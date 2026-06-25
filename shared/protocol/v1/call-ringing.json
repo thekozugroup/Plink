@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "evt_call_001",
+  "type": "call.ringing",
+  "sentAt": "2026-06-25T00:00:00Z",
+  "sourceDeviceId": "pixel-demo",
+  "targetDeviceId": "mac-demo",
+  "requiresAck": true,
+  "payload": {
+    "callerName": "Alex Morgan",
+    "callerHandle": "+15551234567",
+    "canAnswer": false,
+    "canDecline": true
+  }
+}

@@ -1,0 +1,13 @@
+.DS_Store
+.gradle/
+build/
+**/build/
+local.properties
+DerivedData/
+.swiftpm/
+macos/.build/
+.a5c/
+*.xcuserstate
+*.xcuserdata/
+*.keystore
+*.jks

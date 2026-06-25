@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "pair_001",
+  "type": "pairing.offer",
+  "sentAt": "2026-06-25T00:00:00Z",
+  "sourceDeviceId": "pixel-demo",
+  "targetDeviceId": "mac-demo",
+  "requiresAck": true,
+  "payload": {
+    "deviceName": "Pixel",
+    "platform": "android",
+    "endpoint": "192.168.1.24:45731",
+    "nonce": "demo-nonce",
+    "emojiCode": ["sparkles", "key"]
+  }
+}

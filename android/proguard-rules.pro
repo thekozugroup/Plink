@@ -1,0 +1,2 @@
+-keep class app.plink.android.protocol.** { *; }
+-keepattributes *Annotation*

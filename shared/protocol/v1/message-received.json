@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "evt_msg_001",
+  "type": "message.received",
+  "sentAt": "2026-06-25T00:00:00Z",
+  "sourceDeviceId": "pixel-demo",
+  "targetDeviceId": "mac-demo",
+  "requiresAck": true,
+  "payload": {
+    "conversationId": "thread-demo",
+    "sender": "Alex Morgan",
+    "preview": "Can you send the deck?",
+    "canReply": true
+  }
+}

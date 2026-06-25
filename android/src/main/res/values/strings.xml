@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Plink</string>
+    <string name="notification_listener_name">Plink notification handoff</string>
+    <string name="clipboard_accessibility_name">Plink clipboard handoff</string>
+    <string name="clipboard_accessibility_description">Shares clipboard changes with paired Macs when enabled.</string>
+</resources>
