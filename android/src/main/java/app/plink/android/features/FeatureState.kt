@@ -49,7 +49,7 @@ object FeaturePolicy {
             ContinuityFeature.Sms,
             enabled = false,
             available = permissionState.smsRole,
-            reason = if (permissionState.smsRole) null else "Direct SMS requires default SMS role."
+            reason = if (permissionState.smsRole) null else "Future direct SMS mode requires default SMS role."
         ),
         FeatureAvailability(
             ContinuityFeature.ScreenMirror,

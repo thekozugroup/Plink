@@ -11,6 +11,7 @@ struct PlinkMacApp: App {
         MenuBarExtra("Plink", systemImage: "link") {
             Label("Pixel ready", systemImage: "iphone.gen3")
             Text("Last reply: \(appDelegate.lastReply)")
+            Text(appDelegate.lastDeliveryState)
             Divider()
             Button("Show Pairing") {
                 appDelegate.showPairingWindow()
@@ -33,18 +34,43 @@ struct PlinkMacApp: App {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     let notificationBridge = NotificationBridge()
     let pairingMachine = PairingStateMachine()
     let pairingStore = InMemoryPairingStore()
+    let replyTransport: any PlinkTransport = InMemoryPlinkTransport()
     @Published var lastReply: String = "None"
+    @Published var lastDeliveryState: String = "Notifications pending"
     private var pairingWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         notificationBridge.configure()
-        notificationBridge.onTextReply = { [weak self] text in
+        notificationBridge.onAuthorizationChanged = { [weak self] granted, error in
             Task { @MainActor in
-                self?.lastReply = text
+                self?.lastDeliveryState = granted
+                    ? "Notifications enabled"
+                    : (error?.localizedDescription ?? "Notifications denied")
+            }
+        }
+        notificationBridge.onDeliveryError = { [weak self] _, error in
+            Task { @MainActor in
+                self?.lastDeliveryState = error.localizedDescription
+            }
+        }
+        notificationBridge.onTextReply = { [weak self] context, text in
+            Task {
+                do {
+                    let reply = try ReplyRouter.makeReplyEnvelope(context: context, text: text)
+                    try await self?.replyTransport.send(reply)
+                    await MainActor.run {
+                        self?.lastReply = "Sent: \(text)"
+                    }
+                } catch {
+                    await MainActor.run {
+                        self?.lastReply = "Reply failed"
+                        self?.lastDeliveryState = error.localizedDescription
+                    }
+                }
             }
         }
     }

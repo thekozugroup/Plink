@@ -1,5 +1,12 @@
 # Manual Test Plan
 
+## Release Gate
+
+1. Run `./scripts/verify.sh`.
+2. Confirm Android debug and release builds finish.
+3. Confirm macOS bundle is created at `build/PlinkMac.app`.
+4. Confirm the Android manifest gate rejects raw SMS permissions.
+
 ## Android
 
 1. Install debug build on Pixel.
@@ -10,6 +17,7 @@
 6. Optional: enable phone state, SMS/default SMS role, accessibility clipboard, and Shizuku.
 7. Confirm pairing screen shows emoji code `⚡ 🔑` for demo pairing.
 8. Trigger simulator events and confirm generated event types match shared fixtures.
+9. Confirm SMS is shown as a future/default-role mode, not as a requested install permission.
 
 ## macOS
 
@@ -19,7 +27,8 @@
 4. Confirm emoji code matches Android.
 5. Click `Simulate Call`; confirm native macOS notification appears.
 6. Click `Simulate Message`; confirm native macOS notification appears with reply action.
-7. Send a reply and confirm it is queued in the menu state/log.
+7. Send a reply and confirm it is converted into a `message.reply` event targeting the paired Pixel.
+8. Disable notifications in System Settings and confirm the menu reports the denied/error state.
 
 ## Cross-Device
 
@@ -29,3 +38,24 @@
 4. Pair only if emoji code matches on both devices.
 5. Send sample `call.ringing`, `message.received`, `clipboard.updated`, and `web.open` events.
 6. Confirm unsupported permissions degrade visibly instead of failing silently.
+
+## Negative Cases
+
+1. Pair only when both emoji codes match.
+2. Tamper with a signed envelope and confirm it is rejected.
+3. Send a `javascript:` web handoff and confirm it is rejected.
+4. Send a reply with blank text and confirm it is rejected.
+5. Send a message reply without the original notification route and confirm it is rejected.
+6. Trigger large payloads above 64 KB and confirm they are rejected.
+
+## Evidence Matrix
+
+| Area | Evidence |
+| --- | --- |
+| Pairing | matching emoji code, paired device stored |
+| Calls | macOS native notification appears |
+| Messages | reply action creates `message.reply` |
+| Clipboard | clipboard event writes through adapter |
+| Web | `http`/`https` only |
+| Security | signed envelope tamper test fails closed |
+| Release | Android APK build and `PlinkMac.app` bundle exist |

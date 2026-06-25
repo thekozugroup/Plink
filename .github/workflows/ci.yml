@@ -15,10 +15,18 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: android-actions/setup-android@v3
-      - run: ./gradlew --no-daemon :android:lintDebug :android:testDebugUnitTest
+      - run: ./scripts/check-fixtures.sh
+      - run: |
+          if grep -Eq 'READ_SMS|SEND_SMS|RECEIVE_SMS' android/src/main/AndroidManifest.xml; then
+            echo "Android manifest must not request SMS permissions until default-SMS role flow is implemented." >&2
+            exit 1
+          fi
+      - run: ./gradlew --no-daemon :android:assembleDebug :android:assembleRelease :android:lintDebug :android:testDebugUnitTest
 
   macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - run: ./scripts/check-fixtures.sh
       - run: cd macos && swift test && swift build
+      - run: ./scripts/package-macos.sh

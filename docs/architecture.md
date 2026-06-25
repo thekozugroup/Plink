@@ -50,7 +50,7 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 5. Plink stores a paired-device record and a shared session id.
 6. Future events must include the paired device id and protocol version.
 
-MVP pairing uses deterministic emoji confirmation and local session modeling. Production encryption should add Noise/HPKE or TLS with pinned per-device certificates before sensitive real traffic.
+Pairing uses deterministic emoji confirmation and local session modeling. Session traffic is wrapped with signed envelopes so tampering fails closed. A production build should add Noise/HPKE or TLS with pinned per-device certificates before broad sensitive traffic.
 
 ## Protocol Envelope
 
@@ -66,6 +66,17 @@ MVP pairing uses deterministic emoji confirmation and local session modeling. Pr
   "payload": {}
 }
 ```
+
+## Secure Envelope
+
+Runtime events are validated before send and after receive:
+
+- protocol version must match
+- source and target device ids must be present
+- payloads are capped at 64 KB
+- web handoff only accepts `http` and `https`
+- sensitive fields are redacted for logs
+- HMAC signatures bind sequence, nonce, timestamp, and canonical event JSON
 
 ## Event Types
 
@@ -92,6 +103,7 @@ Android:
 - Notification listener: required for most mirrored app messages and call notifications.
 - `RemoteInput`: required for notification-based message replies.
 - SMS default app/SMS permissions: required for direct SMS texting.
+- SMS permissions are not declared in the Android manifest until the default-SMS-role flow exists.
 - Phone state: required for direct call-state visibility.
 - Accessibility: optional clipboard automation.
 - Shizuku: optional privileged helper path; app must work without it.
@@ -130,16 +142,20 @@ Controls:
 
 - User-confirmed emoji verification.
 - Paired-device allowlist.
+- Signed event envelopes with sequence, nonce, timestamp, and payload policy validation.
 - Protocol versioning and event validation.
 - Permission-gated feature toggles.
 - Redaction defaults for sensitive notification content.
+- Reply events bind to the original notification id, package, notification key, conversation id, paired device id, and reply token.
 - No Shizuku dependency for baseline behavior.
-- Future production encryption before real sensitive payload sync.
+- Future production encryption before broad sensitive payload sync.
 
 ## Release Gates
 
 - Android unit tests pass.
+- Android debug and release builds assemble.
 - macOS Swift tests pass.
+- macOS app bundle is generated with menu-bar metadata and sandbox/network entitlements.
 - Protocol fixtures match on both platforms.
 - `scripts/verify.sh` passes.
 - Feature parity document lists public-API parity and private-API gaps.

@@ -9,7 +9,13 @@ if [ ! -f local.properties ] && [ -d "$HOME/Library/Android/sdk" ]; then
 fi
 
 ./scripts/check-fixtures.sh
-./gradlew --no-daemon :android:lintDebug :android:testDebugUnitTest
+if grep -Eq 'READ_SMS|SEND_SMS|RECEIVE_SMS' android/src/main/AndroidManifest.xml; then
+  echo "Android manifest must not request SMS permissions until default-SMS role flow is implemented." >&2
+  exit 1
+fi
+
+./gradlew --no-daemon :android:assembleDebug :android:assembleRelease :android:lintDebug :android:testDebugUnitTest
 (cd macos && swift test && swift build)
+./scripts/package-macos.sh
 
 git status --short

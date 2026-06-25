@@ -31,6 +31,7 @@ public enum HandoffPlanner {
         case .webOpen:
             guard
                 let raw = envelope.payload["url"]?.stringValue,
+                PayloadPolicy.isAllowedURL(raw),
                 let url = URL(string: raw)
             else { return nil }
             return HandoffAction(kind: .openURL(url))
