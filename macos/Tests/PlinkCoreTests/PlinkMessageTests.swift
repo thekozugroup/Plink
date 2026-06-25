@@ -11,7 +11,7 @@ func envelopeRoundTrips() throws {
         sourceDeviceId: "pixel",
         targetDeviceId: "mac",
         requiresAck: true,
-        payload: ["sender": "Alex", "canReply": "true"]
+        payload: ["sender": .string("Alex"), "canReply": .bool(true)]
     )
 
     let encoder = JSONEncoder()

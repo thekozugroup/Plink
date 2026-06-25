@@ -8,7 +8,7 @@ public struct PlinkEnvelope: Codable, Equatable, Sendable {
     public var sourceDeviceId: String
     public var targetDeviceId: String
     public var requiresAck: Bool
-    public var payload: [String: String]
+    public var payload: [String: PayloadValue]
 
     public init(
         version: Int = 1,
@@ -18,7 +18,7 @@ public struct PlinkEnvelope: Codable, Equatable, Sendable {
         sourceDeviceId: String,
         targetDeviceId: String,
         requiresAck: Bool = false,
-        payload: [String: String]
+        payload: [String: PayloadValue]
     ) {
         self.version = version
         self.id = id
@@ -28,6 +28,50 @@ public struct PlinkEnvelope: Codable, Equatable, Sendable {
         self.targetDeviceId = targetDeviceId
         self.requiresAck = requiresAck
         self.payload = payload
+    }
+}
+
+public enum PayloadValue: Codable, Equatable, Sendable {
+    case string(String)
+    case bool(Bool)
+    case int(Int)
+    case double(Double)
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let value = try? container.decode(Bool.self) {
+            self = .bool(value)
+        } else if let value = try? container.decode(Int.self) {
+            self = .int(value)
+        } else if let value = try? container.decode(Double.self) {
+            self = .double(value)
+        } else {
+            self = .string(try container.decode(String.self))
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let value):
+            try container.encode(value)
+        case .bool(let value):
+            try container.encode(value)
+        case .int(let value):
+            try container.encode(value)
+        case .double(let value):
+            try container.encode(value)
+        }
+    }
+
+    public var stringValue: String? {
+        if case .string(let value) = self { return value }
+        return nil
+    }
+
+    public var boolValue: Bool? {
+        if case .bool(let value) = self { return value }
+        return nil
     }
 }
 

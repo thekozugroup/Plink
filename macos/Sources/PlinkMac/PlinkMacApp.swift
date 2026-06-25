@@ -9,6 +9,9 @@ struct PlinkMacApp: App {
 
     var body: some Scene {
         MenuBarExtra("Plink", systemImage: "link") {
+            Label("Pixel ready", systemImage: "iphone.gen3")
+            Text("Last reply: \(appDelegate.lastReply)")
+            Divider()
             Button("Show Pairing") {
                 appDelegate.showPairingWindow()
             }
@@ -32,10 +35,18 @@ struct PlinkMacApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let notificationBridge = NotificationBridge()
+    let pairingMachine = PairingStateMachine()
+    let pairingStore = InMemoryPairingStore()
+    @Published var lastReply: String = "None"
     private var pairingWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         notificationBridge.configure()
+        notificationBridge.onTextReply = { [weak self] text in
+            Task { @MainActor in
+                self?.lastReply = text
+            }
+        }
     }
 
     func showPairingWindow() {
@@ -48,16 +59,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             window.center()
             window.title = "Pair Pixel"
-            window.contentView = NSHostingView(rootView: PairingView())
+            window.contentView = NSHostingView(rootView: PairingView(onConfirm: { [weak self] in
+                self?.confirmDemoPairing()
+            }))
             pairingWindow = window
         }
         pairingWindow?.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate()
     }
+
+    func confirmDemoPairing() {
+        _ = pairingMachine.receive(
+            PairingOffer(
+                deviceId: "pixel-demo",
+                deviceName: "Pixel",
+                platform: "android",
+                endpoint: "192.168.1.24:45731",
+                nonce: "demo-nonce"
+            )
+        )
+        if case .paired(let device) = try? pairingMachine.confirm() {
+            pairingStore.save(device)
+        }
+    }
 }
 
 struct PairingView: View {
     private let emoji = EmojiPairing.derive(sourceDeviceId: "pixel-demo", targetDeviceId: "mac-demo", nonce: "demo-nonce")
+    var onConfirm: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -73,6 +102,10 @@ struct PairingView: View {
                 Label("Clipboard, files, links, battery, and media are event driven", systemImage: "bolt.horizontal")
             }
             .foregroundStyle(.secondary)
+            Button("Confirm Pairing") {
+                onConfirm()
+            }
+            .keyboardShortcut(.defaultAction)
             Spacer()
         }
         .padding(28)

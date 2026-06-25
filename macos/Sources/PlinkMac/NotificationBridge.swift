@@ -1,8 +1,10 @@
 import Foundation
+import PlinkCore
 import UserNotifications
 
 final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     private let center = UNUserNotificationCenter.current()
+    var onTextReply: ((String) -> Void)?
 
     func configure() {
         center.delegate = self
@@ -21,20 +23,35 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func showCall(caller: String, handle: String) {
-        let content = UNMutableNotificationContent()
-        content.title = "Incoming call"
-        content.subtitle = caller
-        content.body = handle
-        content.categoryIdentifier = "plink.call"
-        submit(content: content, id: "call-\(UUID().uuidString)")
+        show(
+            plan: NativeNotificationPlan(
+                categoryIdentifier: "plink.call",
+                title: "Incoming call",
+                subtitle: caller,
+                body: handle
+            )
+        )
     }
 
     func showMessage(sender: String, preview: String) {
+        show(
+            plan: NativeNotificationPlan(
+                categoryIdentifier: "plink.message",
+                title: sender,
+                body: preview,
+                allowsTextReply: true,
+                continuityResponseType: .messageReply
+            )
+        )
+    }
+
+    func show(plan: NativeNotificationPlan) {
         let content = UNMutableNotificationContent()
-        content.title = sender
-        content.body = preview
-        content.categoryIdentifier = "plink.message"
-        submit(content: content, id: "message-\(UUID().uuidString)")
+        content.title = plan.title
+        content.subtitle = plan.subtitle
+        content.body = plan.body
+        content.categoryIdentifier = plan.categoryIdentifier
+        submit(content: content, id: "\(plan.categoryIdentifier)-\(UUID().uuidString)")
     }
 
     func userNotificationCenter(
@@ -42,7 +59,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse
     ) async {
         if let response = response as? UNTextInputNotificationResponse {
-            print("Plink reply queued: \(response.userText)")
+            onTextReply?(response.userText)
         }
     }
 
