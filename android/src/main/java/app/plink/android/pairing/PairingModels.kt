@@ -9,6 +9,7 @@ data class PairingOffer(
     val platform: String,
     val endpoint: String,
     val nonce: String,
+    val publicKey: String,
     val targetDeviceId: String = "mac-demo",
     val protocolVersion: Int = 1
 ) {
@@ -23,6 +24,8 @@ data class PairedDevice(
     val platform: String,
     val endpoint: String,
     val sessionId: String,
+    val peerPublicKey: String,
+    val localPublicKey: String,
     val trusted: Boolean
 )
 

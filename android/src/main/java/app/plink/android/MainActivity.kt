@@ -2,6 +2,7 @@ package app.plink.android
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -38,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,11 +54,14 @@ import app.plink.android.continuity.MessageReceivedEvent
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeaturePolicy
 import app.plink.android.permissions.PermissionState
+import app.plink.android.permissions.AndroidPermissionReader
+import app.plink.android.permissions.PermissionOnboarding
 import app.plink.android.pairing.EmojiPairing
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent { PlinkApp() }
     }
 }
@@ -63,14 +69,19 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlinkApp() {
+    val context = LocalContext.current
     MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = GoogleBlue,
-            secondary = GoogleGreen,
-            tertiary = GoogleYellow,
-            surface = GoogleSurface,
-            background = GoogleSurface
-        ),
+        colorScheme = if (android.os.Build.VERSION.SDK_INT >= 31) {
+            dynamicLightColorScheme(context)
+        } else {
+            lightColorScheme(
+                primary = GoogleBlue,
+                secondary = GoogleGreen,
+                tertiary = GoogleYellow,
+                surface = GoogleSurface,
+                background = GoogleSurface
+            )
+        },
         typography = MaterialTheme.typography.copy(
             headlineMedium = MaterialTheme.typography.headlineMedium.copy(
                 fontFamily = FontFamily.SansSerif,
@@ -104,20 +115,16 @@ fun PlinkApp() {
 
 @Composable
 private fun PlinkHome(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val emoji = remember { EmojiPairing.derive("pixel-demo", "mac-demo", "demo-nonce") }
     val labels = remember { EmojiPairing.labels("pixel-demo", "mac-demo", "demo-nonce") }
-    val permissions = remember {
-        PermissionState(
-            notificationListener = true,
-            notificationRuntime = true,
-            phoneState = true,
-            smsRole = false,
-            accessibilityClipboard = false
-        )
+    var permissions by remember {
+        mutableStateOf(AndroidPermissionReader.read(context))
     }
-    val features = remember {
+    val features = remember(permissions) {
         FeaturePolicy.evaluate(permissions).filter { it.feature != ContinuityFeature.Sms && it.feature != ContinuityFeature.ScreenMirror }
     }
+    val onboarding = remember(permissions) { PermissionOnboarding.steps(permissions) }
     val simulatedEvents = remember {
         listOf(
             ContinuityEnvelopeFactory.create(
@@ -164,8 +171,28 @@ private fun PlinkHome(modifier: Modifier = Modifier) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("Connection", fontWeight = FontWeight.SemiBold)
-                    Text("Local transport ready. Events are queued until your Mac confirms pairing.")
+                    Text("Secure local transport uses paired-device keys and encrypted frames.")
                     AssistChip(onClick = {}, label = { Text("Encrypted session pending") })
+                }
+            }
+        }
+        item {
+            Card {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Permissions", fontWeight = FontWeight.SemiBold)
+                    onboarding.filter { it.enabled && !it.completed }.take(3).forEach { step ->
+                        AssistChip(
+                            onClick = {
+                                context.startActivity(AndroidPermissionReader.settingsIntent(step.action))
+                                permissions = AndroidPermissionReader.read(context)
+                            },
+                            label = { Text(step.title) }
+                        )
+                    }
+                    AssistChip(onClick = { permissions = AndroidPermissionReader.read(context) }, label = { Text("Refresh") })
                 }
             }
         }

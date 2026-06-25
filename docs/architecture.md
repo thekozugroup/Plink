@@ -15,25 +15,26 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 ### Android
 
 - Jetpack Compose app shell with Material 3 UI.
-- `PairingStateMachine` for device linking and emoji confirmation.
+- `PairingStateMachine` for device linking, ECDH public-key exchange, and emoji confirmation.
 - `PlinkMessage` protocol models.
 - `ConnectionRepository` for local peer state.
 - `PermissionModel` for notification, phone state, SMS/default-role, accessibility, local network, and Shizuku capability visibility.
 - `NotificationBridgeService` abstraction for message/call notification mirroring.
 - `ContinuityEventRepository` for calls, messages, clipboard, files, web links, battery, and media commands.
-- Android Keystore-backed storage planned for production secrets; local test implementation uses injectable storage.
+- Android Keystore-backed paired-device storage for production metadata and secrets; local tests use injectable memory storage.
 
 ### macOS
 
 - SwiftUI app with AppKit `NSStatusItem` menu bar integration.
 - Pairing window with matching emoji confirmation.
 - `PlinkMessage` protocol models matching Android.
-- `PairingStore` for remembered device state.
+- `PairingStore` for remembered device metadata.
+- Keychain-backed session secret storage.
 - `NotificationBridge` using `UNUserNotificationCenter`.
 - Native call notifications with answer/decline actions.
 - Native message notifications with text reply action.
 - Pasteboard/file/URL handoff adapters.
-- `Network.framework` transport boundary for local peer connections.
+- Secure `Network.framework` transport using length-prefixed encrypted frames.
 
 ## Pairing Flow
 
@@ -47,10 +48,12 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 2. Both devices derive a short visual confirmation from the offer hash.
 3. UI shows a matching emoji pair, for example `sparkles + key`.
 4. User confirms only when both screens match.
-5. Plink stores a paired-device record and a shared session id.
-6. Future events must include the paired device id and protocol version.
+5. Devices exchange P-256 ECDH public keys inside the pairing offer/confirm flow.
+6. Plink derives a session key with HKDF-SHA256 using the pairing nonce and transcript.
+7. Plink stores device metadata separately from session secret material.
+8. Future events must include the paired device id and protocol version.
 
-Pairing uses deterministic emoji confirmation and local session modeling. Session traffic is wrapped with signed envelopes so tampering fails closed. A production build should add Noise/HPKE or TLS with pinned per-device certificates before broad sensitive traffic.
+Pairing uses deterministic emoji confirmation plus ECDH-derived session keys. Session traffic is sent as encrypted, signed, length-prefixed frames with replay checks. A future hardening path can replace the direct ECDH/HKDF exchange with Noise/HPKE or TLS with pinned per-device certificates.
 
 ## Protocol Envelope
 
@@ -77,6 +80,9 @@ Runtime events are validated before send and after receive:
 - web handoff only accepts `http` and `https`
 - sensitive fields are redacted for logs
 - HMAC signatures bind sequence, nonce, timestamp, and canonical event JSON
+- encrypted frames bind sequence, nonce, timestamp, source device, target device, and ciphertext
+- replay checks reject old sequence numbers, reused nonces, and stale timestamps
+- network frames use a 4-byte length prefix and reject oversized payloads
 
 ## Event Types
 
@@ -142,13 +148,15 @@ Controls:
 
 - User-confirmed emoji verification.
 - Paired-device allowlist.
-- Signed event envelopes with sequence, nonce, timestamp, and payload policy validation.
+- ECDH/HKDF session key derivation during pairing.
+- Encrypted event frames with sequence, nonce, timestamp, and payload policy validation.
 - Protocol versioning and event validation.
 - Permission-gated feature toggles.
 - Redaction defaults for sensitive notification content.
 - Reply events bind to the original notification id, package, notification key, conversation id, paired device id, and reply token.
+- Android reply tokens are consumed once from a live route registry.
 - No Shizuku dependency for baseline behavior.
-- Future production encryption before broad sensitive payload sync.
+- Android Keystore and macOS Keychain boundaries for session secrets.
 
 ## Release Gates
 
@@ -156,6 +164,7 @@ Controls:
 - Android debug and release builds assemble.
 - macOS Swift tests pass.
 - macOS app bundle is generated with menu-bar metadata and sandbox/network entitlements.
+- macOS bundle is codesigned locally with entitlements; public distribution requires Developer ID signing and notarization.
 - Protocol fixtures match on both platforms.
 - `scripts/verify.sh` passes.
 - Feature parity document lists public-API parity and private-API gaps.

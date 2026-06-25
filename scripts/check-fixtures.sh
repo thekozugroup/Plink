@@ -22,4 +22,13 @@ for fixture in Path("shared/protocol/v1").glob("*.json"):
         raise SystemExit(f"{fixture}: missing {missing}")
     if data["type"] not in allowed:
         raise SystemExit(f"{fixture}: invalid type {data['type']}")
+    payload = data["payload"]
+    if data["type"] == "pairing.offer":
+        for key in ["endpoint", "nonce", "publicKey", "emojiCode"]:
+            if key not in payload:
+                raise SystemExit(f"{fixture}: pairing offer missing payload.{key}")
+    if data["type"] == "message.received" and payload.get("canReply"):
+        for key in ["packageName", "notificationKey", "replyToken"]:
+            if key not in payload:
+                raise SystemExit(f"{fixture}: replyable message missing payload.{key}")
 PY

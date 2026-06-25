@@ -20,4 +20,11 @@ plutil -lint "$APP_DIR/Contents/Info.plist" >/dev/null
 test -x "$MACOS_DIR/PlinkMac"
 test -f "$RESOURCES_DIR/PlinkMac.entitlements"
 
+SIGN_IDENTITY="${MACOS_CODESIGN_IDENTITY:--}"
+codesign --force --sign "$SIGN_IDENTITY" \
+  --entitlements "$ROOT_DIR/macos/Resources/PlinkMac.entitlements" \
+  "$APP_DIR"
+codesign --verify --deep --strict "$APP_DIR"
+codesign -d --entitlements :- "$APP_DIR" >/dev/null 2>&1
+
 echo "$APP_DIR"

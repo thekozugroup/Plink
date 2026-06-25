@@ -6,10 +6,13 @@
 2. Confirm Android debug and release builds finish.
 3. Confirm macOS bundle is created at `build/PlinkMac.app`.
 4. Confirm the Android manifest gate rejects raw SMS permissions.
+5. Confirm `codesign --verify --deep --strict build/PlinkMac.app` passes.
+6. For public distribution, set `MACOS_CODESIGN_IDENTITY` to a Developer ID identity and notarize the bundle.
 
 ## Android
 
 1. Install debug build on Pixel.
+   `adb install -r android/build/outputs/apk/debug/android-debug.apk`
 2. Open Plink.
 3. Confirm Google-style Material UI loads.
 4. Enable notification listener.
@@ -18,6 +21,7 @@
 7. Confirm pairing screen shows emoji code `⚡ 🔑` for demo pairing.
 8. Trigger simulator events and confirm generated event types match shared fixtures.
 9. Confirm SMS is shown as a future/default-role mode, not as a requested install permission.
+10. Confirm notification listener creates reply routes for replyable notifications and consumes reply tokens once.
 
 ## macOS
 
@@ -29,6 +33,7 @@
 6. Click `Simulate Message`; confirm native macOS notification appears with reply action.
 7. Send a reply and confirm it is converted into a `message.reply` event targeting the paired Pixel.
 8. Disable notifications in System Settings and confirm the menu reports the denied/error state.
+9. Confirm `build/PlinkMac.app` is signed with the expected identity or ad-hoc identity for local testing.
 
 ## Cross-Device
 

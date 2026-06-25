@@ -1,4 +1,5 @@
 import AppKit
+import CryptoKit
 import PlinkCore
 import SwiftUI
 import UserNotifications
@@ -37,8 +38,9 @@ struct PlinkMacApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     let notificationBridge = NotificationBridge()
     let pairingMachine = PairingStateMachine()
-    let pairingStore = InMemoryPairingStore()
-    let replyTransport: any PlinkTransport = InMemoryPlinkTransport()
+    let pairingStore = UserDefaultsPairingStore()
+    private let fallbackTransport: any PlinkTransport = InMemoryPlinkTransport()
+    private var activeTransport: (any PlinkTransport)?
     @Published var lastReply: String = "None"
     @Published var lastDeliveryState: String = "Notifications pending"
     private var pairingWindow: NSWindow?
@@ -61,7 +63,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             Task {
                 do {
                     let reply = try ReplyRouter.makeReplyEnvelope(context: context, text: text)
-                    try await self?.replyTransport.send(reply)
+                    let transport = await MainActor.run { self?.activeTransport ?? self?.fallbackTransport }
+                    try await transport?.send(reply)
                     await MainActor.run {
                         self?.lastReply = "Sent: \(text)"
                     }
@@ -101,12 +104,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 deviceName: "Pixel",
                 platform: "android",
                 endpoint: "192.168.1.24:45731",
-                nonce: "demo-nonce"
+                nonce: "demo-nonce",
+                publicKey: P256.KeyAgreement.PrivateKey().publicKey.derRepresentation.base64EncodedString()
             )
         )
         if case .paired(let device) = try? pairingMachine.confirm() {
-            pairingStore.save(device)
+            try? pairingStore.save(device)
+            activeTransport = makeTransport(for: device)
         }
+    }
+
+    private func makeTransport(for device: PairedDevice) -> (any PlinkTransport)? {
+        guard
+            let key = pairingMachine.lastSessionKey,
+            let separator = device.endpoint.lastIndex(of: ":"),
+            let port = UInt16(device.endpoint[device.endpoint.index(after: separator)...])
+        else { return nil }
+
+        let host = String(device.endpoint[..<separator])
+        let sessionKey = key.withUnsafeBytes { Data($0) }
+        return SecureNetworkPlinkClient(
+            host: host,
+            port: port,
+            codec: EncryptedFrameCodec(sessionKey: sessionKey)
+        )
     }
 }
 

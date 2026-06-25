@@ -1,9 +1,16 @@
 import Foundation
+import Security
 
 public protocol PairingStore: Sendable {
     func save(_ device: PairedDevice) throws
     func all() throws -> [PairedDevice]
     func remove(deviceId: String) throws
+}
+
+public protocol PairingSecretStore: Sendable {
+    func save(sessionKey: Data, sessionId: String) throws
+    func load(sessionId: String) throws -> Data?
+    func remove(sessionId: String) throws
 }
 
 public final class InMemoryPairingStore: PairingStore, @unchecked Sendable {
@@ -55,6 +62,77 @@ public final class UserDefaultsPairingStore: PairingStore, @unchecked Sendable {
         let data = try JSONEncoder().encode(devices)
         defaults.set(data, forKey: key)
     }
+}
+
+public final class InMemoryPairingSecretStore: PairingSecretStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var secrets: [String: Data] = [:]
+
+    public init() {}
+
+    public func save(sessionKey: Data, sessionId: String) {
+        lock.withLock { secrets[sessionId] = sessionKey }
+    }
+
+    public func load(sessionId: String) -> Data? {
+        lock.withLock { secrets[sessionId] }
+    }
+
+    public func remove(sessionId: String) {
+        lock.withLock { _ = secrets.removeValue(forKey: sessionId) }
+    }
+}
+
+public final class KeychainPairingSecretStore: PairingSecretStore, @unchecked Sendable {
+    private let service: String
+
+    public init(service: String = "com.thekozugroup.plink.session") {
+        self.service = service
+    }
+
+    public func save(sessionKey: Data, sessionId: String) throws {
+        try remove(sessionId: sessionId)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: sessionId,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+            kSecValueData as String: sessionKey
+        ]
+        let status = SecItemAdd(query as CFDictionary, nil)
+        guard status == errSecSuccess else { throw KeychainSecretStoreError.status(status) }
+    }
+
+    public func load(sessionId: String) throws -> Data? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: sessionId,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else { throw KeychainSecretStoreError.status(status) }
+        return result as? Data
+    }
+
+    public func remove(sessionId: String) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: sessionId
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw KeychainSecretStoreError.status(status)
+        }
+    }
+}
+
+public enum KeychainSecretStoreError: Error, Equatable {
+    case status(OSStatus)
 }
 
 private extension NSLock {

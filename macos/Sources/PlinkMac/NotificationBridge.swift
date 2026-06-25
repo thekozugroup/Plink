@@ -4,9 +4,9 @@ import UserNotifications
 
 final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     private let center = UNUserNotificationCenter.current()
-    private let lock = NSLock()
-    private var replyContexts: [String: ReplyContext] = [:]
+    private let replyContextStore: ReplyContextStoring = UserDefaultsReplyContextStore()
     var onTextReply: ((ReplyContext, String) -> Void)?
+    var onCallAction: ((String) -> Void)?
     var onAuthorizationChanged: ((Bool, Error?) -> Void)?
     var onDeliveryError: ((String, Error) -> Void)?
 
@@ -22,7 +22,8 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate, @unc
         let decline = UNNotificationAction(identifier: "call.decline", title: "Decline", options: [])
         let callCategory = UNNotificationCategory(identifier: "plink.call", actions: [decline], intentIdentifiers: [])
         let messageCategory = UNNotificationCategory(identifier: "plink.message", actions: [reply], intentIdentifiers: [])
-        center.setNotificationCategories([callCategory, messageCategory])
+        let readOnlyMessageCategory = UNNotificationCategory(identifier: "plink.message.readonly", actions: [], intentIdentifiers: [])
+        center.setNotificationCategories([callCategory, messageCategory, readOnlyMessageCategory])
         center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, error in
             self?.onAuthorizationChanged?(granted, error)
         }
@@ -82,7 +83,9 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate, @unc
         content.title = plan.title
         content.subtitle = plan.subtitle
         content.body = plan.body
-        content.categoryIdentifier = plan.categoryIdentifier
+        content.categoryIdentifier = plan.categoryIdentifier == "plink.message" && !plan.allowsTextReply
+            ? "plink.message.readonly"
+            : plan.categoryIdentifier
         submit(content: content, id: id, replyContext: replyContext)
     }
 
@@ -90,9 +93,20 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate, @unc
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
+        if response.actionIdentifier == "call.decline" {
+            onCallAction?(response.notification.request.identifier)
+            return
+        }
         guard let response = response as? UNTextInputNotificationResponse else { return }
         guard let context = takeReplyContext(for: response.notification.request.identifier) else { return }
         onTextReply?(context, response.userText)
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .sound]
     }
 
     private func submit(content: UNMutableNotificationContent, id: String, replyContext: ReplyContext?) {
@@ -109,15 +123,11 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate, @unc
     }
 
     private func store(_ context: ReplyContext, for id: String) {
-        lock.lock()
-        replyContexts[id] = context
-        lock.unlock()
+        try? replyContextStore.save(context, notificationId: id)
     }
 
     @discardableResult
     private func takeReplyContext(for id: String) -> ReplyContext? {
-        lock.lock()
-        defer { lock.unlock() }
-        return replyContexts.removeValue(forKey: id)
+        try? replyContextStore.take(notificationId: id)
     }
 }

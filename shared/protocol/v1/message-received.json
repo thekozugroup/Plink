@@ -10,6 +10,9 @@
     "conversationId": "thread-demo",
     "sender": "Alex Morgan",
     "preview": "Can you send the deck?",
-    "canReply": true
+    "canReply": true,
+    "packageName": "com.google.android.apps.messaging",
+    "notificationKey": "demo-message",
+    "replyToken": "demo-reply-token"
   }
 }

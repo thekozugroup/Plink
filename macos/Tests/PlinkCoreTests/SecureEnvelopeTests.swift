@@ -48,6 +48,37 @@ func redactionMasksSensitivePayloadValues() throws {
     #expect(redacted.payload["sender"] == .string("Alex"))
 }
 
+@Test
+func encryptedFrameRoundTripsAndRejectsReplay() throws {
+    let codec = EncryptedFrameCodec(sessionKey: Data("test-session-secret".utf8))
+    let protector = ReplayProtector(maxClockSkew: 600)
+    let issuedAt = Date(timeIntervalSince1970: 1_782_000_000)
+    let frame = try codec.seal(
+        messageEnvelope(),
+        sequence: 1,
+        nonce: "frame-nonce",
+        issuedAt: issuedAt,
+        iv: Data(repeating: 7, count: 12)
+    )
+
+    #expect(try codec.open(frame, replayProtector: protector, now: issuedAt.addingTimeInterval(1)) == messageEnvelope())
+    #expect(throws: PayloadPolicyError.self) {
+        _ = try codec.open(frame, replayProtector: protector, now: issuedAt.addingTimeInterval(2))
+    }
+}
+
+@Test
+func encryptedFrameRejectsTampering() throws {
+    let codec = EncryptedFrameCodec(sessionKey: Data("test-session-secret".utf8))
+    let frame = try codec.seal(messageEnvelope(), sequence: 1, nonce: "frame-nonce")
+    var tampered = frame
+    tampered.cipherText = String(tampered.cipherText.dropLast(2)) + "xx"
+
+    #expect(throws: PayloadPolicyError.self) {
+        _ = try codec.open(tampered)
+    }
+}
+
 private func messageEnvelope() -> PlinkEnvelope {
     PlinkEnvelope(
         id: "evt-1",
@@ -59,7 +90,10 @@ private func messageEnvelope() -> PlinkEnvelope {
         payload: [
             "sender": .string("Alex"),
             "preview": .string("Private"),
-            "canReply": .bool(true)
+            "canReply": .bool(true),
+            "packageName": .string("com.example.messages"),
+            "notificationKey": .string("key"),
+            "replyToken": .string("token")
         ]
     )
 }

@@ -54,6 +54,7 @@ func replyContextDerivesFromMessageEnvelope() throws {
         sourceDeviceId: "pixel",
         targetDeviceId: "mac",
         payload: [
+            "canReply": .bool(true),
             "packageName": .string("com.example.messages"),
             "notificationKey": .string("key"),
             "conversationId": .string("thread"),
@@ -66,4 +67,34 @@ func replyContextDerivesFromMessageEnvelope() throws {
     #expect(context.pairedDeviceId == "pixel")
     #expect(context.macDeviceId == "mac")
     #expect(context.notificationKey == "key")
+}
+
+@Test
+func replyContextRequiresReplyCapabilityAndRouteFields() throws {
+    let nonReplyable = PlinkEnvelope(
+        id: "evt-1",
+        type: .messageReceived,
+        sentAt: .now,
+        sourceDeviceId: "pixel",
+        targetDeviceId: "mac",
+        payload: [
+            "canReply": .bool(false),
+            "packageName": .string("pkg"),
+            "notificationKey": .string("key"),
+            "replyToken": .string("token")
+        ]
+    )
+
+    #expect(ReplyRouter.context(from: nonReplyable) == nil)
+
+    let missingRoute = PlinkEnvelope(
+        id: "evt-2",
+        type: .messageReceived,
+        sentAt: .now,
+        sourceDeviceId: "pixel",
+        targetDeviceId: "mac",
+        payload: ["canReply": .bool(true)]
+    )
+
+    #expect(ReplyRouter.context(from: missingRoute) == nil)
 }

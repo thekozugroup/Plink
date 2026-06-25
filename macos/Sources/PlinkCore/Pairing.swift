@@ -7,6 +7,7 @@ public struct PairingOffer: Codable, Equatable, Sendable {
     public var platform: String
     public var endpoint: String
     public var nonce: String
+    public var publicKey: String
     public var targetDeviceId: String
     public var protocolVersion: Int
 
@@ -16,6 +17,7 @@ public struct PairingOffer: Codable, Equatable, Sendable {
         platform: String,
         endpoint: String,
         nonce: String,
+        publicKey: String,
         targetDeviceId: String = "mac-demo",
         protocolVersion: Int = 1
     ) {
@@ -24,6 +26,7 @@ public struct PairingOffer: Codable, Equatable, Sendable {
         self.platform = platform
         self.endpoint = endpoint
         self.nonce = nonce
+        self.publicKey = publicKey
         self.targetDeviceId = targetDeviceId
         self.protocolVersion = protocolVersion
     }
@@ -39,14 +42,27 @@ public struct PairedDevice: Codable, Equatable, Sendable, Identifiable {
     public var platform: String
     public var endpoint: String
     public var sessionId: String
+    public var peerPublicKey: String
+    public var localPublicKey: String
     public var trusted: Bool
 
-    public init(id: String, name: String, platform: String, endpoint: String, sessionId: String, trusted: Bool) {
+    public init(
+        id: String,
+        name: String,
+        platform: String,
+        endpoint: String,
+        sessionId: String,
+        peerPublicKey: String,
+        localPublicKey: String,
+        trusted: Bool
+    ) {
         self.id = id
         self.name = name
         self.platform = platform
         self.endpoint = endpoint
         self.sessionId = sessionId
+        self.peerPublicKey = peerPublicKey
+        self.localPublicKey = localPublicKey
         self.trusted = trusted
     }
 }
@@ -60,13 +76,18 @@ public enum PairingStatus: Equatable, Sendable {
 
 public enum PairingError: Error, Equatable {
     case noOfferToConfirm
+    case invalidPublicKey
 }
 
 public final class PairingStateMachine: @unchecked Sendable {
     private let lock = NSLock()
     private var current: PairingStatus = .idle
+    private let localPrivateKey: P256.KeyAgreement.PrivateKey
+    public private(set) var lastSessionKey: SymmetricKey?
 
-    public init() {}
+    public init(localPrivateKey: P256.KeyAgreement.PrivateKey = P256.KeyAgreement.PrivateKey()) {
+        self.localPrivateKey = localPrivateKey
+    }
 
     public var status: PairingStatus {
         lock.withLock { current }
@@ -85,12 +106,19 @@ public final class PairingStateMachine: @unchecked Sendable {
             return nil
         }
         guard let offer else { throw PairingError.noOfferToConfirm }
+        let session = try Self.deriveSession(
+            offer,
+            localPrivateKey: localPrivateKey
+        )
+        lastSessionKey = session.key
         let device = PairedDevice(
             id: offer.deviceId,
             name: offer.deviceName,
             platform: offer.platform,
             endpoint: offer.endpoint,
-            sessionId: Self.deriveSessionId(offer),
+            sessionId: session.sessionId,
+            peerPublicKey: offer.publicKey,
+            localPublicKey: localPublicKeyBase64,
             trusted: true
         )
         let next = PairingStatus.paired(device)
@@ -104,10 +132,31 @@ public final class PairingStateMachine: @unchecked Sendable {
         return next
     }
 
-    private static func deriveSessionId(_ offer: PairingOffer) -> String {
-        let input = "\(offer.deviceId)|\(offer.endpoint)|\(offer.nonce)|plink-v\(offer.protocolVersion)"
-        let digest = SHA256.hash(data: Data(input.utf8))
-        return digest.map { String(format: "%02x", $0) }.joined().prefix(32).description
+    public var localPublicKeyBase64: String {
+        localPrivateKey.publicKey.derRepresentation.base64EncodedString()
+    }
+
+    private static func deriveSession(
+        _ offer: PairingOffer,
+        localPrivateKey: P256.KeyAgreement.PrivateKey
+    ) throws -> (sessionId: String, key: SymmetricKey) {
+        guard !offer.publicKey.isEmpty else { throw PairingError.invalidPublicKey }
+        let peerKey = try P256.KeyAgreement.PublicKey(derRepresentation: Data(base64Encoded: offer.publicKey) ?? Data())
+        let sharedSecret = try localPrivateKey.sharedSecretFromKeyAgreement(with: peerKey)
+        let transcript = "\(offer.deviceId)|\(offer.targetDeviceId)|\(offer.endpoint)|plink-v\(offer.protocolVersion)"
+        let key = sharedSecret.hkdfDerivedSymmetricKey(
+            using: SHA256.self,
+            salt: Data(SHA256.hash(data: Data(offer.nonce.utf8))),
+            sharedInfo: Data("plink-session-v1|\(transcript)".utf8),
+            outputByteCount: 32
+        )
+        let keyBytes = key.withUnsafeBytes { Data($0) }
+        let sessionId = SHA256.hash(data: keyBytes)
+            .map { String(format: "%02x", $0) }
+            .joined()
+            .prefix(32)
+            .description
+        return (sessionId, key)
     }
 }
 
