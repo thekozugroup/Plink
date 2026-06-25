@@ -7,6 +7,7 @@ public struct PairingOffer: Codable, Equatable, Sendable {
     public var platform: String
     public var endpoint: String
     public var nonce: String
+    public var targetDeviceId: String
     public var protocolVersion: Int
 
     public init(
@@ -15,6 +16,7 @@ public struct PairingOffer: Codable, Equatable, Sendable {
         platform: String,
         endpoint: String,
         nonce: String,
+        targetDeviceId: String = "mac-demo",
         protocolVersion: Int = 1
     ) {
         self.deviceId = deviceId
@@ -22,11 +24,12 @@ public struct PairingOffer: Codable, Equatable, Sendable {
         self.platform = platform
         self.endpoint = endpoint
         self.nonce = nonce
+        self.targetDeviceId = targetDeviceId
         self.protocolVersion = protocolVersion
     }
 
     public var emojiCode: (String, String) {
-        EmojiPairing.derive(sourceDeviceId: deviceId, targetDeviceId: "mac", nonce: nonce)
+        EmojiPairing.derive(sourceDeviceId: deviceId, targetDeviceId: targetDeviceId, nonce: nonce)
     }
 }
 

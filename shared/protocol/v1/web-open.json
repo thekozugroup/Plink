@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "evt_web_001",
+  "type": "web.open",
+  "sentAt": "2026-06-25T00:00:00Z",
+  "sourceDeviceId": "pixel-demo",
+  "targetDeviceId": "mac-demo",
+  "requiresAck": false,
+  "payload": {
+    "url": "https://plink.local/demo"
+  }
+}

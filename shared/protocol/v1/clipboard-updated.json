@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "id": "evt_clip_001",
+  "type": "clipboard.updated",
+  "sentAt": "2026-06-25T00:00:00Z",
+  "sourceDeviceId": "pixel-demo",
+  "targetDeviceId": "mac-demo",
+  "requiresAck": false,
+  "payload": {
+    "text": "https://plink.local/demo",
+    "localOnly": false
+  }
+}

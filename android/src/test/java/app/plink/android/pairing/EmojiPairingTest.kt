@@ -20,4 +20,9 @@ class EmojiPairingTest {
             EmojiPairing.derive("pixel", "mac", "nonce-2")
         )
     }
+
+    @Test
+    fun demoPairingCodeMatchesSharedFixture() {
+        assertEquals("⚡" to "🔑", EmojiPairing.derive("pixel-demo", "mac-demo", "demo-nonce"))
+    }
 }

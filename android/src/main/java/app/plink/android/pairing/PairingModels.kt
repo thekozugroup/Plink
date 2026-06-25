@@ -9,10 +9,11 @@ data class PairingOffer(
     val platform: String,
     val endpoint: String,
     val nonce: String,
+    val targetDeviceId: String = "mac-demo",
     val protocolVersion: Int = 1
 ) {
     val emojiCode: Pair<String, String>
-        get() = EmojiPairing.derive(deviceId, "mac", nonce)
+        get() = EmojiPairing.derive(deviceId, targetDeviceId, nonce)
 }
 
 @Serializable

@@ -11,6 +11,8 @@
     "platform": "android",
     "endpoint": "192.168.1.24:45731",
     "nonce": "demo-nonce",
-    "emojiCode": ["sparkles", "key"]
+    "targetDeviceId": "mac-demo",
+    "emojiCode": ["⚡", "🔑"],
+    "emojiLabels": ["bolt", "key"]
   }
 }

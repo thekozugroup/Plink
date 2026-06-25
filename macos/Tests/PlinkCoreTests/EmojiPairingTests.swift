@@ -17,3 +17,11 @@ func deriveChangesWithNonce() {
 
     #expect(first.0 != second.0 || first.1 != second.1)
 }
+
+@Test
+func demoPairingCodeMatchesSharedFixture() {
+    let code = EmojiPairing.derive(sourceDeviceId: "pixel-demo", targetDeviceId: "mac-demo", nonce: "demo-nonce")
+
+    #expect(code.0 == "⚡")
+    #expect(code.1 == "🔑")
+}

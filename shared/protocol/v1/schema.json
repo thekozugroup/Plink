@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlinkEnvelope",
+  "type": "object",
+  "required": [
+    "version",
+    "id",
+    "type",
+    "sentAt",
+    "sourceDeviceId",
+    "targetDeviceId",
+    "requiresAck",
+    "payload"
+  ],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "type": {
+      "type": "string",
+      "enum": [
+        "pairing.offer",
+        "pairing.confirm",
+        "device.status",
+        "call.ringing",
+        "call.ended",
+        "message.received",
+        "message.reply",
+        "clipboard.updated",
+        "file.offer",
+        "web.open",
+        "media.state",
+        "media.command",
+        "permission.state",
+        "ack",
+        "error"
+      ]
+    },
+    "sentAt": { "type": "string" },
+    "sourceDeviceId": { "type": "string", "minLength": 1 },
+    "targetDeviceId": { "type": "string", "minLength": 1 },
+    "requiresAck": { "type": "boolean" },
+    "payload": { "type": "object" }
+  }
+}
