@@ -1,0 +1,5 @@
+<full-backup-content>
+    <exclude
+        domain="sharedpref"
+        path="paired_devices.xml" />
+</full-backup-content>

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,6 +44,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.plink.android.continuity.CallRingingEvent
+import app.plink.android.continuity.ClipboardUpdatedEvent
+import app.plink.android.continuity.ContinuityEnvelopeFactory
+import app.plink.android.continuity.MessageReceivedEvent
+import app.plink.android.features.ContinuityFeature
+import app.plink.android.features.FeaturePolicy
+import app.plink.android.permissions.PermissionState
 import app.plink.android.pairing.EmojiPairing
 
 class MainActivity : ComponentActivity() {
@@ -97,14 +105,36 @@ fun PlinkApp() {
 @Composable
 private fun PlinkHome(modifier: Modifier = Modifier) {
     val emoji = remember { EmojiPairing.derive("pixel-demo", "mac-demo", "demo-nonce") }
+    val labels = remember { EmojiPairing.labels("pixel-demo", "mac-demo", "demo-nonce") }
+    val permissions = remember {
+        PermissionState(
+            notificationListener = true,
+            notificationRuntime = true,
+            phoneState = true,
+            smsRole = false,
+            accessibilityClipboard = false
+        )
+    }
     val features = remember {
+        FeaturePolicy.evaluate(permissions).filter { it.feature != ContinuityFeature.Sms && it.feature != ContinuityFeature.ScreenMirror }
+    }
+    val simulatedEvents = remember {
         listOf(
-            Feature("Calls", "Show native Mac call notifications", Icons.Rounded.Phone, true),
-            Feature("Messages", "Reply from Mac notifications", Icons.AutoMirrored.Rounded.Message, true),
-            Feature("Clipboard", "Share copied text and links", Icons.Rounded.ContentCopy, true),
-            Feature("Files", "Send files both ways", Icons.Rounded.Folder, true),
-            Feature("Web", "Open Pixel links on Mac", Icons.Rounded.Link, true),
-            Feature("Media", "Mirror media state and controls", Icons.Rounded.PlayArrow, false)
+            ContinuityEnvelopeFactory.create(
+                CallRingingEvent("Alex Morgan", "+1 555 123 4567"),
+                "pixel-demo",
+                "mac-demo"
+            ),
+            ContinuityEnvelopeFactory.create(
+                MessageReceivedEvent("thread-demo", "Alex Morgan", "Can you send the deck?", canReply = true),
+                "pixel-demo",
+                "mac-demo"
+            ),
+            ContinuityEnvelopeFactory.create(
+                ClipboardUpdatedEvent("https://plink.local/demo"),
+                "pixel-demo",
+                "mac-demo"
+            )
         )
     }
 
@@ -122,18 +152,47 @@ private fun PlinkHome(modifier: Modifier = Modifier) {
                     AssistChip(onClick = {}, label = { Text("Ready to pair") })
                     Text("Match this code on your Mac", style = MaterialTheme.typography.titleMedium)
                     Text("${emoji.first}  ${emoji.second}", style = MaterialTheme.typography.displayMedium)
+                    Text("${labels.first} + ${labels.second}")
                     Text("Only confirm when the same emoji pair appears on both devices.")
+                }
+            }
+        }
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Connection", fontWeight = FontWeight.SemiBold)
+                    Text("Local transport ready. Events are queued until your Mac confirms pairing.")
+                    AssistChip(onClick = {}, label = { Text("Encrypted session pending") })
                 }
             }
         }
         items(features) { feature ->
             FeatureRow(feature)
         }
+        item {
+            Card {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("Simulator", fontWeight = FontWeight.SemiBold)
+                    simulatedEvents.forEach { envelope ->
+                        Text(
+                            "${envelope.type} → ${envelope.targetDeviceId}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun FeatureRow(feature: Feature) {
+private fun FeatureRow(feature: app.plink.android.features.FeatureAvailability) {
     var enabled by remember { mutableStateOf(feature.enabled) }
     Card {
         androidx.compose.foundation.layout.Row(
@@ -142,26 +201,39 @@ private fun FeatureRow(feature: Feature) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                feature.icon,
+                iconFor(feature.feature),
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(feature.title, fontWeight = FontWeight.SemiBold)
-                Text(feature.description, style = MaterialTheme.typography.bodyMedium)
+                Text(feature.feature.name, fontWeight = FontWeight.SemiBold)
+                Text(
+                    feature.reason ?: if (feature.available) "Available for paired Macs" else "Unavailable",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.widthIn(max = 260.dp)
+                )
             }
-            Switch(checked = enabled, onCheckedChange = { enabled = it })
+            Switch(
+                checked = enabled && feature.available,
+                enabled = feature.available,
+                onCheckedChange = { enabled = it }
+            )
         }
     }
 }
 
-private data class Feature(
-    val title: String,
-    val description: String,
-    val icon: ImageVector,
-    val enabled: Boolean
-)
+private fun iconFor(feature: ContinuityFeature): ImageVector = when (feature) {
+    ContinuityFeature.Calls -> Icons.Rounded.Phone
+    ContinuityFeature.Messages -> Icons.AutoMirrored.Rounded.Message
+    ContinuityFeature.Clipboard -> Icons.Rounded.ContentCopy
+    ContinuityFeature.Files -> Icons.Rounded.Folder
+    ContinuityFeature.Web -> Icons.Rounded.Link
+    ContinuityFeature.Battery -> Icons.Rounded.Devices
+    ContinuityFeature.Media -> Icons.Rounded.PlayArrow
+    ContinuityFeature.Sms -> Icons.AutoMirrored.Rounded.Message
+    ContinuityFeature.ScreenMirror -> Icons.Rounded.Devices
+}
 
 private val GoogleBlue = androidx.compose.ui.graphics.Color(0xFF1A73E8)
 private val GoogleGreen = androidx.compose.ui.graphics.Color(0xFF188038)
