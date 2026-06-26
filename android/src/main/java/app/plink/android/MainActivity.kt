@@ -72,6 +72,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -129,24 +130,24 @@ fun PlinkApp(onRequestPostNotifications: () -> Unit = {}) {
         },
         typography = MaterialTheme.typography.copy(
             displaySmall = MaterialTheme.typography.displaySmall.copy(
-                fontFamily = FontFamily.SansSerif,
+                fontFamily = GoogleSansFlex,
                 fontWeight = FontWeight.Bold
             ),
             headlineMedium = MaterialTheme.typography.headlineMedium.copy(
-                fontFamily = FontFamily.SansSerif,
+                fontFamily = GoogleSansFlex,
                 fontWeight = FontWeight.Bold
             ),
             titleLarge = MaterialTheme.typography.titleLarge.copy(
-                fontFamily = FontFamily.SansSerif,
+                fontFamily = GoogleSansFlex,
                 fontWeight = FontWeight.SemiBold
             ),
             titleMedium = MaterialTheme.typography.titleMedium.copy(
-                fontFamily = FontFamily.SansSerif,
+                fontFamily = GoogleSansFlex,
                 fontWeight = FontWeight.SemiBold
             ),
-            bodyLarge = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.SansSerif),
+            bodyLarge = MaterialTheme.typography.bodyLarge.copy(fontFamily = GoogleSansFlex),
             labelLarge = MaterialTheme.typography.labelLarge.copy(
-                fontFamily = FontFamily.SansSerif,
+                fontFamily = GoogleSansFlex,
                 fontWeight = FontWeight.SemiBold
             )
         ),
@@ -652,6 +653,13 @@ private fun ContinuityFeature.label(): String = when (this) {
     ContinuityFeature.Sms -> "SMS"
     ContinuityFeature.ScreenMirror -> "Screen mirror"
 }
+
+private val GoogleSansFlex = FontFamily(
+    Font(R.font.google_sans_flex_400, FontWeight.Normal),
+    Font(R.font.google_sans_flex_500, FontWeight.Medium),
+    Font(R.font.google_sans_flex_600, FontWeight.SemiBold),
+    Font(R.font.google_sans_flex_700, FontWeight.Bold)
+)
 
 private val PlinkLightColors = lightColorScheme(
     primary = Color(0xFF0B57D0),
