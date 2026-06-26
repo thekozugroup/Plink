@@ -39,15 +39,26 @@ guard let sessionKey = Data(base64Encoded: sessionKeyBase64) else {
 let pairedDeviceId = try environment("PLINK_DEBUG_PAIRED_DEVICE_ID")
 let targetDeviceId = ProcessInfo.processInfo.environment["PLINK_DEBUG_TARGET_DEVICE_ID"] ?? "mac-demo"
 let port = UInt16(ProcessInfo.processInfo.environment["PLINK_DEBUG_RECEIVER_PORT"] ?? "45731") ?? 45731
+let receiverMode = ProcessInfo.processInfo.environment["PLINK_DEBUG_RECEIVER_MODE"] ?? "foundation"
 let semaphore = DispatchSemaphore(value: 0)
 let exitState = ExitState()
 
-let server = try SecureNetworkPlinkServer(
-    port: port,
-    codec: EncryptedFrameCodec(sessionKey: sessionKey),
-    expectedSourceDeviceId: pairedDeviceId,
-    expectedTargetDeviceId: targetDeviceId
-)
+let codec = EncryptedFrameCodec(sessionKey: sessionKey)
+let server: PlinkEventReceiver = if receiverMode == "network" {
+    try SecureNetworkPlinkServer(
+        port: port,
+        codec: codec,
+        expectedSourceDeviceId: pairedDeviceId,
+        expectedTargetDeviceId: targetDeviceId
+    )
+} else {
+    FoundationSecurePlinkServer(
+        port: port,
+        codec: codec,
+        expectedSourceDeviceId: pairedDeviceId,
+        expectedTargetDeviceId: targetDeviceId
+    )
+}
 
 try server.start { result in
     switch result {
@@ -69,7 +80,7 @@ try server.start { result in
     semaphore.signal()
 }
 
-print("listening port=\(port) expectedSource=\(pairedDeviceId) expectedTarget=\(targetDeviceId)")
+print("listening mode=\(receiverMode) port=\(port) expectedSource=\(pairedDeviceId) expectedTarget=\(targetDeviceId)")
 semaphore.wait()
 server.stop()
 exit(exitState.code)

@@ -14,7 +14,7 @@ if grep -Eq 'READ_SMS|SEND_SMS|RECEIVE_SMS' android/src/main/AndroidManifest.xml
   exit 1
 fi
 
-./gradlew --no-daemon :android:assembleDebug :android:assembleRelease :android:lintDebug :android:testDebugUnitTest
+./gradlew --no-daemon :android:clean :android:assembleDebug :android:assembleRelease :android:lintDebug :android:testDebugUnitTest
 (cd macos && swift test && swift build)
 ./scripts/package-macos.sh
 

@@ -10,13 +10,16 @@ What is ready:
 - Android lint and JVM unit tests pass.
 - macOS Swift tests and build pass.
 - macOS app is packaged, ad-hoc signed for local testing, strict-verified outside the workspace metadata path, and exported as `build/PlinkMac.app.zip`.
+- macOS has both `Network.framework` and Foundation/POSIX secure TCP receivers; the debug receiver defaults to the Foundation fallback for Android-compatible length-prefixed frames.
+- Pixel-to-Mac encrypted clipboard delivery passed on real hardware through the Foundation fallback receiver on 2026-06-26.
+- Local install validation passed: `/Applications/PlinkMac.app` launches, and the Pixel has `app.plink.android` version `0.1.0` installed.
 - Shared protocol fixtures validate.
 - SMS and phone-state permissions are not requested in the current Android manifest.
 - The repo documents public-API limits instead of claiming private Apple Continuity parity.
 
 What still blocks public end-user release:
 
-- Real Pixel plus Mac pairing must be tested on hardware.
+- Visible real nearby pairing must be wired to the proven transport path and tested on hardware.
 - Android notification forwarding and Android `RemoteInput` replies need device E2E proof.
 - Android release APK/AAB needs release signing credentials.
 - macOS needs Developer ID signing, notarization, and stapling.
@@ -66,6 +69,8 @@ Before publishing:
 - Android debug APK: `android/build/outputs/apk/debug/android-debug.apk`
 - Android unsigned release APK: `android/build/outputs/apk/release/android-release-unsigned.apk`
 - macOS local-test zip: `build/PlinkMac.app.zip`
+- Installed macOS app: `/Applications/PlinkMac.app`
+- Hardware transport proof: `docs/device-test-2026-06-26.md`
 
 ## Release Decision
 
