@@ -9,6 +9,11 @@ struct PlinkMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
+        WindowGroup("Plink") {
+            DashboardWindow(appDelegate: appDelegate)
+        }
+        .defaultSize(width: 420, height: 520)
+
         MenuBarExtra {
             MenuBarPanel(appDelegate: appDelegate)
         } label: {
@@ -46,7 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     func applicationDidFinishLaunching(_ notification: Notification) {
         ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
         ProcessInfo.processInfo.disableSuddenTermination()
-        NSApplication.shared.setActivationPolicy(.accessory)
+        NSApplication.shared.setActivationPolicy(.regular)
         notificationBridge.configure()
         notificationBridge.onAuthorizationChanged = { [weak self] granted, error in
             Task { @MainActor in
@@ -363,6 +368,80 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
             publicKey: demoPixelPrivateKey.publicKey.derRepresentation.base64EncodedString(),
             targetDeviceId: localMacDeviceId
         )
+    }
+}
+
+struct DashboardWindow: View {
+    @ObservedObject var appDelegate: AppDelegate
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 14) {
+                Image(systemName: "link.circle.fill")
+                    .font(.system(size: 42, weight: .semibold))
+                    .foregroundStyle(.blue)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Plink")
+                        .font(.largeTitle.weight(.semibold))
+                    Text("Pixel + Mac continuity")
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                StatusRow(title: "Status", value: appDelegate.lastDeliveryState, symbol: "dot.radiowaves.left.and.right")
+                StatusRow(title: "Last reply", value: appDelegate.lastReply, symbol: "arrowshape.turn.up.left")
+            }
+            .padding(14)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+
+            VStack(spacing: 12) {
+                Button {
+                    appDelegate.showPairingWindow()
+                } label: {
+                    Label("Pair Pixel", systemImage: "iphone.gen3.radiowaves.left.and.right")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+
+                HStack(spacing: 12) {
+                    Button {
+                        appDelegate.simulateCall()
+                    } label: {
+                        Label("Simulate Call", systemImage: "phone")
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    Button {
+                        appDelegate.simulateMessage()
+                    } label: {
+                        Label("Simulate Message", systemImage: "message")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+
+                HStack(spacing: 12) {
+                    Button {
+                        appDelegate.openSettings()
+                    } label: {
+                        Label("Settings", systemImage: "gearshape")
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    Button(role: .destructive) {
+                        appDelegate.quit()
+                    } label: {
+                        Label("Quit", systemImage: "power")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+
+            Spacer()
+        }
+        .padding(24)
+        .frame(minWidth: 380, minHeight: 460)
     }
 }
 

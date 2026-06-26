@@ -22,8 +22,6 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
-    <key>LSUIElement</key>
-    <true/>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Plink connects to your paired Pixel on your local network.</string>
     <key>NSUserNotificationAlertStyle</key>
