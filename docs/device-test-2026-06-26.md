@@ -19,6 +19,8 @@
 - Pixel app `app.plink.android` installed and launched.
 - Pixel package state showed `versionName=0.1.0`, `versionCode=1`.
 - Pixel UI showed the visible `Manual pairing` controls: `Mac pairing offer`, `Import`, and `Confirm`.
+- Pixel UI showed the nearby discovery controls: `Scan`, `Nearby scan idle`.
+- Tapping `Scan` changed the Pixel UI to `Stop` and `Scanning for nearby Macs`; tapping again stopped discovery and returned to `Scan`.
 - Pixel UI showed paired diagnostic controls in `Preview events`: `Call`, `Message`, and `Clipboard`.
 - Foundation/POSIX Mac receiver accepted an encrypted Pixel event using Android-compatible length-prefixed socket framing.
 - Pixel sent `clipboard.updated` with `source=pixel-debug` and `target=mac-demo`.
@@ -39,11 +41,17 @@
 - Paired diagnostics UI screenshot: `build/pixel-diagnostics-preview-final3-2026-06-26.png`
 - Paired diagnostics UI dump: `build/pixel-diagnostics-preview-final3-ui-2026-06-26.json`
 - Installed-app paired log: `build/plinkmac-installed-paired-2026-06-26.log`
+- Nearby discovery installed screenshot: `build/pixel-nearby-discovery-installed-2026-06-26.png`
+- Nearby discovery installed UI dump: `build/pixel-nearby-discovery-installed-ui-2026-06-26.json`
+- Nearby discovery scan screenshot: `build/pixel-nearby-discovery-scan-2026-06-26.png`
+- Nearby discovery scan UI dump: `build/pixel-nearby-discovery-scan-ui-2026-06-26.json`
+- Nearby discovery stopped UI dump: `build/pixel-nearby-discovery-stopped-ui-2026-06-26.json`
 - macOS local-test package: `build/PlinkMac.app.zip`
 
 ## Remaining Release Blockers
 
 - Visible manual pairing UI is implemented and visible on Pixel, but the full copy-offer / paste-response UI flow still needs a human-driven hardware pass.
+- Nearby discovery starts and stops on Pixel; same-network Mac offer discovery still needs a fresh unpaired-Mac hardware pass because the installed Mac restored an existing pairing and did not advertise.
 - Notification mirroring and reply require Android notification access and runtime permission, which were intentionally left unchanged.
 - Android release signing credentials are still needed for a distributable APK or AAB.
 - macOS Developer ID signing, notarization, and stapling are still needed for public distribution.

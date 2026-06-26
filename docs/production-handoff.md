@@ -12,9 +12,9 @@ Plink is ready for a final release pass once user-controlled permissions and sig
 ## Final Hardware Pass
 
 1. Put Pixel and Mac on the same local network.
-2. Open Plink on macOS and copy the Mac pairing offer.
-3. Open Plink on Pixel and paste the offer into `Manual pairing`.
-4. Tap `Import`.
+2. Open Plink on macOS and confirm it is discoverable.
+3. Open Plink on Pixel and tap `Scan`.
+4. Tap the discovered Mac offer, or copy/paste the Mac offer manually if discovery is unavailable.
 5. Confirm the emoji and six-digit code match on both devices.
 6. Tap `Confirm` on Pixel and paste the Pixel response into macOS.
 7. Click `Finish Pairing` on macOS.

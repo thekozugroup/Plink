@@ -66,6 +66,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -92,10 +93,13 @@ import app.plink.android.features.FeatureAvailability
 import app.plink.android.features.FeaturePolicy
 import app.plink.android.pairing.PairingCrypto
 import app.plink.android.pairing.PairingPayloadCodec
+import app.plink.android.pairing.PairingOffer
 import app.plink.android.pairing.PairingStateMachine
 import app.plink.android.pairing.PairingStatus
 import app.plink.android.pairing.PairingTranscript
 import app.plink.android.pairing.PairingVerificationCode
+import app.plink.android.pairing.DiscoveredPairingOffer
+import app.plink.android.pairing.NearbyPairingDiscovery
 import app.plink.android.permissions.AndroidPermissionReader
 import app.plink.android.permissions.PermissionAction
 import app.plink.android.permissions.PermissionOnboarding
@@ -361,6 +365,33 @@ private fun ManualPairingCard() {
     var showingCode by remember { mutableStateOf<PairingStatus.ShowingCode?>(null) }
     var responsePayload by remember { mutableStateOf("") }
     var statusText by remember { mutableStateOf("Paste the Mac offer to start real pairing.") }
+    var discoveredOffers by remember { mutableStateOf(emptyList<DiscoveredPairingOffer>()) }
+    var discoveryStatus by remember { mutableStateOf("Nearby scan idle") }
+    var scanningNearby by remember { mutableStateOf(false) }
+    val discovery = remember {
+        NearbyPairingDiscovery(
+            context = context.applicationContext,
+            onOffersChanged = { discoveredOffers = it },
+            onStatusChanged = { discoveryStatus = it }
+        )
+    }
+
+    DisposableEffect(discovery) {
+        onDispose { discovery.stop() }
+    }
+
+    fun importOffer(offer: PairingOffer) {
+        runCatching {
+            val targetedOffer = offer.copy(targetDeviceId = localDeviceId)
+            offerPayload = PairingPayloadCodec.encodeOffer(targetedOffer)
+            showingCode = pairingMachine.receiveOffer(targetedOffer)
+            responsePayload = ""
+            statusText = "Confirm only if this code matches on your Mac."
+        }.onFailure { error ->
+            showingCode = null
+            statusText = error.localizedMessage ?: "Pairing offer could not be read."
+        }
+    }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -380,6 +411,43 @@ private fun ManualPairingCard() {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        if (scanningNearby) {
+                            discovery.stop()
+                            scanningNearby = false
+                            discoveryStatus = "Scan stopped"
+                        } else {
+                            discoveredOffers = emptyList()
+                            scanningNearby = true
+                            discovery.start()
+                        }
+                    },
+                    shape = RoundedCornerShape(22.dp)
+                ) {
+                    Icon(Icons.Rounded.Devices, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (scanningNearby) "Stop" else "Scan")
+                }
+                Text(
+                    discoveryStatus,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            discoveredOffers.take(3).forEach { discovered ->
+                NearbyOfferRow(
+                    discovered = discovered,
+                    onUse = { importOffer(discovered.offer) }
+                )
+            }
             OutlinedTextField(
                 value = offerPayload,
                 onValueChange = { offerPayload = it },
@@ -391,14 +459,12 @@ private fun ManualPairingCard() {
                 OutlinedButton(
                     onClick = {
                         runCatching {
-                            val offer = PairingPayloadCodec.decodeOffer(offerPayload)
-                                .copy(targetDeviceId = localDeviceId)
-                            showingCode = pairingMachine.receiveOffer(offer)
-                            responsePayload = ""
-                            statusText = "Confirm only if this code matches on your Mac."
+                            PairingPayloadCodec.decodeOffer(offerPayload)
                         }.onFailure { error ->
                             showingCode = null
                             statusText = error.localizedMessage ?: "Pairing offer could not be read."
+                        }.onSuccess { offer ->
+                            importOffer(offer)
                         }
                     },
                     shape = RoundedCornerShape(22.dp),
@@ -460,6 +526,42 @@ private fun ManualPairingCard() {
                     overflow = TextOverflow.Ellipsis
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun NearbyOfferRow(
+    discovered: DiscoveredPairingOffer,
+    onUse: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        ExpressiveIcon(Icons.Rounded.Devices, MaterialTheme.colorScheme.primary)
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                discovered.offer.deviceName,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                discovered.offer.endpoint,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        FilledTonalButton(onClick = onUse, shape = RoundedCornerShape(22.dp)) {
+            Text("Use")
         }
     }
 }

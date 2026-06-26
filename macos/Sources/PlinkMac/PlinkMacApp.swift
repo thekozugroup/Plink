@@ -16,7 +16,7 @@ struct PlinkMacApp: App {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unchecked Sendable {
+final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetServiceDelegate, ObservableObject, @unchecked Sendable {
     let notificationBridge = NotificationBridge()
     let pairingMachine = PairingStateMachine()
     let pairingStore = UserDefaultsPairingStore(
@@ -30,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
     private var receiver: (any PlinkEventReceiver)?
     private var pendingManualOffer: PairingOffer?
     private var pendingManualConfirmation: PairingConfirmation?
+    private var pairingAdvertiser: NetService?
     private var statusItem: NSStatusItem?
     @Published var lastReply: String = "None"
     @Published var lastDeliveryState: String = "Notifications pending"
@@ -72,7 +73,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
                 }
             }
         }
-        restoreSavedPairing()
+        if restoreSavedPairing() == false {
+            publishPairingOffer(prepareManualPairing())
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -122,7 +125,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
 
     func showPairingWindow() {
         if pairingWindow == nil {
-            let offer = prepareManualPairing()
+            let offer = pendingManualOffer ?? prepareManualPairing()
+            publishPairingOffer(offer)
             let offerPayload = (try? PairingPayloadCodec.encodeOffer(offer)) ?? ""
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 520, height: 560),
@@ -202,36 +206,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
             try pairingSecretStore.save(sessionKey: sessionKeyData, sessionId: device.sessionId)
             activeTransport = makeTransport(for: device, sessionKey: sessionKeyData)
             startReceiver(sessionKey: sessionKeyData, pairedDeviceId: device.id)
+            stopPairingAdvertiser()
             lastDeliveryState = "Paired with \(device.name)"
         }
     }
 
-    private func restoreSavedPairing() {
+    @discardableResult
+    private func restoreSavedPairing() -> Bool {
         if restoreDebugEnvironmentPairing() {
-            return
+            stopPairingAdvertiser()
+            return true
         }
         let devices: [PairedDevice]
         do {
             devices = try pairingStore.all()
         } catch {
             NSLog("Plink restore pairing failed to load devices: \(error.localizedDescription)")
-            return
+            return false
         }
         guard let device = devices.first else {
             NSLog("Plink restore pairing found no saved devices")
-            return
+            return false
         }
         let storedSessionKey: Data?
         do {
             storedSessionKey = try pairingSecretStore.load(sessionId: device.sessionId)
         } catch {
             NSLog("Plink restore pairing failed to load session key: \(error.localizedDescription)")
-            return
+            return false
         }
-        guard let sessionKey = storedSessionKey else { return }
+        guard let sessionKey = storedSessionKey else { return false }
         NSLog("Plink restore pairing loaded \(device.id); starting receiver")
         activeTransport = makeTransport(for: device, sessionKey: sessionKey)
         startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id)
+        stopPairingAdvertiser()
+        return true
     }
 
     private func restoreDebugEnvironmentPairing() -> Bool {
@@ -257,6 +266,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
         activeTransport = makeTransport(for: device, sessionKey: sessionKey)
         startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id)
         return true
+    }
+
+    private func publishPairingOffer(_ offer: PairingOffer) {
+        stopPairingAdvertiser()
+        let service = NetService(
+            domain: PairingBonjour.domain,
+            type: PairingBonjour.serviceType,
+            name: "Plink \(offer.deviceName)",
+            port: Int32(receiverPort)
+        )
+        service.delegate = self
+        service.setTXTRecord(NetService.data(fromTXTRecord: PairingBonjour.txtRecord(for: offer)))
+        service.publish()
+        pairingAdvertiser = service
+        lastDeliveryState = "Pairing discoverable"
+    }
+
+    private func stopPairingAdvertiser() {
+        pairingAdvertiser?.stop()
+        pairingAdvertiser = nil
+    }
+
+    func netServiceDidPublish(_ sender: NetService) {
+        lastDeliveryState = "Pairing discoverable"
+        NSLog("Plink Bonjour published \(sender.name) \(sender.type)")
+    }
+
+    func netService(_ sender: NetService, didNotPublish errorDict: [String: NSNumber]) {
+        lastDeliveryState = "Pairing discovery failed"
+        NSLog("Plink Bonjour publish failed: \(errorDict)")
     }
 
     private func makeTransport(for device: PairedDevice, sessionKey: Data) -> (any PlinkTransport)? {

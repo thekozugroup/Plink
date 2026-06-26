@@ -2,13 +2,14 @@
 
 ## Simple Summary
 
-Plink’s current build has the security, protocol, native notification, and storage foundations for Pixel-to-Mac continuity. Live end-to-end parity still depends on production pairing, paired-session configuration, device testing, and signed distribution. It cannot become Apple Continuity internally because Apple does not expose those private services to Android.
+Plink’s current build has the security, protocol, local discovery, native notification, and storage foundations for Pixel-to-Mac continuity. Live end-to-end parity still depends on permission-gated device testing and signed distribution. It cannot become Apple Continuity internally because Apple does not expose those private services to Android.
 
 ## Parity Matrix
 
 | Apple Continuity Feature | Plink Status | Public-API Implementation | Gap |
 | --- | --- | --- | --- |
-| iPhone call appears on Mac | Foundation built | Android notification mapper, secure transport, and macOS notification presenter exist | Production pairing/session wiring and device proof still required |
+| Local device pairing | Partial | macOS Bonjour advertises `_plink._tcp.` offers; Android NSD scan imports nearby Mac offers; both sides require matching emoji/numeric confirmation | Same-network hardware discovery pass still required |
+| iPhone call appears on Mac | Foundation built | Android notification mapper, secure transport, and macOS notification presenter exist | Permission-gated notification device proof still required |
 | Answer iPhone call from Mac | Limited | Event model supports action; Android cannot route cellular audio through macOS with public APIs | True call audio handoff unavailable |
 | SMS/iMessage reply from Mac notification | Foundation built | macOS text reply sends `message.reply`; Android has one-time route validation and `RemoteInput` executor | Android inbound reply receiver and device proof still required; iMessage relay unavailable |
 | Universal Clipboard | Partial | Clipboard event and macOS pasteboard adapter | Android collector is permission-gated and not release-proven |
