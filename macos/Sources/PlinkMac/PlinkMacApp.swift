@@ -40,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     func applicationDidFinishLaunching(_ notification: Notification) {
         ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
         ProcessInfo.processInfo.disableSuddenTermination()
+        NSApplication.shared.setActivationPolicy(.accessory)
         configureStatusItem()
         notificationBridge.configure()
         notificationBridge.onAuthorizationChanged = { [weak self] granted, error in
@@ -76,6 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         if restoreSavedPairing() == false {
             publishPairingOffer(prepareManualPairing())
         }
+        verifyStatusItem()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -89,8 +91,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
 
     private func configureStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(systemSymbolName: "link", accessibilityDescription: "Plink")
-        item.button?.title = " Plink"
+        item.isVisible = true
+        if let button = item.button {
+            let image = NSImage(systemSymbolName: "link.circle.fill", accessibilityDescription: "Plink")
+                ?? NSImage(systemSymbolName: "link", accessibilityDescription: "Plink")
+            image?.isTemplate = true
+            button.image = image
+            button.title = " Plink"
+            button.imagePosition = .imageLeading
+            button.appearsDisabled = false
+            button.toolTip = "Plink"
+        }
         let menu = NSMenu()
         let ready = NSMenuItem(title: "Pixel ready", action: nil, keyEquivalent: "")
         ready.image = NSImage(systemSymbolName: "iphone.gen3", accessibilityDescription: nil)
@@ -105,6 +116,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         menu.items.forEach { $0.target = self }
         item.menu = menu
         statusItem = item
+    }
+
+    private func verifyStatusItem() {
+        guard statusItem?.button != nil else {
+            lastDeliveryState = "Menu bar unavailable"
+            showPairingWindow()
+            return
+        }
+        NSLog("Plink status item ready")
     }
 
     @objc private func showPairingFromMenu() {
