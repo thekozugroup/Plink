@@ -19,7 +19,7 @@ Plink uses public Android and macOS APIs. It cannot clone Apple private Continui
 - `android/`: Kotlin Jetpack Compose Pixel companion.
 - `macos/`: SwiftUI/AppKit macOS menu bar companion.
 - `shared/`: Protocol fixtures and cross-platform examples.
-- `docs/`: Architecture, research, parity, and release notes.
+- `docs/`: Architecture, research, parity, release readiness, and manual test notes.
 - `scripts/verify.sh`: Local verification gate.
 
 ## Build And Test
@@ -43,6 +43,25 @@ Everything:
 ```sh
 ./scripts/verify.sh
 ```
+
+macOS local-test package:
+
+```sh
+./scripts/package-macos.sh
+```
+
+The script prints the strict-verified app path and exports `build/PlinkMac.app.zip`.
+
+## Release Status
+
+This repo is a verified foundation build. Public end-user release still needs:
+
+- real Pixel plus Mac E2E test evidence
+- Android release signing credentials
+- macOS Developer ID signing and notarization
+- passing GitHub Actions after push
+
+See `docs/release-readiness.md`.
 
 ## Permissions
 
