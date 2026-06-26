@@ -11,6 +11,11 @@ public protocol PlinkEventReceiver: Sendable {
     func stop()
 }
 
+public protocol LengthPrefixedMessageReceiver: Sendable {
+    func start(onMessage: @escaping @Sendable (Result<Data, Error>) -> Void) throws
+    func stop()
+}
+
 public actor InMemoryPlinkTransport: PlinkTransport {
     public private(set) var sent: [PlinkEnvelope] = []
 
@@ -181,6 +186,124 @@ public enum NetworkPlinkServerError: Error, Equatable {
     case invalidPort
     case emptyPayload
     case invalidFrame
+}
+
+public final class FoundationLengthPrefixedMessageServer: LengthPrefixedMessageReceiver, @unchecked Sendable {
+    private let port: UInt16
+    private let queue = DispatchQueue(label: "app.plink.length-prefixed-message-server", qos: .utility)
+    private let lock = NSLock()
+    private var listenerSocket: Int32 = -1
+    private var isStopped = false
+
+    public init(port: UInt16) {
+        self.port = port
+    }
+
+    public func start(onMessage: @escaping @Sendable (Result<Data, Error>) -> Void) throws {
+        lock.withLock {
+            isStopped = false
+        }
+        queue.async {
+            self.run(onMessage: onMessage)
+        }
+    }
+
+    public func stop() {
+        let socket = lock.withLock {
+            isStopped = true
+            let socket = listenerSocket
+            listenerSocket = -1
+            return socket
+        }
+        if socket >= 0 {
+            Darwin.shutdown(socket, SHUT_RDWR)
+            Darwin.close(socket)
+        }
+    }
+
+    private func run(onMessage: @escaping @Sendable (Result<Data, Error>) -> Void) {
+        let serverSocket = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        guard serverSocket >= 0 else {
+            onMessage(.failure(FoundationPlinkServerError.socketSetupFailed))
+            return
+        }
+
+        var reuse: Int32 = 1
+        setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout<Int32>.size))
+
+        var address = sockaddr_in(
+            sin_len: UInt8(MemoryLayout<sockaddr_in>.size),
+            sin_family: sa_family_t(AF_INET),
+            sin_port: port.bigEndian,
+            sin_addr: in_addr(s_addr: INADDR_ANY.bigEndian),
+            sin_zero: (0, 0, 0, 0, 0, 0, 0, 0)
+        )
+
+        let bound = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockAddress in
+                Darwin.bind(serverSocket, sockAddress, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        guard bound == 0 else {
+            Darwin.close(serverSocket)
+            onMessage(.failure(FoundationPlinkServerError.bindFailed))
+            return
+        }
+
+        guard Darwin.listen(serverSocket, SOMAXCONN) == 0 else {
+            Darwin.close(serverSocket)
+            onMessage(.failure(FoundationPlinkServerError.listenFailed))
+            return
+        }
+
+        lock.withLock {
+            listenerSocket = serverSocket
+        }
+
+        while !lock.withLock({ isStopped }) {
+            let clientSocket = Darwin.accept(serverSocket, nil, nil)
+            guard clientSocket >= 0 else {
+                if !lock.withLock({ isStopped }) {
+                    onMessage(.failure(FoundationPlinkServerError.acceptFailed))
+                }
+                continue
+            }
+            receiveOne(clientSocket, onMessage: onMessage)
+        }
+        Darwin.close(serverSocket)
+    }
+
+    private func receiveOne(
+        _ clientSocket: Int32,
+        onMessage: @escaping @Sendable (Result<Data, Error>) -> Void
+    ) {
+        defer { Darwin.close(clientSocket) }
+        do {
+            let header = try readExact(count: 4, from: clientSocket)
+            let frameSize = header.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
+            guard frameSize > 0, frameSize <= 128 * 1024 else {
+                throw NetworkPlinkServerError.invalidFrame
+            }
+            onMessage(.success(try readExact(count: Int(frameSize), from: clientSocket)))
+        } catch {
+            onMessage(.failure(error))
+        }
+    }
+
+    private func readExact(count: Int, from socket: Int32) throws -> Data {
+        var output = Data(count: count)
+        var offset = 0
+        while offset < count {
+            let bytesRead = output.withUnsafeMutableBytes { rawBuffer in
+                Darwin.read(socket, rawBuffer.baseAddress!.advanced(by: offset), count - offset)
+            }
+            guard bytesRead > 0 else {
+                throw FoundationPlinkServerError.readFailed
+            }
+            offset += bytesRead
+        }
+        return output
+    }
 }
 
 public final class FoundationSecurePlinkServer: PlinkEventReceiver, @unchecked Sendable {

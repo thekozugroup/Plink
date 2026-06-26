@@ -1,8 +1,6 @@
 package app.plink.android
 
 import android.Manifest
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -55,7 +53,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -92,7 +89,7 @@ import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeatureAvailability
 import app.plink.android.features.FeaturePolicy
 import app.plink.android.pairing.PairingCrypto
-import app.plink.android.pairing.PairingPayloadCodec
+import app.plink.android.pairing.PairingConfirmationSender
 import app.plink.android.pairing.PairingOffer
 import app.plink.android.pairing.PairingStateMachine
 import app.plink.android.pairing.PairingStatus
@@ -358,16 +355,16 @@ private fun ManualPairingCard() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val pairingMachine = remember { PairingStateMachine() }
+    val confirmationSender = remember { PairingConfirmationSender() }
     val sessionController = remember { PlinkSessionController(context.applicationContext) }
     val localDeviceId = remember { context.localPlinkDeviceId() }
     val localEndpoint = remember { "${localLanAddress()}:45731" }
-    var offerPayload by remember { mutableStateOf("") }
     var showingCode by remember { mutableStateOf<PairingStatus.ShowingCode?>(null) }
-    var responsePayload by remember { mutableStateOf("") }
-    var statusText by remember { mutableStateOf("Paste the Mac offer to start real pairing.") }
+    var selectedOffer by remember { mutableStateOf<PairingOffer?>(null) }
+    var statusText by remember { mutableStateOf("Scanning for nearby Macs.") }
     var discoveredOffers by remember { mutableStateOf(emptyList<DiscoveredPairingOffer>()) }
     var discoveryStatus by remember { mutableStateOf("Nearby scan idle") }
-    var scanningNearby by remember { mutableStateOf(false) }
+    var scanningNearby by remember { mutableStateOf(true) }
     val discovery = remember {
         NearbyPairingDiscovery(
             context = context.applicationContext,
@@ -377,16 +374,16 @@ private fun ManualPairingCard() {
     }
 
     DisposableEffect(discovery) {
+        discovery.start()
         onDispose { discovery.stop() }
     }
 
     fun importOffer(offer: PairingOffer) {
         runCatching {
             val targetedOffer = offer.copy(targetDeviceId = localDeviceId)
-            offerPayload = PairingPayloadCodec.encodeOffer(targetedOffer)
+            selectedOffer = targetedOffer
             showingCode = pairingMachine.receiveOffer(targetedOffer)
-            responsePayload = ""
-            statusText = "Confirm only if this code matches on your Mac."
+            statusText = "Compare this code with your Mac, then tap Confirm."
         }.onFailure { error ->
             showingCode = null
             statusText = error.localizedMessage ?: "Pairing offer could not be read."
@@ -402,7 +399,7 @@ private fun ManualPairingCard() {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Manual pairing", style = MaterialTheme.typography.titleLarge)
+                Text("Nearby pairing", style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.weight(1f))
                 StatusPill("Secure", Icons.Rounded.Security)
             }
@@ -442,36 +439,34 @@ private fun ManualPairingCard() {
                     modifier = Modifier.weight(1f)
                 )
             }
-            discoveredOffers.take(3).forEach { discovered ->
+            if (discoveredOffers.isEmpty()) {
+                Text(
+                    "No Mac found yet. Keep Plink open on both devices.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            discoveredOffers.take(4).forEach { discovered ->
                 NearbyOfferRow(
                     discovered = discovered,
                     onUse = { importOffer(discovered.offer) }
                 )
             }
-            OutlinedTextField(
-                value = offerPayload,
-                onValueChange = { offerPayload = it },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                label = { Text("Mac pairing offer") }
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(
-                    onClick = {
-                        runCatching {
-                            PairingPayloadCodec.decodeOffer(offerPayload)
-                        }.onFailure { error ->
-                            showingCode = null
-                            statusText = error.localizedMessage ?: "Pairing offer could not be read."
-                        }.onSuccess { offer ->
-                            importOffer(offer)
-                        }
-                    },
-                    shape = RoundedCornerShape(22.dp),
-                    enabled = offerPayload.isNotBlank()
-                ) {
-                    Text("Import")
-                }
+            showingCode?.let { code ->
+                Text(
+                    code.verificationCode.emoji.joinToString("  "),
+                    style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Code ${code.verificationCode.numeric}",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    code.verificationCode.labels.joinToString(" + "),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 FilledTonalButton(
                     onClick = {
                         scope.launch {
@@ -490,11 +485,14 @@ private fun ManualPairingCard() {
                                     pairedDevice = paired.device,
                                     sessionKey = sessionKey
                                 )
-                                PairingPayloadCodec.encodeConfirmation(confirmation)
-                            }.onSuccess { response ->
-                                responsePayload = response
-                                context.copyToClipboard("Plink pairing response", response)
-                                statusText = "Paired. Response copied for your Mac."
+                                confirmationSender.send(
+                                    offer = selectedOffer ?: code.offer,
+                                    confirmation = confirmation
+                                )
+                            }.onSuccess {
+                                discovery.stop()
+                                scanningNearby = false
+                                statusText = "Code sent. Confirm on your Mac to finish."
                             }.onFailure { error ->
                                 statusText = error.localizedMessage ?: "Pairing confirmation failed."
                             }
@@ -505,26 +503,6 @@ private fun ManualPairingCard() {
                 ) {
                     Text("Confirm")
                 }
-            }
-            showingCode?.let { code ->
-                Text(
-                    code.verificationCode.emoji.joinToString("  "),
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    "Code ${code.verificationCode.numeric}",
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-            if (responsePayload.isNotBlank()) {
-                Text(
-                    responsePayload,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
         }
     }
@@ -916,11 +894,6 @@ private fun ContinuityFeature.label(): String = when (this) {
 private fun Context.localPlinkDeviceId(): String {
     val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID).orEmpty()
     return "pixel-${androidId.ifBlank { Build.MODEL.ifBlank { "android" } }}"
-}
-
-private fun Context.copyToClipboard(label: String, text: String) {
-    val clipboard = getSystemService(ClipboardManager::class.java)
-    clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
 }
 
 private fun localLanAddress(): String {
