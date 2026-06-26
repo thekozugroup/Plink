@@ -272,9 +272,17 @@ public struct EncryptedFrameCodec: Sendable {
     public func open(
         _ frame: EncryptedPlinkFrame,
         replayProtector: ReplayProtector? = nil,
-        now: Date = .now
+        now: Date = .now,
+        expectedSourceDeviceId: String? = nil,
+        expectedTargetDeviceId: String? = nil
     ) throws -> PlinkEnvelope {
         guard frame.version == 1 else { throw PayloadPolicyError.unsupportedVersion }
+        if let expectedSourceDeviceId, frame.sourceDeviceId != expectedSourceDeviceId {
+            throw PayloadPolicyError.deviceMismatch
+        }
+        if let expectedTargetDeviceId, frame.targetDeviceId != expectedTargetDeviceId {
+            throw PayloadPolicyError.deviceMismatch
+        }
         var unsigned = frame
         unsigned.signature = ""
         guard signature(for: unsigned) == frame.signature else { throw PayloadPolicyError.invalidSignature }
@@ -284,10 +292,14 @@ public struct EncryptedFrameCodec: Sendable {
         }
         let sealed = try AES.GCM.SealedBox(combined: combined)
         let data = try AES.GCM.open(sealed, using: aesKey, authenticating: aad(frame))
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let envelope = try decoder.decode(PlinkEnvelope.self, from: data)
+        let envelope = try PlinkJSON.decoder().decode(PlinkEnvelope.self, from: data)
         guard envelope.sourceDeviceId == frame.sourceDeviceId, envelope.targetDeviceId == frame.targetDeviceId else {
+            throw PayloadPolicyError.deviceMismatch
+        }
+        if let expectedSourceDeviceId, envelope.sourceDeviceId != expectedSourceDeviceId {
+            throw PayloadPolicyError.deviceMismatch
+        }
+        if let expectedTargetDeviceId, envelope.targetDeviceId != expectedTargetDeviceId {
             throw PayloadPolicyError.deviceMismatch
         }
         try PayloadPolicy.validate(envelope)
@@ -349,10 +361,7 @@ public struct EncryptedFrameCodec: Sendable {
 
 enum CanonicalJSON {
     static func encode<T: Encodable>(_ value: T) throws -> Data {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.sortedKeys]
-        return try encoder.encode(value)
+        try PlinkJSON.encoder(sortedKeys: true).encode(value)
     }
 }
 

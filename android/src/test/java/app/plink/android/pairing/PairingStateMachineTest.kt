@@ -32,6 +32,26 @@ class PairingStateMachineTest {
         assertTrue(machine.lastSessionKey?.isNotEmpty() == true)
     }
 
+    @Test
+    fun receiveOfferShowsKeyBoundVerificationCode() {
+        val macKey = PairingCrypto.generateKeyPair()
+        val machine = PairingStateMachine()
+        val showing = machine.receiveOffer(
+            PairingOffer(
+                deviceId = "mac-1",
+                deviceName = "MacBook Pro",
+                platform = "macos",
+                endpoint = "192.168.1.5:45731",
+                nonce = "abc",
+                publicKey = macKey.publicKeyBase64,
+                targetDeviceId = "pixel-1"
+            )
+        )
+
+        assertEquals(4, showing.verificationCode.emoji.size)
+        assertEquals(6, showing.verificationCode.numeric.length)
+    }
+
     @Test(expected = IllegalStateException::class)
     fun confirmWithoutOfferFailsClosed() {
         PairingStateMachine().confirm()

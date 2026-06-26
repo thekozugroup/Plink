@@ -10,7 +10,11 @@ class PairingStateMachine(
         private set
 
     fun receiveOffer(offer: PairingOffer): PairingStatus.ShowingCode {
-        val next = PairingStatus.ShowingCode(offer, offer.emojiCode)
+        val next = PairingStatus.ShowingCode(
+            offer = offer,
+            emoji = offer.emojiCode,
+            verificationCode = PairingTranscript.verificationCode(pairingTranscript(offer))
+        )
         status = next
         return next
     }
@@ -44,9 +48,19 @@ class PairingStateMachine(
             localPrivateKey = localKeyPair.privateKey,
             peerPublicKeyBase64 = offer.publicKey,
             nonce = offer.nonce,
-            transcript = "${offer.deviceId}|${offer.targetDeviceId}|${offer.endpoint}|plink-v${offer.protocolVersion}"
+            transcript = pairingTranscript(offer)
         )
         lastSessionKey = session.sessionKey
         return session
     }
+
+    private fun pairingTranscript(offer: PairingOffer): String = PairingTranscript.canonical(
+        sourceDeviceId = offer.deviceId,
+        targetDeviceId = offer.targetDeviceId,
+        endpoint = offer.endpoint,
+        nonce = offer.nonce,
+        sourcePublicKey = offer.publicKey,
+        targetPublicKey = localKeyPair.publicKeyBase64,
+        protocolVersion = offer.protocolVersion
+    )
 }

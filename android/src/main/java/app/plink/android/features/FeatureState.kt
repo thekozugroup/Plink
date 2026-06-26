@@ -27,7 +27,7 @@ object FeaturePolicy {
             ContinuityFeature.Calls,
             enabled = true,
             available = permissionState.canMirrorCalls,
-            reason = if (permissionState.canMirrorCalls) null else "Enable notification listener or phone state."
+            reason = if (permissionState.canMirrorCalls) null else "Enable notification listener."
         ),
         FeatureAvailability(
             ContinuityFeature.Messages,

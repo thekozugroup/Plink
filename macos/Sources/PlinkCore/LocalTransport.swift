@@ -41,6 +41,15 @@ public enum LengthPrefixedFrameCodec {
         }
         return data.dropFirst(4).prefix(Int(length))
     }
+
+    public static func expectedTotalLength(_ data: Data) throws -> Int? {
+        guard data.count >= 4 else { return nil }
+        let length = data.prefix(4).reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
+        guard length > 0, length <= maxFrameBytes else {
+            throw NetworkPlinkServerError.invalidFrame
+        }
+        return Int(length) + 4
+    }
 }
 
 public final class SecureNetworkPlinkClient: PlinkTransport, @unchecked Sendable {
@@ -62,9 +71,7 @@ public final class SecureNetworkPlinkClient: PlinkTransport, @unchecked Sendable
             return sequence
         }
         let frame = try codec.seal(envelope, sequence: nextSequence)
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        let payload = try LengthPrefixedFrameCodec.encode(encoder.encode(frame))
+        let payload = try LengthPrefixedFrameCodec.encode(PlinkJSON.encoder().encode(frame))
         let connection = NWConnection(host: host, port: port, using: .tcp)
         connection.start(queue: .global(qos: .utility))
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
@@ -84,46 +91,88 @@ public final class SecureNetworkPlinkServer: PlinkEventReceiver, @unchecked Send
     private let listener: NWListener
     private let codec: EncryptedFrameCodec
     private let replayProtector: ReplayProtector
+    private let expectedSourceDeviceId: String?
+    private let expectedTargetDeviceId: String?
     private let queue = DispatchQueue(label: "app.plink.secure-network-server", qos: .utility)
 
-    public init(port: UInt16, codec: EncryptedFrameCodec, replayProtector: ReplayProtector = ReplayProtector()) throws {
+    public init(
+        port: UInt16,
+        codec: EncryptedFrameCodec,
+        replayProtector: ReplayProtector = ReplayProtector(),
+        expectedSourceDeviceId: String? = nil,
+        expectedTargetDeviceId: String? = nil
+    ) throws {
         guard let port = NWEndpoint.Port(rawValue: port) else {
             throw NetworkPlinkServerError.invalidPort
         }
         self.listener = try NWListener(using: .tcp, on: port)
         self.codec = codec
         self.replayProtector = replayProtector
+        self.expectedSourceDeviceId = expectedSourceDeviceId
+        self.expectedTargetDeviceId = expectedTargetDeviceId
     }
 
     public func start(onEnvelope: @escaping @Sendable (Result<PlinkEnvelope, Error>) -> Void) throws {
         listener.newConnectionHandler = { connection in
             connection.start(queue: self.queue)
-            connection.receive(minimumIncompleteLength: 4, maximumLength: 128 * 1024 + 4) { data, _, _, error in
-                defer { connection.cancel() }
-                if let error {
-                    onEnvelope(.failure(error))
-                    return
-                }
-                guard let data else {
-                    onEnvelope(.failure(NetworkPlinkServerError.emptyPayload))
-                    return
-                }
-                do {
-                    let decoder = JSONDecoder()
-                    decoder.dateDecodingStrategy = .iso8601
-                    let payload = try LengthPrefixedFrameCodec.decode(data)
-                    let frame = try decoder.decode(EncryptedPlinkFrame.self, from: payload)
-                    onEnvelope(.success(try self.codec.open(frame, replayProtector: self.replayProtector)))
-                } catch {
-                    onEnvelope(.failure(error))
-                }
-            }
+            self.receiveFrame(from: connection, buffer: Data(), onEnvelope: onEnvelope)
         }
         listener.start(queue: queue)
     }
 
     public func stop() {
         listener.cancel()
+    }
+
+    private func receiveFrame(
+        from connection: NWConnection,
+        buffer: Data,
+        onEnvelope: @escaping @Sendable (Result<PlinkEnvelope, Error>) -> Void
+    ) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 16 * 1024) { data, _, isComplete, error in
+            if let error {
+                connection.cancel()
+                onEnvelope(.failure(error))
+                return
+            }
+            guard let data, !data.isEmpty else {
+                if isComplete {
+                    connection.cancel()
+                    onEnvelope(.failure(NetworkPlinkServerError.emptyPayload))
+                } else {
+                    self.receiveFrame(from: connection, buffer: buffer, onEnvelope: onEnvelope)
+                }
+                return
+            }
+
+            var nextBuffer = buffer
+            nextBuffer.append(data)
+            do {
+                if let expectedLength = try LengthPrefixedFrameCodec.expectedTotalLength(nextBuffer),
+                   nextBuffer.count >= expectedLength {
+                    let payload = try LengthPrefixedFrameCodec.decode(nextBuffer.prefix(expectedLength))
+                    let frame = try PlinkJSON.decoder().decode(EncryptedPlinkFrame.self, from: payload)
+                    let envelope = try self.codec.open(
+                        frame,
+                        replayProtector: self.replayProtector,
+                        expectedSourceDeviceId: self.expectedSourceDeviceId,
+                        expectedTargetDeviceId: self.expectedTargetDeviceId
+                    )
+                    connection.cancel()
+                    onEnvelope(.success(envelope))
+                    return
+                }
+                if isComplete {
+                    connection.cancel()
+                    onEnvelope(.failure(NetworkPlinkServerError.invalidFrame))
+                    return
+                }
+                self.receiveFrame(from: connection, buffer: nextBuffer, onEnvelope: onEnvelope)
+            } catch {
+                connection.cancel()
+                onEnvelope(.failure(error))
+            }
+        }
     }
 }
 

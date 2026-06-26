@@ -31,7 +31,11 @@ data class PairedDevice(
 
 sealed interface PairingStatus {
     data object Idle : PairingStatus
-    data class ShowingCode(val offer: PairingOffer, val emoji: Pair<String, String>) : PairingStatus
+    data class ShowingCode(
+        val offer: PairingOffer,
+        val emoji: Pair<String, String>,
+        val verificationCode: PairingVerificationCode
+    ) : PairingStatus
     data class Paired(val device: PairedDevice) : PairingStatus
     data class Rejected(val reason: String) : PairingStatus
 }

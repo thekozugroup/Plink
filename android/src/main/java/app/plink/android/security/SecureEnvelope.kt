@@ -67,10 +67,28 @@ class SecureEnvelopeCodec(private val sessionKey: ByteArray) {
 object PayloadPolicy {
     const val maxEnvelopeBytes: Int = 64 * 1024
     private val allowedUrlSchemes = setOf("http", "https")
+    private val allowedEventTypes = setOf(
+        PlinkEventType.PairingOffer,
+        PlinkEventType.PairingConfirm,
+        PlinkEventType.DeviceStatus,
+        PlinkEventType.CallRinging,
+        PlinkEventType.CallEnded,
+        PlinkEventType.MessageReceived,
+        PlinkEventType.MessageReply,
+        PlinkEventType.ClipboardUpdated,
+        PlinkEventType.FileOffer,
+        PlinkEventType.WebOpen,
+        PlinkEventType.MediaState,
+        PlinkEventType.MediaCommand,
+        PlinkEventType.PermissionState,
+        PlinkEventType.Ack,
+        PlinkEventType.Error
+    )
 
     fun requireAcceptable(envelope: PlinkEnvelope) {
         require(envelope.version == 1) { "Unsupported protocol version." }
         require(envelope.id.isNotBlank()) { "Envelope id is required." }
+        require(envelope.type in allowedEventTypes) { "Unsupported event type." }
         require(envelope.sourceDeviceId.isNotBlank()) { "Source device id is required." }
         require(envelope.targetDeviceId.isNotBlank()) { "Target device id is required." }
         require(envelope.encode().toByteArray(Charsets.UTF_8).size <= maxEnvelopeBytes) {
@@ -205,8 +223,20 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         return frame.copy(signature = sign(frame.signingInput()))
     }
 
-    fun open(frame: EncryptedPlinkFrame, replayWindow: ReplayWindow? = null, now: Instant = Instant.now()): PlinkEnvelope {
+    fun open(
+        frame: EncryptedPlinkFrame,
+        replayWindow: ReplayWindow? = null,
+        now: Instant = Instant.now(),
+        expectedSourceDeviceId: String? = null,
+        expectedTargetDeviceId: String? = null
+    ): PlinkEnvelope {
         require(frame.version == 1) { "Unsupported frame version." }
+        if (expectedSourceDeviceId != null) {
+            require(frame.sourceDeviceId == expectedSourceDeviceId) { "Unexpected source device." }
+        }
+        if (expectedTargetDeviceId != null) {
+            require(frame.targetDeviceId == expectedTargetDeviceId) { "Unexpected target device." }
+        }
         val expected = sign(frame.copy(signature = "").signingInput())
         require(MessageDigest.isEqual(expected.toByteArray(), frame.signature.toByteArray())) {
             "Frame signature failed verification."
@@ -222,6 +252,12 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         val envelope = PlinkEnvelope.decode(String(cipher.doFinal(encrypted), Charsets.UTF_8))
         require(envelope.sourceDeviceId == frame.sourceDeviceId) { "Source device mismatch." }
         require(envelope.targetDeviceId == frame.targetDeviceId) { "Target device mismatch." }
+        if (expectedSourceDeviceId != null) {
+            require(envelope.sourceDeviceId == expectedSourceDeviceId) { "Unexpected source device." }
+        }
+        if (expectedTargetDeviceId != null) {
+            require(envelope.targetDeviceId == expectedTargetDeviceId) { "Unexpected target device." }
+        }
         PayloadPolicy.requireAcceptable(envelope)
         return envelope
     }

@@ -18,19 +18,23 @@ object EmojiPairing {
         "cloud" to "☁️"
     )
 
+    fun symbolsForDigest(digest: ByteArray, count: Int): List<String> =
+        (0 until count).map { index -> emoji[digest[index].toUByte().toInt() % emoji.size].second }
+
+    fun labelsForDigest(digest: ByteArray, count: Int): List<String> =
+        (0 until count).map { index -> emoji[digest[index].toUByte().toInt() % emoji.size].first }
+
     fun derive(sourceDeviceId: String, targetDeviceId: String, nonce: String): Pair<String, String> {
         val input = "$sourceDeviceId|$targetDeviceId|$nonce"
         val digest = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
-        val first = emoji[digest[0].toUByte().toInt() % emoji.size].second
-        val second = emoji[digest[1].toUByte().toInt() % emoji.size].second
-        return first to second
+        val symbols = symbolsForDigest(digest, count = 2)
+        return symbols[0] to symbols[1]
     }
 
     fun labels(sourceDeviceId: String, targetDeviceId: String, nonce: String): Pair<String, String> {
         val input = "$sourceDeviceId|$targetDeviceId|$nonce"
         val digest = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
-        val first = emoji[digest[0].toUByte().toInt() % emoji.size].first
-        val second = emoji[digest[1].toUByte().toInt() % emoji.size].first
-        return first to second
+        val labels = labelsForDigest(digest, count = 2)
+        return labels[0] to labels[1]
     }
 }

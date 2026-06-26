@@ -4,7 +4,7 @@ import UserNotifications
 
 final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     private let center = UNUserNotificationCenter.current()
-    private let replyContextStore: ReplyContextStoring = UserDefaultsReplyContextStore()
+    private let replyContextStore: ReplyContextStoring = InMemoryReplyContextStore()
     var onTextReply: ((ReplyContext, String) -> Void)?
     var onCallAction: ((String) -> Void)?
     var onAuthorizationChanged: ((Bool, Error?) -> Void)?

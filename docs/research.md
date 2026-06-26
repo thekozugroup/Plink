@@ -56,7 +56,7 @@ Useful Android implementation cues:
 - Android 15 and later can hide sensitive notification content unless the app receives special permission through ADB/app-ops or equivalent user action.
 - Message replies via notification require the source app to expose a `RemoteInput` action.
 - Direct SMS read/send needs SMS permissions and may require being the default SMS app for policy-compliant distribution.
-- Call state visibility may need `READ_PHONE_STATE`; detailed call log behavior needs additional permissions and policy review.
+- Call mirroring in the current build uses notification access. Direct call-state fallback would need `READ_PHONE_STATE` and policy review, so it is not requested now.
 - Clipboard auto-sync is constrained by modern Android privacy limits; foreground, accessibility, or share-sheet paths are safer.
 - Shizuku can improve privileged access in developer/power-user mode, but release behavior must not depend on it.
 

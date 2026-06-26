@@ -35,12 +35,16 @@ struct PlinkMacApp: App {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unchecked Sendable {
     let notificationBridge = NotificationBridge()
     let pairingMachine = PairingStateMachine()
     let pairingStore = UserDefaultsPairingStore()
-    private let fallbackTransport: any PlinkTransport = InMemoryPlinkTransport()
+    let pairingSecretStore = KeychainPairingSecretStore()
+    private let localMacDeviceId = "mac-demo"
+    private let receiverPort: UInt16 = 45731
+    private let demoPixelPrivateKey = P256.KeyAgreement.PrivateKey()
     private var activeTransport: (any PlinkTransport)?
+    private var receiver: (any PlinkEventReceiver)?
     @Published var lastReply: String = "None"
     @Published var lastDeliveryState: String = "Notifications pending"
     private var pairingWindow: NSWindow?
@@ -63,8 +67,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             Task {
                 do {
                     let reply = try ReplyRouter.makeReplyEnvelope(context: context, text: text)
-                    let transport = await MainActor.run { self?.activeTransport ?? self?.fallbackTransport }
-                    try await transport?.send(reply)
+                    guard let transport = await MainActor.run(body: { self?.activeTransport }) else {
+                        throw AppDeliveryError.transportUnavailable
+                    }
+                    try await transport.send(reply)
                     await MainActor.run {
                         self?.lastReply = "Sent: \(text)"
                     }
@@ -76,10 +82,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 }
             }
         }
+        restoreSavedPairing()
     }
 
     func showPairingWindow() {
         if pairingWindow == nil {
+            let verificationCode = prepareDemoPairing()
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 420, height: 360),
                 styleMask: [.titled, .closable, .miniaturizable],
@@ -90,50 +98,139 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             window.title = "Pair Pixel"
             window.contentView = NSHostingView(rootView: PairingView(onConfirm: { [weak self] in
                 self?.confirmDemoPairing()
-            }))
+            }, verificationCode: verificationCode))
             pairingWindow = window
         }
         pairingWindow?.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate()
     }
 
+    @discardableResult
+    func prepareDemoPairing() -> PairingVerificationCode {
+        let status = pairingMachine.receive(demoPairingOffer())
+        if case .showingCode(_, _, _, let code) = status {
+            return code
+        }
+        return PairingTranscript.verificationCode(transcript: "plink-demo")
+    }
+
     func confirmDemoPairing() {
-        _ = pairingMachine.receive(
-            PairingOffer(
-                deviceId: "pixel-demo",
-                deviceName: "Pixel",
-                platform: "android",
-                endpoint: "192.168.1.24:45731",
-                nonce: "demo-nonce",
-                publicKey: P256.KeyAgreement.PrivateKey().publicKey.derRepresentation.base64EncodedString()
-            )
-        )
+        if case .showingCode = pairingMachine.status {} else {
+            _ = pairingMachine.receive(demoPairingOffer())
+        }
         if case .paired(let device) = try? pairingMachine.confirm() {
             try? pairingStore.save(device)
-            activeTransport = makeTransport(for: device)
+            guard let sessionKey = pairingMachine.lastSessionKey else { return }
+            let sessionKeyData = data(from: sessionKey)
+            try? pairingSecretStore.save(sessionKey: sessionKeyData, sessionId: device.sessionId)
+            activeTransport = makeTransport(for: device, sessionKey: sessionKeyData)
+            startReceiver(sessionKey: sessionKeyData, pairedDeviceId: device.id)
         }
     }
 
-    private func makeTransport(for device: PairedDevice) -> (any PlinkTransport)? {
+    private func restoreSavedPairing() {
+        guard let device = try? pairingStore.all().first else { return }
+        let storedSessionKey: Data?
+        do {
+            storedSessionKey = try pairingSecretStore.load(sessionId: device.sessionId)
+        } catch {
+            return
+        }
+        guard let sessionKey = storedSessionKey else { return }
+        activeTransport = makeTransport(for: device, sessionKey: sessionKey)
+        startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id)
+    }
+
+    private func makeTransport(for device: PairedDevice, sessionKey: Data) -> (any PlinkTransport)? {
         guard
-            let key = pairingMachine.lastSessionKey,
             let separator = device.endpoint.lastIndex(of: ":"),
             let port = UInt16(device.endpoint[device.endpoint.index(after: separator)...])
         else { return nil }
 
         let host = String(device.endpoint[..<separator])
-        let sessionKey = key.withUnsafeBytes { Data($0) }
         return SecureNetworkPlinkClient(
             host: host,
             port: port,
             codec: EncryptedFrameCodec(sessionKey: sessionKey)
         )
     }
+
+    private func startReceiver(sessionKey: Data, pairedDeviceId: String) {
+        receiver?.stop()
+        do {
+            let server = try SecureNetworkPlinkServer(
+                port: receiverPort,
+                codec: EncryptedFrameCodec(sessionKey: sessionKey),
+                expectedSourceDeviceId: pairedDeviceId,
+                expectedTargetDeviceId: localMacDeviceId
+            )
+            try server.start { [weak self] result in
+                Task { @MainActor in
+                    self?.handleInbound(result)
+                }
+            }
+            receiver = server
+            lastDeliveryState = "Receiver listening"
+        } catch {
+            lastDeliveryState = error.localizedDescription
+        }
+    }
+
+    private func handleInbound(_ result: Result<PlinkEnvelope, Error>) {
+        switch result {
+        case .success(let envelope):
+            if let action = HandoffPlanner.action(for: envelope) {
+                perform(action)
+            }
+            notificationBridge.show(envelope: envelope)
+            lastDeliveryState = "Received \(envelope.type.rawValue)"
+        case .failure(let error):
+            lastDeliveryState = error.localizedDescription
+        }
+    }
+
+    private func perform(_ action: HandoffAction) {
+        switch action.kind {
+        case .clipboard(let text):
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+        case .openURL(let url):
+            NSWorkspace.shared.open(url)
+        case .fileOffer:
+            break
+        }
+    }
+
+    private func data(from key: SymmetricKey) -> Data {
+        key.withUnsafeBytes { Data($0) }
+    }
+
+    private func demoPairingOffer() -> PairingOffer {
+        PairingOffer(
+            deviceId: "pixel-demo",
+            deviceName: "Pixel",
+            platform: "android",
+            endpoint: "192.168.1.24:45731",
+            nonce: "demo-nonce",
+            publicKey: demoPixelPrivateKey.publicKey.derRepresentation.base64EncodedString(),
+            targetDeviceId: localMacDeviceId
+        )
+    }
 }
 
 struct PairingView: View {
-    private let emoji = EmojiPairing.derive(sourceDeviceId: "pixel-demo", targetDeviceId: "mac-demo", nonce: "demo-nonce")
     var onConfirm: () -> Void = {}
+    var verificationCode: PairingVerificationCode = PairingTranscript.verificationCode(
+        transcript: PairingTranscript.canonical(
+            sourceDeviceId: "pixel-demo",
+            targetDeviceId: "mac-demo",
+            endpoint: "192.168.1.24:45731",
+            nonce: "demo-nonce",
+            sourcePublicKey: "pixel-demo-public-key",
+            targetPublicKey: "mac-demo-public-key",
+            protocolVersion: 1
+        )
+    )
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -141,8 +238,10 @@ struct PairingView: View {
                 .font(.largeTitle.weight(.semibold))
             Text("Match this code on your Pixel before confirming.")
                 .font(.title3)
-            Text("\(emoji.0)  \(emoji.1)")
+            Text(verificationCode.emoji.joined(separator: "  "))
                 .font(.system(size: 52, weight: .bold, design: .rounded))
+            Text("Code \(verificationCode.numeric)")
+                .font(.title3.monospacedDigit())
             VStack(alignment: .leading, spacing: 8) {
                 Label("Calls appear as Mac notifications", systemImage: "phone")
                 Label("Messages can reply from notification actions", systemImage: "message")
@@ -157,5 +256,16 @@ struct PairingView: View {
         }
         .padding(28)
         .frame(width: 420, height: 360)
+    }
+}
+
+enum AppDeliveryError: LocalizedError {
+    case transportUnavailable
+
+    var errorDescription: String? {
+        switch self {
+        case .transportUnavailable:
+            return "No paired Pixel transport is available."
+        }
     }
 }

@@ -3,6 +3,8 @@ package app.plink.android.notifications
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import java.time.Instant
 import java.util.UUID
@@ -60,6 +62,47 @@ data class ReplyCommand(
             put("text", text.trim())
         }
     )
+}
+
+data class ValidatedInboundReply(
+    val route: ReplyRoute,
+    val text: String,
+    val sourceDeviceId: String,
+    val targetDeviceId: String
+)
+
+object InboundReplyValidator {
+    fun consume(
+        envelope: PlinkEnvelope,
+        routes: ReplyRouteRegistry,
+        localDeviceId: String
+    ): ValidatedInboundReply {
+        require(envelope.type == PlinkEventType.MessageReply) { "Expected a message reply." }
+        require(envelope.targetDeviceId == localDeviceId) { "Reply targets a different device." }
+        val replyToken = envelope.requiredString("replyToken")
+        val route = routes.peek(replyToken) ?: throw IllegalArgumentException("Reply route was not found.")
+        route.requireReplyable()
+        require(envelope.sourceDeviceId == route.pairedDeviceId) { "Reply came from a different paired device." }
+        require(envelope.requiredString("sourceEnvelopeId") == route.sourceEnvelopeId) { "Reply source envelope mismatch." }
+        require(envelope.requiredString("packageName") == route.packageName) { "Reply package mismatch." }
+        require(envelope.requiredString("notificationKey") == route.notificationKey) { "Reply notification mismatch." }
+        val text = envelope.requiredString("text").trim()
+        require(text.isNotBlank()) { "Reply text cannot be blank." }
+        val consumed = routes.consume(replyToken) ?: throw IllegalArgumentException("Reply route was already consumed.")
+        require(consumed == route) { "Reply route changed during validation." }
+        return ValidatedInboundReply(
+            route = route,
+            text = text,
+            sourceDeviceId = envelope.sourceDeviceId,
+            targetDeviceId = envelope.targetDeviceId
+        )
+    }
+
+    private fun PlinkEnvelope.requiredString(key: String): String {
+        val value = payload[key]?.jsonPrimitive?.contentOrNull
+        require(!value.isNullOrBlank()) { "payload.$key is required." }
+        return value
+    }
 }
 
 object ReplyRouteFactory {

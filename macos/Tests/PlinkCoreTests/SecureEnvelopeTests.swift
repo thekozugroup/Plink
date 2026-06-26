@@ -79,6 +79,45 @@ func encryptedFrameRejectsTampering() throws {
     }
 }
 
+@Test
+func encryptedFrameRejectsUnexpectedDeviceIds() throws {
+    let codec = EncryptedFrameCodec(sessionKey: Data("test-session-secret".utf8))
+    let frame = try codec.seal(messageEnvelope(), sequence: 1, nonce: "frame-nonce")
+
+    #expect(throws: PayloadPolicyError.self) {
+        _ = try codec.open(
+            frame,
+            expectedSourceDeviceId: "other-pixel",
+            expectedTargetDeviceId: "mac"
+        )
+    }
+}
+
+@Test
+func decodesAndroidFractionalIsoDates() throws {
+    let raw = """
+    {
+      "version": 1,
+      "id": "evt-1",
+      "type": "message.received",
+      "sentAt": "2026-06-25T00:00:00.123456Z",
+      "sourceDeviceId": "pixel",
+      "targetDeviceId": "mac",
+      "requiresAck": true,
+      "payload": {
+        "sender": "Alex",
+        "preview": "Private",
+        "canReply": false
+      }
+    }
+    """
+
+    let envelope = try PlinkJSON.decoder().decode(PlinkEnvelope.self, from: Data(raw.utf8))
+
+    #expect(envelope.sentAt.timeIntervalSince1970 > 0)
+    #expect(envelope.type == .messageReceived)
+}
+
 private func messageEnvelope() -> PlinkEnvelope {
     PlinkEnvelope(
         id: "evt-1",

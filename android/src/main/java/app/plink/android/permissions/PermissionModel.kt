@@ -53,9 +53,10 @@ object PermissionOnboarding {
         ),
         PermissionOnboardingStep(
             title = "Phone state",
-            summary = "Improves call-state detection when call notifications are limited.",
+            summary = "Future fallback only. Current call mirroring uses notification access.",
             action = PermissionAction.RequestPhoneState,
-            completed = state.phoneState
+            completed = state.phoneState,
+            enabled = state.phoneState
         ),
         PermissionOnboardingStep(
             title = "Clipboard automation",

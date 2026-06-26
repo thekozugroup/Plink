@@ -15,7 +15,8 @@ data class NotificationHandoff(
 class NotificationMapper(
     private val localDeviceId: String,
     private val pairedMacDeviceId: String,
-    private val replyRoutes: ReplyRouteRegistry
+    private val replyRoutes: ReplyRouteRegistry,
+    private val replyActions: RemoteInputReplyRegistry? = null
 ) {
     fun map(sbn: StatusBarNotification): NotificationHandoff? {
         val notification = sbn.notification ?: return null
@@ -47,7 +48,12 @@ class NotificationMapper(
             )
         }
 
-        val canReply = !isCall && notification.actions?.any { action -> !action.remoteInputs.isNullOrEmpty() } == true
+        val replyAction = if (!isCall) {
+            notification.actions?.firstOrNull { action -> !action.remoteInputs.isNullOrEmpty() }
+        } else {
+            null
+        }
+        val canReply = replyAction != null
         val route = if (canReply) {
             replyRoutes.register(
                 pairedDeviceId = pairedMacDeviceId,
@@ -56,7 +62,13 @@ class NotificationMapper(
                 notificationKey = sbn.key,
                 conversationId = notification.shortcutId,
                 canReply = true
-            )
+            ).also { registered ->
+                replyActions?.register(
+                    replyToken = registered.replyToken,
+                    notificationKey = sbn.key,
+                    action = replyAction
+                )
+            }
         } else {
             null
         }

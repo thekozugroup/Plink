@@ -69,7 +69,7 @@ public struct PairedDevice: Codable, Equatable, Sendable, Identifiable {
 
 public enum PairingStatus: Equatable, Sendable {
     case idle
-    case showingCode(PairingOffer, String, String)
+    case showingCode(PairingOffer, String, String, PairingVerificationCode)
     case paired(PairedDevice)
     case rejected(String)
 }
@@ -95,14 +95,19 @@ public final class PairingStateMachine: @unchecked Sendable {
 
     public func receive(_ offer: PairingOffer) -> PairingStatus {
         let code = offer.emojiCode
-        let next = PairingStatus.showingCode(offer, code.0, code.1)
+        let next = PairingStatus.showingCode(
+            offer,
+            code.0,
+            code.1,
+            PairingTranscript.verificationCode(transcript: pairingTranscript(offer))
+        )
         lock.withLock { current = next }
         return next
     }
 
     public func confirm() throws -> PairingStatus {
         let offer: PairingOffer? = lock.withLock {
-            if case .showingCode(let offer, _, _) = current { return offer }
+            if case .showingCode(let offer, _, _, _) = current { return offer }
             return nil
         }
         guard let offer else { throw PairingError.noOfferToConfirm }
@@ -136,6 +141,18 @@ public final class PairingStateMachine: @unchecked Sendable {
         localPrivateKey.publicKey.derRepresentation.base64EncodedString()
     }
 
+    private func pairingTranscript(_ offer: PairingOffer) -> String {
+        PairingTranscript.canonical(
+            sourceDeviceId: offer.deviceId,
+            targetDeviceId: offer.targetDeviceId,
+            endpoint: offer.endpoint,
+            nonce: offer.nonce,
+            sourcePublicKey: offer.publicKey,
+            targetPublicKey: localPublicKeyBase64,
+            protocolVersion: offer.protocolVersion
+        )
+    }
+
     private static func deriveSession(
         _ offer: PairingOffer,
         localPrivateKey: P256.KeyAgreement.PrivateKey
@@ -143,7 +160,15 @@ public final class PairingStateMachine: @unchecked Sendable {
         guard !offer.publicKey.isEmpty else { throw PairingError.invalidPublicKey }
         let peerKey = try P256.KeyAgreement.PublicKey(derRepresentation: Data(base64Encoded: offer.publicKey) ?? Data())
         let sharedSecret = try localPrivateKey.sharedSecretFromKeyAgreement(with: peerKey)
-        let transcript = "\(offer.deviceId)|\(offer.targetDeviceId)|\(offer.endpoint)|plink-v\(offer.protocolVersion)"
+        let transcript = PairingTranscript.canonical(
+            sourceDeviceId: offer.deviceId,
+            targetDeviceId: offer.targetDeviceId,
+            endpoint: offer.endpoint,
+            nonce: offer.nonce,
+            sourcePublicKey: offer.publicKey,
+            targetPublicKey: localPrivateKey.publicKey.derRepresentation.base64EncodedString(),
+            protocolVersion: offer.protocolVersion
+        )
         let key = sharedSecret.hkdfDerivedSymmetricKey(
             using: SHA256.self,
             salt: Data(SHA256.hash(data: Data(offer.nonce.utf8))),

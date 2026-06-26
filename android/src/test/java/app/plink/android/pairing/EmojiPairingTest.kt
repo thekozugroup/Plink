@@ -25,4 +25,18 @@ class EmojiPairingTest {
     fun demoPairingCodeMatchesSharedFixture() {
         assertEquals("⚡" to "🔑", EmojiPairing.derive("pixel-demo", "mac-demo", "demo-nonce"))
     }
+
+    @Test
+    fun strongVerificationBindsPublicKeys() {
+        val first = PairingTranscript.verificationCode(
+            PairingTranscript.canonical("pixel", "mac", "host:1", "nonce", "pixel-key-a", "mac-key", 1)
+        )
+        val second = PairingTranscript.verificationCode(
+            PairingTranscript.canonical("pixel", "mac", "host:1", "nonce", "pixel-key-b", "mac-key", 1)
+        )
+
+        assertEquals(4, first.emoji.size)
+        assertEquals(6, first.numeric.length)
+        assertNotEquals(first, second)
+    }
 }

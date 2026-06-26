@@ -14,6 +14,10 @@ import java.net.Socket
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 
+interface OutboundPlinkSender {
+    suspend fun send(envelope: PlinkEnvelope)
+}
+
 object LengthPrefixedFrameCodec {
     private const val maxFrameBytes = 128 * 1024
 
@@ -38,10 +42,10 @@ class SecureSocketPlinkClient(
     private val port: Int,
     private val codec: EncryptedFrameCodec,
     private val json: Json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
-) {
+) : OutboundPlinkSender {
     private val sequence = AtomicLong(0)
 
-    suspend fun send(envelope: PlinkEnvelope) = withContext(Dispatchers.IO) {
+    override suspend fun send(envelope: PlinkEnvelope) = withContext(Dispatchers.IO) {
         val frame = codec.seal(envelope, sequence = sequence.incrementAndGet())
         val payload = json.encodeToString(EncryptedPlinkFrame.serializer(), frame).toByteArray(Charsets.UTF_8)
         Socket(host, port).use { socket ->
@@ -54,6 +58,8 @@ class SecureSocketPlinkServer(
     private val port: Int,
     private val codec: EncryptedFrameCodec,
     private val replayWindow: ReplayWindow = ReplayWindow(),
+    private val expectedSourceDeviceId: String? = null,
+    private val expectedTargetDeviceId: String? = null,
     private val json: Json = Json { ignoreUnknownKeys = true }
 ) {
     suspend fun receiveOnce(now: Instant = Instant.now()): PlinkEnvelope = withContext(Dispatchers.IO) {
@@ -61,7 +67,13 @@ class SecureSocketPlinkServer(
             server.accept().use { socket ->
                 val payload = LengthPrefixedFrameCodec.read(DataInputStream(socket.getInputStream()))
                 val frame = json.decodeFromString(EncryptedPlinkFrame.serializer(), payload.decodeToString())
-                codec.open(frame, replayWindow = replayWindow, now = now)
+                codec.open(
+                    frame,
+                    replayWindow = replayWindow,
+                    now = now,
+                    expectedSourceDeviceId = expectedSourceDeviceId,
+                    expectedTargetDeviceId = expectedTargetDeviceId
+                )
             }
         }
     }

@@ -51,6 +51,13 @@ class ReplyRouteRegistry(
     }
 
     @Synchronized
+    fun peek(replyToken: String): ReplyRoute? {
+        val now = Instant.now(clock)
+        prune(now)
+        return routes[replyToken]?.route
+    }
+
+    @Synchronized
     fun removeByNotificationKey(notificationKey: String) {
         routes.entries.removeIf { it.value.route.notificationKey == notificationKey }
     }

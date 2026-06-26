@@ -25,3 +25,33 @@ func demoPairingCodeMatchesSharedFixture() {
     #expect(code.0 == "⚡")
     #expect(code.1 == "🔑")
 }
+
+@Test
+func strongVerificationBindsPublicKeys() {
+    let first = PairingTranscript.verificationCode(
+        transcript: PairingTranscript.canonical(
+            sourceDeviceId: "pixel",
+            targetDeviceId: "mac",
+            endpoint: "host:1",
+            nonce: "nonce",
+            sourcePublicKey: "pixel-key-a",
+            targetPublicKey: "mac-key",
+            protocolVersion: 1
+        )
+    )
+    let second = PairingTranscript.verificationCode(
+        transcript: PairingTranscript.canonical(
+            sourceDeviceId: "pixel",
+            targetDeviceId: "mac",
+            endpoint: "host:1",
+            nonce: "nonce",
+            sourcePublicKey: "pixel-key-b",
+            targetPublicKey: "mac-key",
+            protocolVersion: 1
+        )
+    )
+
+    #expect(first.emoji.count == 4)
+    #expect(first.numeric.count == 6)
+    #expect(first != second)
+}

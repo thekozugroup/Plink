@@ -15,7 +15,7 @@ object AndroidPermissionReader {
     fun read(context: Context): PermissionState = PermissionState(
         notificationListener = isNotificationListenerEnabled(context),
         notificationRuntime = hasRuntimeNotifications(context),
-        phoneState = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED,
+        phoneState = false,
         smsRole = false,
         accessibilityClipboard = isAccessibilityServiceEnabled(context),
         shizukuAvailable = ShizukuCapability.isAvailable()

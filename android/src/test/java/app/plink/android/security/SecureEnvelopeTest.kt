@@ -47,6 +47,15 @@ class SecureEnvelopeTest {
     }
 
     @Test
+    fun unknownEventTypeFailsPolicy() {
+        val envelope = messageEnvelope().copy(type = "unknown.event")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.seal(envelope, sequence = 1)
+        }
+    }
+
+    @Test
     fun redactorMasksSensitiveFields() {
         val redacted = PrivacyRedactor.redact(messageEnvelope())
 
@@ -81,6 +90,20 @@ class SecureEnvelopeTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             frameCodec.open(tampered)
+        }
+    }
+
+    @Test
+    fun encryptedFrameRejectsUnexpectedDeviceIds() {
+        val frameCodec = EncryptedFrameCodec("test-session-secret".toByteArray())
+        val frame = frameCodec.seal(messageEnvelope(), sequence = 1, nonce = "frame-nonce")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            frameCodec.open(
+                frame,
+                expectedSourceDeviceId = "other-pixel",
+                expectedTargetDeviceId = "mac"
+            )
         }
     }
 

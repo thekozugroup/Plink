@@ -5,7 +5,7 @@
 Plink is a local-first companion system:
 
 - Android app: Pixel-side permission manager, event collector, and continuity sender.
-- macOS app: menu bar companion, pairing host, native notification presenter, and reply/action router.
+- macOS app: menu bar companion, pairing host, native notification presenter, secure receiver, and reply/action router.
 - Shared protocol: versioned JSON envelopes over a local authenticated TCP channel.
 
 Plink does not attempt to use private Apple Continuity APIs. It implements the closest public-API equivalent.
@@ -15,13 +15,14 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 ### Android
 
 - Jetpack Compose app shell with Material 3 UI.
-- `PairingStateMachine` for device linking, ECDH public-key exchange, and emoji confirmation.
+- `PairingStateMachine` for device linking, ECDH public-key exchange, and key-bound emoji/numeric confirmation.
 - `PlinkMessage` protocol models.
-- `ConnectionRepository` for local peer state.
-- `PermissionModel` for notification, phone state, SMS/default-role, accessibility, local network, and Shizuku capability visibility.
-- `NotificationBridgeService` abstraction for message/call notification mirroring.
+- `PermissionModel` for notification, SMS/default-role, accessibility, local network, and Shizuku capability visibility.
+- `PlinkNotificationListenerService` for message/call notification mirroring.
+- `RemoteInputReplyExecutor` for Android notification-action replies.
 - `ContinuityEventRepository` for calls, messages, clipboard, files, web links, battery, and media commands.
 - Android Keystore-backed paired-device storage for production metadata and secrets; local tests use injectable memory storage.
+- Secure socket client/server with encrypted length-prefixed frames.
 
 ### macOS
 
@@ -34,7 +35,7 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 - Native call notifications with answer/decline actions.
 - Native message notifications with text reply action.
 - Pasteboard/file/URL handoff adapters.
-- Secure `Network.framework` transport using length-prefixed encrypted frames.
+- Secure `Network.framework` sender and receiver using length-prefixed encrypted frames.
 
 ## Pairing Flow
 
@@ -45,15 +46,15 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
    - local endpoint
    - nonce
    - protocol version
-2. Both devices derive a short visual confirmation from the offer hash.
-3. UI shows a matching emoji pair, for example `sparkles + key`.
+2. Both devices derive a visual confirmation from a transcript that includes device ids, endpoint, nonce, protocol version, and both public keys.
+3. UI shows a four-emoji confirmation plus a six-digit numeric code.
 4. User confirms only when both screens match.
 5. Devices exchange P-256 ECDH public keys inside the pairing offer/confirm flow.
 6. Plink derives a session key with HKDF-SHA256 using the pairing nonce and transcript.
 7. Plink stores device metadata separately from session secret material.
 8. Future events must include the paired device id and protocol version.
 
-Pairing uses deterministic emoji confirmation plus ECDH-derived session keys. Session traffic is sent as encrypted, signed, length-prefixed frames with replay checks. A future hardening path can replace the direct ECDH/HKDF exchange with Noise/HPKE or TLS with pinned per-device certificates.
+Pairing uses deterministic key-bound confirmation plus ECDH-derived session keys. Session traffic is sent as encrypted, signed, length-prefixed frames with replay checks and expected peer/local device-id checks. A future hardening path can replace the direct ECDH/HKDF exchange with Noise/HPKE or TLS with pinned per-device certificates.
 
 ## Protocol Envelope
 
@@ -78,9 +79,11 @@ Runtime events are validated before send and after receive:
 - source and target device ids must be present
 - payloads are capped at 64 KB
 - web handoff only accepts `http` and `https`
+- unknown event types are rejected
 - sensitive fields are redacted for logs
 - HMAC signatures bind sequence, nonce, timestamp, and canonical event JSON
 - encrypted frames bind sequence, nonce, timestamp, source device, target device, and ciphertext
+- receivers can enforce expected source and target device ids
 - replay checks reject old sequence numbers, reused nonces, and stale timestamps
 - network frames use a 4-byte length prefix and reject oversized payloads
 
@@ -110,7 +113,7 @@ Android:
 - `RemoteInput`: required for notification-based message replies.
 - SMS default app/SMS permissions: required for direct SMS texting.
 - SMS permissions are not declared in the Android manifest until the default-SMS-role flow exists.
-- Phone state: required for direct call-state visibility.
+- Phone state: not requested in the current build; call mirroring uses notification access.
 - Accessibility: optional clipboard automation.
 - Shizuku: optional privileged helper path; app must work without it.
 
@@ -146,15 +149,17 @@ Primary risks:
 
 Controls:
 
-- User-confirmed emoji verification.
+- User-confirmed key-bound emoji/numeric verification.
 - Paired-device allowlist.
 - ECDH/HKDF session key derivation during pairing.
 - Encrypted event frames with sequence, nonce, timestamp, and payload policy validation.
+- Expected peer/local device-id enforcement on secure receive.
 - Protocol versioning and event validation.
 - Permission-gated feature toggles.
 - Redaction defaults for sensitive notification content.
 - Reply events bind to the original notification id, package, notification key, conversation id, paired device id, and reply token.
 - Android reply tokens are consumed once from a live route registry.
+- Android notification `RemoteInput` actions are kept in memory and expire with reply routes.
 - No Shizuku dependency for baseline behavior.
 - Android Keystore and macOS Keychain boundaries for session secrets.
 

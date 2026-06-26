@@ -31,6 +31,29 @@ func confirmCreatesTrustedDevice() throws {
 }
 
 @Test
+func receiveShowsKeyBoundVerificationCode() throws {
+    let pixelKey = P256.KeyAgreement.PrivateKey()
+    let machine = PairingStateMachine()
+    let status = machine.receive(
+        PairingOffer(
+            deviceId: "pixel-1",
+            deviceName: "Pixel",
+            platform: "android",
+            endpoint: "192.168.1.24:45731",
+            nonce: "abc",
+            publicKey: pixelKey.publicKey.derRepresentation.base64EncodedString()
+        )
+    )
+
+    if case .showingCode(_, _, _, let verificationCode) = status {
+        #expect(verificationCode.emoji.count == 4)
+        #expect(verificationCode.numeric.count == 6)
+    } else {
+        Issue.record("Expected showing code status")
+    }
+}
+
+@Test
 func confirmWithoutOfferFailsClosed() {
     let machine = PairingStateMachine()
 

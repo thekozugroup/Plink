@@ -17,23 +17,24 @@
 3. Confirm Google-style Material UI loads.
 4. Enable notification listener.
 5. Enable notifications.
-6. Optional: enable phone state, SMS/default SMS role, accessibility clipboard, and Shizuku.
-7. Confirm pairing screen shows emoji code `⚡ 🔑` for demo pairing.
+6. Optional: enable accessibility clipboard and Shizuku.
+7. Confirm pairing screen shows four emoji plus a six-digit numeric code.
 8. Trigger simulator events and confirm generated event types match shared fixtures.
 9. Confirm SMS is shown as a future/default-role mode, not as a requested install permission.
-10. Confirm notification listener creates reply routes for replyable notifications and consumes reply tokens once.
+10. Confirm notification listener creates reply routes for replyable notifications, stores live `RemoteInput` actions in memory, and consumes reply tokens once.
 
 ## macOS
 
 1. Run `swift run PlinkMac` from `macos/`.
 2. Confirm Plink appears in the menu bar.
 3. Open pairing window.
-4. Confirm emoji code matches Android.
+4. Confirm the four-emoji and six-digit code matches Android.
 5. Click `Simulate Call`; confirm native macOS notification appears.
 6. Click `Simulate Message`; confirm native macOS notification appears with reply action.
 7. Send a reply and confirm it is converted into a `message.reply` event targeting the paired Pixel.
-8. Disable notifications in System Settings and confirm the menu reports the denied/error state.
-9. Confirm `build/PlinkMac.app` is signed with the expected identity or ad-hoc identity for local testing.
+8. Confirm the receiver reports listening after pairing or saved-pairing restore.
+9. Disable notifications in System Settings and confirm the menu reports the denied/error state.
+10. Confirm `build/PlinkMac.app` is signed with the expected identity or ad-hoc identity for local testing.
 
 ## Cross-Device
 
@@ -43,6 +44,7 @@
 4. Pair only if emoji code matches on both devices.
 5. Send sample `call.ringing`, `message.received`, `clipboard.updated`, and `web.open` events.
 6. Confirm unsupported permissions degrade visibly instead of failing silently.
+7. Send an encrypted frame with the wrong source or target device id and confirm it is rejected.
 
 ## Negative Cases
 
@@ -52,14 +54,15 @@
 4. Send a reply with blank text and confirm it is rejected.
 5. Send a message reply without the original notification route and confirm it is rejected.
 6. Trigger large payloads above 64 KB and confirm they are rejected.
+7. Send an unknown event type and confirm it is rejected.
 
 ## Evidence Matrix
 
 | Area | Evidence |
 | --- | --- |
-| Pairing | matching emoji code, paired device stored |
+| Pairing | matching key-bound emoji/numeric code, paired device stored |
 | Calls | macOS native notification appears |
-| Messages | reply action creates `message.reply` |
+| Messages | reply action creates `message.reply`; Android validates and executes live reply route |
 | Clipboard | clipboard event writes through adapter |
 | Web | `http`/`https` only |
 | Security | signed envelope tamper test fails closed |
