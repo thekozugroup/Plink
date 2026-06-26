@@ -42,7 +42,7 @@ class SecureEnvelopeCodec(private val sessionKey: ByteArray) {
             envelope = envelope,
             sequence = sequence,
             nonce = nonce,
-            issuedAt = issuedAt.toString(),
+            issuedAt = PlinkTime.canonicalTimestamp(issuedAt),
             signature = ""
         )
         return unsigned.copy(signature = sign(unsigned.signingInput()))
@@ -206,7 +206,8 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         iv: ByteArray = randomIv()
     ): EncryptedPlinkFrame {
         PayloadPolicy.requireAcceptable(envelope)
-        val aad = aad(version = 1, sequence = sequence, nonce = nonce, issuedAt = issuedAt.toString(), envelope = envelope)
+        val canonicalIssuedAt = PlinkTime.canonicalTimestamp(issuedAt)
+        val aad = aad(version = 1, sequence = sequence, nonce = nonce, issuedAt = canonicalIssuedAt, envelope = envelope)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(aesKey, "AES"), GCMParameterSpec(128, iv))
         cipher.updateAAD(aad)
@@ -214,7 +215,7 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         val frame = EncryptedPlinkFrame(
             sequence = sequence,
             nonce = nonce,
-            issuedAt = issuedAt.toString(),
+            issuedAt = canonicalIssuedAt,
             sourceDeviceId = envelope.sourceDeviceId,
             targetDeviceId = envelope.targetDeviceId,
             cipherText = Base64.getEncoder().encodeToString(iv + encrypted),

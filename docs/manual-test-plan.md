@@ -4,9 +4,9 @@
 
 1. Run `./scripts/verify.sh`.
 2. Confirm Android debug and release builds finish.
-3. Confirm macOS bundle is created at `build/PlinkMac.app`.
+3. Confirm macOS bundle is created at the path printed by `scripts/package-macos.sh` and exported as `build/PlinkMac.app.zip`.
 4. Confirm the Android manifest gate rejects raw SMS permissions.
-5. Confirm `codesign --verify --deep --strict build/PlinkMac.app` passes.
+5. Confirm strict `codesign --verify --deep --strict` passes for the printed app path.
 6. For public distribution, set `MACOS_CODESIGN_IDENTITY` to a Developer ID identity and notarize the bundle.
 
 ## Android
@@ -34,7 +34,7 @@
 7. Send a reply and confirm it is converted into a `message.reply` event targeting the paired Pixel.
 8. Confirm the receiver reports listening after pairing or saved-pairing restore.
 9. Disable notifications in System Settings and confirm the menu reports the denied/error state.
-10. Confirm `build/PlinkMac.app` is signed with the expected identity or ad-hoc identity for local testing.
+10. Confirm the printed app path is signed with the expected identity or ad-hoc identity for local testing and `build/PlinkMac.app.zip` exists.
 
 ## Cross-Device
 
@@ -66,4 +66,4 @@
 | Clipboard | clipboard event writes through adapter |
 | Web | `http`/`https` only |
 | Security | signed envelope tamper test fails closed |
-| Release | Android APK build and `PlinkMac.app` bundle exist |
+| Release | Android APK build and `PlinkMac.app.zip` bundle export exist |

@@ -67,7 +67,7 @@ class SecureEnvelopeTest {
     fun encryptedFrameRoundTripsAndRejectsReplay() {
         val frameCodec = EncryptedFrameCodec("test-session-secret".toByteArray())
         val replayWindow = ReplayWindow(maxClockSkewSeconds = 600)
-        val issuedAt = Instant.parse("2026-06-25T00:00:00Z")
+        val issuedAt = Instant.parse("2026-06-25T00:00:00.123456Z")
         val frame = frameCodec.seal(
             envelope = messageEnvelope(),
             sequence = 1,
@@ -76,6 +76,7 @@ class SecureEnvelopeTest {
             iv = ByteArray(12) { 7 }
         )
 
+        assertEquals("2026-06-25T00:00:00Z", frame.issuedAt)
         assertEquals(messageEnvelope(), frameCodec.open(frame, replayWindow, now = issuedAt.plusSeconds(1)))
         assertThrows(IllegalArgumentException::class.java) {
             frameCodec.open(frame, replayWindow, now = issuedAt.plusSeconds(2))

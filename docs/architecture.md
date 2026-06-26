@@ -168,7 +168,7 @@ Controls:
 - Android unit tests pass.
 - Android debug and release builds assemble.
 - macOS Swift tests pass.
-- macOS app bundle is generated with menu-bar metadata and sandbox/network entitlements.
+- macOS app bundle is generated with menu-bar metadata and sandbox/network entitlements, then exported as `build/PlinkMac.app.zip`.
 - macOS bundle is codesigned locally with entitlements; public distribution requires Developer ID signing and notarization.
 - Protocol fixtures match on both platforms.
 - `scripts/verify.sh` passes.

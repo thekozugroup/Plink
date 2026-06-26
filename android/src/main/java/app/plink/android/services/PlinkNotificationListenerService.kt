@@ -9,17 +9,16 @@ import app.plink.android.notifications.ReplyRouteRegistry
 class PlinkNotificationListenerService : NotificationListenerService() {
     private val replyRoutes = SharedReplyRoutes.registry
     private val replyActions = SharedReplyActions.registry
-    private val mapper by lazy {
-        NotificationMapper(
-            localDeviceId = "pixel-local",
-            pairedMacDeviceId = "mac-demo",
-            replyRoutes = replyRoutes,
-            replyActions = replyActions
-        )
-    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         sbn ?: return
+        val session = SharedSessionState.snapshot() ?: return
+        val mapper = NotificationMapper(
+            localDeviceId = session.localDeviceId,
+            pairedMacDeviceId = session.pairedDevice.id,
+            replyRoutes = replyRoutes,
+            replyActions = replyActions
+        )
         val handoff = mapper.map(sbn) ?: return
         SharedNotificationEvents.trySend(handoff.envelope)
         SharedOutboundBridge.tryForward(handoff.envelope)

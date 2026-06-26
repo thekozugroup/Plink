@@ -1,6 +1,9 @@
 package app.plink.android
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
@@ -56,19 +59,33 @@ import app.plink.android.features.FeaturePolicy
 import app.plink.android.permissions.PermissionState
 import app.plink.android.permissions.AndroidPermissionReader
 import app.plink.android.permissions.PermissionOnboarding
-import app.plink.android.pairing.EmojiPairing
+import app.plink.android.permissions.PermissionAction
+import app.plink.android.pairing.PairingCrypto
+import app.plink.android.pairing.PairingTranscript
 
 class MainActivity : ComponentActivity() {
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { PlinkApp() }
+        setContent {
+            PlinkApp(
+                onRequestPostNotifications = {
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            )
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlinkApp() {
+fun PlinkApp(onRequestPostNotifications: () -> Unit = {}) {
     val context = LocalContext.current
     MaterialTheme(
         colorScheme = if (android.os.Build.VERSION.SDK_INT >= 31) {
@@ -107,17 +124,35 @@ fun PlinkApp() {
                     )
                 }
             ) { padding ->
-                PlinkHome(Modifier.padding(padding))
+                PlinkHome(
+                    modifier = Modifier.padding(padding),
+                    onRequestPostNotifications = onRequestPostNotifications
+                )
             }
         }
     }
 }
 
 @Composable
-private fun PlinkHome(modifier: Modifier = Modifier) {
+private fun PlinkHome(
+    modifier: Modifier = Modifier,
+    onRequestPostNotifications: () -> Unit = {}
+) {
     val context = LocalContext.current
-    val emoji = remember { EmojiPairing.derive("pixel-demo", "mac-demo", "demo-nonce") }
-    val labels = remember { EmojiPairing.labels("pixel-demo", "mac-demo", "demo-nonce") }
+    val previewKey = remember { PairingCrypto.generateKeyPair() }
+    val verificationCode = remember(previewKey.publicKeyBase64) {
+        PairingTranscript.verificationCode(
+            PairingTranscript.canonical(
+                sourceDeviceId = "pixel-preview",
+                targetDeviceId = "mac-preview",
+                endpoint = "mac.local:45731",
+                nonce = "preview-nonce",
+                sourcePublicKey = previewKey.publicKeyBase64,
+                targetPublicKey = "mac-preview-public-key",
+                protocolVersion = 1
+            )
+        )
+    }
     var permissions by remember {
         mutableStateOf(AndroidPermissionReader.read(context))
     }
@@ -158,9 +193,10 @@ private fun PlinkHome(modifier: Modifier = Modifier) {
                 ) {
                     AssistChip(onClick = {}, label = { Text("Ready to pair") })
                     Text("Match this code on your Mac", style = MaterialTheme.typography.titleMedium)
-                    Text("${emoji.first}  ${emoji.second}", style = MaterialTheme.typography.displayMedium)
-                    Text("${labels.first} + ${labels.second}")
-                    Text("Only confirm when the same emoji pair appears on both devices.")
+                    Text(verificationCode.emoji.joinToString("  "), style = MaterialTheme.typography.displayMedium)
+                    Text("Code ${verificationCode.numeric}", style = MaterialTheme.typography.titleLarge)
+                    Text(verificationCode.labels.joinToString(" + "))
+                    Text("Only confirm when the same emoji and number appear on both devices.")
                 }
             }
         }
@@ -186,7 +222,11 @@ private fun PlinkHome(modifier: Modifier = Modifier) {
                     onboarding.filter { it.enabled && !it.completed }.take(3).forEach { step ->
                         AssistChip(
                             onClick = {
-                                context.startActivity(AndroidPermissionReader.settingsIntent(step.action))
+                                if (step.action == PermissionAction.RequestPostNotifications) {
+                                    onRequestPostNotifications()
+                                } else {
+                                    context.startActivity(AndroidPermissionReader.settingsIntent(step.action))
+                                }
                                 permissions = AndroidPermissionReader.read(context)
                             },
                             label = { Text(step.title) }

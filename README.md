@@ -50,8 +50,7 @@ Android users must explicitly enable capabilities:
 
 - Notification listener for notification and message mirroring.
 - Notification reply actions for supported app replies.
-- Phone state for call-state detection where available.
-- SMS/default SMS role for direct SMS texting.
+- SMS/default SMS role only for a future direct-SMS mode.
 - Accessibility or share sheet for clipboard automation.
 - Optional Shizuku for power-user privileged paths.
 
