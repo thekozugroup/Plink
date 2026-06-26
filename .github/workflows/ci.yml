@@ -43,5 +43,5 @@ jobs:
         with:
           name: macos-artifacts
           path: |
-            build/PlinkMac.app
+            build/PlinkMac.app.zip
             macos/.build
