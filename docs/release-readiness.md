@@ -53,7 +53,11 @@ This verifies:
 Before publishing:
 
 - Create a release keystore outside the repo.
-- Provide signing config through local Gradle properties or CI secrets.
+- Provide signing config through local Gradle properties or CI secrets. Gradle uses these only when all values are present:
+  - `PLINK_ANDROID_KEYSTORE_PATH` or `plink.android.storeFile`
+  - `PLINK_ANDROID_KEYSTORE_PASSWORD` or `plink.android.storePassword`
+  - `PLINK_ANDROID_KEY_ALIAS` or `plink.android.keyAlias`
+  - `PLINK_ANDROID_KEY_PASSWORD` or `plink.android.keyPassword`
 - Build a signed APK or AAB.
 - Run device tests on at least one Pixel with notification listener enabled.
 - Verify notification mirroring, text reply, clipboard/web handoff, negative security cases, and permission-denied behavior.
@@ -65,8 +69,10 @@ Before publishing:
 
 - Set `MACOS_CODESIGN_IDENTITY` to a Developer ID Application identity.
 - Package using `./scripts/package-macos.sh`.
-- Notarize the exported app archive with Apple notary credentials.
-- Staple the notarization ticket.
+- Notarize and staple using `./scripts/notarize-macos.sh build/PlinkMac.app.zip` with:
+  - `MACOS_NOTARY_APPLE_ID`
+  - `MACOS_NOTARY_TEAM_ID`
+  - `MACOS_NOTARY_PASSWORD`
 - Verify with Gatekeeper on a clean Mac account.
 
 ## Current Artifacts

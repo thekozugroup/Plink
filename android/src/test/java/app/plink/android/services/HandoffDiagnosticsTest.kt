@@ -4,12 +4,12 @@ import app.plink.android.pairing.PairedDevice
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
 import app.plink.android.transport.OutboundPlinkSender
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
 
 class HandoffDiagnosticsTest {
     @After
@@ -50,7 +50,7 @@ class HandoffDiagnosticsTest {
         SharedOutboundBridge.configure(sender)
 
         val result = HandoffDiagnostics.send(DiagnosticHandoff.Message)
-        delay(100)
+        sender.waitForSentCount(1)
 
         assertTrue(result is DiagnosticSendResult.Sent)
         assertEquals(1, sender.sent.size)
@@ -60,10 +60,17 @@ class HandoffDiagnosticsTest {
     }
 
     private class RecordingSender : OutboundPlinkSender {
-        val sent = mutableListOf<PlinkEnvelope>()
+        val sent = CopyOnWriteArrayList<PlinkEnvelope>()
 
         override suspend fun send(envelope: PlinkEnvelope) {
             sent += envelope
+        }
+
+        fun waitForSentCount(count: Int) {
+            repeat(50) {
+                if (sent.size >= count) return
+                Thread.sleep(20)
+            }
         }
     }
 }
