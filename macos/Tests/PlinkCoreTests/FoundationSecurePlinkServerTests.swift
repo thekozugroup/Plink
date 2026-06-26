@@ -173,10 +173,17 @@ private func sendRawFrame(_ payload: Data, to port: UInt16) throws {
         sin_zero: (0, 0, 0, 0, 0, 0, 0, 0)
     )
 
-    let connected = withUnsafePointer(to: &address) { pointer in
-        pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockAddress in
-            Darwin.connect(clientSocket, sockAddress, socklen_t(MemoryLayout<sockaddr_in>.size))
+    var connected: Int32 = -1
+    for attempt in 0..<50 {
+        connected = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockAddress in
+                Darwin.connect(clientSocket, sockAddress, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
         }
+        if connected == 0 || attempt == 49 {
+            break
+        }
+        usleep(20_000)
     }
     #expect(connected == 0)
 

@@ -22,8 +22,9 @@
 8. Enable notifications only when explicitly testing notification handoff.
 9. Optional: enable accessibility clipboard and Shizuku.
 10. Trigger simulator events and confirm generated event types match shared fixtures.
-11. Confirm SMS is shown as a future/default-role mode, not as a requested install permission.
-12. Confirm notification listener creates reply routes for replyable notifications, stores live `RemoteInput` actions in memory, and consumes reply tokens once.
+11. After pairing, use `Preview events` diagnostic buttons for `Call`, `Message`, and `Clipboard`; confirm paired events reach the Mac without changing Android Settings.
+12. Confirm SMS is shown as a future/default-role mode, not as a requested install permission.
+13. Confirm notification listener creates reply routes for replyable notifications, stores live `RemoteInput` actions in memory, and consumes reply tokens once.
 
 ## macOS
 
@@ -47,7 +48,7 @@
 3. Start Android app.
 4. Copy the Mac offer to Android, import it, confirm on Android, then paste the Pixel response back into macOS.
 5. Pair only if emoji code matches on both devices.
-6. Send sample `call.ringing`, `message.received`, `clipboard.updated`, and `web.open` events.
+6. Send Android `Preview events` diagnostics for `call.ringing`, `message.received`, and `clipboard.updated`.
 7. Confirm unsupported permissions degrade visibly instead of failing silently.
 8. Send an encrypted frame with the wrong source or target device id and confirm it is rejected.
 

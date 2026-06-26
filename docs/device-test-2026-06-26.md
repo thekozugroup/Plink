@@ -19,6 +19,7 @@
 - Pixel app `app.plink.android` installed and launched.
 - Pixel package state showed `versionName=0.1.0`, `versionCode=1`.
 - Pixel UI showed the visible `Manual pairing` controls: `Mac pairing offer`, `Import`, and `Confirm`.
+- Pixel UI showed paired diagnostic controls in `Preview events`: `Call`, `Message`, and `Clipboard`.
 - Foundation/POSIX Mac receiver accepted an encrypted Pixel event using Android-compatible length-prefixed socket framing.
 - Pixel sent `clipboard.updated` with `source=pixel-debug` and `target=mac-demo`.
 - macOS pasteboard updated to `PlinkPixelToMacEncryptedClipboard_20260626T135916Z`.
@@ -35,6 +36,8 @@
 - Pixel launch screenshot: `build/pixel-installed-after-fallback.png`
 - Updated Pixel manual-pairing screenshot: `build/pixel-manual-pairing-2026-06-26.png`
 - Updated Pixel manual-pairing UI dump: `build/pixel-manual-pairing-ui-2026-06-26.json`
+- Paired diagnostics UI screenshot: `build/pixel-diagnostics-preview-final3-2026-06-26.png`
+- Paired diagnostics UI dump: `build/pixel-diagnostics-preview-final3-ui-2026-06-26.json`
 - Installed-app paired log: `build/plinkmac-installed-paired-2026-06-26.log`
 - macOS local-test package: `build/PlinkMac.app.zip`
 

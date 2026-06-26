@@ -103,6 +103,9 @@ import app.plink.android.permissions.PermissionOnboardingStep
 import app.plink.android.permissions.PermissionState
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.services.PlinkSessionController
+import app.plink.android.services.DiagnosticHandoff
+import app.plink.android.services.DiagnosticSendResult
+import app.plink.android.services.HandoffDiagnostics
 import app.plink.android.storage.KeystorePairingSecretStore
 import app.plink.android.storage.KeystorePairingStore
 import java.net.Inet4Address
@@ -628,6 +631,7 @@ private fun FeatureRow(feature: FeatureAvailability) {
 
 @Composable
 private fun SimulatorCard(simulatedEvents: List<PlinkEnvelope>) {
+    var diagnosticStatus by remember { mutableStateOf("Ready for paired diagnostics") }
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
         shape = RoundedCornerShape(32.dp)
@@ -640,6 +644,26 @@ private fun SimulatorCard(simulatedEvents: List<PlinkEnvelope>) {
                 Text("Preview events", style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.weight(1f))
                 StatusPill("Model", Icons.Rounded.Devices)
+            }
+            Text(
+                diagnosticStatus,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                DiagnosticHandoff.entries.forEach { kind ->
+                    FilledTonalButton(
+                        onClick = {
+                            diagnosticStatus = when (val result = HandoffDiagnostics.send(kind)) {
+                                is DiagnosticSendResult.Sent -> "Sent ${result.envelope.type}"
+                                DiagnosticSendResult.NotPaired -> "Pair first, then send diagnostics."
+                            }
+                        },
+                        shape = RoundedCornerShape(22.dp)
+                    ) {
+                        Text(kind.label)
+                    }
+                }
             }
             simulatedEvents.forEach { envelope ->
                 Row(
