@@ -9,25 +9,6 @@ struct PlinkMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra("Plink", systemImage: "link") {
-            Label("Pixel ready", systemImage: "iphone.gen3")
-            Text("Last reply: \(appDelegate.lastReply)")
-            Text(appDelegate.lastDeliveryState)
-            Divider()
-            Button("Show Pairing") {
-                appDelegate.showPairingWindow()
-            }
-            Button("Simulate Call") {
-                appDelegate.notificationBridge.showCall(caller: "Alex Morgan", handle: "+1 555 123 4567")
-            }
-            Button("Simulate Message") {
-                appDelegate.notificationBridge.showMessage(sender: "Alex Morgan", preview: "Can you send the deck?")
-            }
-            Divider()
-            Button("Quit") {
-                NSApplication.shared.terminate(nil)
-            }
-        }
         Settings {
             PairingView()
         }
@@ -47,11 +28,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
     private let demoPixelPrivateKey = P256.KeyAgreement.PrivateKey()
     private var activeTransport: (any PlinkTransport)?
     private var receiver: (any PlinkEventReceiver)?
+    private var pendingManualOffer: PairingOffer?
+    private var pendingManualConfirmation: PairingConfirmation?
+    private var statusItem: NSStatusItem?
     @Published var lastReply: String = "None"
     @Published var lastDeliveryState: String = "Notifications pending"
     private var pairingWindow: NSWindow?
+    private var allowsTermination = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
+        ProcessInfo.processInfo.disableSuddenTermination()
+        configureStatusItem()
         notificationBridge.configure()
         notificationBridge.onAuthorizationChanged = { [weak self] granted, error in
             Task { @MainActor in
@@ -87,11 +75,57 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
         restoreSavedPairing()
     }
 
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        allowsTermination ? .terminateNow : .terminateCancel
+    }
+
+    func quit() {
+        allowsTermination = true
+        NSApplication.shared.terminate(nil)
+    }
+
+    private func configureStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        item.button?.image = NSImage(systemSymbolName: "link", accessibilityDescription: "Plink")
+        item.button?.title = " Plink"
+        let menu = NSMenu()
+        let ready = NSMenuItem(title: "Pixel ready", action: nil, keyEquivalent: "")
+        ready.image = NSImage(systemSymbolName: "iphone.gen3", accessibilityDescription: nil)
+        menu.addItem(ready)
+        menu.addItem(NSMenuItem(title: lastDeliveryState, action: nil, keyEquivalent: ""))
+        menu.addItem(.separator())
+        menu.addItem(NSMenuItem(title: "Show Pairing", action: #selector(showPairingFromMenu), keyEquivalent: "p"))
+        menu.addItem(NSMenuItem(title: "Simulate Call", action: #selector(simulateCallFromMenu), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Simulate Message", action: #selector(simulateMessageFromMenu), keyEquivalent: ""))
+        menu.addItem(.separator())
+        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitFromMenu), keyEquivalent: "q"))
+        menu.items.forEach { $0.target = self }
+        item.menu = menu
+        statusItem = item
+    }
+
+    @objc private func showPairingFromMenu() {
+        showPairingWindow()
+    }
+
+    @objc private func simulateCallFromMenu() {
+        notificationBridge.showCall(caller: "Alex Morgan", handle: "+1 555 123 4567")
+    }
+
+    @objc private func simulateMessageFromMenu() {
+        notificationBridge.showMessage(sender: "Alex Morgan", preview: "Can you send the deck?")
+    }
+
+    @objc private func quitFromMenu() {
+        quit()
+    }
+
     func showPairingWindow() {
         if pairingWindow == nil {
-            let verificationCode = prepareDemoPairing()
+            let offer = prepareManualPairing()
+            let offerPayload = (try? PairingPayloadCodec.encodeOffer(offer)) ?? ""
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 360),
+                contentRect: NSRect(x: 0, y: 0, width: 520, height: 560),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false
@@ -99,8 +133,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
             window.center()
             window.title = "Pair Pixel"
             window.contentView = NSHostingView(rootView: PairingView(onConfirm: { [weak self] in
-                self?.confirmDemoPairing()
-            }, verificationCode: verificationCode))
+                try? self?.confirmManualPairing()
+            }, onPreviewResponse: { [weak self] payload in
+                guard let self else { throw AppDeliveryError.pairingOfferUnavailable }
+                return try self.previewManualResponse(payload)
+            }, offerPayload: offerPayload))
             pairingWindow = window
         }
         pairingWindow?.makeKeyAndOrderFront(nil)
@@ -127,6 +164,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
             try? pairingSecretStore.save(sessionKey: sessionKeyData, sessionId: device.sessionId)
             activeTransport = makeTransport(for: device, sessionKey: sessionKeyData)
             startReceiver(sessionKey: sessionKeyData, pairedDeviceId: device.id)
+        }
+    }
+
+    @discardableResult
+    func prepareManualPairing() -> PairingOffer {
+        let offer = pairingMachine.makeOffer(
+            deviceId: localMacDeviceId,
+            deviceName: Host.current().localizedName ?? "Mac",
+            endpoint: localMacEndpoint()
+        )
+        pendingManualOffer = offer
+        pendingManualConfirmation = nil
+        return offer
+    }
+
+    func previewManualResponse(_ payload: String) throws -> PairingVerificationCode {
+        guard let offer = pendingManualOffer else {
+            throw AppDeliveryError.pairingOfferUnavailable
+        }
+        let confirmation = try PairingPayloadCodec.decodeConfirmation(payload)
+        pendingManualConfirmation = confirmation
+        return pairingMachine.verificationCode(for: offer, confirmation: confirmation)
+    }
+
+    func confirmManualPairing() throws {
+        guard let offer = pendingManualOffer else {
+            throw AppDeliveryError.pairingOfferUnavailable
+        }
+        guard let confirmation = pendingManualConfirmation else {
+            throw AppDeliveryError.pairingResponseUnavailable
+        }
+        if case .paired(let device) = try pairingMachine.accept(confirmation, for: offer) {
+            try pairingStore.save(device)
+            guard let sessionKey = pairingMachine.lastSessionKey else { return }
+            let sessionKeyData = data(from: sessionKey)
+            try pairingSecretStore.save(sessionKey: sessionKeyData, sessionId: device.sessionId)
+            activeTransport = makeTransport(for: device, sessionKey: sessionKeyData)
+            startReceiver(sessionKey: sessionKeyData, pairedDeviceId: device.id)
+            lastDeliveryState = "Paired with \(device.name)"
         }
     }
 
@@ -200,7 +276,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
     private func startReceiver(sessionKey: Data, pairedDeviceId: String) {
         receiver?.stop()
         do {
-            let server = try SecureNetworkPlinkServer(
+            let server = FoundationSecurePlinkServer(
                 port: receiverPort,
                 codec: EncryptedFrameCodec(sessionKey: sessionKey),
                 expectedSourceDeviceId: pairedDeviceId,
@@ -218,6 +294,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
             lastDeliveryState = error.localizedDescription
             NSLog("Plink receiver failed: \(error.localizedDescription)")
         }
+    }
+
+    private func localMacEndpoint() -> String {
+        let address = Host.current().addresses.first {
+            $0.contains(".") && !$0.hasPrefix("127.") && !$0.hasPrefix("169.254.")
+        } ?? "127.0.0.1"
+        return "\(address):\(receiverPort)"
     }
 
     private func handleInbound(_ result: Result<PlinkEnvelope, Error>) {
@@ -264,6 +347,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
 
 struct PairingView: View {
     var onConfirm: () -> Void = {}
+    var onPreviewResponse: (String) throws -> PairingVerificationCode = { _ in
+        PairingTranscript.verificationCode(transcript: "plink-demo")
+    }
+    var offerPayload: String = ""
     var verificationCode: PairingVerificationCode = PairingTranscript.verificationCode(
         transcript: PairingTranscript.canonical(
             sourceDeviceId: "pixel-demo",
@@ -275,16 +362,44 @@ struct PairingView: View {
             protocolVersion: 1
         )
     )
+    @State private var responsePayload = ""
+    @State private var previewCode: PairingVerificationCode?
+    @State private var statusText = "Copy this offer to your Pixel."
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Plink")
                 .font(.largeTitle.weight(.semibold))
-            Text("Match this code on your Pixel before confirming.")
+            Text(statusText)
                 .font(.title3)
-            Text(verificationCode.emoji.joined(separator: "  "))
-                .font(.system(size: 52, weight: .bold, design: .rounded))
-            Text("Code \(verificationCode.numeric)")
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Mac offer")
+                    .font(.headline)
+                Text(offerPayload)
+                    .font(.caption.monospaced())
+                    .lineLimit(4)
+                    .textSelection(.enabled)
+                Button("Copy Offer") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(offerPayload, forType: .string)
+                    statusText = "Offer copied. Paste it into Plink on your Pixel."
+                }
+            }
+            TextField("Pixel pairing response", text: $responsePayload, axis: .vertical)
+                .lineLimit(3...5)
+            Button("Preview Response Code") {
+                do {
+                    previewCode = try onPreviewResponse(responsePayload)
+                    statusText = "Confirm only if this matches your Pixel."
+                } catch {
+                    statusText = error.localizedDescription
+                }
+            }
+            .disabled(responsePayload.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            let code = previewCode ?? verificationCode
+            Text(code.emoji.joined(separator: "  "))
+                .font(.system(size: 44, weight: .bold, design: .rounded))
+            Text("Code \(code.numeric)")
                 .font(.title3.monospacedDigit())
             VStack(alignment: .leading, spacing: 8) {
                 Label("Calls appear as Mac notifications", systemImage: "phone")
@@ -292,24 +407,32 @@ struct PairingView: View {
                 Label("Clipboard, files, links, battery, and media are event driven", systemImage: "bolt.horizontal")
             }
             .foregroundStyle(.secondary)
-            Button("Confirm Pairing") {
+            Button("Finish Pairing") {
                 onConfirm()
+                statusText = "Pairing saved. Receiver is listening."
             }
             .keyboardShortcut(.defaultAction)
+            .disabled(previewCode == nil)
             Spacer()
         }
         .padding(28)
-        .frame(width: 420, height: 360)
+        .frame(width: 520, height: 560)
     }
 }
 
 enum AppDeliveryError: LocalizedError {
     case transportUnavailable
+    case pairingOfferUnavailable
+    case pairingResponseUnavailable
 
     var errorDescription: String? {
         switch self {
         case .transportUnavailable:
             return "No paired Pixel transport is available."
+        case .pairingOfferUnavailable:
+            return "No Mac pairing offer is ready."
+        case .pairingResponseUnavailable:
+            return "Paste and preview the Pixel response first."
         }
     }
 }

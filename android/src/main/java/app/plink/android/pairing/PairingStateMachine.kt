@@ -8,6 +8,8 @@ class PairingStateMachine(
         private set
     var lastSessionKey: ByteArray? = null
         private set
+    val localPublicKeyBase64: String
+        get() = localKeyPair.publicKeyBase64
 
     fun receiveOffer(offer: PairingOffer): PairingStatus.ShowingCode {
         val next = PairingStatus.ShowingCode(
@@ -22,12 +24,13 @@ class PairingStateMachine(
     fun confirm(): PairingStatus.Paired {
         val showing = status as? PairingStatus.ShowingCode
             ?: error("Pairing can only be confirmed after an offer is shown.")
+        val session = deriveSession(showing.offer)
         val device = PairedDevice(
             id = showing.offer.deviceId,
             name = showing.offer.deviceName,
             platform = showing.offer.platform,
             endpoint = showing.offer.endpoint,
-            sessionId = deriveSession(showing.offer).sessionId,
+            sessionId = session.sessionId,
             peerPublicKey = showing.offer.publicKey,
             localPublicKey = localKeyPair.publicKeyBase64,
             trusted = true
@@ -35,6 +38,33 @@ class PairingStateMachine(
         val next = PairingStatus.Paired(device)
         status = next
         return next
+    }
+
+    fun confirmWithResponse(
+        localDeviceId: String,
+        localDeviceName: String,
+        localEndpoint: String
+    ): Pair<PairingStatus.Paired, PairingConfirmation> {
+        val showing = status as? PairingStatus.ShowingCode
+            ?: error("Pairing can only be confirmed after an offer is shown.")
+        val paired = confirm()
+        val session = lastSessionKey ?: error("Pairing session key was not derived.")
+        val sessionId = DerivedSession(
+            sessionId = PairingCrypto.sessionId(session),
+            sessionKey = session
+        ).sessionId
+        val confirmation = PairingConfirmation(
+            deviceId = localDeviceId,
+            deviceName = localDeviceName,
+            platform = "android",
+            endpoint = localEndpoint,
+            publicKey = localKeyPair.publicKeyBase64,
+            targetDeviceId = showing.offer.deviceId,
+            offerNonce = showing.offer.nonce,
+            sessionId = sessionId,
+            protocolVersion = showing.offer.protocolVersion
+        )
+        return paired to confirmation
     }
 
     fun reject(reason: String): PairingStatus.Rejected {

@@ -1,8 +1,12 @@
 package app.plink.android
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -51,6 +55,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -64,6 +69,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,6 +91,9 @@ import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeatureAvailability
 import app.plink.android.features.FeaturePolicy
 import app.plink.android.pairing.PairingCrypto
+import app.plink.android.pairing.PairingPayloadCodec
+import app.plink.android.pairing.PairingStateMachine
+import app.plink.android.pairing.PairingStatus
 import app.plink.android.pairing.PairingTranscript
 import app.plink.android.pairing.PairingVerificationCode
 import app.plink.android.permissions.AndroidPermissionReader
@@ -93,6 +102,12 @@ import app.plink.android.permissions.PermissionOnboarding
 import app.plink.android.permissions.PermissionOnboardingStep
 import app.plink.android.permissions.PermissionState
 import app.plink.android.protocol.PlinkEnvelope
+import app.plink.android.services.PlinkSessionController
+import app.plink.android.storage.KeystorePairingSecretStore
+import app.plink.android.storage.KeystorePairingStore
+import java.net.Inet4Address
+import java.net.NetworkInterface
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -228,6 +243,9 @@ private fun PlinkHome(
             )
         }
         item {
+            ManualPairingCard()
+        }
+        item {
             ConnectionCard(setupProgress = setupProgress)
         }
         item {
@@ -324,6 +342,121 @@ private fun PairingHeroCard(
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.52f)
             )
+        }
+    }
+}
+
+@Composable
+private fun ManualPairingCard() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val pairingMachine = remember { PairingStateMachine() }
+    val sessionController = remember { PlinkSessionController(context.applicationContext) }
+    val localDeviceId = remember { context.localPlinkDeviceId() }
+    val localEndpoint = remember { "${localLanAddress()}:45731" }
+    var offerPayload by remember { mutableStateOf("") }
+    var showingCode by remember { mutableStateOf<PairingStatus.ShowingCode?>(null) }
+    var responsePayload by remember { mutableStateOf("") }
+    var statusText by remember { mutableStateOf("Paste the Mac offer to start real pairing.") }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = RoundedCornerShape(32.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Manual pairing", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.weight(1f))
+                StatusPill("Secure", Icons.Rounded.Security)
+            }
+            Text(
+                statusText,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedTextField(
+                value = offerPayload,
+                onValueChange = { offerPayload = it },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
+                label = { Text("Mac pairing offer") }
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        runCatching {
+                            val offer = PairingPayloadCodec.decodeOffer(offerPayload)
+                                .copy(targetDeviceId = localDeviceId)
+                            showingCode = pairingMachine.receiveOffer(offer)
+                            responsePayload = ""
+                            statusText = "Confirm only if this code matches on your Mac."
+                        }.onFailure { error ->
+                            showingCode = null
+                            statusText = error.localizedMessage ?: "Pairing offer could not be read."
+                        }
+                    },
+                    shape = RoundedCornerShape(22.dp),
+                    enabled = offerPayload.isNotBlank()
+                ) {
+                    Text("Import")
+                }
+                FilledTonalButton(
+                    onClick = {
+                        scope.launch {
+                            runCatching {
+                                val (paired, confirmation) = pairingMachine.confirmWithResponse(
+                                    localDeviceId = localDeviceId,
+                                    localDeviceName = Build.MODEL,
+                                    localEndpoint = localEndpoint
+                                )
+                                val sessionKey = pairingMachine.lastSessionKey
+                                    ?: error("Pairing session key was not derived.")
+                                KeystorePairingStore(context).save(paired.device)
+                                KeystorePairingSecretStore(context).save(sessionKey, paired.device.sessionId)
+                                sessionController.configure(
+                                    localDeviceId = localDeviceId,
+                                    pairedDevice = paired.device,
+                                    sessionKey = sessionKey
+                                )
+                                PairingPayloadCodec.encodeConfirmation(confirmation)
+                            }.onSuccess { response ->
+                                responsePayload = response
+                                context.copyToClipboard("Plink pairing response", response)
+                                statusText = "Paired. Response copied for your Mac."
+                            }.onFailure { error ->
+                                statusText = error.localizedMessage ?: "Pairing confirmation failed."
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(22.dp),
+                    enabled = showingCode != null
+                ) {
+                    Text("Confirm")
+                }
+            }
+            showingCode?.let { code ->
+                Text(
+                    code.verificationCode.emoji.joinToString("  "),
+                    style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Code ${code.verificationCode.numeric}",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            if (responsePayload.isNotBlank()) {
+                Text(
+                    responsePayload,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -652,6 +785,26 @@ private fun ContinuityFeature.label(): String = when (this) {
     ContinuityFeature.Media -> "Media"
     ContinuityFeature.Sms -> "SMS"
     ContinuityFeature.ScreenMirror -> "Screen mirror"
+}
+
+private fun Context.localPlinkDeviceId(): String {
+    val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID).orEmpty()
+    return "pixel-${androidId.ifBlank { Build.MODEL.ifBlank { "android" } }}"
+}
+
+private fun Context.copyToClipboard(label: String, text: String) {
+    val clipboard = getSystemService(ClipboardManager::class.java)
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
+}
+
+private fun localLanAddress(): String {
+    val interfaces = NetworkInterface.getNetworkInterfaces().toList()
+    return interfaces
+        .flatMap { it.inetAddresses.toList() }
+        .filterIsInstance<Inet4Address>()
+        .firstOrNull { !it.isLoopbackAddress && !it.isLinkLocalAddress }
+        ?.hostAddress
+        ?: "127.0.0.1"
 }
 
 private val GoogleSansFlex = FontFamily(

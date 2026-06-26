@@ -11,7 +11,9 @@ What is ready:
 - macOS Swift tests and build pass.
 - macOS app is packaged, ad-hoc signed for local testing, strict-verified outside the workspace metadata path, and exported as `build/PlinkMac.app.zip`.
 - macOS has both `Network.framework` and Foundation/POSIX secure TCP receivers; the debug receiver defaults to the Foundation fallback for Android-compatible length-prefixed frames.
+- Visible manual pairing is implemented as a copy-offer / paste-response flow with key-bound emoji and numeric verification.
 - Pixel-to-Mac encrypted clipboard delivery passed on real hardware through the Foundation fallback receiver on 2026-06-26.
+- Installed-app paired clipboard proof passed with `/Applications/PlinkMac.app` and the Pixel app using a fresh shared app-data session on 2026-06-26.
 - Local install validation passed: `/Applications/PlinkMac.app` launches, and the Pixel has `app.plink.android` version `0.1.0` installed.
 - Shared protocol fixtures validate.
 - SMS and phone-state permissions are not requested in the current Android manifest.
@@ -19,7 +21,8 @@ What is ready:
 
 What still blocks public end-user release:
 
-- Visible real nearby pairing must be wired to the proven transport path and tested on hardware.
+- Visible manual pairing must get a final human-driven copy-offer / paste-response hardware pass.
+- Automatic nearby discovery/pairing is not implemented yet.
 - Android notification forwarding and Android `RemoteInput` replies need device E2E proof.
 - Android release APK/AAB needs release signing credentials.
 - macOS needs Developer ID signing, notarization, and stapling.

@@ -15,21 +15,32 @@
 
 - macOS app installed to `/Applications/PlinkMac.app`.
 - macOS app launched successfully from `/Applications`.
+- macOS menu bar app remained running after switching to an AppKit `NSStatusItem` lifecycle.
 - Pixel app `app.plink.android` installed and launched.
 - Pixel package state showed `versionName=0.1.0`, `versionCode=1`.
+- Pixel UI showed the visible `Manual pairing` controls: `Mac pairing offer`, `Import`, and `Confirm`.
 - Foundation/POSIX Mac receiver accepted an encrypted Pixel event using Android-compatible length-prefixed socket framing.
 - Pixel sent `clipboard.updated` with `source=pixel-debug` and `target=mac-demo`.
 - macOS pasteboard updated to `PlinkPixelToMacEncryptedClipboard_20260626T135916Z`.
+- Installed-app paired proof passed with a fresh app-data session:
+  - Mac app binary: `/Applications/PlinkMac.app/Contents/MacOS/PlinkMac`
+  - Pixel id: `pixel-cecf07c65fc020a0`
+  - Pixel IP: `192.168.50.98`
+  - Mac IP: `192.168.50.41`
+  - macOS pasteboard updated to `PlinkInstalledPairedClipboard_20260626T141547Z`.
 
 ## Artifacts
 
 - Receiver log: `build/foundation-receiver-device-test-2026-06-26.log`
 - Pixel launch screenshot: `build/pixel-installed-after-fallback.png`
+- Updated Pixel manual-pairing screenshot: `build/pixel-manual-pairing-2026-06-26.png`
+- Updated Pixel manual-pairing UI dump: `build/pixel-manual-pairing-ui-2026-06-26.json`
+- Installed-app paired log: `build/plinkmac-installed-paired-2026-06-26.log`
 - macOS local-test package: `build/PlinkMac.app.zip`
 
 ## Remaining Release Blockers
 
-- Visible nearby pairing UI still needs to use the proven encrypted transport path end to end.
+- Visible manual pairing UI is implemented and visible on Pixel, but the full copy-offer / paste-response UI flow still needs a human-driven hardware pass.
 - Notification mirroring and reply require Android notification access and runtime permission, which were intentionally left unchanged.
 - Android release signing credentials are still needed for a distributable APK or AAB.
 - macOS Developer ID signing, notarization, and stapling are still needed for public distribution.

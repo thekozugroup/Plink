@@ -15,36 +15,41 @@
    `adb install -r android/build/outputs/apk/debug/android-debug.apk`
 2. Open Plink.
 3. Confirm Google-style Material UI loads.
-4. Enable notification listener.
-5. Enable notifications.
-6. Optional: enable accessibility clipboard and Shizuku.
-7. Confirm pairing screen shows four emoji plus a six-digit numeric code.
-8. Trigger simulator events and confirm generated event types match shared fixtures.
-9. Confirm SMS is shown as a future/default-role mode, not as a requested install permission.
-10. Confirm notification listener creates reply routes for replyable notifications, stores live `RemoteInput` actions in memory, and consumes reply tokens once.
+4. Paste the Mac pairing offer into `Manual pairing`.
+5. Tap `Import` and confirm the four emoji plus six-digit code match the Mac preview after the Mac imports the Pixel response.
+6. Tap `Confirm`; confirm the Pixel response is copied and the encrypted session is stored.
+7. Enable notification listener only when explicitly testing notification handoff.
+8. Enable notifications only when explicitly testing notification handoff.
+9. Optional: enable accessibility clipboard and Shizuku.
+10. Trigger simulator events and confirm generated event types match shared fixtures.
+11. Confirm SMS is shown as a future/default-role mode, not as a requested install permission.
+12. Confirm notification listener creates reply routes for replyable notifications, stores live `RemoteInput` actions in memory, and consumes reply tokens once.
 
 ## macOS
 
 1. Run `swift run PlinkMac` from `macos/`.
 2. Confirm Plink appears in the menu bar.
 3. Open pairing window.
-4. Confirm the four-emoji and six-digit code matches Android.
-5. Click `Simulate Call`; confirm native macOS notification appears.
-6. Click `Simulate Message`; confirm native macOS notification appears with reply action.
-7. Send a reply and confirm it is converted into a `message.reply` event targeting the paired Pixel.
-8. Confirm the receiver reports listening after pairing or saved-pairing restore.
-9. Disable notifications in System Settings and confirm the menu reports the denied/error state.
-10. Confirm the printed app path is signed with the expected identity or ad-hoc identity for local testing and `build/PlinkMac.app.zip` exists.
+4. Click `Copy Offer` and paste it into the Pixel app.
+5. Paste the Pixel pairing response into the Mac window.
+6. Click `Preview Response Code`; confirm the four-emoji and six-digit code matches Android.
+7. Click `Finish Pairing`; confirm the receiver reports listening after pairing or saved-pairing restore.
+8. Click `Simulate Call`; confirm native macOS notification appears.
+9. Click `Simulate Message`; confirm native macOS notification appears with reply action.
+10. Send a reply and confirm it is converted into a `message.reply` event targeting the paired Pixel.
+11. Disable notifications in System Settings and confirm the menu reports the denied/error state.
+12. Confirm the printed app path is signed with the expected identity or ad-hoc identity for local testing and `build/PlinkMac.app.zip` exists.
 
 ## Cross-Device
 
 1. Put Pixel and Mac on the same local network.
 2. Start macOS app.
 3. Start Android app.
-4. Pair only if emoji code matches on both devices.
-5. Send sample `call.ringing`, `message.received`, `clipboard.updated`, and `web.open` events.
-6. Confirm unsupported permissions degrade visibly instead of failing silently.
-7. Send an encrypted frame with the wrong source or target device id and confirm it is rejected.
+4. Copy the Mac offer to Android, import it, confirm on Android, then paste the Pixel response back into macOS.
+5. Pair only if emoji code matches on both devices.
+6. Send sample `call.ringing`, `message.received`, `clipboard.updated`, and `web.open` events.
+7. Confirm unsupported permissions degrade visibly instead of failing silently.
+8. Send an encrypted frame with the wrong source or target device id and confirm it is rejected.
 
 ## Negative Cases
 

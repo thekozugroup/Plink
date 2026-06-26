@@ -57,12 +57,13 @@ object PairingCrypto {
             info = "plink-session-v1|$transcript".toByteArray(Charsets.UTF_8),
             length = 32
         )
-        val sessionId = MessageDigest.getInstance("SHA-256")
-            .digest(sessionKey)
-            .joinToString(separator = "") { "%02x".format(it) }
-            .take(32)
-        return DerivedSession(sessionId = sessionId, sessionKey = sessionKey)
+        return DerivedSession(sessionId = sessionId(sessionKey), sessionKey = sessionKey)
     }
+
+    fun sessionId(sessionKey: ByteArray): String = MessageDigest.getInstance("SHA-256")
+        .digest(sessionKey)
+        .joinToString(separator = "") { "%02x".format(it) }
+        .take(32)
 
     private fun hkdfSha256(inputKeyMaterial: ByteArray, salt: ByteArray, info: ByteArray, length: Int): ByteArray {
         val prk = hmac(salt, inputKeyMaterial)

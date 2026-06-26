@@ -35,7 +35,7 @@ codesign --verify --deep --strict "$APP_DIR"
 codesign -d --entitlements :- "$APP_DIR" >/dev/null 2>&1
 
 rm -f "$DIST_ZIP"
-ditto -c -k --norsrc --noextattr "$APP_DIR" "$DIST_ZIP"
+ditto -c -k --norsrc --noextattr --keepParent "$APP_DIR" "$DIST_ZIP"
 
 echo "$APP_DIR"
 echo "$DIST_ZIP"
