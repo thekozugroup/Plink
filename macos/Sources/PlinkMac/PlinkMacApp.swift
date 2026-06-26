@@ -9,6 +9,13 @@ struct PlinkMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
+        MenuBarExtra {
+            MenuBarPanel(appDelegate: appDelegate)
+        } label: {
+            Label("Plink", systemImage: "link.circle.fill")
+        }
+        .menuBarExtraStyle(.window)
+
         Settings {
             PairingView()
         }
@@ -31,7 +38,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     private var pendingManualOffer: PairingOffer?
     private var pendingManualConfirmation: PairingConfirmation?
     private var pairingAdvertiser: NetService?
-    private var statusItem: NSStatusItem?
     @Published var lastReply: String = "None"
     @Published var lastDeliveryState: String = "Notifications pending"
     private var pairingWindow: NSWindow?
@@ -41,7 +47,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
         ProcessInfo.processInfo.disableSuddenTermination()
         NSApplication.shared.setActivationPolicy(.accessory)
-        configureStatusItem()
         notificationBridge.configure()
         notificationBridge.onAuthorizationChanged = { [weak self] granted, error in
             Task { @MainActor in
@@ -77,7 +82,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         if restoreSavedPairing() == false {
             publishPairingOffer(prepareManualPairing())
         }
-        verifyStatusItem()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -89,58 +93,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         NSApplication.shared.terminate(nil)
     }
 
-    private func configureStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.isVisible = true
-        if let button = item.button {
-            let image = NSImage(systemSymbolName: "link.circle.fill", accessibilityDescription: "Plink")
-                ?? NSImage(systemSymbolName: "link", accessibilityDescription: "Plink")
-            image?.isTemplate = true
-            button.image = image
-            button.title = " Plink"
-            button.imagePosition = .imageLeading
-            button.appearsDisabled = false
-            button.toolTip = "Plink"
-        }
-        let menu = NSMenu()
-        let ready = NSMenuItem(title: "Pixel ready", action: nil, keyEquivalent: "")
-        ready.image = NSImage(systemSymbolName: "iphone.gen3", accessibilityDescription: nil)
-        menu.addItem(ready)
-        menu.addItem(NSMenuItem(title: lastDeliveryState, action: nil, keyEquivalent: ""))
-        menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Show Pairing", action: #selector(showPairingFromMenu), keyEquivalent: "p"))
-        menu.addItem(NSMenuItem(title: "Simulate Call", action: #selector(simulateCallFromMenu), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Simulate Message", action: #selector(simulateMessageFromMenu), keyEquivalent: ""))
-        menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitFromMenu), keyEquivalent: "q"))
-        menu.items.forEach { $0.target = self }
-        item.menu = menu
-        statusItem = item
-    }
-
-    private func verifyStatusItem() {
-        guard statusItem?.button != nil else {
-            lastDeliveryState = "Menu bar unavailable"
-            showPairingWindow()
-            return
-        }
-        NSLog("Plink status item ready")
-    }
-
-    @objc private func showPairingFromMenu() {
-        showPairingWindow()
-    }
-
-    @objc private func simulateCallFromMenu() {
+    func simulateCall() {
         notificationBridge.showCall(caller: "Alex Morgan", handle: "+1 555 123 4567")
     }
 
-    @objc private func simulateMessageFromMenu() {
+    func simulateMessage() {
         notificationBridge.showMessage(sender: "Alex Morgan", preview: "Can you send the deck?")
     }
 
-    @objc private func quitFromMenu() {
-        quit()
+    func openSettings() {
+        NSApplication.shared.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 
     func showPairingWindow() {
@@ -401,6 +363,102 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
             publicKey: demoPixelPrivateKey.publicKey.derRepresentation.base64EncodedString(),
             targetDeviceId: localMacDeviceId
         )
+    }
+}
+
+struct MenuBarPanel: View {
+    @ObservedObject var appDelegate: AppDelegate
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: "link.circle.fill")
+                    .font(.system(size: 34, weight: .semibold))
+                    .foregroundStyle(.blue)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Plink")
+                        .font(.title2.weight(.semibold))
+                    Text("Pixel + Mac continuity")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                StatusRow(title: "Status", value: appDelegate.lastDeliveryState, symbol: "dot.radiowaves.left.and.right")
+                StatusRow(title: "Last reply", value: appDelegate.lastReply, symbol: "arrowshape.turn.up.left")
+            }
+
+            Divider()
+
+            VStack(spacing: 10) {
+                Button {
+                    appDelegate.showPairingWindow()
+                } label: {
+                    Label("Pair Pixel", systemImage: "iphone.gen3.radiowaves.left.and.right")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderedProminent)
+
+                HStack(spacing: 10) {
+                    Button {
+                        appDelegate.simulateCall()
+                    } label: {
+                        Label("Call", systemImage: "phone")
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    Button {
+                        appDelegate.simulateMessage()
+                    } label: {
+                        Label("Message", systemImage: "message")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        appDelegate.openSettings()
+                    } label: {
+                        Label("Settings", systemImage: "gearshape")
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    Button(role: .destructive) {
+                        appDelegate.quit()
+                    } label: {
+                        Label("Quit", systemImage: "power")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .frame(width: 340)
+    }
+}
+
+private struct StatusRow: View {
+    var title: String
+    var value: String
+    var symbol: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: symbol)
+                .foregroundStyle(.secondary)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.callout)
+                    .lineLimit(2)
+            }
+            Spacer(minLength: 0)
+        }
     }
 }
 
