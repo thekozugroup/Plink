@@ -86,3 +86,5 @@ Before publishing:
 ## Release Decision
 
 Use this repo as a development/public foundation release until hardware E2E and signing/notarization are complete. Do not market it as full iPhone Continuity parity.
+
+Final release handoff checklist: `docs/production-handoff.md`.

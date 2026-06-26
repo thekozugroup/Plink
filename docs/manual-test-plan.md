@@ -8,6 +8,7 @@
 4. Confirm the Android manifest gate rejects raw SMS permissions.
 5. Confirm strict `codesign --verify --deep --strict` passes for the printed app path.
 6. For public distribution, set `MACOS_CODESIGN_IDENTITY` to a Developer ID identity and notarize the bundle.
+7. Use `docs/production-handoff.md` for the final permission, signing, notarization, and paired hardware pass.
 
 ## Android
 
