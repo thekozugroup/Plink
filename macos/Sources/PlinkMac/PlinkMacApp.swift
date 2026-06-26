@@ -38,7 +38,9 @@ struct PlinkMacApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unchecked Sendable {
     let notificationBridge = NotificationBridge()
     let pairingMachine = PairingStateMachine()
-    let pairingStore = UserDefaultsPairingStore()
+    let pairingStore = UserDefaultsPairingStore(
+        domainName: "com.thekozugroup.plink.mac"
+    )
     let pairingSecretStore = KeychainPairingSecretStore()
     private let localMacDeviceId = "mac-demo"
     private let receiverPort: UInt16 = 45731
@@ -129,16 +131,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
     }
 
     private func restoreSavedPairing() {
-        guard let device = try? pairingStore.all().first else { return }
+        if restoreDebugEnvironmentPairing() {
+            return
+        }
+        let devices: [PairedDevice]
+        do {
+            devices = try pairingStore.all()
+        } catch {
+            NSLog("Plink restore pairing failed to load devices: \(error.localizedDescription)")
+            return
+        }
+        guard let device = devices.first else {
+            NSLog("Plink restore pairing found no saved devices")
+            return
+        }
         let storedSessionKey: Data?
         do {
             storedSessionKey = try pairingSecretStore.load(sessionId: device.sessionId)
         } catch {
+            NSLog("Plink restore pairing failed to load session key: \(error.localizedDescription)")
             return
         }
         guard let sessionKey = storedSessionKey else { return }
+        NSLog("Plink restore pairing loaded \(device.id); starting receiver")
         activeTransport = makeTransport(for: device, sessionKey: sessionKey)
         startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id)
+    }
+
+    private func restoreDebugEnvironmentPairing() -> Bool {
+        let environment = ProcessInfo.processInfo.environment
+        guard
+            let sessionKeyBase64 = environment["PLINK_DEBUG_SESSION_KEY_BASE64"],
+            let sessionKey = Data(base64Encoded: sessionKeyBase64),
+            let pairedDeviceId = environment["PLINK_DEBUG_PAIRED_DEVICE_ID"]
+        else {
+            return false
+        }
+        let device = PairedDevice(
+            id: pairedDeviceId,
+            name: environment["PLINK_DEBUG_PAIRED_DEVICE_NAME"] ?? "Pixel",
+            platform: "android",
+            endpoint: environment["PLINK_DEBUG_PAIRED_ENDPOINT"] ?? "127.0.0.1:45731",
+            sessionId: environment["PLINK_DEBUG_SESSION_ID"] ?? "debug-session",
+            peerPublicKey: "debug-pixel-public-key",
+            localPublicKey: "debug-mac-public-key",
+            trusted: true
+        )
+        NSLog("Plink debug restore loaded \(device.id); starting receiver")
+        activeTransport = makeTransport(for: device, sessionKey: sessionKey)
+        startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id)
+        return true
     }
 
     private func makeTransport(for device: PairedDevice, sessionKey: Data) -> (any PlinkTransport)? {
@@ -171,8 +213,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, @unc
             }
             receiver = server
             lastDeliveryState = "Receiver listening"
+            NSLog("Plink receiver listening on \(receiverPort)")
         } catch {
             lastDeliveryState = error.localizedDescription
+            NSLog("Plink receiver failed: \(error.localizedDescription)")
         }
     }
 

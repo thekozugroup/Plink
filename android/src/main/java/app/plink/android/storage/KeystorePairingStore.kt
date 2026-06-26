@@ -7,7 +7,6 @@ import app.plink.android.pairing.PairedDevice
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import java.security.KeyStore
-import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -44,10 +43,9 @@ class KeystorePairingStore(
     }
 
     private fun encrypt(value: String): ByteArray {
-        val iv = ByteArray(12).also { SecureRandom().nextBytes(it) }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey(), GCMParameterSpec(128, iv))
-        return iv + cipher.doFinal(value.toByteArray(Charsets.UTF_8))
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey())
+        return cipher.iv + cipher.doFinal(value.toByteArray(Charsets.UTF_8))
     }
 
     private fun decrypt(value: ByteArray): String {

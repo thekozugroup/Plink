@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.time.Instant
@@ -48,7 +49,10 @@ class SecureSocketPlinkClient(
     override suspend fun send(envelope: PlinkEnvelope) = withContext(Dispatchers.IO) {
         val frame = codec.seal(envelope, sequence = sequence.incrementAndGet())
         val payload = json.encodeToString(EncryptedPlinkFrame.serializer(), frame).toByteArray(Charsets.UTF_8)
-        Socket(host, port).use { socket ->
+        Socket().use { socket ->
+            socket.connect(InetSocketAddress(host, port), 5_000)
+            socket.soTimeout = 5_000
+            socket.tcpNoDelay = true
             LengthPrefixedFrameCodec.write(DataOutputStream(socket.getOutputStream()), payload)
         }
     }

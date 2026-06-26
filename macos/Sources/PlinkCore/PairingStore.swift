@@ -35,10 +35,16 @@ public final class InMemoryPairingStore: PairingStore, @unchecked Sendable {
 public final class UserDefaultsPairingStore: PairingStore, @unchecked Sendable {
     private let defaults: UserDefaults
     private let key: String
+    private let domainName: String?
 
-    public init(defaults: UserDefaults = .standard, key: String = "app.plink.pairedDevices") {
+    public init(
+        defaults: UserDefaults = .standard,
+        key: String = "app.plink.pairedDevices",
+        domainName: String? = nil
+    ) {
         self.defaults = defaults
         self.key = key
+        self.domainName = domainName
     }
 
     public func save(_ device: PairedDevice) throws {
@@ -49,7 +55,13 @@ public final class UserDefaultsPairingStore: PairingStore, @unchecked Sendable {
     }
 
     public func all() throws -> [PairedDevice] {
-        guard let data = defaults.data(forKey: key) else { return [] }
+        let data: Data?
+        if let domainName {
+            data = defaults.persistentDomain(forName: domainName)?[key] as? Data
+        } else {
+            data = defaults.data(forKey: key)
+        }
+        guard let data else { return [] }
         return try JSONDecoder().decode([PairedDevice].self, from: data)
     }
 
@@ -60,7 +72,13 @@ public final class UserDefaultsPairingStore: PairingStore, @unchecked Sendable {
 
     private func persist(_ devices: [PairedDevice]) throws {
         let data = try JSONEncoder().encode(devices)
-        defaults.set(data, forKey: key)
+        if let domainName {
+            var domain = defaults.persistentDomain(forName: domainName) ?? [:]
+            domain[key] = data
+            defaults.setPersistentDomain(domain, forName: domainName)
+        } else {
+            defaults.set(data, forKey: key)
+        }
     }
 }
 
