@@ -1,0 +1,1021 @@
+{
+  "schemaVersion": 1,
+  "status": "independent_adversarial_metric_review_2_complete_acceptance_incomplete",
+  "reviewedAt": "2026-09-20T04:56:47.358125+00:00",
+  "effectId": "01M2YJB9BRCR61CCTDBAKJP6X1",
+  "existingBabysitterRun": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+  "newRunCreated": false,
+  "verified": false,
+  "productComplete": false,
+  "allOriginalCasesClosed": false,
+  "metrics": {
+    "cellularCalls": 0,
+    "notificationReplies": 0,
+    "nativeMac": 0,
+    "tomatoAndroid": 0,
+    "continuity": 0,
+    "security": 0,
+    "stability": 0,
+    "deviceEndToEnd": 0,
+    "processIntegrity": 0
+  },
+  "overallScore": 0,
+  "metricDetails": {
+    "cellularCalls": {
+      "score": 0,
+      "weight": 25,
+      "passedCases": 0,
+      "totalCases": 4,
+      "caseIds": [
+        "CALL-01",
+        "CALL-02",
+        "CALL-03",
+        "CALL-04"
+      ]
+    },
+    "notificationReplies": {
+      "score": 0,
+      "weight": 15,
+      "passedCases": 0,
+      "totalCases": 3,
+      "caseIds": [
+        "MSG-01",
+        "MSG-02",
+        "MSG-03"
+      ]
+    },
+    "nativeMac": {
+      "score": 0,
+      "weight": 8,
+      "passedCases": 0,
+      "totalCases": 2,
+      "caseIds": [
+        "MAC-01",
+        "MAC-02"
+      ]
+    },
+    "tomatoAndroid": {
+      "score": 0,
+      "weight": 15,
+      "passedCases": 0,
+      "totalCases": 3,
+      "caseIds": [
+        "TOM-01",
+        "TOM-02",
+        "TOM-03"
+      ]
+    },
+    "continuity": {
+      "score": 0,
+      "weight": 12,
+      "passedCases": 0,
+      "totalCases": 3,
+      "caseIds": [
+        "CON-01",
+        "CON-02",
+        "CON-03"
+      ]
+    },
+    "security": {
+      "score": 0,
+      "weight": 8,
+      "passedCases": 0,
+      "totalCases": 3,
+      "caseIds": [
+        "SEC-01",
+        "SEC-02",
+        "SEC-03"
+      ]
+    },
+    "stability": {
+      "score": 0,
+      "weight": 7,
+      "passedCases": 0,
+      "totalCases": 3,
+      "caseIds": [
+        "STAB-01",
+        "STAB-02",
+        "STAB-03"
+      ]
+    },
+    "deviceEndToEnd": {
+      "score": 0,
+      "weight": 7,
+      "passedCases": 0,
+      "totalCases": 4,
+      "caseIds": [
+        "E2E-01",
+        "E2E-02",
+        "E2E-03",
+        "E2E-04"
+      ]
+    },
+    "processIntegrity": {
+      "score": 0,
+      "weight": 3,
+      "passedCases": 0,
+      "totalCases": 2,
+      "caseIds": [
+        "PROC-01",
+        "PROC-02"
+      ]
+    }
+  },
+  "passedCases": 0,
+  "totalCases": 27,
+  "scoring": {
+    "rule": {
+      "withinMetric": "Equal case weight. Credit only for all case criteria supported by actual matching-build evidence and independent review.",
+      "overall": "Sum(metric weight * passed/total). Missing, blocked, failed, invalid, skipped and not-run earn zero. Incomplete score is capped below 100.",
+      "completion": "Every metric must be 100; an aggregate average cannot waive a case. Platform limits and missing human input remain open.",
+      "meaning": "Zero evidence-backed score is not a conclusion that the product has zero functionality."
+    },
+    "matrixPath": ".a5c/artifacts/acceptance/matrix.json",
+    "matrixSha256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+    "unchanged": true,
+    "interpretation": "No entire frozen original case is independently closed by the supplied evidence at this checkpoint. Zero is whole-case evidence completeness, not implementation quality or a denial of the successful engine, transport, RemoteInput and build results. Partial case evidence receives no numeric credit under the frozen rule.",
+    "formalEvidenceCheckerRun": false,
+    "reasonNoCheckerRun": "This is the requested independent adversarial review, not a fabricated all-pass submission. No builds/tests or new audit framework were run."
+  },
+  "pendingEffectInspection": {
+    "path": ".a5c/artifacts/current-iteration.json",
+    "snapshotSha256": "797935f486656dba9b051c310707e00010a3c80f162841a4886ed0a74ba72308",
+    "taskPromptSha256": "999589ea06137bc725fc9178f8a208f4a82798ed2c73ce76d85ccc79b491992a",
+    "taskPromptCharacters": 67090,
+    "taskPromptVerbatimEmbeddedFiles": [
+      ".a5c/spec.md",
+      ".a5c/artifacts/acceptance/README.md",
+      ".a5c/artifacts/acceptance/baseline.json",
+      ".a5c/artifacts/acceptance/evaluate.py",
+      ".a5c/artifacts/acceptance/freeze.json",
+      ".a5c/artifacts/acceptance/matrix.json",
+      ".a5c/artifacts/acceptance/verification.json"
+    ],
+    "directComparison": "The actual task contains original SPEC verbatim and ARTIFACTS stdout consisting of a diffstat, frozen acceptance README/baseline/checker/freeze/matrix/verification. Their embedded text matches the files exactly. Baseline/checker self-tests establish no product acceptance. Final evidence was separately opened and inspected directly; narrative claims in context were not substituted for logs, captured bytes or original criteria.",
+    "checksStdoutMatchesFinalLog": true
+  },
+  "cases": [
+    {
+      "id": "CALL-01",
+      "metric": "cellularCalls",
+      "title": "Real incoming carrier call and native answer",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No consented carrier call, native Answer interaction, or same-call device/peer observation.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CALL-01.1",
+        "CALL-01.2",
+        "CALL-01.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-2.json",
+        "docs/feature-parity.md"
+      ]
+    },
+    {
+      "id": "CALL-02",
+      "metric": "cellularCalls",
+      "title": "Cellular audio on laptop",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No two-minute unpredictable two-way speech through laptop microphone/output with route traces and consented peer confirmation.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CALL-02.1",
+        "CALL-02.2",
+        "CALL-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-2.json",
+        "docs/feature-parity.md"
+      ]
+    },
+    {
+      "id": "CALL-03",
+      "metric": "cellularCalls",
+      "title": "Native call lifecycle controls",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No real-call decline/end/remote hang-up or exposed mute/route control observations.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CALL-03.1",
+        "CALL-03.2",
+        "CALL-03.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-2.json",
+        "docs/feature-parity.md"
+      ]
+    },
+    {
+      "id": "CALL-04",
+      "metric": "cellularCalls",
+      "title": "Call recovery and capability truthfulness",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No recovered real carrier call with laptop audio after denied permission/connection interruption.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CALL-04.1",
+        "CALL-04.2",
+        "CALL-04.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-2.json",
+        "docs/feature-parity.md"
+      ]
+    },
+    {
+      "id": "MSG-01",
+      "metric": "notificationReplies",
+      "title": "Native Notification Center text reply",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Synthetic programmatic Swift reply reaches the test-owned Android RemoteInput once. Native Notification Center text entry and original external recipient delivery remain absent.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "MSG-01.1",
+        "MSG-01.2",
+        "MSG-01.3"
+      ],
+      "evidence": [
+        "docs/evidence/2026-09-20/replies-android-roundtrip.log",
+        "docs/evidence/2026-09-20/replies-mac-roundtrip.log",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "MSG-02",
+      "metric": "notificationReplies",
+      "title": "Conversation routing and message coverage",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No two real controlled conversations, identical-name/account routing, or SMS/RCS/app coverage proof.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "MSG-02.1",
+        "MSG-02.2",
+        "MSG-02.3"
+      ],
+      "evidence": [
+        "docs/evidence/2026-09-20/replies-android-roundtrip.log",
+        "docs/evidence/2026-09-20/replies-mac-roundtrip.log",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "MSG-03",
+      "metric": "notificationReplies",
+      "title": "Stale reply and failure handling",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Synthetic one-use/replacement/removal negatives pass, but visible native failure/recovery and a fresh real reply after recovery are absent.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "MSG-03.1",
+        "MSG-03.2",
+        "MSG-03.3"
+      ],
+      "evidence": [
+        "docs/evidence/2026-09-20/replies-android-roundtrip.log",
+        "docs/evidence/2026-09-20/replies-mac-roundtrip.log",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "MAC-01",
+      "metric": "nativeMac",
+      "title": "Native Swift app and OS controls",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Native Swift build exists. Actual macOS-owned call/reply controls, keyboard and VoiceOver behavior remain unverified while Mac is locked.",
+      "supportedWholeCriteria": [
+        "MAC-01.1"
+      ],
+      "criteriaNotFullyClosed": [
+        "MAC-01.2",
+        "MAC-01.3"
+      ],
+      "evidence": [
+        "docs/evidence/2026-09-20/verification-manifest.json",
+        ".a5c/artifacts/device-evidence-2.json"
+      ]
+    },
+    {
+      "id": "MAC-02",
+      "metric": "nativeMac",
+      "title": "HIG and permissions",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No complete native HIG/permission recovery, appearance/text scaling and accessibility observations.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "MAC-02.1",
+        "MAC-02.2",
+        "MAC-02.3"
+      ],
+      "evidence": [
+        "docs/evidence/2026-09-20/verification-manifest.json",
+        ".a5c/artifacts/device-evidence-2.json"
+      ]
+    },
+    {
+      "id": "TOM-01",
+      "metric": "tomatoAndroid",
+      "title": "Pinned Tomato basis and provenance",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Pinned Tomato provenance and mechanical adaptation map exist. Matched upstream reference captures/device-version evidence and complete independent mapping/licensing closure are not established by supplied artifacts.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "TOM-01.1",
+        "TOM-01.2",
+        "TOM-01.3"
+      ],
+      "evidence": [
+        "docs/evidence/2026-09-20/tomato-design-comparison.md",
+        "docs/evidence/2026-09-20/ui-final-evidence-2.json",
+        "docs/evidence/2026-09-20/verified-apk-ui.json",
+        "docs/evidence/2026-09-20/verified-apk-connection-large-text.png"
+      ]
+    },
+    {
+      "id": "TOM-02",
+      "metric": "tomatoAndroid",
+      "title": "Interface, design and fonts",
+      "status": "fail",
+      "credit": 0,
+      "reason": "Final tested APK visibly clips Stop to Sto at 1.5x font scale. Full matched Tomato visual/font comparison is absent; earlier Settings fixes do not close all UI.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "TOM-02.1",
+        "TOM-02.2",
+        "TOM-02.3"
+      ],
+      "evidence": [
+        "docs/evidence/2026-09-20/tomato-design-comparison.md",
+        "docs/evidence/2026-09-20/ui-final-evidence-2.json",
+        "docs/evidence/2026-09-20/verified-apk-ui.json",
+        "docs/evidence/2026-09-20/verified-apk-connection-large-text.png"
+      ]
+    },
+    {
+      "id": "TOM-03",
+      "metric": "tomatoAndroid",
+      "title": "Animations and interaction",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Earlier emulator reduced-motion recording is partial. No measured reference animation tolerances, human TalkBack or physical Pixel motion/input proof.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "TOM-03.1",
+        "TOM-03.2",
+        "TOM-03.3"
+      ],
+      "evidence": [
+        "docs/evidence/2026-09-20/tomato-design-comparison.md",
+        "docs/evidence/2026-09-20/ui-final-evidence-2.json",
+        "docs/evidence/2026-09-20/verified-apk-ui.json",
+        "docs/evidence/2026-09-20/verified-apk-connection-large-text.png"
+      ]
+    },
+    {
+      "id": "CON-01",
+      "metric": "continuity",
+      "title": "Parity inventory and investigation",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Feature inventory names the material gaps, but does not supply feasibility evidence and public/private integration-option research for each material feature.",
+      "supportedWholeCriteria": [
+        "CON-01.1",
+        "CON-01.3"
+      ],
+      "criteriaNotFullyClosed": [
+        "CON-01.2"
+      ],
+      "evidence": [
+        "docs/feature-parity.md",
+        "docs/evidence/2026-09-20/files-android-roundtrip.log",
+        "docs/evidence/2026-09-20/files-mac-roundtrip.log",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "CON-02",
+      "metric": "continuity",
+      "title": "Clipboard, file and task handoff",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Ten synthetic engine transfers demonstrate destination file bytes and cleanup. Native file consent, real paired-device clipboard destination and native browser/task handoff, plus destination failure/cancellation journeys, remain open.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CON-02.1",
+        "CON-02.2",
+        "CON-02.3"
+      ],
+      "evidence": [
+        "docs/feature-parity.md",
+        "docs/evidence/2026-09-20/files-android-roundtrip.log",
+        "docs/evidence/2026-09-20/files-mac-roundtrip.log",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "CON-03",
+      "metric": "continuity",
+      "title": "Other integrations and remaining gaps",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Battery/media collectors and other paths have source support; complete positive/denied/offline destination evidence and material parity resolution remain absent.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CON-03.1",
+        "CON-03.2",
+        "CON-03.3"
+      ],
+      "evidence": [
+        "docs/feature-parity.md",
+        "docs/evidence/2026-09-20/files-android-roundtrip.log",
+        "docs/evidence/2026-09-20/files-mac-roundtrip.log",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "SEC-01",
+      "metric": "security",
+      "title": "Pairing, authentication and confidentiality",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Independent keyless capture confirms no tested synthetic file/reply markers and expected outer fields. Full trust-negative, OS-protected identity/secret-storage evidence for tested app paths and other protected content/media paths remain incomplete.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "SEC-01.1",
+        "SEC-01.2",
+        "SEC-01.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/file-policy-independent-2.json",
+        ".a5c/artifacts/android-file-critic-2.json",
+        ".a5c/artifacts/mac-file-critic-2.json",
+        ".a5c/artifacts/android-critic-2.json",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "SEC-02",
+      "metric": "security",
+      "title": "Replay and malformed traffic",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Unit policy/replay/queue negatives and Android replay-store recreation/RemoteInput negatives pass. Captured positive traffic does not demonstrate full malformed/oversized/wrong-session injection with no OS side effects through both complete application paths.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "SEC-02.1",
+        "SEC-02.2",
+        "SEC-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/file-policy-independent-2.json",
+        ".a5c/artifacts/android-file-critic-2.json",
+        ".a5c/artifacts/mac-file-critic-2.json",
+        ".a5c/artifacts/android-critic-2.json",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "SEC-03",
+      "metric": "security",
+      "title": "Consent, revocation and private data",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Reviewed revocation mechanisms and focused regressions are closed. Whole-app OS-permission revocation, private diagnostics/preview behavior and recovery preserving real user state are not fully demonstrated.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "SEC-03.1",
+        "SEC-03.2",
+        "SEC-03.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/file-policy-independent-2.json",
+        ".a5c/artifacts/android-file-critic-2.json",
+        ".a5c/artifacts/mac-file-critic-2.json",
+        ".a5c/artifacts/android-critic-2.json",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "STAB-01",
+      "metric": "stability",
+      "title": "Build and regression evidence",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Canonical build/regression gate and current binary bindings are substantiated. Exact build-time tool versions are not retained in the supplied final gate/manifest, so STAB-01.1 is not fully closed. Manifest now includes Swift receiver and installed-debug-APK digest; the checkpoint-1 missing-receiver-hash reason is superseded.",
+      "supportedWholeCriteria": [
+        "STAB-01.2",
+        "STAB-01.3"
+      ],
+      "criteriaNotFullyClosed": [
+        "STAB-01.1"
+      ],
+      "evidence": [
+        "scripts/verify.sh",
+        "docs/evidence/2026-09-20/verification-2-final-rerun.log",
+        "docs/evidence/2026-09-20/verification-manifest.json",
+        ".a5c/artifacts/device-evidence-2.json",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "STAB-02",
+      "metric": "stability",
+      "title": "Reconnect and lifecycle",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No three-cycle network/sleep/restart/locked-background journey followed by real call audio and native reply. Unexplained emulator exit before reply rerun remains unexplained.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "STAB-02.1",
+        "STAB-02.2",
+        "STAB-02.3"
+      ],
+      "evidence": [
+        "scripts/verify.sh",
+        "docs/evidence/2026-09-20/verification-2-final-rerun.log",
+        "docs/evidence/2026-09-20/verification-manifest.json",
+        ".a5c/artifacts/device-evidence-2.json",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "STAB-03",
+      "metric": "stability",
+      "title": "Background and burst stability",
+      "status": "not_run",
+      "credit": 0,
+      "reason": "No two-hour background soak with 100 synthetic notifications and resource/latency baseline/drain evidence.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "STAB-03.1",
+        "STAB-03.2",
+        "STAB-03.3"
+      ],
+      "evidence": [
+        "scripts/verify.sh",
+        "docs/evidence/2026-09-20/verification-2-final-rerun.log",
+        "docs/evidence/2026-09-20/verification-manifest.json",
+        ".a5c/artifacts/device-evidence-2.json",
+        ".a5c/artifacts/checkpoint-2-independent-integration.json"
+      ]
+    },
+    {
+      "id": "E2E-01",
+      "metric": "deviceEndToEnd",
+      "title": "Actual Pixel/Mac provenance",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Final evidence is API36 arm64 emulator plus Swift on Mac; physical Pixel same-build call/reply/continuity journey is absent.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "E2E-01.1",
+        "E2E-01.2",
+        "E2E-01.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-2.json",
+        ".a5c/artifacts/cleanup-inventory-2.json",
+        ".a5c/artifacts/checkpoint-review-1.json"
+      ]
+    },
+    {
+      "id": "E2E-02",
+      "metric": "deviceEndToEnd",
+      "title": "Other Android support",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No physical non-Pixel core call/audio/native reply journey or corresponding complete support evidence.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "E2E-02.1",
+        "E2E-02.2",
+        "E2E-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-2.json",
+        ".a5c/artifacts/cleanup-inventory-2.json",
+        ".a5c/artifacts/checkpoint-review-1.json"
+      ]
+    },
+    {
+      "id": "E2E-03",
+      "metric": "deviceEndToEnd",
+      "title": "Human-assisted completion ledger",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Required human actions remain explicitly pending; all human-dependent cases need actual reviewed evidence before this frozen whole case closes.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "E2E-03.1",
+        "E2E-03.2",
+        "E2E-03.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-2.json",
+        ".a5c/artifacts/cleanup-inventory-2.json",
+        ".a5c/artifacts/checkpoint-review-1.json"
+      ]
+    },
+    {
+      "id": "PROC-01",
+      "metric": "processIntegrity",
+      "title": "Adversarial review and requested model mix",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Independent critics preserve defects and corrected historical evidence. Complete requested model-mix/decision ownership audit and every-metric correction/reverification record are not closed by this bounded evidence review.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "PROC-01.1",
+        "PROC-01.2",
+        "PROC-01.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/current-iteration.json",
+        "docs/evidence/2026-09-20/README.md",
+        ".a5c/artifacts/file-policy-independent-2.json"
+      ]
+    },
+    {
+      "id": "PROC-02",
+      "metric": "processIntegrity",
+      "title": "Checkpoints and honest completion",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Current checkpoint claims are bounded and link source/runtime evidence; parent checkpoint publication and final matching-evidence report remain pending at this effect. Reviewer performed no commit/push; no full completion is claimed.",
+      "supportedWholeCriteria": [
+        "PROC-02.1"
+      ],
+      "criteriaNotFullyClosed": [
+        "PROC-02.2",
+        "PROC-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/current-iteration.json",
+        "docs/evidence/2026-09-20/README.md",
+        ".a5c/artifacts/file-policy-independent-2.json"
+      ]
+    },
+    {
+      "id": "E2E-04",
+      "metric": "deviceEndToEnd",
+      "title": "Shared Pixel protection and temporary-file cleanup",
+      "status": "partial",
+      "credit": 0,
+      "reason": "No physical Pixel use this iteration; parent records removed test package and empty forwards/reverses. Cross-team final temporary-artifact/AVD cleanup closure is pending; reviewer raw inspection is complete and cleanup-ready.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "E2E-04.1",
+        "E2E-04.2",
+        "E2E-04.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-2.json",
+        ".a5c/artifacts/cleanup-inventory-2.json",
+        ".a5c/artifacts/checkpoint-review-1.json"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "ACCEPT2-UI-01",
+      "priority": "P2",
+      "kind": "reproduced_UI_defect",
+      "status": "open_iteration_3",
+      "title": "Nearby pairing Stop label clips at 1.5x font scale",
+      "path": "android/src/main/java/app/plink/android/ui/ManualPairingCard.kt",
+      "line": 102,
+      "relatedLine": 106,
+      "exactScenario": "On final tested APK 031d5196298d8a1cfd4da3aa4fd201af82191a8822e6c8528029911bbbe7b4d7, API36 arm64 emulator at font_scale=1.5, open unpaired Connection while nearby scanning. The fixed 112dp by 48dp icon/text button renders Stop as Sto.",
+      "actual": "Reviewer independently viewed supplied PNG; final p is clipped.",
+      "expected": "Complete action label remains readable with enlarged text.",
+      "cause": "Fixed width leaves insufficient content width for icon, spacer and enlarged label.",
+      "evidence": "docs/evidence/2026-09-20/verified-apk-connection-large-text.png",
+      "evidenceSha256": "f9f3a3ad41bd07705b74ecd5a36e389fb732a78cfd344943bfe14d72c68fddad",
+      "correction": "Allow intrinsic/minimum button width or adapt row layout at enlarged fonts, then capture this same state on the revised build. No source edit in this review.",
+      "acceptanceCases": [
+        "TOM-02",
+        "TOM-03"
+      ]
+    }
+  ],
+  "checkpointSpecificAssessment": {
+    "separateArtifact": ".a5c/artifacts/checkpoint-2-independent-integration.json",
+    "separateFromOriginalMetricScores": true,
+    "canonicalGate": {
+      "androidTests": 131,
+      "androidFailures": 0,
+      "androidErrors": 0,
+      "androidSkipped": 0,
+      "swiftXCTest": 48,
+      "swiftTesting": 53,
+      "swiftTotal": 101,
+      "lintErrors": 0,
+      "lintWarnings": 32,
+      "parentExitCode": 0,
+      "logSha256": "fa700cdb3d88a61fbad98a60aab2c397fc29d8b92f548080c2812d20176e2d3a"
+    },
+    "sourceAndBinaryBinding": {
+      "sourceSha256": {
+        "entries": 163,
+        "mismatches": []
+      },
+      "binarySha256": {
+        "entries": 6,
+        "mismatches": []
+      },
+      "installedAPKMatchesDebugAPK": true,
+      "installedIdentityBoundary": "Installed APK digest/device identity supplied by parent; reviewer verified local binary digest equality, performed no device query. Manifest identifies a frozen modified working tree relative to baseline commit, not a committed release revision."
+    },
+    "runtime": {
+      "fileTransfers": 10,
+      "sizesEachDirection": [
+        0,
+        1,
+        32768,
+        32769,
+        16777216
+      ],
+      "fileFramesEachDirection": 1052,
+      "replyFramesByDirection": {
+        "android-to-mac": 2,
+        "mac-to-android": 1
+      },
+      "replyComponentRegression": "pass",
+      "knownSyntheticMarkerMatches": 0,
+      "rawCapturesIndependentlyInspected": true
+    },
+    "sourceReviewStatus": "Previously reported bounded Android coordinator/queue, Mac engine/controller and raw payload policy mechanisms remain source-closed with parent regression evidence. Current hashes match frozen manifest. This evidence review does not reopen or recertify the entire product.",
+    "nativeAndLifecycleBoundary": "Harness bypasses native pickers and application session/queue integration. Programmatic synthetic RemoteInput reply does not prove Notification Center entry, native stale-control disappearance or external recipient delivery. Physical Pixel, carrier audio and whole-app background acceptance remain open.",
+    "ui": "Two final-APK unpaired screenshots were independently viewed and hash checked. Settings guidance wraps in the captured state; Connection Stop clipping is open. Earlier UI screenshots keep their earlier binary bindings; no active file UI or complete reference/TalkBack claim."
+  },
+  "blockers": [
+    {
+      "cases": [
+        "CALL-01",
+        "CALL-02",
+        "CALL-03",
+        "CALL-04",
+        "MSG-01",
+        "MSG-02",
+        "MSG-03",
+        "MAC-01",
+        "MAC-02"
+      ],
+      "owner": "parent with user and consented peers",
+      "action": "Unlock Mac/authorize native notifications; select controlled accounts/callers; observe native controls, original-conversation reply once, cellular answer/lifecycle and two-way laptop speech with route traces. Preserve native stale-control disappearance as pending."
+    },
+    {
+      "cases": [
+        "TOM-01",
+        "TOM-02",
+        "TOM-03"
+      ],
+      "owner": "Android UI owner and independent design reviewer",
+      "action": "Correct final-APK Stop clipping; complete pinned reference captures, visual/font/motion comparisons and authorized physical Pixel/TalkBack evidence. Prior title/help fixes do not close whole UI."
+    },
+    {
+      "cases": [
+        "CON-01",
+        "CON-02",
+        "CON-03"
+      ],
+      "owner": "parent continuity team",
+      "action": "Supply material-feature feasibility/public-private research and destination evidence for clipboard, native file consent, handoff and other additions; preserve hotspot/camera/screen and remaining parity gaps."
+    },
+    {
+      "cases": [
+        "SEC-01",
+        "SEC-02",
+        "SEC-03"
+      ],
+      "owner": "parent security evidence owner with independent reviewer",
+      "action": "Complete bounded trust-negative, permission/preview/private-data and OS-protected storage evidence on tested application paths. Passive positive capture does not prove negative enforcement or confidentiality of untested media/content."
+    },
+    {
+      "cases": [
+        "STAB-01"
+      ],
+      "owner": "parent build evidence owner",
+      "action": "Retain exact tool versions used for the final gate alongside existing command/log/exit/binary records. Do not relabel current post-hoc tool versions as historical build-time observations."
+    },
+    {
+      "cases": [
+        "STAB-02",
+        "STAB-03"
+      ],
+      "owner": "parent runtime evidence owner",
+      "action": "Keep unexplained emulator exit visible. Required recovery cycles, two-hour/100-notification soak and resource evidence remain open; recovered synthetic reply is not their substitute."
+    },
+    {
+      "cases": [
+        "E2E-01",
+        "E2E-02",
+        "E2E-03",
+        "E2E-04",
+        "PROC-01",
+        "PROC-02"
+      ],
+      "owner": "parent",
+      "action": "Complete same-build physical hardware/human evidence, model/decision records, authorized checkpoint publication and final cross-team temporary-file cleanup. No new device work by this critic."
+    }
+  ],
+  "correctionsToStaleClaims": [
+    "Checkpoint-1 missing Swift receiver hash is now resolved by the final six-binary manifest; all local hashes match.",
+    "File transfer is implemented and ten synthetic destination checks pass; prior unimplemented/pending cross-platform claims are historical.",
+    "Fresh same-binary reply regression and independent raw capture inspection are now complete; docs still describing either as pending should link the final report.",
+    "The prior title/help clipping fixes do not establish all UI resolved: final-APK Stop clipping remains open.",
+    "Historical policy JVM failure log remains historical; passing overwritten XML must not be rebound to that failure. Current 131-test XML hashes and counts are recorded together in the integration artifact."
+  ],
+  "checkpointDecision": {
+    "eligibleForHonestDevelopmentCheckpoint": true,
+    "releaseOrFullAcceptanceApproved": false,
+    "reason": "Successful bounded tests, engine/file/socket integration and closed core review mechanisms support an explicit development checkpoint. Open P2 UI and missing original acceptance evidence remain reported."
+  },
+  "rawCaptureCleanupReady": true,
+  "rawCaptureStatus": "Independent scan complete; raw files left untouched by reviewer. Parent received cleanup-ready notification after durable hash-bound report was written.",
+  "evidence": [
+    {
+      "path": ".a5c/artifacts/acceptance/README.md",
+      "sha256": "38c8cb613ccab0585d801cf900d1da2fee8d021340c054d8763ef0425a2c5bc6",
+      "bytes": 5731
+    },
+    {
+      "path": ".a5c/artifacts/acceptance/baseline.json",
+      "sha256": "eb17389f239128deb57ba6fdfa66cd6d1cd1540c8cc822637c2905deae6719a1",
+      "bytes": 5531
+    },
+    {
+      "path": ".a5c/artifacts/acceptance/evaluate.py",
+      "sha256": "73af5bd851e503eba2834b540637d7d135b700a889d2456e121bb82c90f33d78",
+      "bytes": 10158
+    },
+    {
+      "path": ".a5c/artifacts/acceptance/freeze.json",
+      "sha256": "1bca89b7246baa5eca82b740309738fadc4a0be366865e7a1b45f4fcdd9194fb",
+      "bytes": 421
+    },
+    {
+      "path": ".a5c/artifacts/acceptance/matrix.json",
+      "sha256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+      "bytes": 40126
+    },
+    {
+      "path": ".a5c/artifacts/acceptance/verification.json",
+      "sha256": "c5c5a92b0102f99799019b32fb46a6fac51c04fac68998a987100f1cc406b766",
+      "bytes": 319
+    },
+    {
+      "path": ".a5c/artifacts/android-critic-2.json",
+      "sha256": "2a955aaf7597ca3e5f6bfe18d3ae110354cd688e93aea6693526e6965c4c9c96",
+      "bytes": 49173
+    },
+    {
+      "path": ".a5c/artifacts/android-file-critic-2.json",
+      "sha256": "4be4b0831aec8b9098e7c0f367c5bef91a2d26ab42e68cbe5d76075f673d0b76",
+      "bytes": 56240
+    },
+    {
+      "path": ".a5c/artifacts/checkpoint-2-independent-integration.json",
+      "sha256": "d57602f7e3ea818fae56afb6005f98a4cb0952d4269c7052cee2885087769904",
+      "bytes": 30509
+    },
+    {
+      "path": ".a5c/artifacts/checkpoint-review-1.json",
+      "sha256": "b7d986ebe3b6f0e75f723246d9cbb846aa104b51ef57dd76ebad6696c82161a3",
+      "bytes": 17288
+    },
+    {
+      "path": ".a5c/artifacts/cleanup-inventory-2.json",
+      "sha256": "afd6bfc30911e39d15546f1adab6a9a45857919c8a5b74fd80c84b00f053c4cd",
+      "bytes": 3019
+    },
+    {
+      "path": ".a5c/artifacts/current-iteration.json",
+      "sha256": "797935f486656dba9b051c310707e00010a3c80f162841a4886ed0a74ba72308",
+      "bytes": 213765
+    },
+    {
+      "path": ".a5c/artifacts/device-evidence-2.json",
+      "sha256": "4addfba8bfbdd47040ffbc449c87119a38e5a019adebb25d9bceb8bc5fd01773",
+      "bytes": 2112
+    },
+    {
+      "path": ".a5c/artifacts/file-policy-independent-2.json",
+      "sha256": "fb50189eb16c038d7aaccf83a57a6e521c4a8e4a639275777877e3870b42b8ce",
+      "bytes": 22694
+    },
+    {
+      "path": ".a5c/artifacts/mac-file-critic-2.json",
+      "sha256": "339bca701cc43f38cb64f9aca0ac37a065ec79bf29805d8a17a33ca60dc47062",
+      "bytes": 21754
+    },
+    {
+      "path": ".a5c/device-constraints.md",
+      "sha256": "c3be51adce89b8234fc3bb6001dcc88c78418582a953cbb7d13994e65c0da313",
+      "bytes": 1054
+    },
+    {
+      "path": ".a5c/spec.md",
+      "sha256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+      "bytes": 3101
+    },
+    {
+      "path": "android/build/reports/lint-results-debug.xml",
+      "sha256": "ffa9319506c7a4763af9a11a6d83ebdfd9d8829240b214bfa6523c1c5f8dbed0",
+      "bytes": 30282
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/ui/ManualPairingCard.kt",
+      "sha256": "f0945df7d693bd13c4782753276db240ad9da4df926a0762d8fc13da67fc560d",
+      "bytes": 9003
+    },
+    {
+      "path": "docs/evidence/2026-09-20/README.md",
+      "sha256": "dd3074dd29b318fe41a00d59f0565224a763105fd39db93edda6cdf178b4fd3c",
+      "bytes": 11557
+    },
+    {
+      "path": "docs/evidence/2026-09-20/files-android-roundtrip.log",
+      "sha256": "59004965d60de426211228269fc5abf378bc9ab5340f3a1177841e829d2f2393",
+      "bytes": 884
+    },
+    {
+      "path": "docs/evidence/2026-09-20/files-mac-roundtrip.log",
+      "sha256": "6dc5669fa3d2fdc74dea83c782488b9bc8cc0da4887209cbec4450f845d81eea",
+      "bytes": 995
+    },
+    {
+      "path": "docs/evidence/2026-09-20/replies-android-roundtrip.log",
+      "sha256": "985163b7c7a9dbfcb505dc6333780074f20c331f672a06af59e2c68fc5c778f1",
+      "bytes": 387
+    },
+    {
+      "path": "docs/evidence/2026-09-20/replies-mac-roundtrip.log",
+      "sha256": "de5ca4ceaad2dff1a623489521da5787614a5621d3d39b50acf3605e7dec5d51",
+      "bytes": 231
+    },
+    {
+      "path": "docs/evidence/2026-09-20/tomato-design-comparison.md",
+      "sha256": "60fd239cd75448aa9ae5cfd6f601f1233e4dd8673a114d516485277d2a33e72a",
+      "bytes": 4106
+    },
+    {
+      "path": "docs/evidence/2026-09-20/ui-final-evidence-2.json",
+      "sha256": "242f093ffbbc0b3a1b5b3f10484cdf74632f2eb8c740c0bafed5d22ae450b493",
+      "bytes": 2248
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verification-2-final-rerun.log",
+      "sha256": "fa700cdb3d88a61fbad98a60aab2c397fc29d8b92f548080c2812d20176e2d3a",
+      "bytes": 28969
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verification-manifest.json",
+      "sha256": "215d352713b43ae2b14243008a74e4f6ab7e5eb5698bc399dded80df43f09671",
+      "bytes": 23765
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verified-apk-connection-large-text.png",
+      "sha256": "f9f3a3ad41bd07705b74ecd5a36e389fb732a78cfd344943bfe14d72c68fddad",
+      "bytes": 237064
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verified-apk-settings-large-text.png",
+      "sha256": "874bb7042cc1bd650108251a68b1d76fac46b4732f02c2de4baee965f020eb51",
+      "bytes": 220761
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verified-apk-ui.json",
+      "sha256": "2929767778acd4796bae47351b5926a3f8061a23241d55a7dbbe10068e079b40",
+      "bytes": 861
+    },
+    {
+      "path": "docs/feature-parity.md",
+      "sha256": "ee54cc3265cc1f762193ca4bdaa51cb0124181ff33f05741498f1393d021cc7a",
+      "bytes": 6210
+    },
+    {
+      "path": "scripts/verify.sh",
+      "sha256": "eed8d2466283da3fa86ddda6425a38de364ae7a05749810cf6276b3d66cf9303",
+      "bytes": 1140
+    }
+  ],
+  "changedFiles": [
+    ".a5c/artifacts/adversarial-review-2.json",
+    ".a5c/artifacts/checkpoint-2-independent-integration.json"
+  ],
+  "sourceEdits": [],
+  "deviceOperations": [],
+  "buildsOrProductTestsRunByReviewer": [],
+  "commitsOrPushes": []
+}

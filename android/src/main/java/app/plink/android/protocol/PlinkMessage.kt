@@ -24,7 +24,10 @@ data class PlinkEnvelope(
             prettyPrint = false
         }
 
-        fun decode(raw: String): PlinkEnvelope = json.decodeFromString(serializer(), raw)
+        fun decode(raw: String): PlinkEnvelope {
+            FileTransferPayloadPolicy.validateRawJSON(raw)
+            return json.decodeFromString(serializer(), raw)
+        }
     }
 }
 
@@ -38,6 +41,12 @@ object PlinkEventType {
     const val MessageReply = "message.reply"
     const val ClipboardUpdated = "clipboard.updated"
     const val FileOffer = "file.offer"
+    const val FileAccept = "file.accept"
+    const val FileChunk = "file.chunk"
+    const val FileProgress = "file.progress"
+    const val FileComplete = "file.complete"
+    const val FileResult = "file.result"
+    const val FileCancel = "file.cancel"
     const val WebOpen = "web.open"
     const val MediaState = "media.state"
     const val MediaCommand = "media.command"

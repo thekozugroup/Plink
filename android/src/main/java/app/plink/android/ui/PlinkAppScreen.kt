@@ -70,11 +70,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.plink.android.continuity.FileTransferState
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeatureAvailability
 import app.plink.android.permissions.PermissionAction
@@ -237,6 +238,9 @@ private fun SettingsScreen(
                 )
             }
             item { Spacer(Modifier.height(14.dp)) }
+            item { SectionTitle("File transfer") }
+            item { FileTransferCard(state.fileTransferState, actions.onCancelFileTransfer) }
+            item { Spacer(Modifier.height(14.dp)) }
             item { SectionTitle("Permissions") }
             itemsIndexed(state.onboarding, key = { _, step -> step.title }) { index, step ->
                 PermissionSettingRow(
@@ -263,6 +267,103 @@ private fun SettingsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun FileTransferCard(state: FileTransferState, onCancel: () -> Unit) {
+    val title: String
+    val detail: String
+    val canCancel: Boolean
+    when (state) {
+        FileTransferState.Idle -> {
+            title = "No active file transfer"
+            detail = "Shared files appear here while Plink sends or receives them."
+            canCancel = false
+        }
+        is FileTransferState.Preparing -> {
+            title = "Preparing ${state.name}"
+            detail = "Plink is creating a private snapshot before offering the file."
+            canCancel = true
+        }
+        is FileTransferState.Offered -> {
+            title = "Waiting for acceptance"
+            detail = "${state.name} (${formatBytes(state.sizeBytes)}) was offered to your Mac."
+            canCancel = true
+        }
+        is FileTransferState.AwaitingDestination -> {
+            title = "Choose where to save ${state.offer.name}"
+            detail = "Use the file notification to select a destination for ${formatBytes(state.offer.sizeBytes)}."
+            canCancel = true
+        }
+        is FileTransferState.Transferring -> {
+            val percent = if (state.totalBytes == 0L) 100 else
+                ((state.completedBytes * 100) / state.totalBytes).coerceIn(0, 100)
+            title = "Transferring ${state.name}"
+            detail = "${formatBytes(state.completedBytes)} of ${formatBytes(state.totalBytes)} ($percent%)."
+            canCancel = true
+        }
+        is FileTransferState.Verifying -> {
+            title = "Saving ${state.name}"
+            detail = "Plink is completing the transfer and verifying its result."
+            canCancel = true
+        }
+        is FileTransferState.Saved -> {
+            title = "Saved ${state.name}"
+            detail = "The file was saved successfully."
+            canCancel = false
+        }
+        is FileTransferState.OutcomeUnconfirmed -> {
+            title = "Save confirmation unavailable"
+            detail = "${state.name} was sent, but Plink did not receive final save confirmation."
+            canCancel = false
+        }
+        is FileTransferState.Failed -> {
+            title = state.name?.let { "Could not transfer $it" } ?: "File transfer failed"
+            detail = if (state.cleanupNeeded) {
+                "${fileFailureDetail(state.reason)} Remove the empty or partial document from the selected location."
+            } else {
+                fileFailureDetail(state.reason)
+            }
+            canCancel = false
+        }
+    }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(detail, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (canCancel) {
+                FilledTonalButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("Cancel transfer")
+                }
+            }
+        }
+    }
+}
+
+private fun formatBytes(bytes: Long): String = when {
+    bytes < 1_024 -> "$bytes B"
+    bytes < 1_048_576 -> "${bytes / 1_024} KiB"
+    else -> "${bytes / 1_048_576} MiB"
+}
+
+private fun fileFailureDetail(reason: String): String = when (reason) {
+    "busy" -> "Another file transfer is active."
+    "cancelled" -> "The file transfer was cancelled."
+    "disconnected" -> "The connection ended before the transfer finished."
+    "invalid" -> "The file data did not match the offer."
+    "receive_unavailable" -> "The other device could not receive the file."
+    "storage" -> "The selected file or destination could not be read or written."
+    "timeout" -> "The file transfer timed out."
+    "too_large" -> "Files must be 16 MiB or smaller."
+    else -> "The file transfer failed ($reason)."
 }
 
 @Composable
@@ -329,14 +430,21 @@ private fun ScreenScaffold(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { inner ->
-        content(
-            PaddingValues(
-                start = 16.dp,
-                top = inner.calculateTopPadding() + 8.dp,
-                end = 16.dp,
-                bottom = outerPadding.calculateBottomPadding() + 16.dp
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = inner.calculateTopPadding())
+                .clipToBounds()
+        ) {
+            content(
+                PaddingValues(
+                    start = 16.dp,
+                    top = 8.dp,
+                    end = 16.dp,
+                    bottom = outerPadding.calculateBottomPadding() + 16.dp
+                )
             )
-        )
+        }
     }
 }
 
@@ -391,9 +499,7 @@ private fun FeatureSettingRow(
                 Text(
                     feature.reason ?: if (feature.available) "Available for paired Macs" else "Unavailable",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Switch(checked = checked, enabled = feature.available, onCheckedChange = null)
@@ -430,9 +536,7 @@ private fun PermissionSettingRow(
                 Text(
                     step.summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Icon(if (step.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Settings, contentDescription = null)

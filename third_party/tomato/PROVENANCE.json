@@ -65,7 +65,7 @@
       "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/settingsScreen/screens/SettingsMainScreen.kt",
       "upstreamSha256": "2f37254b218df1f975ae91262cda0deb8b7170e9cff2467fa72230a1d6327ec0",
       "adaptedPath": "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt",
-      "adaptedSha256": "c087568ef7e6fe4cdfd2f154dc7a15df1fb1fa4adbb56c5ff20becb2368149cd",
+      "adaptedSha256": "1c198590ecd71a1cc9b696166add25fa1eae451a9d5f43e5a331d43ccacbe28e",
       "changeNote": "Adapted expressive settings-list and card presentation patterns for Plink setup controls."
     }
   ],

@@ -3,12 +3,14 @@ import Foundation
 public enum PlinkJSON {
     public static func encoder(sortedKeys: Bool = false) -> JSONEncoder {
         let encoder = JSONEncoder()
+        // Base64 chunks can consist mostly of '/'; escaping doubles their wire size.
+        encoder.outputFormatting = [.withoutEscapingSlashes]
         encoder.dateEncodingStrategy = .custom { date, encoder in
             var container = encoder.singleValueContainer()
             try container.encode(iso8601Formatter(includeFractionalSeconds: false).string(from: date))
         }
         if sortedKeys {
-            encoder.outputFormatting = [.sortedKeys]
+            encoder.outputFormatting.insert(.sortedKeys)
         }
         return encoder
     }

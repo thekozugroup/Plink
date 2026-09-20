@@ -79,6 +79,7 @@ public enum PayloadPolicy {
         guard try CanonicalJSON.encode(envelope).count <= maxEnvelopeBytes else {
             throw PayloadPolicyError.envelopeTooLarge
         }
+        try FileTransferPayloadPolicy.validate(envelope)
         if envelope.type == .webOpen {
             guard
                 let rawURL = envelope.payload["url"]?.stringValue,
@@ -115,7 +116,7 @@ public enum PayloadPolicy {
     }
 
     public static func redact(_ envelope: PlinkEnvelope) -> PlinkEnvelope {
-        let sensitiveKeys: Set<String> = ["preview", "text", "callerHandle", "body", "message", "clipboard"]
+        let sensitiveKeys: Set<String> = ["preview", "text", "callerHandle", "body", "message", "clipboard", "data", "name"]
         var payload = envelope.payload
         for key in sensitiveKeys where payload[key] != nil {
             payload[key] = .string("[redacted]")
@@ -292,7 +293,7 @@ public struct EncryptedFrameCodec: Sendable {
         }
         let sealed = try AES.GCM.SealedBox(combined: combined)
         let data = try AES.GCM.open(sealed, using: aesKey, authenticating: aad(frame))
-        let envelope = try PlinkJSON.decoder().decode(PlinkEnvelope.self, from: data)
+        let envelope = try PlinkEnvelope.decode(data)
         guard envelope.sourceDeviceId == frame.sourceDeviceId, envelope.targetDeviceId == frame.targetDeviceId else {
             throw PayloadPolicyError.deviceMismatch
         }

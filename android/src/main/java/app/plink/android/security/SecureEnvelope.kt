@@ -2,6 +2,7 @@ package app.plink.android.security
 
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
+import app.plink.android.protocol.FileTransferPayloadPolicy
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -83,7 +84,7 @@ object PayloadPolicy {
         PlinkEventType.PermissionState,
         PlinkEventType.Ack,
         PlinkEventType.Error
-    )
+    ) + FileTransferPayloadPolicy.eventTypes
 
     fun requireAcceptable(envelope: PlinkEnvelope) {
         require(envelope.version == 1) { "Unsupported protocol version." }
@@ -94,6 +95,7 @@ object PayloadPolicy {
         require(envelope.encode().toByteArray(Charsets.UTF_8).size <= maxEnvelopeBytes) {
             "Envelope exceeds $maxEnvelopeBytes bytes."
         }
+        FileTransferPayloadPolicy.requireAcceptable(envelope)
 
         if (envelope.type == PlinkEventType.WebOpen) {
             val rawUrl = envelope.payload["url"]?.jsonPrimitive?.content.orEmpty()
@@ -139,7 +141,7 @@ object PayloadPolicy {
 }
 
 object PrivacyRedactor {
-    private val sensitiveKeys = setOf("preview", "text", "callerHandle", "body", "message", "clipboard")
+    private val sensitiveKeys = setOf("preview", "text", "callerHandle", "body", "message", "clipboard", "data", "name")
 
     fun redact(envelope: PlinkEnvelope): PlinkEnvelope {
         val redactedPayload = JsonObject(

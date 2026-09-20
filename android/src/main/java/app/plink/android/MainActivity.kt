@@ -55,6 +55,7 @@ fun PlinkApp(onRequestPostNotifications: () -> Unit = {}) {
     val context = LocalContext.current
     val application = context.applicationContext as PlinkApplication
     val sessionStatus by application.sessionController.status.collectAsState()
+    val fileTransferState by application.sessionController.fileTransferState.collectAsState()
     val featureSettings by application.featureSettings.enabled.collectAsState()
     val backgroundConnectionEnabled by application.featureSettings.backgroundConnectionEnabled.collectAsState()
     val backgroundConnectionState by application.backgroundConnectionState.collectAsState()
@@ -82,7 +83,8 @@ fun PlinkApp(onRequestPostNotifications: () -> Unit = {}) {
                     features = features,
                     onboarding = onboarding,
                     backgroundConnectionEnabled = backgroundConnectionEnabled,
-                    backgroundConnectionState = backgroundConnectionState
+                    backgroundConnectionState = backgroundConnectionState,
+                    fileTransferState = fileTransferState
                 ),
                 actions = PlinkUiActions(
                     onRequestPostNotifications = onRequestPostNotifications,
@@ -93,7 +95,8 @@ fun PlinkApp(onRequestPostNotifications: () -> Unit = {}) {
                     onFeatureEnabledChange = application.featureSettings::setEnabled,
                     onBackgroundConnectionEnabledChange = { enabled ->
                         application.requestBackgroundConnection(enabled)
-                    }
+                    },
+                    onCancelFileTransfer = application.sessionController::cancelFileTransfer
                 )
             )
         }

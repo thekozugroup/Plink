@@ -1,0 +1,28 @@
+# Authenticated file-transfer protocol
+
+Use existing authenticated version-2 paired transport and trust, never a second unauthenticated server. The feature is bidirectional with explicit sender file selection and receiver destination selection. No data before receiver acceptance; no automatic opening/execution. Files switch defaults off until user enables it; toggling it off cancels active transfer and revokes pending receive actions. Mac has equivalent explicit receive permission (default off) and chooser-based send action.
+
+Limits: 16 MiB per file (16,777,216 bytes), 32 KiB per chunk (32,768), one active send-or-receive transfer per peer, 60-second offer timeout, 30-second inactivity timeout, 300-second absolute transfer timeout. Monotonic timers. No resume; reconnect/session replacement cancels. Keep current 64 KiB envelope and 128 KiB frame limits. Sender waits for each receiver progress acknowledgment before sending another chunk.
+
+Common payload rules: exact listed keys only; transferId canonical lowercase UUID; display name nonblank UTF-8 <=255 bytes, no slash/backslash or ASCII control characters, not . or ..; mimeType nonblank ASCII <=127 bytes with no controls (advisory only); SHA-256 exactly64 lowercase hex. File numeric fields must use unsigned integer JSON tokens matching `0|[1-9][0-9]*`, at most eight digits, bounded as below. Reject signs (including -0), fractions, exponents, strings and booleans before typed numeric decoding. Reject duplicate root or payload keys for file envelopes. Non-file numeric decoding is unchanged. Production wire decoding uses `PlinkEnvelope.decode` on both platforms; do not bypass it with a generic decoder. The raw gate preserves tokens; the platform JSON decoder still validates the complete JSON grammar.
+
+Blank names use the fixed Unicode White_Space set: U+0009..000D, U+0020, U+0085, U+00A0, U+1680, U+2000..200A, U+2028, U+2029, U+202F, U+205F, U+3000. A name must contain a scalar outside this set; the separate ASCII-control prohibition still applies. U+200B and U+FEFF count as nonblank. Shared vectors with `rawEnvelope` must be decoded from that exact string, never parsed and reserialized first.
+
+Swift JSON serialization leaves forward slashes unescaped, matching Kotlin and keeping slash-heavy base64 chunks below the unchanged envelope/frame bounds. Sorted-key encoding retains this setting. Authentication of encrypted frames uses the actual ciphertext plus the existing newline-delimited fields; no JSON-text canonicalization is added.
+
+- file.offer: {transferId,name,mimeType,sizeBytes:0..16777216,sha256,chunkBytes:32768}
+- file.accept: {transferId}, sent only after user selected destination.
+- file.chunk: {transferId,index:0..511,data:canonical standard base64}. Decoded bytes1..32768; receiver additionally requires exact expected index and length based on size. Duplicate/out-of-order/overrun fails. Chunk sender only after accepted.
+- file.progress: {transferId,nextIndex:0..512}. Receiver after successful staging write. Sender requires exact next expected index.
+- file.complete: {transferId}. Sender after all chunks acknowledged, including zero chunks for empty file. Receiver requires exact received size and SHA-256, then exports.
+- file.result: {transferId,status:saved|error,code?:invalid|storage|receive_unavailable|busy|timeout|cancelled|disconnected}. Saved forbids code; error requires code. Saved only after output close succeeds. Sender must not show saved based on local write or bytes sent.
+- file.cancel: {transferId,reason:cancelled|timeout|disconnected|invalid|storage}.
+
+Every event is bound to current authenticated source/target/session by coordinator. Reject unknown transfer IDs. Generate fresh random transfer ID for every attempt. Never put file commands/chunks in durable notification outbox. Failure/queue rejection stops transfer truthfully; acknowledgment loss can produce unknown outcome after receiver saved. Do not automatically repeat filesystem side effects.
+
+Sender snapshots explicitly selected input into bounded private staging and computes digest before offering. Stream input; enforce cap even with unknown provider size. Receiver stages UUID-named file privately; peer names never select filesystem paths. Mac output exclusively NSSavePanel and user-selected read/write entitlement, atomic same-volume export/replace after normal overwrite consent. Android output exclusively ACTION_CREATE_DOCUMENT URI selected by user; copy only verified complete staging. If document provider fails, disclose partial newly created output and enable its cancellation cleanup when supported. Never delete preexisting user content. Close streams/security-scoped resources in all exits. Remove private staging after cancel, timeout, failure, success, session reset and startup stale cleanup. No broad temp deletion.
+
+Android receives via notification opening non-exported acceptance activity then document picker, bound opaque in-memory transfer handle; do not put keys in intents. Notification denial rejects receive_unavailable without launch/wake locks. Android send uses ACTION_SEND stream and granted read URI, plus visible confirmation before transmitting; incoming arbitrary app intent must not silently send private content. Preserve text/plain existing handoff. No SMS/default-role changes.
+
+Mac receives via visible pending offer with Accept and Reject; Accept opens NSSavePanel. Send File opens NSOpenPanel. Native UI reports actual states and supports cancel. UI must not block main thread for streaming/hash/network. Files feature disabled until paired and explicit receive settings.
+

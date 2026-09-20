@@ -3,11 +3,19 @@ package app.plink.android.services
 import android.content.Context
 import app.plink.android.continuity.ContinuityEnvelopeFactory
 import app.plink.android.continuity.ContinuityEvent
+import app.plink.android.continuity.AndroidFileTransferEnvironment
+import app.plink.android.continuity.FileOfferStartResult
+import app.plink.android.continuity.FileTransferCoordinator
+import app.plink.android.continuity.FileTransferState
+import app.plink.android.continuity.IncomingFileDestination
+import app.plink.android.continuity.IncomingFileOffer
+import app.plink.android.continuity.OutgoingFileSource
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeatureSettings
 import app.plink.android.notifications.RemoteInputReplyExecutor
 import app.plink.android.pairing.PairedDevice
 import app.plink.android.protocol.PlinkEventType
+import app.plink.android.protocol.FileTransferPayloadPolicy
 import app.plink.android.security.EncryptedFrameCodec
 import app.plink.android.security.FileFrameStateStore
 import app.plink.android.security.ReplayWindow
@@ -26,6 +34,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
+import java.util.concurrent.atomic.AtomicLong
+import java.util.UUID
 
 enum class SessionStatus { DISCONNECTED, REPAIR_REQUIRED, READY }
 
@@ -41,10 +51,20 @@ class PlinkSessionController(
     private var activeSession: ActivePlinkSession? = null
     @Volatile
     private var outbox: DurableEventOutbox? = null
+    private val sessionGeneration = AtomicLong()
     private val _status = MutableStateFlow(SessionStatus.DISCONNECTED)
     val status: StateFlow<SessionStatus> = _status.asStateFlow()
     private val mediaCollector = MediaSessionCollector(context) { sendEvent(it) }
     private val batteryCollector = BatteryStatusCollector(context) { sendEvent(it) }
+    private val fileTransferEnvironment = AndroidFileTransferEnvironment(context.applicationContext)
+    val fileTransferCoordinator = FileTransferCoordinator(
+        stagingBase = newFileTransferProcessRoot(context.cacheDir),
+        scope = scope,
+        environment = fileTransferEnvironment,
+        filesEnabled = { featureSettings.isEnabled(ContinuityFeature.Files) },
+        sendEnvelope = { envelope, allowRevoked, stillValid -> SharedOutboundBridge.sendAwaitable(envelope, allowRevoked, stillValid) }
+    )
+    val fileTransferState: StateFlow<FileTransferState> = fileTransferCoordinator.state
 
     init {
         featureSettings.addListener { feature, enabled ->
@@ -53,6 +73,7 @@ class PlinkSessionController(
                     SharedReplyRoutes.registry.clear()
                     SharedReplyActions.registry.clear()
                 }
+                if (feature == ContinuityFeature.Files) fileTransferCoordinator.featureDisabled()
                 SharedOutboundBridge.purge(feature.eventTypes)
             }
         }
@@ -105,9 +126,11 @@ class PlinkSessionController(
                         .flatMapTo(mutableSetOf()) { it.eventTypes }
                 )
             }
-            startReplyReceiver(server, localDeviceId, pairedDevice.id)
             SharedSessionState.configure(session)
             configureOutbound(pairedDevice, sessionKey)
+            val generation = sessionGeneration.incrementAndGet()
+            fileTransferCoordinator.activateSession(localDeviceId, pairedDevice.id, generation)
+            startReplyReceiver(server, localDeviceId, pairedDevice.id, generation)
             _status.value = SessionStatus.READY
             if (featureSettings.isEnabled(ContinuityFeature.Battery)) batteryCollector.start()
             if (featureSettings.isEnabled(ContinuityFeature.Media)) mediaCollector.start()
@@ -132,6 +155,8 @@ class PlinkSessionController(
 
     @Synchronized
     fun stop() {
+        sessionGeneration.incrementAndGet()
+        fileTransferCoordinator.deactivateSession()
         replyServer?.close()
         replyServer = null
         replyReceiverJob?.cancel()
@@ -166,6 +191,20 @@ class PlinkSessionController(
 
     fun retryPendingEvents() {
         SharedOutboundBridge.retryPending()
+    }
+
+    suspend fun offerSharedFile(source: OutgoingFileSource): FileOfferStartResult =
+        fileTransferCoordinator.offerOutgoing(source)
+
+    fun pendingIncomingFile(handle: String): IncomingFileOffer? = fileTransferCoordinator.pendingIncoming(handle)
+
+    suspend fun acceptIncomingFile(handle: String, destination: IncomingFileDestination): Boolean =
+        fileTransferCoordinator.acceptIncoming(handle, destination)
+
+    suspend fun declineIncomingFile(handle: String): Boolean = fileTransferCoordinator.declineIncoming(handle)
+
+    fun cancelFileTransfer() {
+        scope.launch { fileTransferCoordinator.cancelActive() }
     }
 
     @Synchronized
@@ -214,7 +253,8 @@ class PlinkSessionController(
     private fun startReplyReceiver(
         server: SecureSocketPlinkServer,
         localDeviceId: String,
-        pairedDeviceId: String
+        pairedDeviceId: String,
+        generation: Long
     ) {
         val previousJob = replyReceiverJob
         previousJob?.cancel()
@@ -250,7 +290,13 @@ class PlinkSessionController(
             try {
                 while (isActive) {
                     try {
-                        server.receiveOnce().let { handler.handle(it) }
+                        server.receiveOnce().let { envelope ->
+                            if (envelope.type in FileTransferPayloadPolicy.eventTypes) {
+                                fileTransferCoordinator.handle(envelope, generation)
+                            } else {
+                                handler.handle(envelope)
+                            }
+                        }
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (_: Exception) {
@@ -277,6 +323,12 @@ class PlinkSessionController(
     }
 }
 
+private fun newFileTransferProcessRoot(cacheDirectory: File): File {
+    val ownedRoot = File(cacheDirectory, "PlinkFileTransfer").also { it.mkdirs() }
+    ownedRoot.listFiles()?.forEach { it.deleteRecursively() }
+    return File(ownedRoot, UUID.randomUUID().toString()).also { check(it.mkdirs()) }
+}
+
 private val ContinuityEvent.feature: ContinuityFeature
     get() = when (type) {
         PlinkEventType.CallRinging, PlinkEventType.CallEnded -> ContinuityFeature.Calls
@@ -296,6 +348,7 @@ private val String.feature: ContinuityFeature?
         PlinkEventType.WebOpen -> ContinuityFeature.Web
         PlinkEventType.DeviceStatus -> ContinuityFeature.Battery
         PlinkEventType.MediaState, PlinkEventType.MediaCommand -> ContinuityFeature.Media
+        in FileTransferPayloadPolicy.eventTypes -> ContinuityFeature.Files
         else -> null
     }
 
@@ -307,5 +360,6 @@ private val ContinuityFeature.eventTypes: Set<String>
         ContinuityFeature.Web -> setOf(PlinkEventType.WebOpen)
         ContinuityFeature.Battery -> setOf(PlinkEventType.DeviceStatus)
         ContinuityFeature.Media -> setOf(PlinkEventType.MediaState, PlinkEventType.MediaCommand)
+        ContinuityFeature.Files -> FileTransferPayloadPolicy.eventTypes
         else -> emptySet()
     }

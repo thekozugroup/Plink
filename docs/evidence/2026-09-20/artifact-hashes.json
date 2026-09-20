@@ -1,0 +1,150 @@
+{
+  "description": "Checkpoint 2 published evidence SHA-256 manifest. Excludes this manifest itself.",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-20/README.md",
+      "sha256": "f64064f2ac24c7c877223bd2d26f7148d3a96083c0e81b450ba7cd760f30ef3d",
+      "bytes": 12424
+    },
+    {
+      "path": "docs/evidence/2026-09-20/adversarial-review.json",
+      "sha256": "c0242c7791b32bcc768105e6a29b72093374967630a212f78e74374b0101d0ac",
+      "bytes": 38064
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-activity-large-text.png",
+      "sha256": "2c6539c7be115f7133571c73f71da673529edf55f48ac2e4cae24bfaa23589dc",
+      "bytes": 198814
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-connection-large-text.png",
+      "sha256": "e731e6f2104e899c2bf225f8d8819ef187b4ee2f8a97d1645ba3ebae396b9387",
+      "bytes": 238840
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-reduced-motion-navigation.mp4",
+      "sha256": "9daa4037fac454c026f3410d6eb2e4d832e591666795aee43af47cb5bf9dc11a",
+      "bytes": 709436
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-bottom.png",
+      "sha256": "f09a232c42ef22538817b026291efe351f1b316dc81a3f59eec65bb9249e3e6e",
+      "bytes": 277096
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-files.png",
+      "sha256": "d4fca25611b0cf7230fe4f43d8b38672cdab1749899f8b1425bbe7a878fe10f4",
+      "bytes": 249877
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-lower.png",
+      "sha256": "5adc84945af3f56f9be64e7cb18099cae7f7f5b36881adfa5ea3f36844817f6b",
+      "bytes": 244249
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-permissions.png",
+      "sha256": "30131c6d4adb1c369d0d2659d3bab647bcaf313c6efcda23c43665869edad727",
+      "bytes": 284166
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-top.png",
+      "sha256": "55671b957322424ab2671f6e9a28f2306c05b3957fabd15938ee62481e85209b",
+      "bytes": 222005
+    },
+    {
+      "path": "docs/evidence/2026-09-20/files-android-roundtrip.log",
+      "sha256": "59004965d60de426211228269fc5abf378bc9ab5340f3a1177841e829d2f2393",
+      "bytes": 884
+    },
+    {
+      "path": "docs/evidence/2026-09-20/files-capture-summary.json",
+      "sha256": "cd77a0aff51175425dfd4c2d418af70464154e146c323da0de92d355b14e5466",
+      "bytes": 945
+    },
+    {
+      "path": "docs/evidence/2026-09-20/files-mac-roundtrip.log",
+      "sha256": "6dc5669fa3d2fdc74dea83c782488b9bc8cc0da4887209cbec4450f845d81eea",
+      "bytes": 995
+    },
+    {
+      "path": "docs/evidence/2026-09-20/final-settings-files.png",
+      "sha256": "7176b8ae246aca6b9be33e088a9a4953a1022a1546f28e25624e534380538f64",
+      "bytes": 235209
+    },
+    {
+      "path": "docs/evidence/2026-09-20/final-settings-large-text-scrolled.png",
+      "sha256": "f28d1001d0211b6552934b39f77c2f8729b072b281490599cf4d5dd86081c49f",
+      "bytes": 247308
+    },
+    {
+      "path": "docs/evidence/2026-09-20/final-settings-large-text-top.png",
+      "sha256": "1259150c1f106be6205d2162fda74d2880e27a75aa09fd3376dd2fe4c95c5ee7",
+      "bytes": 222109
+    },
+    {
+      "path": "docs/evidence/2026-09-20/independent-integration-review.json",
+      "sha256": "d57602f7e3ea818fae56afb6005f98a4cb0952d4269c7052cee2885087769904",
+      "bytes": 30509
+    },
+    {
+      "path": "docs/evidence/2026-09-20/raw-capture-cleanup.json",
+      "sha256": "fdec668783303d6b1fcd39eaa6d6bd32895c3666ea7cc2d5d57b77d09fea9dec",
+      "bytes": 985
+    },
+    {
+      "path": "docs/evidence/2026-09-20/replies-android-roundtrip.log",
+      "sha256": "985163b7c7a9dbfcb505dc6333780074f20c331f672a06af59e2c68fc5c778f1",
+      "bytes": 387
+    },
+    {
+      "path": "docs/evidence/2026-09-20/replies-capture-summary.json",
+      "sha256": "2ecc08191ecd33eb6f0168308e5bdcbbb26fb97a2329e77045859e5b7b317e65",
+      "bytes": 926
+    },
+    {
+      "path": "docs/evidence/2026-09-20/replies-mac-roundtrip.log",
+      "sha256": "de5ca4ceaad2dff1a623489521da5787614a5621d3d39b50acf3605e7dec5d51",
+      "bytes": 231
+    },
+    {
+      "path": "docs/evidence/2026-09-20/tomato-design-comparison.md",
+      "sha256": "60fd239cd75448aa9ae5cfd6f601f1233e4dd8673a114d516485277d2a33e72a",
+      "bytes": 4106
+    },
+    {
+      "path": "docs/evidence/2026-09-20/ui-evidence-2.json",
+      "sha256": "3daed40deb8bda6fc445fb1c4d91c808c6b5daf1b79def95767a6cb9c4f02645",
+      "bytes": 3871
+    },
+    {
+      "path": "docs/evidence/2026-09-20/ui-final-evidence-2.json",
+      "sha256": "242f093ffbbc0b3a1b5b3f10484cdf74632f2eb8c740c0bafed5d22ae450b493",
+      "bytes": 2248
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verification-2-final-rerun.log",
+      "sha256": "fa700cdb3d88a61fbad98a60aab2c397fc29d8b92f548080c2812d20176e2d3a",
+      "bytes": 28969
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verification-manifest.json",
+      "sha256": "215d352713b43ae2b14243008a74e4f6ab7e5eb5698bc399dded80df43f09671",
+      "bytes": 23765
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verified-apk-connection-large-text.png",
+      "sha256": "f9f3a3ad41bd07705b74ecd5a36e389fb732a78cfd344943bfe14d72c68fddad",
+      "bytes": 237064
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verified-apk-settings-large-text.png",
+      "sha256": "874bb7042cc1bd650108251a68b1d76fac46b4732f02c2de4baee965f020eb51",
+      "bytes": 220761
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verified-apk-ui.json",
+      "sha256": "2929767778acd4796bae47351b5926a3f8061a23241d55a7dbbe10068e079b40",
+      "bytes": 861
+    }
+  ]
+}

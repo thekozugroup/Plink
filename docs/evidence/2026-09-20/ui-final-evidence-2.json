@@ -1,0 +1,51 @@
+{
+  "owner": "delegated Android UI final visual checkpoint 2",
+  "device": "emulator-5580, isolated API 36 arm64 emulator",
+  "apk": {
+    "path": "android/build/outputs/apk/debug/android-debug.apk",
+    "sha256": "5da77b790a0d93d5a95abe9da3c9368b7edaedf09ff282b168dfbee879091bfe",
+    "installedBaseApkSha256": "5da77b790a0d93d5a95abe9da3c9368b7edaedf09ff282b168dfbee879091bfe",
+    "byteIdentical": true
+  },
+  "scopeNote": "These screenshots are bound only to the recorded APK hash. That APK predates the parent's final URI-guard source change; no claim is made about the later binary. The URI-guard change was reported as UI-neutral.",
+  "source": {
+    "plinkAppScreenSha256": "1c198590ecd71a1cc9b696166add25fa1eae451a9d5f43e5a331d43ccacbe28e",
+    "provenanceEntryMatches": true
+  },
+  "captureSettings": {
+    "font_scale": "1.5",
+    "animator_duration_scale": "0"
+  },
+  "restoredSettings": {
+    "font_scale": "1.0",
+    "animator_duration_scale": "null",
+    "transition_animation_scale": "1.0",
+    "window_animation_scale": "1.0"
+  },
+  "evidence": [
+    {
+      "path": "docs/evidence/2026-09-20/final-settings-large-text-top.png",
+      "sha256": "1259150c1f106be6205d2162fda74d2880e27a75aa09fd3376dd2fe4c95c5ee7"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/final-settings-files.png",
+      "sha256": "7176b8ae246aca6b9be33e088a9a4953a1022a1546f28e25624e534380538f64"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/final-settings-large-text-scrolled.png",
+      "sha256": "f28d1001d0211b6552934b39f77c2f8729b072b281490599cf4d5dd86081c49f"
+    }
+  ],
+  "findings": [
+    "Corrected Clipboard guidance remains fully wrapped at 1.5x font scale.",
+    "The Files integration row is visible with its idle availability guidance.",
+    "Scrolled content is clipped below the fixed header and no longer paints through the Settings title or subtitle.",
+    "The lower Settings controls remain reachable by scrolling."
+  ],
+  "notEstablished": [
+    "An active or completed file-transfer progress card; no file transfer was started during this UI pass.",
+    "Pairing, permission grants, physical-device behavior, or human TalkBack acceptance."
+  ],
+  "productionSourceChangedDuringCapture": false,
+  "emulatorReleased": true
+}

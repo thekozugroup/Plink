@@ -33,14 +33,18 @@
             android:name=".continuity.ShareHandoffActivity"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:noHistory="true"
             android:theme="@style/Theme.Plink">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
+                <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".continuity.FileTransferAcceptanceActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.Plink" />
         <activity
             android:name=".continuity.HandoffActionActivity"
             android:excludeFromRecents="true"

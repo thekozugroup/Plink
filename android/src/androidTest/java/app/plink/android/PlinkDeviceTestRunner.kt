@@ -59,7 +59,13 @@ class PlinkDeviceTestRunner : Instrumentation() {
             testProtectedAndDataOnlyActions()
             testDurableFrameState()
             if (arguments.containsKey("macPort")) {
-                if (arguments.containsKey("replyPort")) testMacRoundtrip() else testMacTransport()
+                if (arguments.getString("mode") == "files") {
+                    checks += runBlocking {
+                        checkFileRoundtrip(targetContext, arguments) { message ->
+                            sendStatus(1, Bundle().apply { putString("stream", "\n$message\n") })
+                        }
+                    }
+                } else if (arguments.containsKey("replyPort")) testMacRoundtrip() else testMacTransport()
             }
             result.putString("stream", "\nPLINK DEVICE CHECKS PASSED: ${checks.joinToString(", ")}\n")
             result.putInt("checks", checks.size)

@@ -6,6 +6,9 @@ import app.plink.android.transport.OutboundPlinkSender
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.advanceTimeBy
@@ -24,6 +27,128 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SerializedOutboundQueueTest {
+    @Test
+    fun awaitableSendCompletesOnlyAfterTransportSend() = runTest {
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val sender = object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) { gate.await() }
+        }
+        val queue = SerializedOutboundQueue(sender, this, capacity = 2)
+
+        val result = async { queue.sendAwaitable(envelope("file")) }
+        runCurrent()
+        assertFalse(result.isCompleted)
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertTrue(result.isCompleted)
+        queue.stop()
+    }
+
+    @Test
+    fun cancellingQueuedAwaitableSendPreventsLaterDispatch() = runTest {
+        val firstStarted = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val releaseFirst = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val attempted = mutableListOf<String>()
+        val sender = object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) {
+                attempted += envelope.id
+                if (envelope.id == "first") {
+                    firstStarted.complete(Unit)
+                    releaseFirst.await()
+                }
+            }
+        }
+        val queue = SerializedOutboundQueue(sender, this, capacity = 2)
+        val first = launch { queue.sendAwaitable(envelope("first")) }
+        firstStarted.await()
+        val cancelled = launch { queue.sendAwaitable(envelope("cancelled")) }
+        runCurrent()
+        cancelled.cancelAndJoin()
+        releaseFirst.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(listOf("first"), attempted)
+        first.join()
+        queue.stop()
+    }
+
+    @Test
+    fun purgeFailsQueuedAwaitableSendBeforeDispatch() = runTest {
+        val firstStarted = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val releaseFirst = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val attempted = mutableListOf<String>()
+        val sender = object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) {
+                attempted += envelope.id
+                if (envelope.id == "first") {
+                    firstStarted.complete(Unit)
+                    releaseFirst.await()
+                }
+            }
+        }
+        val queue = SerializedOutboundQueue(sender, this, capacity = 2)
+        val first = launch { queue.sendAwaitable(envelope("first")) }
+        firstStarted.await()
+        val revoked = async { runCatching { queue.sendAwaitable(envelope("file", PlinkEventType.FileChunk)) } }
+        runCurrent()
+        queue.purge(setOf(PlinkEventType.FileChunk))
+        releaseFirst.complete(Unit)
+        advanceUntilIdle()
+
+        assertTrue(revoked.await().isFailure)
+        assertEquals(listOf("first"), attempted)
+        first.join()
+        queue.stop()
+    }
+
+    @Test
+    fun transferGuardRejectsLateEnqueueAndQueuedDispatchEvenAfterFeatureReenabled() = runTest {
+        val firstStarted = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val releaseFirst = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val sent = mutableListOf<String>()
+        val sender = object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) {
+                sent += envelope.id
+                if (envelope.id == "first") { firstStarted.complete(Unit); releaseFirst.await() }
+            }
+        }
+        val queue = SerializedOutboundQueue(sender, this, capacity = 4)
+        val first = launch { queue.sendAwaitable(envelope("first")) }
+        firstStarted.await()
+        var valid = true
+        val queued = async { runCatching {
+            queue.sendAwaitable(envelope("queued", PlinkEventType.FileChunk), stillValid = { valid })
+        } }
+        runCurrent()
+        valid = false
+        // Simulate a feature disabled/re-enabled before the old producer enqueues.
+        // Its attempt token remains invalid even when current policy permits Files.
+        val late = runCatching {
+            queue.sendAwaitable(envelope("late", PlinkEventType.FileChunk), stillValid = { valid })
+        }
+        assertTrue(late.isFailure)
+        releaseFirst.complete(Unit)
+        advanceUntilIdle()
+        assertTrue(queued.await().isFailure)
+        assertEquals(listOf("first"), sent)
+        first.join()
+        queue.stop()
+    }
+
+    @Test
+    fun ownedTerminalCleanupCanFollowFilePurge() = runTest {
+        val sender = RecordingSender()
+        val queue = SerializedOutboundQueue(sender, this, capacity = 2, isAllowed = { false })
+        queue.purge(setOf(PlinkEventType.FileCancel))
+
+        queue.sendAwaitable(envelope("cancel", PlinkEventType.FileCancel), allowRevoked = true)
+        advanceUntilIdle()
+
+        assertEquals(listOf("cancel"), sender.sent)
+        queue.stop()
+    }
+
     @Test
     fun sendsInOrderAndContinuesAfterOneSendFails() = runTest {
         val sender = RecordingSender(failId = "two")

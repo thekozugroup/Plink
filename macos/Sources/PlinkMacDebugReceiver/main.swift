@@ -2,6 +2,8 @@ import AppKit
 import Foundation
 import PlinkCore
 
+setbuf(stdout, nil)
+
 enum DebugReceiverError: Error {
     case missingEnvironment(String)
     case invalidSessionKey
@@ -41,8 +43,9 @@ let targetDeviceId = ProcessInfo.processInfo.environment["PLINK_DEBUG_TARGET_DEV
 let port = UInt16(ProcessInfo.processInfo.environment["PLINK_DEBUG_RECEIVER_PORT"] ?? "45731") ?? 45731
 let receiverMode = ProcessInfo.processInfo.environment["PLINK_DEBUG_RECEIVER_MODE"] ?? "foundation"
 let roundtrip = receiverMode == "roundtrip"
+let fileRoundtrip = receiverMode == "files"
 let replyPort = UInt16(ProcessInfo.processInfo.environment["PLINK_DEBUG_REPLY_PORT"] ?? "0") ?? 0
-if roundtrip && (pairedDeviceId != "test-pixel" || targetDeviceId != "test-mac" || replyPort == 0) {
+if (roundtrip || fileRoundtrip) && (pairedDeviceId != "test-pixel" || targetDeviceId != "test-mac" || replyPort == 0) {
     throw DebugReceiverError.missingEnvironment("Isolated test identities and reply port are required")
 }
 let semaphore = DispatchSemaphore(value: 0)
@@ -50,6 +53,11 @@ let exitState = ExitState()
 
 let codec = EncryptedFrameCodec(sessionKey: sessionKey)
 let frameState = InMemoryFrameStateStore()
+let fileHarness = fileRoundtrip ? FileRoundtripHarness(codec: codec, frameState: frameState, replyPort: replyPort) { passed in
+    if !passed { exitState.fail() }
+    semaphore.signal()
+} : nil
+fileHarness?.start()
 let server: PlinkEventReceiver = if receiverMode == "network" {
     try SecureNetworkPlinkServer(
         port: port,
@@ -71,6 +79,7 @@ let server: PlinkEventReceiver = if receiverMode == "network" {
 try server.start { result in
     switch result {
     case .success(let envelope):
+        if let fileHarness { fileHarness.receive(envelope); return }
         if roundtrip {
             if let context = ReplyRouter.context(from: envelope) {
                 Task {
@@ -118,9 +127,10 @@ try server.start { result in
 }
 
 print("listening mode=\(receiverMode) port=\(port) expectedSource=\(pairedDeviceId) expectedTarget=\(targetDeviceId)")
-if semaphore.wait(timeout: .now() + 30) == .timedOut {
+if semaphore.wait(timeout: .now() + (fileRoundtrip ? 920 : 30)) == .timedOut {
     fputs("receiver timed out\n", stderr)
     exitState.fail()
 }
 server.stop()
+fileHarness?.stop()
 exit(exitState.code)

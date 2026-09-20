@@ -1,0 +1,24 @@
+{
+  "device": "emulator-5580 API36 arm64",
+  "apkSha256": "031d5196298d8a1cfd4da3aa4fd201af82191a8822e6c8528029911bbbe7b4d7",
+  "captureFontScale": "1.5",
+  "originalFontScale": "1.0",
+  "restoredFontScale": "1.0",
+  "screenshots": [
+    {
+      "path": "docs/evidence/2026-09-20/verified-apk-connection-large-text.png",
+      "sha256": "f9f3a3ad41bd07705b74ecd5a36e389fb732a78cfd344943bfe14d72c68fddad"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verified-apk-settings-large-text.png",
+      "sha256": "874bb7042cc1bd650108251a68b1d76fac46b4732f02c2de4baee965f020eb51"
+    }
+  ],
+  "findings": [
+    "Settings captured on final tested APK.",
+    "Connection Stop label clips to Sto at 1.5x font scale; remains open for iteration 3."
+  ],
+  "limits": [
+    "Unpaired screens only; no active transfer, native Mac UI, or physical-device behavior."
+  ]
+}

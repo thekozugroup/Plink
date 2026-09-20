@@ -1,0 +1,818 @@
+{
+  "schemaVersion": 1,
+  "runId": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+  "reviewedAt": "2026-09-20T04:51:50.087422+00:00",
+  "reviewer": "independent critic / 01a0bcce-6f45-7063-a34c-4aff6a9cec87",
+  "status": "bounded_independent_integration_evidence_review_complete",
+  "method": "Read-only inspection of synthetic test artifacts and exact harness paths; no keys obtained, no decryption, no builds, no device or UI operations. File bytes, parsed results and recorded hashes are derived from the same read snapshot.",
+  "captures": {
+    "files": {
+      "android-to-mac": {
+        "path": "build/checkpoint-2-files-final/capture/android-to-mac.bin",
+        "captureSha256": "955d44c4789cefcb04e2d92186949b4b5bef8011da59225ec01250eff7b13533",
+        "frames": 1052,
+        "wireBytes": 30634341,
+        "minimumFrameBytes": 624,
+        "maximumFrameBytes": 58910,
+        "completeConsumption": true,
+        "unexpectedOuterFields": 0,
+        "duplicateJSONKeys": [],
+        "outerFields": [
+          "cipherText",
+          "issuedAt",
+          "nonce",
+          "sequence",
+          "signature",
+          "sourceDeviceId",
+          "targetDeviceId",
+          "version"
+        ],
+        "versions": [
+          1
+        ],
+        "identities": [
+          [
+            "test-pixel",
+            "test-mac"
+          ]
+        ],
+        "sequenceFirstLast": [
+          1,
+          1052
+        ],
+        "sequenceDistinct": 1052,
+        "sequenceStepHistogram": {
+          "1": 1051
+        },
+        "issuedAtRange": [
+          "2026-09-20T04:36:08Z",
+          "2026-09-20T04:44:53Z"
+        ],
+        "outerNonceUUIDCount": 1052,
+        "outerNonceDistinct": 1052,
+        "signatureBase64DecodedByteLengths": [
+          32
+        ],
+        "cipherTextBase64DecodedByteRange": [
+          287,
+          44000
+        ],
+        "rawJSONMarkerOccurrences": {
+          "replyText": 0,
+          "syntheticSender": 0,
+          "syntheticReply": 0,
+          "filenamePrefix": 0,
+          "returnFilenamePrefix": 0,
+          "fixturePrefix64": 0,
+          "fixtureBase64Prefix64": 0,
+          "fileOffer": 0,
+          "fileChunk": 0,
+          "mimeType": 0,
+          "innerPayloadKey": 0,
+          "innerDataKey": 0
+        },
+        "decodedCiphertextMarkerOccurrences": {
+          "replyText": 0,
+          "syntheticSender": 0,
+          "syntheticReply": 0,
+          "filenamePrefix": 0,
+          "returnFilenamePrefix": 0,
+          "fixturePrefix64": 0,
+          "fixtureBase64Prefix64": 0,
+          "fileOffer": 0,
+          "fileChunk": 0,
+          "mimeType": 0,
+          "innerPayloadKey": 0,
+          "innerDataKey": 0
+        },
+        "matchesProducerSummary": true
+      },
+      "mac-to-android": {
+        "path": "build/checkpoint-2-files-final/capture/mac-to-android.bin",
+        "captureSha256": "059a211b64b33201ad470ba4a008b529f2545169682cfb0f56d1cdf58f025ac9",
+        "frames": 1052,
+        "wireBytes": 30625149,
+        "minimumFrameBytes": 616,
+        "maximumFrameBytes": 58903,
+        "completeConsumption": true,
+        "unexpectedOuterFields": 0,
+        "duplicateJSONKeys": [],
+        "outerFields": [
+          "cipherText",
+          "issuedAt",
+          "nonce",
+          "sequence",
+          "signature",
+          "sourceDeviceId",
+          "targetDeviceId",
+          "version"
+        ],
+        "versions": [
+          1
+        ],
+        "identities": [
+          [
+            "test-mac",
+            "test-pixel"
+          ]
+        ],
+        "sequenceFirstLast": [
+          1,
+          1052
+        ],
+        "sequenceDistinct": 1052,
+        "sequenceStepHistogram": {
+          "1": 1051
+        },
+        "issuedAtRange": [
+          "2026-09-20T04:36:08Z",
+          "2026-09-20T04:44:53Z"
+        ],
+        "outerNonceUUIDCount": 1052,
+        "outerNonceDistinct": 1052,
+        "signatureBase64DecodedByteLengths": [
+          32
+        ],
+        "cipherTextBase64DecodedByteRange": [
+          280,
+          43993
+        ],
+        "rawJSONMarkerOccurrences": {
+          "replyText": 0,
+          "syntheticSender": 0,
+          "syntheticReply": 0,
+          "filenamePrefix": 0,
+          "returnFilenamePrefix": 0,
+          "fixturePrefix64": 0,
+          "fixtureBase64Prefix64": 0,
+          "fileOffer": 0,
+          "fileChunk": 0,
+          "mimeType": 0,
+          "innerPayloadKey": 0,
+          "innerDataKey": 0
+        },
+        "decodedCiphertextMarkerOccurrences": {
+          "replyText": 0,
+          "syntheticSender": 0,
+          "syntheticReply": 0,
+          "filenamePrefix": 0,
+          "returnFilenamePrefix": 0,
+          "fixturePrefix64": 0,
+          "fixtureBase64Prefix64": 0,
+          "fileOffer": 0,
+          "fileChunk": 0,
+          "mimeType": 0,
+          "innerPayloadKey": 0,
+          "innerDataKey": 0
+        },
+        "matchesProducerSummary": true
+      }
+    },
+    "replies": {
+      "android-to-mac": {
+        "path": "build/checkpoint-2-replies-final/capture/android-to-mac.bin",
+        "captureSha256": "69047f49aee004326ad9a121fef56168ea7bef0ebf2da0a26f55e6743bb7d875",
+        "frames": 2,
+        "wireBytes": 1620,
+        "minimumFrameBytes": 656,
+        "maximumFrameBytes": 956,
+        "completeConsumption": true,
+        "unexpectedOuterFields": 0,
+        "duplicateJSONKeys": [],
+        "outerFields": [
+          "cipherText",
+          "issuedAt",
+          "nonce",
+          "sequence",
+          "signature",
+          "sourceDeviceId",
+          "targetDeviceId",
+          "version"
+        ],
+        "versions": [
+          1
+        ],
+        "identities": [
+          [
+            "test-pixel",
+            "test-mac"
+          ]
+        ],
+        "sequenceFirstLast": [
+          1,
+          2
+        ],
+        "sequenceDistinct": 2,
+        "sequenceStepHistogram": {
+          "1": 1
+        },
+        "issuedAtRange": [
+          "2026-09-20T04:47:08Z",
+          "2026-09-20T04:47:08Z"
+        ],
+        "outerNonceUUIDCount": 2,
+        "outerNonceDistinct": 2,
+        "signatureBase64DecodedByteLengths": [
+          32
+        ],
+        "cipherTextBase64DecodedByteRange": [
+          312,
+          537
+        ],
+        "rawJSONMarkerOccurrences": {
+          "replyText": 0,
+          "syntheticSender": 0,
+          "syntheticReply": 0,
+          "filenamePrefix": 0,
+          "returnFilenamePrefix": 0,
+          "fixturePrefix64": 0,
+          "fixtureBase64Prefix64": 0,
+          "fileOffer": 0,
+          "fileChunk": 0,
+          "mimeType": 0,
+          "innerPayloadKey": 0,
+          "innerDataKey": 0
+        },
+        "decodedCiphertextMarkerOccurrences": {
+          "replyText": 0,
+          "syntheticSender": 0,
+          "syntheticReply": 0,
+          "filenamePrefix": 0,
+          "returnFilenamePrefix": 0,
+          "fixturePrefix64": 0,
+          "fixtureBase64Prefix64": 0,
+          "fileOffer": 0,
+          "fileChunk": 0,
+          "mimeType": 0,
+          "innerPayloadKey": 0,
+          "innerDataKey": 0
+        },
+        "matchesProducerSummary": true
+      },
+      "mac-to-android": {
+        "path": "build/checkpoint-2-replies-final/capture/mac-to-android.bin",
+        "captureSha256": "1b32fc5b29d587a219d2c4c70bfd775ba5bae89af6ed6549a3a8e0a40801a4fe",
+        "frames": 1,
+        "wireBytes": 940,
+        "minimumFrameBytes": 936,
+        "maximumFrameBytes": 936,
+        "completeConsumption": true,
+        "unexpectedOuterFields": 0,
+        "duplicateJSONKeys": [],
+        "outerFields": [
+          "cipherText",
+          "issuedAt",
+          "nonce",
+          "sequence",
+          "signature",
+          "sourceDeviceId",
+          "targetDeviceId",
+          "version"
+        ],
+        "versions": [
+          1
+        ],
+        "identities": [
+          [
+            "test-mac",
+            "test-pixel"
+          ]
+        ],
+        "sequenceFirstLast": [
+          1,
+          1
+        ],
+        "sequenceDistinct": 1,
+        "sequenceStepHistogram": {},
+        "issuedAtRange": [
+          "2026-09-20T04:47:09Z",
+          "2026-09-20T04:47:09Z"
+        ],
+        "outerNonceUUIDCount": 1,
+        "outerNonceDistinct": 1,
+        "signatureBase64DecodedByteLengths": [
+          32
+        ],
+        "cipherTextBase64DecodedByteRange": [
+          522,
+          522
+        ],
+        "rawJSONMarkerOccurrences": {
+          "replyText": 0,
+          "syntheticSender": 0,
+          "syntheticReply": 0,
+          "filenamePrefix": 0,
+          "returnFilenamePrefix": 0,
+          "fixturePrefix64": 0,
+          "fixtureBase64Prefix64": 0,
+          "fileOffer": 0,
+          "fileChunk": 0,
+          "mimeType": 0,
+          "innerPayloadKey": 0,
+          "innerDataKey": 0
+        },
+        "decodedCiphertextMarkerOccurrences": {
+          "replyText": 0,
+          "syntheticSender": 0,
+          "syntheticReply": 0,
+          "filenamePrefix": 0,
+          "returnFilenamePrefix": 0,
+          "fixturePrefix64": 0,
+          "fixtureBase64Prefix64": 0,
+          "fileOffer": 0,
+          "fileChunk": 0,
+          "mimeType": 0,
+          "innerPayloadKey": 0,
+          "innerDataKey": 0
+        },
+        "matchesProducerSummary": true
+      }
+    }
+  },
+  "evidence": [
+    {
+      "path": "build/checkpoint-2-files-final/capture/summary.json",
+      "bytes": 945,
+      "sha256": "cd77a0aff51175425dfd4c2d418af70464154e146c323da0de92d355b14e5466"
+    },
+    {
+      "path": "build/checkpoint-2-files-final/capture/android-to-mac.bin",
+      "bytes": 30634341,
+      "sha256": "955d44c4789cefcb04e2d92186949b4b5bef8011da59225ec01250eff7b13533"
+    },
+    {
+      "path": "build/checkpoint-2-files-final/capture/mac-to-android.bin",
+      "bytes": 30625149,
+      "sha256": "059a211b64b33201ad470ba4a008b529f2545169682cfb0f56d1cdf58f025ac9"
+    },
+    {
+      "path": "build/checkpoint-2-files-final/mac-roundtrip.log",
+      "bytes": 995,
+      "sha256": "6dc5669fa3d2fdc74dea83c782488b9bc8cc0da4887209cbec4450f845d81eea"
+    },
+    {
+      "path": "build/checkpoint-2-files-final/android-roundtrip.log",
+      "bytes": 884,
+      "sha256": "59004965d60de426211228269fc5abf378bc9ab5340f3a1177841e829d2f2393"
+    },
+    {
+      "path": "build/checkpoint-2-files-final/test-install.log",
+      "bytes": 36,
+      "sha256": "781a31c82430c97897af612ece5e0ca2205e301cb5ff121ce2660541ea5182c7"
+    },
+    {
+      "path": "build/checkpoint-2-files-final/test-package-cleanup.log",
+      "bytes": 8,
+      "sha256": "7fc0023a6402c7bd7abd98bb3e580968de4833eed07d88d1cc8d70819d69c7a0"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/capture/summary.json",
+      "bytes": 926,
+      "sha256": "2ecc08191ecd33eb6f0168308e5bdcbbb26fb97a2329e77045859e5b7b317e65"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/capture/android-to-mac.bin",
+      "bytes": 1620,
+      "sha256": "69047f49aee004326ad9a121fef56168ea7bef0ebf2da0a26f55e6743bb7d875"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/capture/mac-to-android.bin",
+      "bytes": 940,
+      "sha256": "1b32fc5b29d587a219d2c4c70bfd775ba5bae89af6ed6549a3a8e0a40801a4fe"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/mac-roundtrip.log",
+      "bytes": 231,
+      "sha256": "de5ca4ceaad2dff1a623489521da5787614a5621d3d39b50acf3605e7dec5d51"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/android-roundtrip.log",
+      "bytes": 387,
+      "sha256": "985163b7c7a9dbfcb505dc6333780074f20c331f672a06af59e2c68fc5c778f1"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/test-install.log",
+      "bytes": 36,
+      "sha256": "781a31c82430c97897af612ece5e0ca2205e301cb5ff121ce2660541ea5182c7"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/test-package-cleanup.log",
+      "bytes": 8,
+      "sha256": "7fc0023a6402c7bd7abd98bb3e580968de4833eed07d88d1cc8d70819d69c7a0"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/verification-manifest.json",
+      "bytes": 23765,
+      "sha256": "215d352713b43ae2b14243008a74e4f6ab7e5eb5698bc399dded80df43f09671"
+    },
+    {
+      "path": ".a5c/artifacts/verification-2-final-rerun.log",
+      "bytes": 28969,
+      "sha256": "fa700cdb3d88a61fbad98a60aab2c397fc29d8b92f548080c2812d20176e2d3a"
+    },
+    {
+      "path": "scripts/capture-synthetic-transport.py",
+      "bytes": 4515,
+      "sha256": "079189d87039bf719b64a4b25cee8b7bd286f4149eb50ac34a8d4c3302e07cc4"
+    },
+    {
+      "path": "macos/Sources/PlinkMacDebugReceiver/FileRoundtrip.swift",
+      "bytes": 5529,
+      "sha256": "261a81923e268af07813ce03b0e3af9df7b55c78ca0be97c179bbc3ec19a5c08"
+    },
+    {
+      "path": "macos/Sources/PlinkMacDebugReceiver/main.swift",
+      "bytes": 5189,
+      "sha256": "7d5b8e2ada15688b950b950c1e6532336f7ad73f66790d574eeea96de8e88169"
+    },
+    {
+      "path": "android/src/androidTest/java/app/plink/android/FileTransferDeviceCheck.kt",
+      "bytes": 5530,
+      "sha256": "e5373a81c9e4d7ae4fff870539e82772a0c924f1d8cfbb8b34bc143f49ab7379"
+    },
+    {
+      "path": "android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt",
+      "bytes": 13201,
+      "sha256": "7ce4c0778776462a4e4136d420b6449a82d65fdaff0d5642cc36c796c6e5f710"
+    },
+    {
+      "path": ".a5c/artifacts/device-evidence-2.json",
+      "bytes": 2112,
+      "sha256": "4addfba8bfbdd47040ffbc449c87119a38e5a019adebb25d9bceb8bc5fd01773"
+    }
+  ],
+  "allCaptureOuterNonces": {
+    "count": 2107,
+    "distinct": 2107
+  },
+  "fileTransfers": {
+    "passed": 10,
+    "sizesEachDirection": [
+      0,
+      1,
+      32768,
+      32769,
+      16777216
+    ],
+    "fixture": "byte at offset i is i modulo 251",
+    "expectedHashes": {
+      "0": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "1": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "32768": "09fed9cbfb98b6ab0f3e8ff63b7b1f9b0e07d58b225295c78fdc023cc4985a72",
+      "32769": "346e2310c7233f7723048e8289ba7a299d635ded9723dfea5248773f5b7684b8",
+      "16777216": "287507f403176f1f5b22b9a4d9cb49f7d7f88ac19e406b5ae87ce109564846bd"
+    },
+    "proof": "Mac harness reads saved destination and checks every byte and size, prints SHA-256, then returns that file. Android reads each saved return destination and checks every byte and size. Both check private staging cleanup. Reviewer recomputed deterministic fixture hashes; original temporary destination files were already cleaned by harness.",
+    "scope": "Production MacFileTransfer and Android FileTransferCoordinator, real file/socket IO with injected test environments and automatic test acceptance. Android harness sends directly via client after stillValid, bypassing production session controller/outbound queue, and disables scheduled watchdog. Mac harness bypasses native FileTransferController/picker. Neither native picker nor full app/FGS lifecycle acceptance is established."
+  },
+  "replyRegression": {
+    "status": "passed_synthetic_component_roundtrip",
+    "path": [
+      "Android NotificationMapper on test-owned Notification.Action",
+      "encrypted Android socket to Swift receiver",
+      "ReplyRouter creates synthetic Unicode reply",
+      "encrypted return socket",
+      "InboundCommandHandler and RemoteInputReplyExecutor",
+      "test-owned Android PendingIntent receiver checks exact Unicode and count==1",
+      "executed ack to Swift"
+    ],
+    "additionalAndroidChecks": [
+      "one-use RemoteInput route",
+      "replacement and keyed removal revoke old route",
+      "data-only action rejected",
+      "authentication-required action rejected",
+      "FileFrameStateStore recreation retains outgoing counter and duplicate rejection"
+    ],
+    "limits": "Swift debug receiver generates reply programmatically; no Notification Center text entry, native disappearance of stale control, original external conversation or real recipient. FileFrameStateStore recreation is a component test; passive capture does not execute replay injection."
+  },
+  "captureBoundaries": [
+    "This is a keyless local TCP relay capture, not a radio/network-interface packet capture. Raw streams contain length-prefixed JSON as forwarded by the relay.",
+    "No known synthetic fixture/name/text markers occur in outer JSON or base64-decoded ciphertext. This bounded observation is not a proof of cryptographic security, absence of arbitrary secrets, or confidentiality of untested clipboard/call-media paths. No session key was obtained or compared.",
+    "Visible metadata includes device IDs, sequence, issuedAt, version, outer UUID nonce, authenticator, ciphertext length and frame counts; traffic analysis and transfer-size/timing leakage remain possible.",
+    "Outer UUID uniqueness and monotonic sequence demonstrate metadata in these runs only. They do not establish replay rejection, restart persistence, key freshness across runs or authenticated metadata integrity. Frames were not decrypted/authenticated by this reviewer. File and reply harness runs each start counters at 1 using isolated in-memory stores.",
+    "Native picker consent, provider-specific URI/revocation behavior, actual Android session/outbound queue/FGS wiring and Mac UI are outside these successful harness journeys. Source/unit evidence covers some mechanisms separately.",
+    "Parent reports emulator disappeared before first reply attempt for unknown cause, then restarted same task-owned AVD without changing binaries. Successful rerun does not explain the exit or establish lifecycle/soak stability. No physical Pixel was used."
+  ],
+  "manifestVerification": {
+    "sourceSha256": {
+      "entries": 163,
+      "mismatches": []
+    },
+    "binarySha256": {
+      "entries": 6,
+      "mismatches": []
+    },
+    "installedAPKMatchesDebugAPK": true,
+    "installedIdentityBoundary": "Installed APK digest/device identity supplied by parent; reviewer verified local binary digest equality, performed no device query. Manifest identifies a frozen modified working tree relative to baseline commit, not a committed release revision."
+  },
+  "canonicalGate": {
+    "log": ".a5c/artifacts/verification-2-final-rerun.log",
+    "parentExitCode": 0,
+    "android": {
+      "suites": 30,
+      "tests": 131,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "androidXMLSnapshot": [
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.continuity.ContinuityContractTest.xml",
+        "sha256": "06fab5ad362726f1a64d31a8a5bff90a9d8c4b9bad1dd15c24d5de244b525194",
+        "timestamp": "2026-09-20T04:35:02.861Z",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.continuity.ContinuityEnvelopeFactoryTest.xml",
+        "sha256": "0e4edfe4322f8f2541bd21dac83d033ac35d03a7b67bc39b8d47a4b320abd12d",
+        "timestamp": "2026-09-20T04:35:02.879Z",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.continuity.FileTransferCoordinatorTest.xml",
+        "sha256": "247ed3a000239a0fdc1a08695f8369d2c9eefd8acddfff7f006dc3d86e8f7259",
+        "timestamp": "2026-09-20T04:35:02.887Z",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.features.FeaturePolicyTest.xml",
+        "sha256": "aaba5f6dddea886b3f4363c5504a8bdc23c17715e8c9b756f122b997e435475a",
+        "timestamp": "2026-09-20T04:35:03.532Z",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.notifications.ReplyRouteRegistryTest.xml",
+        "sha256": "29893997eb0300458389ab0743260d11c1465035da8f068fe56d41435fa52807",
+        "timestamp": "2026-09-20T04:35:03.534Z",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.notifications.ReplyRouteTest.xml",
+        "sha256": "13d461234d14e587afee4147b3951a1f7e25f917bca7be8480e3565cd4ed3b1e",
+        "timestamp": "2026-09-20T04:35:03.538Z",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.EmojiPairingTest.xml",
+        "sha256": "3d6678f3d67acf3342c92a878a721606d0d610a696a15f8b5b2bb90699a31785",
+        "timestamp": "2026-09-20T04:35:03.542Z",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.NearbyPairingOfferParserTest.xml",
+        "sha256": "8facacb0eeaf88f0e51ba90f4de0123db3f5f359dfd41c24a1a483e4c9fe6bee",
+        "timestamp": "2026-09-20T04:35:03.555Z",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingConsentGateTest.xml",
+        "sha256": "ab009e33ddb5dd0854e6d7846e509eaee578c60c973140c427d65775dc16a56b",
+        "timestamp": "2026-09-20T04:35:03.559Z",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingConsentTest.xml",
+        "sha256": "ac20a0e37deaa3e9905293115951272aa599359748cfcf1c7de4070abb9482a2",
+        "timestamp": "2026-09-20T04:35:03.561Z",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingCoordinatorTest.xml",
+        "sha256": "cf6828148c3e3ee71c52b2c6a6394dda01ed8707aac460728c4423eed8993ec4",
+        "timestamp": "2026-09-20T04:35:03.588Z",
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingMigrationTest.xml",
+        "sha256": "0ac84b05f6211d16e2f6387f94b60d0e959222bd6e7d47730a69bc8086f801a7",
+        "timestamp": "2026-09-20T04:35:03.803Z",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingSecurityTest.xml",
+        "sha256": "491441abd776f418ef011f97e476ab43d127abf3dda778f159ea9cb5e6393b35",
+        "timestamp": "2026-09-20T04:35:03.805Z",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingStateMachineTest.xml",
+        "sha256": "529e12d02ef8ef707d03c81b154aca242d925c4ed20174930f34985be5135022",
+        "timestamp": "2026-09-20T04:35:03.815Z",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.permissions.PermissionModelTest.xml",
+        "sha256": "014335647c2fb964197fcd1fc3474414c884125a41e40d66bc157234a6ec64ce",
+        "timestamp": "2026-09-20T04:35:03.827Z",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.protocol.FileTransferPayloadPolicyTest.xml",
+        "sha256": "5a71582714acaaff7e7aabb30d1d1ff13b682b20760bffbb7bb2884d0cefa56f",
+        "timestamp": "2026-09-20T04:35:03.829Z",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.protocol.PlinkMessageTest.xml",
+        "sha256": "377ee64ef13b81db5066c34b192b19f64fbe0920d931533f5f7474c519942673",
+        "timestamp": "2026-09-20T04:35:03.910Z",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.security.DurableFrameStateTest.xml",
+        "sha256": "882d83f44c24df5d834c537d5f625044ca068fc5704650b1fabe5320b8bebd9f",
+        "timestamp": "2026-09-20T04:35:03.914Z",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.security.SecureEnvelopeTest.xml",
+        "sha256": "8db171f2b82faa380111524b4d2bd53d81ddccfc0c060045d21df79e8f8b805f",
+        "timestamp": "2026-09-20T04:35:04.097Z",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.BackgroundConnectionPolicyTest.xml",
+        "sha256": "733cc88b770e039e3cd85cbec86bf533c49b1b0fff3d7a364d05f83b56eac2ef",
+        "timestamp": "2026-09-20T04:35:04.104Z",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.DurableEventOutboxTest.xml",
+        "sha256": "0d570a4928cf1c524d2560c71cc55d602844be5a5ca3ab74ac841b7994311d6b",
+        "timestamp": "2026-09-20T04:35:04.105Z",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.HandoffDiagnosticsTest.xml",
+        "sha256": "bc281b0e9e65f57d7a4e10e5eb12a7b020a28a867a12d1755eb6ae26b67387e9",
+        "timestamp": "2026-09-20T04:35:04.121Z",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.InboundCommandHandlerTest.xml",
+        "sha256": "4ba85e861ea7e28dfc3762c3f2965309dca9de0af1d41b74ecbe47aaed7c999d",
+        "timestamp": "2026-09-20T04:35:04.125Z",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.PlinkEventForwarderTest.xml",
+        "sha256": "129193fae6b850b10e01ce7c9d284782f90df0cbe984986eebc32637874c82c8",
+        "timestamp": "2026-09-20T04:35:04.133Z",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.SerializedOutboundQueueTest.xml",
+        "sha256": "e8663d82b0f7393ee0c5d2ed30640a261b7e322b2eef25d5acfeef628f5230f2",
+        "timestamp": "2026-09-20T04:35:04.136Z",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.SharedSessionStateTest.xml",
+        "sha256": "84d1e7bbf8d39fb92fbf00cb5780f35799bf482562bec5f6fee706f2b75eb5ba",
+        "timestamp": "2026-09-20T04:35:04.156Z",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.storage.PairingSecretStoreTest.xml",
+        "sha256": "37d979764367b9e618b99de7c22b6730a3ba80b4f7755db856c7d1c62b2b5e49",
+        "timestamp": "2026-09-20T04:35:04.157Z",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.transport.InMemoryPlinkTransportTest.xml",
+        "sha256": "40138927f789f87df922b4d5071a3db21929579477dab31de9b797cbfff1f8ef",
+        "timestamp": "2026-09-20T04:35:04.158Z",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.transport.LengthPrefixedFrameCodecTest.xml",
+        "sha256": "76adfef110353c6a3f3f20ba0879f8db45926ab96da883ab1fb07abc2984e50d",
+        "timestamp": "2026-09-20T04:35:04.160Z",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.transport.SocketSecurityTest.xml",
+        "sha256": "a921b14d676d2f03b9a8184ffc96920cd026c883cbd8d2c160e82a124735f923",
+        "timestamp": "2026-09-20T04:35:04.161Z",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "swift": {
+      "XCTest": 48,
+      "SwiftTesting": 53,
+      "total": 101,
+      "failures": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 32
+    },
+    "boundary": "Build logs and XML reviewed, no build rerun. Test success supports tested mechanisms, not user acceptance. Earlier virtual-time/real-IO flake is not erased; final test source uses runBlocking per parent."
+  },
+  "harnessLineReferences": [
+    "macos/Sources/PlinkMacDebugReceiver/FileRoundtrip.swift:49",
+    "macos/Sources/PlinkMacDebugReceiver/FileRoundtrip.swift:70",
+    "android/src/androidTest/java/app/plink/android/FileTransferDeviceCheck.kt:43",
+    "android/src/androidTest/java/app/plink/android/FileTransferDeviceCheck.kt:84",
+    "android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt:168",
+    "android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt:185",
+    "macos/Sources/PlinkMacDebugReceiver/main.swift:83"
+  ],
+  "findings": [],
+  "rawCaptureInspectionComplete": true,
+  "rawCaptureCleanupReady": true,
+  "rawCaptureCleanupBoundary": "Reviewer has not changed or deleted raw capture files. Parent may perform previously authorized task-owned cleanup after retaining this hash-bound independent record and summaries.",
+  "changedFiles": [
+    ".a5c/artifacts/checkpoint-2-independent-integration.json"
+  ]
+}

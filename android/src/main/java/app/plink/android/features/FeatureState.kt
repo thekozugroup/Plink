@@ -110,8 +110,12 @@ object FeaturePolicy {
         FeatureAvailability(
             ContinuityFeature.Files,
             enabled = settings.isEnabled(ContinuityFeature.Files),
-            available = false,
-            reason = "File transfer is not implemented."
+            available = true,
+            reason = if (permissionState.notificationRuntime) {
+                "Use Android share to send. Incoming files require explicit notification and destination approval."
+            } else {
+                "Sending works; incoming files require Pixel notifications."
+            }
         ),
         FeatureAvailability(
             ContinuityFeature.Web,

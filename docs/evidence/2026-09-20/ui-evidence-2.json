@@ -1,0 +1,95 @@
+{
+  "owner": "delegated Android UI visual verification iteration 2",
+  "capturedAt": "2026-09-20",
+  "device": {
+    "serial": "emulator-5580",
+    "type": "isolated API 36 arm64 emulator",
+    "physicalPixelTouched": false
+  },
+  "build": {
+    "package": "app.plink.android",
+    "versionName": "0.1.0",
+    "versionCode": 1,
+    "installedTimestamp": "2026-09-20 00:11:08 America/New_York",
+    "localApk": "android/build/outputs/apk/debug/android-debug.apk",
+    "localApkSha256": "cad2f7cfb48e93df27dd74ecc61abc92717f8c98928e7c8c5ccdab9fc695c658",
+    "installedBaseApkSha256": "cad2f7cfb48e93df27dd74ecc61abc92717f8c98928e7c8c5ccdab9fc695c658",
+    "byteIdentical": true,
+    "repositoryHead": "6bce1e6cc194862c3b4d364da794b93b36e361f8",
+    "plinkAppScreenSha256": "55ab6a878cb4c8b0eb89454903b0383f7f43b9c1b8e7d24b848f7615ea4ee3d5",
+    "sourceState": "UI correction was an uncommitted working-tree change at capture time."
+  },
+  "temporarySettings": {
+    "duringCapture": {
+      "font_scale": "1.5",
+      "animator_duration_scale": "0",
+      "transition_animation_scale": "1.0",
+      "window_animation_scale": "1.0"
+    },
+    "restored": {
+      "font_scale": "1.0",
+      "animator_duration_scale": "null",
+      "transition_animation_scale": "1.0",
+      "window_animation_scale": "1.0"
+    }
+  },
+  "evidence": [
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-connection-large-text.png",
+      "sha256": "e731e6f2104e899c2bf225f8d8819ef187b4ee2f8a97d1645ba3ebae396b9387"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-activity-large-text.png",
+      "sha256": "2c6539c7be115f7133571c73f71da673529edf55f48ac2e4cae24bfaa23589dc"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-top.png",
+      "sha256": "55671b957322424ab2671f6e9a28f2306c05b3957fabd15938ee62481e85209b"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-files.png",
+      "sha256": "d4fca25611b0cf7230fe4f43d8b38672cdab1749899f8b1425bbe7a878fe10f4"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-lower.png",
+      "sha256": "5adc84945af3f56f9be64e7cb18099cae7f7f5b36881adfa5ea3f36844817f6b"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-permissions.png",
+      "sha256": "30131c6d4adb1c369d0d2659d3bab647bcaf313c6efcda23c43665869edad727"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-settings-large-text-bottom.png",
+      "sha256": "f09a232c42ef22538817b026291efe351f1b316dc81a3f59eec65bb9249e3e6e"
+    },
+    {
+      "path": "docs/evidence/2026-09-20/android-emulator-reduced-motion-navigation.mp4",
+      "sha256": "9daa4037fac454c026f3410d6eb2e4d832e591666795aee43af47cb5bf9dc11a",
+      "durationSeconds": 5.211678
+    }
+  ],
+  "verified": [
+    "All three navigation destinations rendered at font_scale 1.5.",
+    "Clipboard supporting guidance wrapped in full with no ellipsis.",
+    "Files integration row and full supporting status were reachable by scrolling.",
+    "Lower Settings controls, including Refresh permissions, were reachable by scrolling.",
+    "Navigation changed destinations with animator_duration_scale 0.",
+    "UIAutomator reported no text-node bounds outside the 1080x2400 display in captured states."
+  ],
+  "openFindings": [
+    {
+      "severity": "P2 visual",
+      "finding": "Scrolled Settings content paints behind and visibly overlaps the fixed title/status region near the top edge."
+    }
+  ],
+  "notEstablished": [
+    "Human TalkBack traversal or focus order",
+    "Permission behavior",
+    "Pairing behavior",
+    "File-transfer behavior",
+    "Physical-device accessibility",
+    "Formal reduced-motion accessibility acceptance"
+  ],
+  "productionSourceChangedDuringCapture": false,
+  "emulatorReleased": true
+}

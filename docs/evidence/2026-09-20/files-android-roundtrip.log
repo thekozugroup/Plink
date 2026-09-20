@@ -1,0 +1,13 @@
+
+FILE ROUNDTRIP boundary=0: Android returned bytes verified and temporary files removed
+
+FILE ROUNDTRIP boundary=1: Android returned bytes verified and temporary files removed
+
+FILE ROUNDTRIP boundary=32768: Android returned bytes verified and temporary files removed
+
+FILE ROUNDTRIP boundary=32769: Android returned bytes verified and temporary files removed
+
+FILE ROUNDTRIP boundary=16777216: Android returned bytes verified and temporary files removed
+
+PLINK DEVICE CHECKS PASSED: RemoteInput text delivered once, Notification replacement revokes reply, Keyed notification removal revokes reply, Data-only RemoteInput rejected, Authentication-required action rejected, Android filesystem retains counters and replay rejection across store recreation, Encrypted Android–Swift files both directions at 0, 1, 32768, 32769, 16777216 bytes, byte equality and private staging cleanup
+

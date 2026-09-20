@@ -49,6 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     private var pairingAttempt = UUID()
     private var pairingExpiryTask: Task<Void, Never>?
     let calling = BluetoothCallController()
+    let files = FileTransferController()
     @Published var deviceStatus: MacDeviceStatus?
     @Published var mediaState: MacMediaState?
     @Published var mediaSessions: [String: MacMediaState] = [:]
@@ -132,6 +133,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        files.reset()
         housekeeping?.cancel()
         clearPairingAttempt() // Prevent a suspended final send from establishing trust.
         connectionGeneration = UUID()
@@ -202,6 +204,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     func startNearbyPairing() {
         guard pairingRecoveryComplete else { pairingStatusText = "Waiting for saved pairing recovery."; return }
         guard !pairingInFlight else { return }
+        files.reset()
         if pendingManualOffer == nil { priorPairing = activePairing }
         stopPairingConfirmationReceiver()
         stopPairingAdvertiser()
@@ -360,6 +363,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     }
 
     private func invalidateActiveSession() {
+        files.reset()
         connectionGeneration = UUID()
         receiver?.stop()
         receiver = nil
@@ -552,6 +556,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
 
     @discardableResult
     private func startReceiver(sessionKey: Data, pairedDeviceId: String) -> Bool {
+        files.reset()
         stopPairingConfirmationReceiver()
         receiver?.stop()
         pairedPeerID = pairedDeviceId
@@ -574,6 +579,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
                 }
             }
             receiver = server
+            if let activeTransport { files.bind(localID: localMacDeviceId, peerID: pairedDeviceId, transport: activeTransport) }
             lastDeliveryState = "Receiver listening"
             NSLog("Plink receiver listening on \(receiverPort)")
             return true
@@ -599,6 +605,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         case .success(let envelope):
             guard envelope.sourceDeviceId == pairedPeerID, envelope.targetDeviceId == localMacDeviceId else { return }
             lastPeerActivity = .now
+            if FileTransferPayloadPolicy.eventTypes.contains(envelope.type) {
+                files.receive(envelope)
+                return
+            }
             if let result = commands.resolve(envelope) { showCommandResult(result); return }
             switch envelope.type {
             case .deviceStatus:
@@ -612,7 +622,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
                 else if !state.sessionID.isEmpty { mediaSessions[state.sessionID] = state }
                 if mediaState?.sessionID == state.sessionID { mediaState = removed ? nil : state }
                 if mediaState == nil { mediaState = mediaSessions.values.sorted { $0.sessionID < $1.sessionID }.first }
-            case .clipboardUpdated, .webOpen, .fileOffer:
+            case .clipboardUpdated, .webOpen:
                 let executed = HandoffPlanner.action(for: envelope).map(perform) ?? false
                 if envelope.requiresAck { sendOutcome(for: envelope, executed: executed) }
                 return
@@ -639,7 +649,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
             lastDeliveryState = result ? "Opened link from phone." : "Could not open link."
             return result
         case .fileOffer:
-            lastDeliveryState = "File transfer is not implemented yet."
+            lastDeliveryState = "Open Files to review the pending offer."
             return false
         }
     }
@@ -755,6 +765,7 @@ struct DashboardWindow: View {
                 }.help("Open Notifications → Plink and enable Allow Notifications. Requesting access again cannot reset a denial.")
                 BluetoothCallingView(controller: appDelegate.calling)
                 ContinuityPanel(appDelegate: appDelegate)
+                FileTransferPanel(controller: appDelegate.files)
             }
             .padding(24)
         }
@@ -775,6 +786,7 @@ struct MenuBarPanel: View {
             Text(appDelegate.lastReply).font(.caption).foregroundStyle(.secondary)
             Button("Open Plink") { appDelegate.showDashboardWindow() }
             Button("Send Clipboard") { appDelegate.sendClipboard() }.disabled(appDelegate.pairedPeerID == nil)
+            FileTransferMenu(controller: appDelegate.files, openDashboard: { appDelegate.showDashboardWindow() })
             Button("Quit") { appDelegate.quit() }
         }.padding(18).frame(width: 320)
     }

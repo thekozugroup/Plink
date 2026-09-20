@@ -36,12 +36,12 @@ class FeaturePolicyTest {
     }
 
     @Test
-    fun unavailableFeaturesRemainUnavailableWhenEnabled() {
+    fun implementedFilesRemainAvailableWhenEnabled() {
         val settings = FeatureToggleReader { true }
         val features = FeaturePolicy.evaluate(PermissionState(), settings)
 
         assertFalse(features.first { it.feature == ContinuityFeature.Media }.available)
-        assertFalse(features.first { it.feature == ContinuityFeature.Files }.available)
+        assertTrue(features.first { it.feature == ContinuityFeature.Files }.available)
         assertTrue(features.first { it.feature == ContinuityFeature.Web }.available)
     }
 }

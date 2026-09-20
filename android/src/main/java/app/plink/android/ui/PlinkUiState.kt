@@ -1,5 +1,6 @@
 package app.plink.android.ui
 
+import app.plink.android.continuity.FileTransferState
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeatureAvailability
 import app.plink.android.permissions.PermissionAction
@@ -12,7 +13,8 @@ data class PlinkUiState(
     val features: List<FeatureAvailability>,
     val onboarding: List<PermissionOnboardingStep>,
     val backgroundConnectionEnabled: Boolean,
-    val backgroundConnectionState: BackgroundConnectionState
+    val backgroundConnectionState: BackgroundConnectionState,
+    val fileTransferState: FileTransferState
 )
 
 data class PlinkUiActions(
@@ -20,5 +22,6 @@ data class PlinkUiActions(
     val onRefreshPermissions: () -> Unit,
     val onOpenPermissionSettings: (PermissionAction) -> Unit,
     val onFeatureEnabledChange: (ContinuityFeature, Boolean) -> Unit,
-    val onBackgroundConnectionEnabledChange: (Boolean) -> Unit
+    val onBackgroundConnectionEnabledChange: (Boolean) -> Unit,
+    val onCancelFileTransfer: () -> Unit
 )

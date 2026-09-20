@@ -1,0 +1,26 @@
+{
+  "recordedAtUTC": "2026-09-20T04:53:05.239638+00:00",
+  "reason": "Removed task-owned temporary raw captures after independent inspection; summaries and hash-bound review retained.",
+  "removed": [
+    {
+      "path": "build/checkpoint-2-files-final/capture/android-to-mac.bin",
+      "bytes": 30634341,
+      "sha256": "955d44c4789cefcb04e2d92186949b4b5bef8011da59225ec01250eff7b13533"
+    },
+    {
+      "path": "build/checkpoint-2-files-final/capture/mac-to-android.bin",
+      "bytes": 30625149,
+      "sha256": "059a211b64b33201ad470ba4a008b529f2545169682cfb0f56d1cdf58f025ac9"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/capture/android-to-mac.bin",
+      "bytes": 1620,
+      "sha256": "69047f49aee004326ad9a121fef56168ea7bef0ebf2da0a26f55e6743bb7d875"
+    },
+    {
+      "path": "build/checkpoint-2-replies-final/capture/mac-to-android.bin",
+      "bytes": 940,
+      "sha256": "1b32fc5b29d587a219d2c4c70bfd775ba5bae89af6ed6549a3a8e0a40801a4fe"
+    }
+  ]
+}
