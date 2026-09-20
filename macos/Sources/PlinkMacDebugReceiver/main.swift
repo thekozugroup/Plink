@@ -44,8 +44,9 @@ let port = UInt16(ProcessInfo.processInfo.environment["PLINK_DEBUG_RECEIVER_PORT
 let receiverMode = ProcessInfo.processInfo.environment["PLINK_DEBUG_RECEIVER_MODE"] ?? "foundation"
 let roundtrip = receiverMode == "roundtrip"
 let fileRoundtrip = receiverMode == "files"
+let screenRoundtrip = receiverMode == "screen"
 let replyPort = UInt16(ProcessInfo.processInfo.environment["PLINK_DEBUG_REPLY_PORT"] ?? "0") ?? 0
-if (roundtrip || fileRoundtrip) && (pairedDeviceId != "test-pixel" || targetDeviceId != "test-mac" || replyPort == 0) {
+if (roundtrip || fileRoundtrip || screenRoundtrip) && (pairedDeviceId != "test-pixel" || targetDeviceId != "test-mac" || replyPort == 0) {
     throw DebugReceiverError.missingEnvironment("Isolated test identities and reply port are required")
 }
 let semaphore = DispatchSemaphore(value: 0)
@@ -53,11 +54,17 @@ let exitState = ExitState()
 
 let codec = EncryptedFrameCodec(sessionKey: sessionKey)
 let frameState = InMemoryFrameStateStore()
+let screenHarness = screenRoundtrip ? ScreenRoundtripHarness(codec: codec, frameState: frameState,
+    replyPort: replyPort, evidenceDirectory: URL(fileURLWithPath: try environment("PLINK_DEBUG_SCREEN_EVIDENCE_DIR"))) { passed in
+        if !passed { exitState.fail() }
+        semaphore.signal()
+    } : nil
 let fileHarness = fileRoundtrip ? FileRoundtripHarness(codec: codec, frameState: frameState, replyPort: replyPort) { passed in
     if !passed { exitState.fail() }
     semaphore.signal()
 } : nil
 fileHarness?.start()
+screenHarness?.start()
 let server: PlinkEventReceiver = if receiverMode == "network" {
     try SecureNetworkPlinkServer(
         port: port,
@@ -79,6 +86,7 @@ let server: PlinkEventReceiver = if receiverMode == "network" {
 try server.start { result in
     switch result {
     case .success(let envelope):
+        if let screenHarness { screenHarness.receive(envelope); return }
         if let fileHarness { fileHarness.receive(envelope); return }
         if roundtrip {
             if let context = ReplyRouter.context(from: envelope) {
@@ -127,10 +135,11 @@ try server.start { result in
 }
 
 print("listening mode=\(receiverMode) port=\(port) expectedSource=\(pairedDeviceId) expectedTarget=\(targetDeviceId)")
-if semaphore.wait(timeout: .now() + (fileRoundtrip ? 920 : 30)) == .timedOut {
+if semaphore.wait(timeout: .now() + (fileRoundtrip ? 920 : screenRoundtrip ? 95 : 30)) == .timedOut {
     fputs("receiver timed out\n", stderr)
     exitState.fail()
 }
 server.stop()
 fileHarness?.stop()
+screenHarness?.stop()
 exit(exitState.code)

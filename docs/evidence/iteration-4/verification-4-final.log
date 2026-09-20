@@ -1,0 +1,750 @@
+Verification started (UTC): 2026-09-20T08:29:03Z
+Repository commit: b4e2cc2a0087cf4388b4129f31169a456e582bc2
+ M README.md
+ M android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt
+ M android/src/debug/AndroidManifest.xml
+ M android/src/main/AndroidManifest.xml
+ M android/src/main/java/app/plink/android/MainActivity.kt
+ M android/src/main/java/app/plink/android/features/FeatureState.kt
+ M android/src/main/java/app/plink/android/protocol/PlinkMessage.kt
+ M android/src/main/java/app/plink/android/security/SecureEnvelope.kt
+ M android/src/main/java/app/plink/android/services/PlinkEventForwarder.kt
+ M android/src/main/java/app/plink/android/services/PlinkSessionController.kt
+ M android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt
+ M android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt
+ M android/src/main/java/app/plink/android/ui/PlinkUiState.kt
+ M android/src/test/java/app/plink/android/features/FeaturePolicyTest.kt
+ M android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt
+ M android/src/test/java/app/plink/android/services/SerializedOutboundQueueTest.kt
+ M docs/architecture.md
+ M docs/feature-parity.md
+ M docs/manual-test-plan.md
+ M macos/Package.swift
+ M macos/Resources/Info.plist
+ M macos/Resources/PlinkMac.entitlements
+ M macos/Sources/PlinkCore/LocalTransport.swift
+ M macos/Sources/PlinkCore/PlinkJSON.swift
+ M macos/Sources/PlinkCore/PlinkMessage.swift
+ M macos/Sources/PlinkCore/SecureEnvelope.swift
+ M macos/Sources/PlinkMac/PlinkMacApp.swift
+ M macos/Sources/PlinkMacDebugReceiver/main.swift
+ M scripts/check-fixtures.sh
+ M scripts/verify-device.sh
+ M shared/protocol/v1/schema.json
+ M third_party/tomato/PROVENANCE.json
+?? android/src/androidTest/java/app/plink/android/ScreenPreviewDeviceCheck.kt
+?? android/src/androidTest/java/app/plink/android/ScreenPreviewTestSession.kt
+?? android/src/debug/java/app/plink/android/debug/ScreenPreviewPatternActivity.kt
+?? android/src/main/java/app/plink/android/protocol/BaselineJpegValidator.kt
+?? android/src/main/java/app/plink/android/protocol/ScreenPreviewPayloadPolicy.kt
+?? android/src/main/java/app/plink/android/screen/
+?? android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt
+?? android/src/test/java/app/plink/android/protocol/ScreenPreviewPayloadPolicyTest.kt
+?? android/src/test/java/app/plink/android/screen/
+?? docs/evidence/iteration-4/
+?? macos/Sources/PlinkCore/BaselineJPEGValidator.swift
+?? macos/Sources/PlinkCore/ScreenFrameDecoder.swift
+?? macos/Sources/PlinkCore/ScreenPreviewProtocol.swift
+?? macos/Sources/PlinkCore/ScreenPreviewSession.swift
+?? macos/Sources/PlinkCore/SerializedPlinkSender.swift
+?? macos/Sources/PlinkCore/WebcamPreviewPolicy.swift
+?? macos/Sources/PlinkMac/PixelWebcamController.swift
+?? macos/Sources/PlinkMac/PixelWebcamView.swift
+?? macos/Sources/PlinkMac/ScreenPreviewController.swift
+?? macos/Sources/PlinkMac/ScreenPreviewView.swift
+?? macos/Sources/PlinkMacDebugReceiver/ScreenPatternVerifier.swift
+?? macos/Sources/PlinkMacDebugReceiver/ScreenRoundtrip.swift
+?? macos/Tests/PlinkCoreTests/ScreenPreviewTests.swift
+?? macos/Tests/PlinkCoreTests/SerializedPlinkSenderTests.swift
+?? macos/Tests/PlinkCoreTests/WebcamPreviewPolicyTests.swift
+?? macos/Tests/PlinkMacTests/
+?? scripts/verify-screen-preview.sh
+?? shared/protocol/v1/screen-preview/
+ProductName:		macOS
+ProductVersion:		27.0
+BuildVersion:		26A428
+openjdk version "17.0.20.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 17.0.20.1+0)
+OpenJDK 64-Bit Server VM Homebrew (build 17.0.20.1+0, mixed mode, sharing)
+
+------------------------------------------------------------
+Gradle 9.3.1
+------------------------------------------------------------
+
+Build time:    2026-01-29 14:15:01 UTC
+Revision:      44f4e8d3122ee6e7cbf5a248d7e20b4ca666bda3
+
+Kotlin:        2.2.21
+Groovy:        4.0.29
+Ant:           Apache Ant(TM) version 1.10.15 compiled on August 25 2024
+Launcher JVM:  17.0.20.1 (Homebrew 17.0.20.1+0)
+Daemon JVM:    /opt/homebrew/Cellar/openjdk@17/17.0.20.1/libexec/openjdk.jdk/Contents/Home (no Daemon JVM specified, using current Java home)
+OS:            Mac OS X 27.0 aarch64
+
+swift-driver version: 1.168.6 Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Xcode 27.0
+Build version 27A266a
+27.0
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+
+> Task :android:printBuildEnvironment
+Android compile SDK: 36
+Android build tools: 36.0.0
+Android minimum SDK: 26
+Android target SDK: 36
+
+> Task :android:clean
+> Task :android:preBuild UP-TO-DATE
+> Task :android:preDebugBuild UP-TO-DATE
+> Task :android:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :android:generateDebugResources
+> Task :android:packageDebugResources
+> Task :android:processDebugNavigationResources
+> Task :android:generateDebugAssets UP-TO-DATE
+> Task :android:javaPreCompileDebug
+> Task :android:mergeDebugAssets
+> Task :android:compressDebugAssets
+> Task :android:desugarDebugFileDependencies
+> Task :android:parseDebugLocalResources
+> Task :android:checkDebugAarMetadata
+> Task :android:compileDebugNavigationResources
+> Task :android:mapDebugSourceSetPaths
+> Task :android:generateDebugRFile
+> Task :android:mergeDebugResources
+> Task :android:createDebugCompatibleScreenManifests
+> Task :android:extractDeepLinksDebug
+> Task :android:processDebugMainManifest
+> Task :android:processDebugManifest
+> Task :android:processDebugManifestForPackage
+> Task :android:checkDebugDuplicateClasses
+> Task :android:mergeDebugJniLibFolders
+> Task :android:mergeLibDexDebug
+> Task :android:mergeDebugNativeLibs
+> Task :android:validateSigningDebug
+> Task :android:writeDebugAppMetadata
+
+> Task :android:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
+
+> Task :android:writeDebugSigningConfigVersions
+> Task :android:preReleaseBuild UP-TO-DATE
+> Task :android:mergeReleaseJniLibFolders
+> Task :android:mergeReleaseNativeLibs
+> Task :android:generateReleaseResources
+
+> Task :android:stripReleaseDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
+
+> Task :android:checkReleaseDuplicateClasses
+> Task :android:extractReleaseNativeSymbolTables
+> Task :android:packageReleaseResources
+> Task :android:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :android:processReleaseNavigationResources
+> Task :android:javaPreCompileRelease
+> Task :android:parseReleaseLocalResources
+> Task :android:mergeReleaseArtProfile
+> Task :android:generateReleaseRFile
+> Task :android:compileReleaseNavigationResources
+> Task :android:checkReleaseAarMetadata
+> Task :android:mapReleaseSourceSetPaths
+> Task :android:createReleaseCompatibleScreenManifests
+> Task :android:extractDeepLinksRelease
+> Task :android:processDebugResources
+> Task :android:processReleaseMainManifest
+> Task :android:processReleaseManifest
+> Task :android:extractProguardFiles
+> Task :android:mergeReleaseStartupProfile UP-TO-DATE
+> Task :android:generateReleaseAssets UP-TO-DATE
+> Task :android:mergeReleaseAssets
+> Task :android:compressReleaseAssets
+> Task :android:mergeReleaseResources
+> Task :android:extractReleaseVersionControlInfo
+> Task :android:collectReleaseDependencies
+> Task :android:sdkReleaseDependencyData
+> Task :android:writeReleaseAppMetadata
+> Task :android:writeReleaseSigningConfigVersions
+> Task :android:preDebugAndroidTestBuild SKIPPED
+> Task :android:generateDebugAndroidTestResources
+> Task :android:packageDebugAndroidTestResources
+> Task :android:processDebugAndroidTestNavigationResources
+> Task :android:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :android:javaPreCompileDebugAndroidTest
+> Task :android:parseDebugAndroidTestLocalResources
+> Task :android:mergeDebugAndroidTestAssets
+> Task :android:compressDebugAndroidTestAssets
+> Task :android:generateDebugAndroidTestRFile
+> Task :android:desugarDebugAndroidTestFileDependencies
+> Task :android:checkDebugAndroidTestAarMetadata
+> Task :android:compileDebugAndroidTestNavigationResources
+> Task :android:mapDebugAndroidTestSourceSetPaths
+> Task :android:mergeDebugAndroidTestResources
+> Task :android:processDebugAndroidTestManifest
+> Task :android:checkDebugAndroidTestDuplicateClasses
+> Task :android:mergeDebugAndroidTestJniLibFolders
+> Task :android:mergeExtDexDebugAndroidTest
+> Task :android:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :android:mergeLibDexDebugAndroidTest
+> Task :android:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :android:validateSigningDebugAndroidTest
+> Task :android:writeDebugAndroidTestSigningConfigVersions
+> Task :android:preDebugUnitTestBuild UP-TO-DATE
+> Task :android:javaPreCompileDebugUnitTest
+> Task :android:processReleaseManifestForPackage
+> Task :android:processDebugAndroidTestResources
+> Task :android:processReleaseResources
+> Task :android:optimizeReleaseResources
+> Task :android:mergeExtDexDebug
+
+> Task :android:compileReleaseKotlin
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt:67:32 Non-public primary constructor is exposed via the generated 'copy()' method of the 'data' class.
+
+The generated 'copy()' will change its visibility in future releases.
+
+To suppress the warning do one of the following:
+- Annotate the data class with the '@ConsistentCopyVisibility' annotation.
+- Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
+- Annotate the data class with the '@ExposedCopyVisibility' annotation 
+  (Discouraged, but can be used to keep binary compatibility).
+
+To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
+
+This will become an error in language version 2.5. See https://youtrack.jetbrains.com/issue/KT-11914.
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt:94:34 Unnecessary safe call on a non-null receiver of type 'String'.
+
+> Task :android:compileReleaseJavaWithJavac NO-SOURCE
+
+> Task :android:compileDebugKotlin
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt:67:32 Non-public primary constructor is exposed via the generated 'copy()' method of the 'data' class.
+
+The generated 'copy()' will change its visibility in future releases.
+
+To suppress the warning do one of the following:
+- Annotate the data class with the '@ConsistentCopyVisibility' annotation.
+- Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
+- Annotate the data class with the '@ExposedCopyVisibility' annotation 
+  (Discouraged, but can be used to keep binary compatibility).
+
+To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
+
+This will become an error in language version 2.5. See https://youtrack.jetbrains.com/issue/KT-11914.
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt:94:34 Unnecessary safe call on a non-null receiver of type 'String'.
+
+> Task :android:compileDebugJavaWithJavac NO-SOURCE
+> Task :android:dexBuilderDebug
+> Task :android:processDebugJavaRes
+> Task :android:mergeDebugGlobalSynthetics
+> Task :android:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :android:processReleaseJavaRes
+> Task :android:mergeProjectDexDebug
+> Task :android:generateReleaseLintVitalReportModel
+> Task :android:generateDebugLintReportModel
+> Task :android:bundleDebugClassesToCompileJar
+> Task :android:expandReleaseArtProfileWildcards
+> Task :android:mergeReleaseJavaResource
+> Task :android:mergeDebugJavaResource
+> Task :android:generateDebugAndroidTestLintModel
+> Task :android:generateDebugUnitTestLintModel
+> Task :android:bundleDebugClassesToRuntimeJar
+> Task :android:packageDebug
+> Task :android:createDebugApkListingFileRedirect
+> Task :android:assembleDebug
+
+> Task :android:compileDebugAndroidTestKotlin
+w: file:///Users/michaelwong/Developer/Plink/android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt:113:16 'constructor(p0: String!, p1: String!, p2: Int, p3: String!, p4: Int, p5: Int, p6: Int, p7: Notification!, p8: UserHandle!, p9: Long): StatusBarNotification' is deprecated. Deprecated in Java.
+
+> Task :android:compileDebugAndroidTestJavaWithJavac NO-SOURCE
+> Task :android:dexBuilderDebugAndroidTest
+> Task :android:mergeDebugAndroidTestGlobalSynthetics
+> Task :android:processDebugAndroidTestJavaRes
+> Task :android:mergeDebugAndroidTestJavaResource
+> Task :android:mergeProjectDexDebugAndroidTest
+> Task :android:packageDebugAndroidTest
+> Task :android:createDebugAndroidTestApkListingFileRedirect
+> Task :android:assembleDebugAndroidTest
+> Task :android:produceReleaseComposeMapping
+> Task :android:reportReleaseComposeMappingErrors
+
+> Task :android:compileDebugUnitTestKotlin
+w: file:///Users/michaelwong/Developer/Plink/android/src/test/java/app/plink/android/protocol/FileTransferPayloadPolicyTest.kt:14:42 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+
+> Task :android:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :android:processDebugUnitTestJavaRes
+> Task :android:testDebugUnitTest
+> Task :android:lintAnalyzeDebugAndroidTest
+> Task :android:lintAnalyzeDebugUnitTest
+> Task :android:lintVitalAnalyzeRelease
+> Task :android:lintVitalReportRelease
+> Task :android:lintVitalRelease
+> Task :android:minifyReleaseWithR8
+> Task :android:mergeReleaseComposeMapping
+> Task :android:compileReleaseArtProfile
+> Task :android:packageRelease
+> Task :android:createReleaseApkListingFileRedirect
+> Task :android:assembleRelease
+> Task :android:lintAnalyzeDebug
+
+> Task :android:lintReportDebug
+Wrote HTML report to file:///Users/michaelwong/Developer/Plink/android/build/reports/lint-results-debug.html
+
+> Task :android:lintDebug
+
+BUILD SUCCESSFUL in 40s
+129 actionable tasks: 127 executed, 2 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.3.1/userguide/configuration_cache_enabling.html
+Building for debugging...
+[1 / 3] PlinkCore
+Build complete! (0.21 sec)
+Test Suite 'All tests' started at 2026-09-20 04:29:46.896.
+Test Suite 'All tests' passed at 2026-09-20 04:29:46.896.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'All tests' started at 2026-09-20 04:29:46.954.
+Test Suite 'PlinkCoreTests.xctest' started at 2026-09-20 04:29:46.955.
+Test Suite 'MacContinuityTests' started at 2026-09-20 04:29:46.955.
+Test Case '-[PlinkCoreTests.MacContinuityTests testAckRequiresMatchingActionPeerAndPendingCommand]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testAckRequiresMatchingActionPeerAndPendingCommand]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testActiveRefreshDoesNotReenablePendingHangup]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testActiveRefreshDoesNotReenablePendingHangup]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testAwaitingUserDoesNotClaimExecutionAndAcceptsLaterOutcome]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testAwaitingUserDoesNotClaimExecutionAndAcceptsLaterOutcome]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testCallActionsRequireCurrentIdentityAndObservedState]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testCallActionsRequireCurrentIdentityAndObservedState]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testDisconnectAndCallCancellationInvalidateActions]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testDisconnectAndCallCancellationInvalidateActions]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testEveryCallActionCancelsOnTerminalStateWithoutMigratingIdentity]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testEveryCallActionCancelsOnTerminalStateWithoutMigratingIdentity]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testExecutingInvocationQuarantinesEvenAfterRemoteEnd]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testExecutingInvocationQuarantinesEvenAfterRemoteEnd]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testExpiredExecutingWorkStaysQuarantinedAfterLateReturn]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testExpiredExecutingWorkStaysQuarantinedAfterLateReturn]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testHeldOrDifferentCallIndexMakesTopologyAmbiguous]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testHeldOrDifferentCallIndexMakesTopologyAmbiguous]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testIncorrectAckDoesNotConsumePendingCommand]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testIncorrectAckDoesNotConsumePendingCommand]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testLateOperationAndOldGenerationCannotCompleteReplacement]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testLateOperationAndOldGenerationCannotCompleteReplacement]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testNativeContinuationIsDeniedAfterExpiryOrCancellation]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testNativeContinuationIsDeniedAfterExpiryOrCancellation]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testQueuedExpiredWorkNeverStartsAndReturnedCompletionCanBeDelayed]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testQueuedExpiredWorkNeverStartsAndReturnedCompletionCanBeDelayed]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testReplyContextsExpireReplaceAndClear]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testReplyContextsExpireReplaceAndClear]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testReplyRevocationIsScopedToPeerAndNotification]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testReplyRevocationIsScopedToPeerAndNotification]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testReturnedInvocationTimesOutRecoverablyAndInvalidatesCallActions]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testReturnedInvocationTimesOutRecoverablyAndInvalidatesCallActions]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOAndGenericActiveCannotResolveUnconfirmedAnswer]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOAndGenericActiveCannotResolveUnconfirmedAnswer]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOCannotCompleteAnswerOrHangup]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOCannotCompleteAnswerOrHangup]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOCannotCreateCallOrGrantActions]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOCannotCreateCallOrGrantActions]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testSocketWriteIsNotExecutionAndTimeoutIsUnknown]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testSocketWriteIsNotExecutionAndTimeoutIsUnknown]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testStatusRejectsInvalidBatteryAndMediaCommands]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testStatusRejectsInvalidBatteryAndMediaCommands]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testWaitingCallCannotReuseOriginalActionIdentityAfterSetupEnds]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testWaitingCallCannotReuseOriginalActionIdentityAfterSetupEnds]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testWaitingCallDoesNotBecomeActionableWithoutCallIndexSupport]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testWaitingCallDoesNotBecomeActionableWithoutCallIndexSupport]' passed (0.000 seconds).
+Test Suite 'MacContinuityTests' passed at 2026-09-20 04:29:46.958.
+	 Executed 23 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'MacDeviceIdentityTests' started at 2026-09-20 04:29:46.958.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testDifferentInstallationsGetDifferentIdentities]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testDifferentInstallationsGetDifferentIdentities]' passed (0.002 seconds).
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testFreshIdentityPersistsAcrossInstances]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testFreshIdentityPersistsAcrossInstances]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testLegacyPairingGetsDurableFreshOfferIdentity]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testLegacyPairingGetsDurableFreshOfferIdentity]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testMalformedPersistedIdentityFailsClosedWithoutReplacement]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testMalformedPersistedIdentityFailsClosedWithoutReplacement]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testTwoUpgradedMacsHaveDifferentFreshOfferIdentities]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testTwoUpgradedMacsHaveDifferentFreshOfferIdentities]' passed (0.002 seconds).
+Test Suite 'MacDeviceIdentityTests' passed at 2026-09-20 04:29:46.964.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
+Test Suite 'MacFileTransferTests' started at 2026-09-20 04:29:46.964.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testAbsoluteDeadlineCannotBeExtendedBySuccessfulProgress]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testAbsoluteDeadlineCannotBeExtendedBySuccessfulProgress]' passed (0.002 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testBidirectionalBoundaryFilesSaveIdenticalBytesOnlyAfterConsent]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testBidirectionalBoundaryFilesSaveIdenticalBytesOnlyAfterConsent]' passed (2.047 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testBusyAndStaleConsentCannotTakeOverExistingTransfer]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testBusyAndStaleConsentCannotTakeOverExistingTransfer]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testCancellationFeatureOffAndSessionResetRevokeConsentAndClean]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testCancellationFeatureOffAndSessionResetRevokeConsentAndClean]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testChooserRejectsChangedTransferAndGenerationBeforeMutation]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testChooserRejectsChangedTransferAndGenerationBeforeMutation]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDeadlineCrossingDuringExportPreservesExistingDestination]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDeadlineCrossingDuringExportPreservesExistingDestination]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDeferredChooserCannotCancelReplacementOffer]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDeferredChooserCannotCancelReplacementOffer]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDisabledBusyForeignAndUnacceptedMessagesCannotWrite]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDisabledBusyForeignAndUnacceptedMessagesCannotWrite]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testExportFailureNeverReportsSavedAndPathTraversalRejected]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testExportFailureNeverReportsSavedAndPathTraversalRejected]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testMalformedActiveChunkStopsAndCleans]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testMalformedActiveChunkStopsAndCleans]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testMonotonicOfferInactivityAndAbsoluteDeadlines]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testMonotonicOfferInactivityAndAbsoluteDeadlines]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testNoncanonicalBase64IsRejectedBeforeWrite]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testNoncanonicalBase64IsRejectedBeforeWrite]' passed (0.002 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testOversizeNeverOffersAndCleansSnapshot]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testOversizeNeverOffersAndCleansSnapshot]' passed (0.013 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testRepeatedCancellationPreservesUnconfirmedSavedOutcome]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testRepeatedCancellationPreservesUnconfirmedSavedOutcome]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testSenderNeverSendsBeforeAcceptOrTreatsTransportAsSaved]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testSenderNeverSendsBeforeAcceptOrTreatsTransportAsSaved]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testSnapshotSurvivesInputMutationAndTerminalFramesDoNotResave]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testSnapshotSurvivesInputMutationAndTerminalFramesDoNotResave]' passed (0.004 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testWrongIndexLengthAndDigestNeverSave]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testWrongIndexLengthAndDigestNeverSave]' passed (0.002 seconds).
+Test Suite 'MacFileTransferTests' passed at 2026-09-20 04:29:49.042.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 2.076 (2.077) seconds
+Test Suite 'MacPairingFinalizationTests' started at 2026-09-20 04:29:49.042.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testCommitFailureInvalidatesReplacementBeforeRollback]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testCommitFailureInvalidatesReplacementBeforeRollback]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testCommitKeepsNewTrustAndExistingSessionKeyCannotBeOverwritten]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testCommitKeepsNewTrustAndExistingSessionKeyCannotBeOverwritten]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testInterruptedDifferentPhonePairingRestoresPreviousSelection]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testInterruptedDifferentPhonePairingRestoresPreviousSelection]' passed (0.002 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testLegacyV2RecordCannotActivateAfterFailedFreshPairing]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testLegacyV2RecordCannotActivateAfterFailedFreshPairing]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testPairingDifferentPhoneRestoresExplicitLatestSelection]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testPairingDifferentPhoneRestoresExplicitLatestSelection]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testPartiallyWrittenMetadataFailureRollsBackBothStores]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testPartiallyWrittenMetadataFailureRollsBackBothStores]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testRecoveryAfterInterruptedSaveRestoresOldTrust]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testRecoveryAfterInterruptedSaveRestoresOldTrust]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testRollbackRestoresPriorDeviceAndRemovesOnlyNewKey]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testRollbackRestoresPriorDeviceAndRemovesOnlyNewKey]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testUnselectedStoredRecordsNeverChooseFirstPhone]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testUnselectedStoredRecordsNeverChooseFirstPhone]' passed (0.000 seconds).
+Test Suite 'MacPairingFinalizationTests' passed at 2026-09-20 04:29:49.050.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.008 (0.009) seconds
+Test Suite 'PlinkCoreTests.xctest' passed at 2026-09-20 04:29:49.050.
+	 Executed 54 tests, with 0 failures (0 unexpected) in 2.093 (2.096) seconds
+Test Suite 'All tests' passed at 2026-09-20 04:29:49.050.
+	 Executed 54 tests, with 0 failures (0 unexpected) in 2.093 (2.096) seconds
+◇ Test run started.
+↳ Testing Library Version: 2084
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite PixelWebcamControllerTests started.
+◇ Suite ScreenPreviewControllerTests started.
+◇ Test authorizationLossBehindBlockedDiscoveryPreventsNativeInputOrStart() started.
+◇ Test duplicateTeardownCannotClearOrUncancelReplacementStart() started.
+◇ Test beginShutdownClosesStartGateAndAsyncShutdownWaitsForTeardown() started.
+◇ Test constructionIsInertUntilExplicitActivation() started.
+◇ Test staleConnectionRejectionCannotEndReplacementPreview() started.
+◇ Test queuedAmbiguousRejectionCannotCrossLocalStartAndQuitIsTerminal() started.
+◇ Test disabledOrInactivePreviewCannotStart() started.
+◇ Test selectedDisconnectInvalidatesImmediatelyAndReplugNeverRestarts() started.
+◇ Test decodedPixelsDisappearImmediatelyWhenPreviewStops() started.
+◇ Test configuredAfterFirstSampleAttachesButStoppedGenerationCannotAttach() started.
+◇ Test hidingStopsSynchronouslyAndReopeningNeedsExplicitStart() started.
+✔ Test constructionIsInertUntilExplicitActivation() passed after 0.001 seconds.
+✔ Test disabledOrInactivePreviewCannotStart() passed after 0.001 seconds.
+✔ Test staleConnectionRejectionCannotEndReplacementPreview() passed after 0.011 seconds.
+✔ Test authorizationLossBehindBlockedDiscoveryPreventsNativeInputOrStart() passed after 0.013 seconds.
+✔ Test beginShutdownClosesStartGateAndAsyncShutdownWaitsForTeardown() passed after 0.015 seconds.
+✔ Test duplicateTeardownCannotClearOrUncancelReplacementStart() passed after 0.016 seconds.
+✔ Test selectedDisconnectInvalidatesImmediatelyAndReplugNeverRestarts() passed after 0.016 seconds.
+✔ Test hidingStopsSynchronouslyAndReopeningNeedsExplicitStart() passed after 0.016 seconds.
+✔ Test decodedPixelsDisappearImmediatelyWhenPreviewStops() passed after 0.020 seconds.
+✔ Test configuredAfterFirstSampleAttachesButStoppedGenerationCannotAttach() passed after 0.022 seconds.
+✔ Suite PixelWebcamControllerTests passed after 0.022 seconds.
+✔ Test queuedAmbiguousRejectionCannotCrossLocalStartAndQuitIsTerminal() passed after 0.022 seconds.
+✔ Suite ScreenPreviewControllerTests passed after 0.022 seconds.
+✔ Test run with 11 tests in 2 suites passed after 0.022 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2084
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Test secureEnvelopeOpensValidMessage() started.
+◇ Test encryptedFrameRejectsUnexpectedDeviceIds() started.
+◇ Test deriveIsStable() started.
+◇ Test replyRouterRejectsBlankReplies() started.
+◇ Test codecPersistsOnlyFullyAuthenticatedFramesAndBindsScope() started.
+◇ Test replyContextDerivesFromMessageEnvelope() started.
+◇ Test messageBookkeepingEvictsOnlyOldestMessageAtCapacity() started.
+◇ Test replayWindowKeepsDuplicateRejectionAfterEviction() started.
+◇ Test webcamPolicyAcceptsConfiguredAfterFirstSampleForCurrentGenerationOnly() started.
+◇ Test unsafeWebURLFailsPolicy() started.
+◇ Test cancelledQueuedProducerCannotSendAfterBlockerClears() started.
+◇ Test lengthPrefixedFrameRoundTrips() started.
+◇ Test legacyTrustDoesNotAcquireDurableTransportVersion() started.
+◇ Test shutdownReturnsOnlyAfterActiveProducerCompletes() started.
+◇ Test successorScreenExpiryAndCancellationRunWhilePredecessorIsHeld() started.
+◇ Test sharedSenderSerializesTrafficAndPrioritizesOrdinaryWork() started.
+◇ Test durableFrameStateFailsClosedOnCorruption() started.
+◇ Test invalidLocalTextLeavesReplyContextAvailable() started.
+◇ Test bonjourRecordRoundTripsPairingOffer() started.
+◇ Test replyContextRequiresReplyCapabilityAndRouteFields() started.
+◇ Test redactionMasksSensitivePayloadValues() started.
+◇ Test screenQueueRejectsWorkBeyondControlAndFrameCaps() started.
+◇ Test encryptedFrameRejectsTampering() started.
+◇ Test inMemorySecretStoreRoundTripsSessionKey() started.
+◇ Test strongVerificationBindsPublicKeys() started.
+◇ Test scopedScreenCancellationAllowsOrdinaryTrafficToProgress() started.
+◇ Test webcamPolicyWatchdogInvalidatesLateSamplesUntilTeardownCompletes() started.
+◇ Test matchingPeerStopNeverEchoesAtLeaseBoundary() started.
+◇ Test webcamPolicyFailsClosedWhenSelectedDeviceDisappears() started.
+◇ Test lateCleanupCannotRemoveReplacementOrSameKeyFromAnotherPeer() started.
+◇ Test demoPairingCodeMatchesSharedFixture() started.
+◇ Test replyRouterRejectsTextAboveExistingLimit() started.
+◇ Test replacementWaitsForPredecessorShutdownCompletion() started.
+◇ Test envelopeRoundTrips() started.
+◇ Test replyLengthMatchesAndroidUTF16Units(_:) started.
+◇ Test webcamPolicyRejectsAStaleDiscoveryResultAfterAStop() started.
+◇ Test foundationSecureServerRejectsWrongDeviceId() started.
+◇ Test queuedScreenPayloadExpiresWhileOrdinaryWriteIsBlocked() started.
+◇ Test screenPreviewSharedContractVectors() started.
+◇ Test boundedIngressReleasesFrameAndControlSlots() started.
+◇ Test foundationSecureServerReceivesAndroidCompatibleFrame() started.
+◇ Test staleTrafficAndSanitizedRejectionsRespectCurrentSession() started.
+◇ Test preframeIdleDoesNotRenewFirstFrameLease() started.
+◇ Test partialSocketDeadlineAllowsNextCompleteFrame() started.
+◇ Test invalidateClosesAdmissionSynchronously() started.
+◇ Test expectedLengthWaitsForCompletePayload() started.
+◇ Test confirmCreatesTrustedDevice() started.
+◇ Test screenSessionUsesProductionDecoderAndPullCadence() started.
+◇ Test fileTransferSharedContractVectors() started.
+◇ Test webcamPolicyRequiresPermissionSelectionAndExplicitStart() started.
+◇ Test receiveShowsKeyBoundVerificationCode() started.
+◇ Test emptyLengthPrefixedFrameFailsClosed() started.
+◇ Test productionDecoderRejectsMalformedAndUnsupportedImages() started.
+◇ Test foundationSecureServerRejectsReplay() started.
+◇ Test maximumFileChunkFitsEncryptedFrame() started.
+◇ Test bonjourRecordRejectsUnsupportedProtocol() started.
+◇ Test screenControlLimitUsesOriginalPlaintextBytes() started.
+◇ Test monotonicSendDeadlineRejectsBoundaryAndLateSuccess() started.
+◇ Test parallelReservationsAcrossStoreInstancesAreUnique() started.
+◇ Test confirmWithoutOfferFailsClosed() started.
+◇ Test webcamPolicyUsesOnlyCurrentExternalUniqueIDAndStopsOnSelectionChange() started.
+◇ Test clipboardEnvelopeCreatesHandoffAction() started.
+◇ Test stopClosesAcceptedClientAndAllowsRebind() started.
+◇ Test messageBookkeepingRemovesIndexesOnReplyDismissalFailureAndExpiry() started.
+◇ Test webcamCaptureGateConsumesOnlyMatchingTeardownAndPreservesReplacementWatchdog() started.
+◇ Test persistenceFailurePreventsAuthenticatedDispatch() started.
+◇ Test decodesAndroidFractionalIsoDates() started.
+◇ Test authenticatedMalformedScreenVectorsAreSanitizedAfterReplayAcceptance() started.
+◇ Test confirmRejectsMissingPublicKey() started.
+◇ Test replyRouterPreservesExactUTF8Bytes(_:) started.
+◇ Test pairingNumericHighBitVectorMatchesAndroid() started.
+◇ Test startReportsBindFailureSynchronously() started.
+◇ Test deterministicEncryptedScreenVectorMatchesProductionCodec() started.
+◇ Test encryptedFrameRoundTripsAndRejectsReplay() started.
+◇ Test replyContextStoreConsumesOnce() started.
+◇ Test deriveChangesWithNonce() started.
+◇ Test pairingConsentFieldsHaveUnambiguousBoundaries() started.
+◇ Test durableFrameStateSurvivesRecreationAndAcceptsReordering() started.
+◇ Test messageEnvelopeCreatesReplyNotificationPlan() started.
+◇ Test untrustedOrStaleMalformedFramesNeverBecomeScreenRejections() started.
+◇ Test bonjourRecordFallsBackToResolvedEndpoint() started.
+◇ Test secureEnvelopeRejectsTampering() started.
+◇ Test acceptsManualPairingConfirmation() started.
+◇ Test pairingConsentProofBindsBothIdentitiesEndpointAndStage() started.
+◇ Test webcamCaptureGateRejectsCancelledAndCurrentAuthorizationLossBeforeNativeCalls() started.
+◇ Test threeOversizeResponsesStopCapture() started.
+◇ Test pairingConsentRejectsLegacyUnconfirmedPayload() started.
+◇ Test replyRouterBuildsPairedDeviceReplyEnvelope() started.
+◇ Test webcamPolicyInvalidatesAQueuedStartBeforeNativeConfiguration() started.
+◇ Test productionDecoderRejectsNonFrameInputWithoutAllocation() started.
+◇ Test transcriptEndpointAndTupleAreBound() started.
+◇ Test manualPairingPayloadRoundTripsOffer() started.
+◇ Test webcamPolicyReleasesOnlyAfterAuthorizationLossTeardownCompletes() started.
+◇ Test case passing 1 argument unit → "é" to replyLengthMatchesAndroidUTF16Units(_:) started.
+◇ Test case passing 1 argument unit → "😀" to replyLengthMatchesAndroidUTF16Units(_:) started.
+✔ Test webcamPolicyAcceptsConfiguredAfterFirstSampleForCurrentGenerationOnly() passed after 0.003 seconds.
+✔ Test lengthPrefixedFrameRoundTrips() passed after 0.004 seconds.
+✔ Test deriveIsStable() passed after 0.004 seconds.
+✔ Test replyRouterRejectsBlankReplies() passed after 0.005 seconds.
+✔ Test replyContextDerivesFromMessageEnvelope() passed after 0.005 seconds.
+✔ Test replyContextRequiresReplyCapabilityAndRouteFields() passed after 0.005 seconds.
+✔ Test redactionMasksSensitivePayloadValues() passed after 0.007 seconds.
+◇ Test case passing 1 argument text → "  reply  " to replyRouterPreservesExactUTF8Bytes(_:) started.
+◇ Test case passing 1 argument text → "	first
+second
+ " to replyRouterPreservesExactUTF8Bytes(_:) started.
+◇ Test case passing 1 argument text → "é|é|👩🏽‍💻|🇺🇳|終
+" to replyRouterPreservesExactUTF8Bytes(_:) started.
+✔ Test legacyTrustDoesNotAcquireDurableTransportVersion() passed after 0.010 seconds.
+◇ Test case passing 1 argument text → "
+	 x 	
+" to replyRouterPreservesExactUTF8Bytes(_:) started.
+✔ Test invalidLocalTextLeavesReplyContextAvailable() passed after 0.014 seconds.
+✔ Test inMemorySecretStoreRoundTripsSessionKey() passed after 0.014 seconds.
+✔ Test replayWindowKeepsDuplicateRejectionAfterEviction() passed after 0.017 seconds.
+✔ Test webcamPolicyWatchdogInvalidatesLateSamplesUntilTeardownCompletes() passed after 0.017 seconds.
+✔ Test webcamPolicyFailsClosedWhenSelectedDeviceDisappears() passed after 0.018 seconds.
+✔ Test demoPairingCodeMatchesSharedFixture() passed after 0.021 seconds.
+✔ Test bonjourRecordRoundTripsPairingOffer() passed after 0.022 seconds.
+✔ Test replyRouterRejectsTextAboveExistingLimit() passed after 0.022 seconds.
+✔ Test webcamPolicyRejectsAStaleDiscoveryResultAfterAStop() passed after 0.022 seconds.
+✔ Test strongVerificationBindsPublicKeys() passed after 0.022 seconds.
+✔ Test lateCleanupCannotRemoveReplacementOrSameKeyFromAnotherPeer() passed after 0.022 seconds.
+✔ Test envelopeRoundTrips() passed after 0.022 seconds.
+✔ Test expectedLengthWaitsForCompletePayload() passed after 0.022 seconds.
+✔ Test messageBookkeepingEvictsOnlyOldestMessageAtCapacity() passed after 0.022 seconds.
+✔ Test confirmCreatesTrustedDevice() passed after 0.022 seconds.
+✔ Test unsafeWebURLFailsPolicy() passed after 0.022 seconds.
+✔ Test webcamPolicyRequiresPermissionSelectionAndExplicitStart() passed after 0.022 seconds.
+✔ Test staleTrafficAndSanitizedRejectionsRespectCurrentSession() passed after 0.022 seconds.
+✔ Test emptyLengthPrefixedFrameFailsClosed() passed after 0.022 seconds.
+✔ Test receiveShowsKeyBoundVerificationCode() passed after 0.022 seconds.
+✔ Test durableFrameStateFailsClosedOnCorruption() passed after 0.022 seconds.
+✔ Test replyLengthMatchesAndroidUTF16Units(_:) with 2 test cases passed after 0.022 seconds.
+✔ Test bonjourRecordRejectsUnsupportedProtocol() passed after 0.022 seconds.
+✔ Test monotonicSendDeadlineRejectsBoundaryAndLateSuccess() passed after 0.022 seconds.
+✔ Test preframeIdleDoesNotRenewFirstFrameLease() passed after 0.022 seconds.
+✔ Test encryptedFrameRejectsUnexpectedDeviceIds() passed after 0.022 seconds.
+✔ Test webcamPolicyUsesOnlyCurrentExternalUniqueIDAndStopsOnSelectionChange() passed after 0.022 seconds.
+✔ Test clipboardEnvelopeCreatesHandoffAction() passed after 0.022 seconds.
+✔ Test messageBookkeepingRemovesIndexesOnReplyDismissalFailureAndExpiry() passed after 0.022 seconds.
+✔ Test confirmWithoutOfferFailsClosed() passed after 0.022 seconds.
+✔ Test webcamCaptureGateConsumesOnlyMatchingTeardownAndPreservesReplacementWatchdog() passed after 0.022 seconds.
+✔ Test encryptedFrameRejectsTampering() passed after 0.022 seconds.
+✔ Test secureEnvelopeOpensValidMessage() passed after 0.022 seconds.
+✔ Test decodesAndroidFractionalIsoDates() passed after 0.022 seconds.
+✔ Test confirmRejectsMissingPublicKey() passed after 0.022 seconds.
+✔ Test replyRouterPreservesExactUTF8Bytes(_:) with 4 test cases passed after 0.022 seconds.
+✔ Test pairingNumericHighBitVectorMatchesAndroid() passed after 0.022 seconds.
+✔ Test matchingPeerStopNeverEchoesAtLeaseBoundary() passed after 0.022 seconds.
+✔ Test persistenceFailurePreventsAuthenticatedDispatch() passed after 0.022 seconds.
+✔ Test parallelReservationsAcrossStoreInstancesAreUnique() passed after 0.022 seconds.
+✔ Test replyContextStoreConsumesOnce() passed after 0.022 seconds.
+✔ Test deriveChangesWithNonce() passed after 0.022 seconds.
+✔ Test pairingConsentFieldsHaveUnambiguousBoundaries() passed after 0.022 seconds.
+✔ Test durableFrameStateSurvivesRecreationAndAcceptsReordering() passed after 0.022 seconds.
+✔ Test maximumFileChunkFitsEncryptedFrame() passed after 0.022 seconds.
+✔ Test messageEnvelopeCreatesReplyNotificationPlan() passed after 0.022 seconds.
+✔ Test bonjourRecordFallsBackToResolvedEndpoint() passed after 0.022 seconds.
+✔ Test codecPersistsOnlyFullyAuthenticatedFramesAndBindsScope() passed after 0.022 seconds.
+✔ Test acceptsManualPairingConfirmation() passed after 0.022 seconds.
+✔ Test pairingConsentProofBindsBothIdentitiesEndpointAndStage() passed after 0.022 seconds.
+✔ Test secureEnvelopeRejectsTampering() passed after 0.022 seconds.
+✔ Test webcamCaptureGateRejectsCancelledAndCurrentAuthorizationLossBeforeNativeCalls() passed after 0.022 seconds.
+✔ Test pairingConsentRejectsLegacyUnconfirmedPayload() passed after 0.022 seconds.
+✔ Test replyRouterBuildsPairedDeviceReplyEnvelope() passed after 0.022 seconds.
+✔ Test webcamPolicyInvalidatesAQueuedStartBeforeNativeConfiguration() passed after 0.022 seconds.
+✔ Test encryptedFrameRoundTripsAndRejectsReplay() passed after 0.022 seconds.
+✔ Test transcriptEndpointAndTupleAreBound() passed after 0.022 seconds.
+✔ Test productionDecoderRejectsNonFrameInputWithoutAllocation() passed after 0.022 seconds.
+✔ Test manualPairingPayloadRoundTripsOffer() passed after 0.022 seconds.
+✔ Test webcamPolicyReleasesOnlyAfterAuthorizationLossTeardownCompletes() passed after 0.022 seconds.
+✔ Test invalidateClosesAdmissionSynchronously() passed after 0.022 seconds.
+✔ Test threeOversizeResponsesStopCapture() passed after 0.023 seconds.
+✔ Test shutdownReturnsOnlyAfterActiveProducerCompletes() passed after 0.030 seconds.
+✔ Test boundedIngressReleasesFrameAndControlSlots() passed after 0.032 seconds.
+✔ Test productionDecoderRejectsMalformedAndUnsupportedImages() passed after 0.035 seconds.
+✔ Test screenSessionUsesProductionDecoderAndPullCadence() passed after 0.036 seconds.
+✔ Test stopClosesAcceptedClientAndAllowsRebind() passed after 0.037 seconds.
+✔ Test authenticatedMalformedScreenVectorsAreSanitizedAfterReplayAcceptance() passed after 0.039 seconds.
+✔ Test screenControlLimitUsesOriginalPlaintextBytes() passed after 0.040 seconds.
+✔ Test untrustedOrStaleMalformedFramesNeverBecomeScreenRejections() passed after 0.040 seconds.
+✔ Test deterministicEncryptedScreenVectorMatchesProductionCodec() passed after 0.041 seconds.
+✔ Test scopedScreenCancellationAllowsOrdinaryTrafficToProgress() passed after 0.051 seconds.
+✔ Test screenPreviewSharedContractVectors() passed after 0.056 seconds.
+✔ Test cancelledQueuedProducerCannotSendAfterBlockerClears() passed after 0.062 seconds.
+✔ Test screenQueueRejectsWorkBeyondControlAndFrameCaps() passed after 0.065 seconds.
+✔ Test replacementWaitsForPredecessorShutdownCompletion() passed after 0.070 seconds.
+✔ Test sharedSenderSerializesTrafficAndPrioritizesOrdinaryWork() passed after 0.071 seconds.
+✔ Test fileTransferSharedContractVectors() passed after 0.092 seconds.
+✔ Test startReportsBindFailureSynchronously() passed after 0.108 seconds.
+✔ Test foundationSecureServerReceivesAndroidCompatibleFrame() passed after 0.206 seconds.
+✔ Test foundationSecureServerRejectsWrongDeviceId() passed after 0.213 seconds.
+✔ Test foundationSecureServerRejectsReplay() passed after 0.219 seconds.
+✔ Test partialSocketDeadlineAllowsNextCompleteFrame() passed after 0.252 seconds.
+✔ Test queuedScreenPayloadExpiresWhileOrdinaryWriteIsBlocked() passed after 1.039 seconds.
+✔ Test successorScreenExpiryAndCancellationRunWhilePredecessorIsHeld() passed after 1.046 seconds.
+✔ Test run with 93 tests in 0 suites passed after 1.047 seconds.
+Building for debugging...
+[Planning deferred tasks]
+Build complete! (0.26 sec)
+Building for production...
+[Planning deferred tasks]
+[12 / 24] PlinkCore
+[14 / 25] PlinkCore
+[22 / 29] PlinkMacDebugReceiver-product
+[27 / 38]
+[28 / 38]
+[31 / 38]
+[32 / 38] PlinkMacDebugReceiver-product
+[34 / 38] PlinkMacDebugReceiver-product
+/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/BluetoothCallController.swift:170:14: warning: result of call to 'abort' is unused [#NoUsage]
+168 | 
+169 |     private func cancelStart(_ operation: MacBluetoothOperationGate.Operation) {
+170 |         gate.abort(operation)
+    |              `- warning: result of call to 'abort' is unused [#NoUsage]
+171 |         worker.cancel(operation)
+172 |         finishUI()
+
+[#NoUsage]: <https://docs.swift.org/compiler/documentation/diagnostics/no-usage>
+[34 / 38] PlinkMac-product
+[36 / 38] PlinkMac-product
+[37 / 38] PlinkMac-product
+[40 / 41] PlinkMacDebugReceiver-product
+Build complete! (9.93 sec)
+/Users/michaelwong/Developer/Plink/build/PlinkMac.app: replacing existing signature
+/Users/michaelwong/Developer/Plink/build/PlinkMac.app
+/Users/michaelwong/Developer/Plink/build/PlinkMac.app.zip
+ M .gitignore
+ M README.md
+ M android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt
+ M android/src/debug/AndroidManifest.xml
+ M android/src/main/AndroidManifest.xml
+ M android/src/main/java/app/plink/android/MainActivity.kt
+ M android/src/main/java/app/plink/android/features/FeatureState.kt
+ M android/src/main/java/app/plink/android/protocol/PlinkMessage.kt
+ M android/src/main/java/app/plink/android/security/SecureEnvelope.kt
+ M android/src/main/java/app/plink/android/services/PlinkEventForwarder.kt
+ M android/src/main/java/app/plink/android/services/PlinkSessionController.kt
+ M android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt
+ M android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt
+ M android/src/main/java/app/plink/android/ui/PlinkUiState.kt
+ M android/src/test/java/app/plink/android/features/FeaturePolicyTest.kt
+ M android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt
+ M android/src/test/java/app/plink/android/services/SerializedOutboundQueueTest.kt
+ M docs/architecture.md
+ M docs/feature-parity.md
+ M docs/manual-test-plan.md
+ M macos/Package.swift
+ M macos/Resources/Info.plist
+ M macos/Resources/PlinkMac.entitlements
+ M macos/Sources/PlinkCore/LocalTransport.swift
+ M macos/Sources/PlinkCore/PlinkJSON.swift
+ M macos/Sources/PlinkCore/PlinkMessage.swift
+ M macos/Sources/PlinkCore/SecureEnvelope.swift
+ M macos/Sources/PlinkMac/PlinkMacApp.swift
+ M macos/Sources/PlinkMacDebugReceiver/main.swift
+ M scripts/check-fixtures.sh
+ M scripts/verify-device.sh
+ M shared/protocol/v1/schema.json
+ M third_party/tomato/PROVENANCE.json
+?? android/src/androidTest/java/app/plink/android/ScreenPreviewDeviceCheck.kt
+?? android/src/androidTest/java/app/plink/android/ScreenPreviewTestSession.kt
+?? android/src/debug/java/app/plink/android/debug/ScreenPreviewPatternActivity.kt
+?? android/src/main/java/app/plink/android/protocol/BaselineJpegValidator.kt
+?? android/src/main/java/app/plink/android/protocol/ScreenPreviewPayloadPolicy.kt
+?? android/src/main/java/app/plink/android/screen/
+?? android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt
+?? android/src/test/java/app/plink/android/protocol/ScreenPreviewPayloadPolicyTest.kt
+?? android/src/test/java/app/plink/android/screen/
+?? docs/evidence/iteration-4/
+?? macos/Sources/PlinkCore/BaselineJPEGValidator.swift
+?? macos/Sources/PlinkCore/ScreenFrameDecoder.swift
+?? macos/Sources/PlinkCore/ScreenPreviewProtocol.swift
+?? macos/Sources/PlinkCore/ScreenPreviewSession.swift
+?? macos/Sources/PlinkCore/SerializedPlinkSender.swift
+?? macos/Sources/PlinkCore/WebcamPreviewPolicy.swift
+?? macos/Sources/PlinkMac/PixelWebcamController.swift
+?? macos/Sources/PlinkMac/PixelWebcamView.swift
+?? macos/Sources/PlinkMac/ScreenPreviewController.swift
+?? macos/Sources/PlinkMac/ScreenPreviewView.swift
+?? macos/Sources/PlinkMacDebugReceiver/ScreenPatternVerifier.swift
+?? macos/Sources/PlinkMacDebugReceiver/ScreenRoundtrip.swift
+?? macos/Tests/PlinkCoreTests/ScreenPreviewTests.swift
+?? macos/Tests/PlinkCoreTests/SerializedPlinkSenderTests.swift
+?? macos/Tests/PlinkCoreTests/WebcamPreviewPolicyTests.swift
+?? macos/Tests/PlinkMacTests/
+?? scripts/verify-screen-preview.sh
+?? shared/protocol/v1/screen-preview/

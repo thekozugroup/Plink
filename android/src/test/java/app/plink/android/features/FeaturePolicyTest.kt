@@ -7,6 +7,18 @@ import org.junit.Test
 
 class FeaturePolicyTest {
     @Test
+    fun screenPreviewRequiresAndroid14AndRemainsOptIn() {
+        val supported = FeaturePolicy.evaluate(PermissionState(), screenPreviewSupported = true)
+            .first { it.feature == ContinuityFeature.ScreenMirror }
+        assertTrue(supported.available)
+        assertFalse(supported.enabled)
+        val older = FeaturePolicy.evaluate(PermissionState(), FeatureToggleReader { true }, screenPreviewSupported = false)
+            .first { it.feature == ContinuityFeature.ScreenMirror }
+        assertFalse(older.available)
+        assertTrue(older.enabled)
+    }
+
+    @Test
     fun callsUnavailableWithPhoneStateOnly() {
         val features = FeaturePolicy.evaluate(PermissionState(phoneState = true))
         val calls = features.first { it.feature == ContinuityFeature.Calls }

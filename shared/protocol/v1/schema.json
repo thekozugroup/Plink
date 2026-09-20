@@ -39,6 +39,12 @@
         "file.complete",
         "file.result",
         "file.cancel",
+        "screen.request",
+        "screen.state",
+        "screen.pull",
+        "screen.frame",
+        "screen.idle",
+        "screen.stop",
         "web.open",
         "media.state",
         "media.command",
@@ -64,5 +70,189 @@
     "payload": {
       "type": "object"
     }
-  }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "pattern": "^screen\\."
+          }
+        },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "sourceDeviceId": {
+            "maxLength": 128
+          },
+          "targetDeviceId": {
+            "maxLength": 128
+          },
+          "requiresAck": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"type": {"const": "screen.request"}},
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["v", "requestId", "profile"],
+            "properties": {
+              "v": {"const": 1},
+              "requestId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "profile": {"const": "jpeg-1280-2fps-v1"}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"type": {"const": "screen.state"}},
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["v", "requestId", "state"],
+                "properties": {
+                  "v": {"const": 1},
+                  "requestId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+                  "state": {"const": "needs_consent"}
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "required": ["v", "requestId", "state", "streamId", "profile"],
+                "properties": {
+                  "v": {"const": 1},
+                  "requestId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+                  "state": {"const": "started"},
+                  "streamId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+                  "profile": {"const": "jpeg-1280-2fps-v1"}
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "required": ["v", "requestId", "state", "reason"],
+                "properties": {
+                  "v": {"const": 1},
+                  "requestId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+                  "state": {"const": "rejected"},
+                  "reason": {"enum": ["denied", "disabled", "unsupported", "busy", "not_ready", "timeout", "capture_error"]}
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"type": {"const": "screen.pull"}},
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["v", "requestId", "streamId", "index"],
+            "properties": {
+              "v": {"const": 1},
+              "requestId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "streamId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "index": {"type": "integer", "minimum": 1, "maximum": 2147483647}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"type": {"const": "screen.idle"}},
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["v", "requestId", "streamId", "index", "reason"],
+            "properties": {
+              "v": {"const": 1},
+              "requestId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "streamId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "index": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+              "reason": {"enum": ["no_new_frame", "frame_too_large"]}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"type": {"const": "screen.frame"}},
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["v", "requestId", "streamId", "index", "width", "height", "data"],
+            "properties": {
+              "v": {"const": 1},
+              "requestId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "streamId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "index": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+              "width": {"type": "integer", "minimum": 1, "maximum": 1280},
+              "height": {"type": "integer", "minimum": 1, "maximum": 1280},
+              "data": {"type": "string", "maxLength": 54616}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"type": {"const": "screen.stop"}},
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["v", "requestId", "reason"],
+            "properties": {
+              "v": {"const": 1},
+              "requestId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "streamId": {"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+              "reason": {"enum": ["user", "disabled", "locked", "hidden", "disconnected", "timeout", "consent_revoked", "capture_error", "protocol_error"]}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ]
 }

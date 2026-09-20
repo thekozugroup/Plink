@@ -23,7 +23,7 @@ struct PlinkMacApp: App {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetServiceDelegate, ObservableObject, @unchecked Sendable {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @preconcurrency NetServiceDelegate, ObservableObject, @unchecked Sendable {
     let notificationBridge = NotificationBridge()
     let pairingMachine = PairingStateMachine()
     let pairingStore = UserDefaultsPairingStore(
@@ -34,7 +34,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     private var localMacDeviceId = ""
     private let receiverPort: UInt16 = 45731
     private let frameStateStore: any FrameStateStoring = FileFrameStateStore.applicationDefault
-    private var activeTransport: (any PlinkTransport)?
+    private var activeTransport: SerializedPlinkSender?
+    private var retiringTransport: SerializedPlinkSender?
     private var receiver: (any PlinkEventReceiver)?
     private var pendingManualOffer: PairingOffer?
     private var pendingManualConfirmation: PairingConfirmation?
@@ -50,6 +51,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     private var pairingExpiryTask: Task<Void, Never>?
     let calling = BluetoothCallController()
     let files = FileTransferController()
+    let screen = ScreenPreviewController()
+    let webcam = PixelWebcamController()
+    private let screenIngress = ScreenPreviewIngress()
+    @Published var screenPreviewEnabled = true {
+        didSet { screen.setEnabled(screenPreviewEnabled) }
+    }
     @Published var deviceStatus: MacDeviceStatus?
     @Published var mediaState: MacMediaState?
     @Published var mediaSessions: [String: MacMediaState] = [:]
@@ -78,8 +85,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     @Published var canConfirmPairing: Bool = false
     private var dashboardWindow: NSWindow?
     private var pairingWindow: NSWindow?
+    private var screenWindow: NSWindow?
+    private var webcamWindow: NSWindow?
+    private var workspaceObservers: [NSObjectProtocol] = []
+    private var terminationPending = false
+    private var terminationReplied = false
+    private var terminationWatchdog: Task<Void, Never>?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        installPreviewLifecycleObservers()
         ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
         ProcessInfo.processInfo.disableSuddenTermination()
         NSApplication.shared.setActivationPolicy(.regular)
@@ -128,7 +142,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        .terminateNow
+        guard !terminationReplied else { return .terminateNow }
+        guard !terminationPending else { return .terminateLater }
+        terminationPending = true
+        screen.beginShutdown()
+        webcam.beginShutdown()
+        terminationWatchdog = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(10)) } catch { return }
+            self?.replyToTermination()
+        }
+        Task { [weak self] in
+            guard let self else { return }
+            await screen.shutdown()
+            await webcam.shutdown()
+            replyToTermination()
+        }
+        return .terminateLater
+    }
+
+    private func replyToTermination() {
+        guard terminationPending, !terminationReplied else { return }
+        terminationReplied = true
+        terminationWatchdog?.cancel()
+        NSApp.reply(toApplicationShouldTerminate: true)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -136,6 +172,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+        workspaceObservers.removeAll()
         files.reset()
         housekeeping?.cancel()
         clearPairingAttempt() // Prevent a suspended final send from establishing trust.
@@ -144,7 +182,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         stopPairingConfirmationReceiver()
         receiver?.stop()
         receiver = nil
-        activeTransport = nil
+        clearTransport()
         pairedPeerID = nil
         calling.shutdown()
         notificationBridge.shutdown()
@@ -204,6 +242,96 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         NSApplication.shared.activate()
     }
 
+    func showScreenWindow() {
+        guard !terminationPending else { return }
+        if screenWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 760),
+                                  styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+            window.title = "Phone Screen"
+            window.isReleasedWhenClosed = false
+            window.delegate = self
+            window.contentView = NSHostingView(rootView: ScreenPreviewView(controller: screen))
+            window.center()
+            screenWindow = window
+        }
+        screenWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+        screen.setVisible(true)
+    }
+
+    func showWebcamWindow() {
+        guard !terminationPending else { return }
+        if webcamWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 720, height: 620),
+                                  styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+            window.title = "Pixel USB Webcam"
+            window.isReleasedWhenClosed = false
+            window.delegate = self
+            window.contentView = NSHostingView(rootView: PixelWebcamView(controller: webcam))
+            window.center()
+            webcamWindow = window
+        }
+        webcamWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+        webcam.activate()
+    }
+
+    func applicationDidResignActive(_ notification: Notification) {
+        screen.setVisible(false)
+        webcam.deactivate()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        guard !terminationPending else { return }
+        if screenWindow?.isKeyWindow == true { screen.setVisible(true) }
+        if webcamWindow?.isKeyWindow == true { webcam.activate() }
+    }
+
+    func windowDidBecomeKey(_ notification: Notification) {
+        guard !terminationPending, NSApp.isActive, let window = notification.object as? NSWindow else { return }
+        if window === screenWindow { screen.setVisible(true) }
+        if window === webcamWindow { webcam.activate() }
+    }
+
+    func windowDidResignKey(_ notification: Notification) { stopHiddenPreview(notification) }
+    func windowWillClose(_ notification: Notification) { stopHiddenPreview(notification) }
+    func windowDidMiniaturize(_ notification: Notification) { stopHiddenPreview(notification) }
+    func windowDidChangeOcclusionState(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if !window.occlusionState.contains(.visible) { stopHiddenPreview(notification) }
+        else if window.isKeyWindow && NSApp.isActive { windowDidBecomeKey(notification) }
+    }
+
+    private func stopHiddenPreview(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if window === screenWindow { screen.setVisible(false) }
+        if window === webcamWindow { webcam.deactivate() }
+    }
+
+    private func installPreviewLifecycleObservers() {
+        let center = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.sessionDidResignActiveNotification, NSWorkspace.screensDidSleepNotification, NSWorkspace.willSleepNotification] {
+            workspaceObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.screen.stop(reason: .locked)
+                    self?.screen.setVisible(false)
+                    self?.webcam.deactivate()
+                }
+            })
+        }
+    }
+
+    private func clearTransport() {
+        screen.unbind()
+        let previous = activeTransport
+        previous?.invalidate()
+        activeTransport = nil
+        if let previous {
+            retiringTransport = previous
+            Task { await previous.shutdown() }
+        }
+    }
+
     func startNearbyPairing() {
         guard pairingRecoveryComplete else { pairingStatusText = "Waiting for saved pairing recovery."; return }
         guard !pairingInFlight else { return }
@@ -213,7 +341,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         stopPairingAdvertiser()
         receiver?.stop()
         receiver = nil
-        activeTransport = nil
+        clearTransport()
         pairedPeerID = nil
         connectionGeneration = UUID()
         commands.removeAll()
@@ -370,7 +498,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         connectionGeneration = UUID()
         receiver?.stop()
         receiver = nil
-        activeTransport = nil
+        clearTransport()
         activePairing = nil
         pairedPeerID = nil
         commands.removeAll()
@@ -540,7 +668,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         NSLog("Plink Bonjour publish failed: \(errorDict)")
     }
 
-    private func makeTransport(for device: PairedDevice, sessionKey: Data) -> (any PlinkTransport)? {
+    private func makeTransport(for device: PairedDevice, sessionKey: Data) -> SerializedPlinkSender? {
         guard
             let separator = device.endpoint.lastIndex(of: ":"),
             let port = UInt16(device.endpoint[device.endpoint.index(after: separator)...]), port > 0,
@@ -549,22 +677,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
 
         let host = String(device.endpoint[..<separator])
         guard !host.contains(where: { $0.isWhitespace }), !host.contains("/") else { return nil }
-        return SecureNetworkPlinkClient(
+        return SerializedPlinkSender(transport: SecureNetworkPlinkClient(
             host: host,
             port: port,
             codec: EncryptedFrameCodec(sessionKey: sessionKey),
             stateStore: frameStateStore
-        )
+        ), previousSender: activeTransport ?? retiringTransport)
     }
 
     @discardableResult
     private func startReceiver(sessionKey: Data, pairedDeviceId: String) -> Bool {
         files.reset()
+        screen.unbind()
         stopPairingConfirmationReceiver()
         receiver?.stop()
         pairedPeerID = pairedDeviceId
         connectionGeneration = UUID()
         let generation = connectionGeneration
+        let localID = localMacDeviceId
+        let ingress = screenIngress
+        let previewAdmission = screen.admissionGeneration
         commands.removeAll()
         notificationBridge.clearContexts()
         do {
@@ -576,6 +708,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
                 stateStore: frameStateStore
             )
             try server.start { [weak self] result in
+                switch result {
+                case .success(let envelope) where ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type):
+                    guard let previewGeneration = previewAdmission.current(),
+                          let admission = ingress.admit(envelope, expectedSourceDeviceID: pairedDeviceId,
+                        expectedTargetDeviceID: localID, connectionGeneration: generation) else { return }
+                    Task { @MainActor in
+                        guard let self, self.connectionGeneration == generation else { admission.release(); return }
+                        self.screen.receive(envelope, admission: admission, previewGeneration: previewGeneration)
+                    }
+                    return
+                case .failure(let error) where error is AuthenticatedScreenProtocolRejection:
+                    guard let previewGeneration = previewAdmission.current(),
+                          let rejection = error as? AuthenticatedScreenProtocolRejection,
+                          let admission = ingress.admit(rejection, expectedPeerDeviceID: pairedDeviceId,
+                                                        connectionGeneration: generation) else { return }
+                    Task { @MainActor in
+                        guard let self, self.connectionGeneration == generation else { admission.release(); return }
+                        self.screen.receive(rejection, admission: admission, previewGeneration: previewGeneration)
+                    }
+                    return
+                case .failure:
+                    // Unauthenticated/malformed traffic is not a user event. Drop
+                    // it here so a network flood cannot enqueue MainActor work.
+                    return
+                default: break
+                }
                 Task { @MainActor in
                     guard self?.connectionGeneration == generation else { return }
                     self?.handleInbound(result)
@@ -583,12 +741,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
             }
             receiver = server
             if let activeTransport { files.bind(localID: localMacDeviceId, peerID: pairedDeviceId, transport: activeTransport) }
+            if let sender = activeTransport {
+                screen.bind(localID: localID, peerID: pairedDeviceId, generation: generation, sender: sender)
+            }
             lastDeliveryState = "Receiver listening"
             NSLog("Plink receiver listening on \(receiverPort)")
             return true
         } catch {
             receiver = nil
-            activeTransport = nil
+            clearTransport()
             pairedPeerID = nil
             lastDeliveryState = error.localizedDescription
             NSLog("Plink receiver failed: \(error.localizedDescription)")
@@ -768,6 +929,16 @@ struct DashboardWindow: View {
                 }.help("Open Notifications → Plink and enable Allow Notifications. Requesting access again cannot reset a denial.")
                 BluetoothCallingView(controller: appDelegate.calling)
                 ContinuityPanel(appDelegate: appDelegate)
+                GroupBox("Phone previews") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle("Allow phone screen preview on this Mac", isOn: $appDelegate.screenPreviewEnabled)
+                        Button("Phone Screen…") { appDelegate.showScreenWindow() }
+                            .disabled(appDelegate.pairedPeerID == nil || !appDelegate.screenPreviewEnabled)
+                        Button("Pixel USB Webcam…") { appDelegate.showWebcamWindow() }
+                        Text("Screen sharing needs approval on your phone. USB webcam needs a data cable and camera access.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
+                }
                 FileTransferPanel(controller: appDelegate.files)
             }
             .padding(24)
@@ -788,6 +959,9 @@ struct MenuBarPanel: View {
             }
             Text(appDelegate.lastReply).font(.caption).foregroundStyle(.secondary)
             Button("Open Plink") { appDelegate.showDashboardWindow() }
+            Button("Phone Screen…") { appDelegate.showScreenWindow() }
+                .disabled(appDelegate.pairedPeerID == nil || !appDelegate.screenPreviewEnabled)
+            Button("Pixel USB Webcam…") { appDelegate.showWebcamWindow() }
             Button("Send Clipboard") { appDelegate.sendClipboard() }.disabled(appDelegate.pairedPeerID == nil)
             FileTransferMenu(controller: appDelegate.files, openDashboard: { appDelegate.showDashboardWindow() })
             Button("Quit") { appDelegate.quit() }

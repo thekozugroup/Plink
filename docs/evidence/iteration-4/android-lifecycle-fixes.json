@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "status": "implementation_complete_source_frozen_parent_validation_pending",
+  "repository": "/Users/michaelwong/Developer/Plink",
+  "generatedAtUTC": "2026-09-20T08:28:18.759069+00:00",
+  "ownership": "Only ScreenPreviewCoordinator.kt, ScreenProjectionService.kt and the focused production-used pure JVM lifecycle seam/test were changed. Parent retains queue, policy, existing tests, builds and devices.",
+  "changes": [
+    {
+      "finding": "I4-ANDROID-PARENT-R01",
+      "change": "Local Stop, remote Stop and authenticated protocol rejection now select and terminally invalidate the exact pending/running request under one coordinator lock. Cancellation, queue purge and native stop happen afterward. The pending-to-running gap and nullable-ID re-fetch are removed.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "startLine": 293,
+          "endLine": 328,
+          "sha256": "7ca3d81a72290c8bce404b5f5fdf915b25616dc2e3362eb643ebe25b3bcf5460"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "startLine": 399,
+          "endLine": 413,
+          "sha256": "7ca3d81a72290c8bce404b5f5fdf915b25616dc2e3362eb643ebe25b3bcf5460"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "startLine": 610,
+          "endLine": 648,
+          "sha256": "7ca3d81a72290c8bce404b5f5fdf915b25616dc2e3362eb643ebe25b3bcf5460"
+        }
+      ]
+    },
+    {
+      "finding": "I4-ANDROID-PARENT-R02",
+      "change": "Issued launches remain outstanding after revocation until service delivery and release, or a known launch failure. Delivery registration is separate from capture authorization. Revoked deliveries are attached to service cleanup without obtaining projection. The service acknowledges all delivered tickets only after capture-thread release.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+          "startLine": 41,
+          "endLine": 59,
+          "sha256": "1c6d2a248be5fe079d63160491b2a185ed171d1ce050ced1bd475fb92ae007f6"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+          "startLine": 81,
+          "endLine": 114,
+          "sha256": "1c6d2a248be5fe079d63160491b2a185ed171d1ce050ced1bd475fb92ae007f6"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "startLine": 96,
+          "endLine": 134,
+          "sha256": "2621d18c30334da8c611530e7fe558dafd191a8c9ed830e856564e07a21c4ab8"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "startLine": 352,
+          "endLine": 377,
+          "sha256": "2621d18c30334da8c611530e7fe558dafd191a8c9ed830e856564e07a21c4ab8"
+        }
+      ]
+    },
+    {
+      "finding": "I4-ANDROID-PARENT-R03",
+      "change": "Resize publishes its new generation and cancels old active output before native surface/reader/display work. Response dispatch validity also checks the runtime service generation, closing the interval before coordinator publication.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "startLine": 283,
+          "endLine": 318,
+          "sha256": "2621d18c30334da8c611530e7fe558dafd191a8c9ed830e856564e07a21c4ab8"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "startLine": 580,
+          "endLine": 589,
+          "sha256": "7ca3d81a72290c8bce404b5f5fdf915b25616dc2e3362eb643ebe25b3bcf5460"
+        }
+      ]
+    },
+    {
+      "finding": "parent_native_notification_stop",
+      "change": "projectionStopped(USER) now requests a peer stop notice. A remotely initiated Stop has already removed running before the service callback and therefore still produces no echo.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "startLine": 293,
+          "endLine": 302,
+          "sha256": "7ca3d81a72290c8bce404b5f5fdf915b25616dc2e3362eb643ebe25b3bcf5460"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+          "startLine": 381,
+          "endLine": 390,
+          "sha256": "7ca3d81a72290c8bce404b5f5fdf915b25616dc2e3362eb643ebe25b3bcf5460"
+        }
+      ]
+    },
+    {
+      "finding": "parent_lifecycle_record_retirement",
+      "change": "Completed/unissued/known-failed lifetime records retire immediately, without requiring a later awaitQuiescence call. No timer or deadline completes a lifecycle in place of release.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+          "startLine": 81,
+          "endLine": 114,
+          "sha256": "1c6d2a248be5fe079d63160491b2a185ed171d1ce050ced1bd475fb92ae007f6"
+        }
+      ]
+    },
+    {
+      "finding": "related_startup_release_order",
+      "change": "Foreground setup now shares the serial capture handler with acquisition and teardown, preventing foreground work after a parallel release. Capture-thread join retries interruption and restores the interrupt flag after cleanup instead of continuing as though the thread exited.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "startLine": 128,
+          "endLine": 134,
+          "sha256": "2621d18c30334da8c611530e7fe558dafd191a8c9ed830e856564e07a21c4ab8"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "startLine": 165,
+          "endLine": 180,
+          "sha256": "2621d18c30334da8c611530e7fe558dafd191a8c9ed830e856564e07a21c4ab8"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+          "startLine": 352,
+          "endLine": 377,
+          "sha256": "2621d18c30334da8c611530e7fe558dafd191a8c9ed830e856564e07a21c4ab8"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+      "sha256": "7ca3d81a72290c8bce404b5f5fdf915b25616dc2e3362eb643ebe25b3bcf5460",
+      "sizeBytes": 34942,
+      "lineCount": 834
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+      "sha256": "2621d18c30334da8c611530e7fe558dafd191a8c9ed830e856564e07a21c4ab8",
+      "sizeBytes": 25142,
+      "lineCount": 630
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+      "sha256": "1c6d2a248be5fe079d63160491b2a185ed171d1ce050ced1bd475fb92ae007f6",
+      "sizeBytes": 4622,
+      "lineCount": 116
+    },
+    {
+      "path": "android/src/test/java/app/plink/android/screen/ScreenProjectionLifecyclesTest.kt",
+      "sha256": "a0ce3177f1d212d417abcc26d92f7c12eefb97207e0404f3f6f5470ad8c98021",
+      "sizeBytes": 5242,
+      "lineCount": 116
+    }
+  ],
+  "newTests": {
+    "path": "android/src/test/java/app/plink/android/screen/ScreenProjectionLifecyclesTest.kt",
+    "class": "app.plink.android.screen.ScreenProjectionLifecyclesTest",
+    "count": 4,
+    "cases": [
+      "Issued/revoked start remains incomplete across 120 seconds of virtual time, delayed delivery and delayed release.",
+      "Never-issued and known-failed launches complete without waiting for impossible delivery.",
+      "Claimed startup requires exact owner cleanup; duplicate/mismatched claims and a late failure cannot stand in for release.",
+      "One hundred completed lifecycles retire immediately; stale completion cannot retire a replacement."
+    ],
+    "productionSeam": "android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+    "authored": true,
+    "compiled": false,
+    "executed": false,
+    "meaning": "Tests exercise the actual production lifecycle registry, not an independent model. They do not exercise Android service delivery or native resources."
+  },
+  "verification": {
+    "performed": [
+      "Read back changed lifecycle/Stop/resize paths.",
+      "Checked call-site references and moved ticket declaration.",
+      "git diff --check passed for the two existing source files; all four files have no trailing whitespace.",
+      "Rechecked all four freeze hashes and JSON structure."
+    ],
+    "buildsRun": [],
+    "testsRun": [],
+    "devicesUsed": [],
+    "uiActions": [],
+    "gitWrites": [],
+    "newBabysitterRuns": []
+  },
+  "unresolved": {
+    "knownUnfixedFindingsFromThisHandoff": [],
+    "parentGatePending": [
+      "Parent starts the full build and emulator rerun on these frozen hashes. The earlier baseline gate ended; its codec failure is reported fixed by parent. These changes and four new JVM tests still await compilation/execution.",
+      "Run stop-versus-consent and nil-ID rejection concurrency regressions against the coordinator.",
+      "Check native notification Stop peer notice and remote Stop no-echo behavior.",
+      "Exercise delayed service delivery/release and resize with queued output using the parent harness as authorized."
+    ],
+    "outsideScope": "Earlier E09 codec behavior and the Swift JPEG-validator correction were not re-reviewed or changed.",
+    "intentionalWait": "If an issued OS launch neither delivers nor returns a known failure, quiescence remains pending. No elapsed deadline is reported as resource release."
+  },
+  "evidenceLabels": {
+    "baselineArtifact": "docs/evidence/iteration-4/screen-rerun1/final-result.json",
+    "baselineArtifactSHA256": "e55786e8cea39c342606324dd844baf14d4e8505c0b8006e4e14c269220d61c2",
+    "baselineEmulatorScenario": "PASS retained; predates this implementation and is not a regression pass for these changes.",
+    "nativeMacWindowVerified": false,
+    "physicalPixelVerified": false,
+    "swiftTests": "158 passed reported by parent; no new Swift verification by this task.",
+    "latestParentGateStatus": "Baseline gate ended; codec failure corrected by parent; full build/emulator gate ready after this freeze. No results for that rerun claimed."
+  },
+  "acceptance": {
+    "original27CasesUnchanged": true,
+    "nineMetricsUnchanged": true,
+    "criteriaReduced": false,
+    "canonicalGate": "Pending parent validation; these tests supplement original acceptance."
+  },
+  "freeze": {
+    "status": "frozen_for_parent_handoff",
+    "sourceFrozenAtUTC": "2026-09-20T08:26:58.819217+00:00",
+    "paths": [
+      "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt",
+      "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt",
+      "android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt",
+      "android/src/test/java/app/plink/android/screen/ScreenProjectionLifecyclesTest.kt"
+    ],
+    "scope": "These four files only; not a repository-wide freeze or test-pass assertion.",
+    "furtherEdits": "None unless parent explicitly requests follow-up."
+  }
+}

@@ -25,9 +25,13 @@ data class PlinkEnvelope(
         }
 
         fun decode(raw: String): PlinkEnvelope {
+            ScreenPreviewPayloadPolicy.validateRawJSON(raw)
             FileTransferPayloadPolicy.validateRawJSON(raw)
-            return json.decodeFromString(serializer(), raw)
+            return decodeUnchecked(raw)
         }
+
+        internal fun decodeUnchecked(raw: String): PlinkEnvelope =
+            json.decodeFromString(serializer(), raw)
     }
 }
 
@@ -47,6 +51,12 @@ object PlinkEventType {
     const val FileComplete = "file.complete"
     const val FileResult = "file.result"
     const val FileCancel = "file.cancel"
+    const val ScreenRequest = "screen.request"
+    const val ScreenState = "screen.state"
+    const val ScreenPull = "screen.pull"
+    const val ScreenFrame = "screen.frame"
+    const val ScreenIdle = "screen.idle"
+    const val ScreenStop = "screen.stop"
     const val WebOpen = "web.open"
     const val MediaState = "media.state"
     const val MediaCommand = "media.command"

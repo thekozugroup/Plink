@@ -1,0 +1,11 @@
+listening mode=screen port=56901 expectedSource=test-pixel expectedTarget=test-mac
+screen: normal OS consent requested on isolated emulator
+screen: awaiting explicit Plink Share action and Android consent
+screen: decoded pattern=1 dimensions=576x1280 jpegBytes=13498 pixelSHA256=3589a291509d2a1bbc302b0b27f673c670dd6f0da00fdbaf0553faf12a30d496
+screen: decoded pattern=2 dimensions=576x1280 jpegBytes=13461 pixelSHA256=f3b3e95034e34dc00316a9cb915860d5291f023ecb0119052fad98dd4790be04
+screen: decoded pattern=3 dimensions=576x1280 jpegBytes=13585 pixelSHA256=62305038ea575eb9a27cb1719f59be551ebf38d50288bca4699e664fcb24c599
+screen: decoded pattern=4 dimensions=576x1280 jpegBytes=13607 pixelSHA256=4de5dd6474a06a084cf09b4fa5352b94dd67f4f6eb1f9a755bfe1dfc9eeeefc8
+screen: decoded pattern=5 dimensions=576x1280 jpegBytes=13628 pixelSHA256=6945c5752f937f404b0ada788431662bde654f5e51d3a96746bf22ed3664a790
+screen: decoded pattern=6 dimensions=576x1280 jpegBytes=13789 pixelSHA256=c9018f62966b22cd9e52fa2911f30e5ccfc33082e3bce465340b69872cfdb88d
+screen: changing pixels verified; waiting for Android cleanup acknowledgment
+SCREEN ROUNDTRIP PASSED: actual MediaProjection, encrypted transport, native ImageIO; 6 pattern frames, 6 distinct decoded pixel hashes, Android stop acknowledged

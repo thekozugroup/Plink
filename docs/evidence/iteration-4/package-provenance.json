@@ -1,0 +1,18 @@
+{
+  "atUTC": "2026-09-20T08:44:39.197507+00:00",
+  "kind": "Post-build package and resource provenance",
+  "SHA256": {
+    "macos/Resources/Info.plist": "ccbc76fed2cc5923eca53452c3fab464cb8c2579cbe45c174553069a9a033786",
+    "macos/Resources/PlinkMac.entitlements": "e6532e1c9a75a2193504c6efac23fd3fb0a57612a81749627133fa17bcb1bcf6",
+    "build/PlinkMac.app/Contents/Info.plist": "ccbc76fed2cc5923eca53452c3fab464cb8c2579cbe45c174553069a9a033786",
+    "build/PlinkMac.app/Contents/MacOS/PlinkMac": "701fa01676b1b8535d1273054dd56fd47d4131dacc240ab6d9867e575098abf1",
+    "build/PlinkMac.app.zip": "34e704af2a6525620d86041bf3bbf2631c4dfb938bbf51c9fcfcc7b9fff8dee2",
+    "scripts/package-macos.sh": "e5e4289c0403ba9d35f4e229407f5048ba7e38cdc3d18ff7cc00116dc345ea17"
+  },
+  "resourceCopyMatches": true,
+  "canonicalBuild": "verification-4-final.log",
+  "nativeMacAppExercised": false,
+  "releaseSigningAndNotarizationVerified": false,
+  "note": "Binds current output of the final canonical packaging step. It does not establish native rendering or hardware acceptance.",
+  "codesignVerification": 0
+}

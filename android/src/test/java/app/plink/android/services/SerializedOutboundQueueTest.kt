@@ -15,11 +15,13 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.nio.file.Files
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -27,6 +29,146 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SerializedOutboundQueueTest {
+    @get:Rule val temporaryFolder = TemporaryFolder()
+
+    @Test
+    fun cancellingQueuedScreenControlDoesNotCancelOrdinaryWorker() = runTest {
+        val predecessors = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val sender = RecordingSender()
+        val queue = SerializedOutboundQueue(
+            sender = sender,
+            scope = this,
+            awaitPredecessors = { predecessors.await() }
+        )
+        val control = queue.sendEphemeral(
+            screenEnvelope("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"),
+            SerializedOutboundQueue.EphemeralKind.CONTROL
+        ) { true }
+        control.cancel()
+        assertTrue(runCatching { control.await() }.isFailure)
+        assertTrue(queue.trySend(envelope("ordinary")))
+
+        predecessors.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(listOf("ordinary"), sender.sent)
+        assertTrue(queue.isRunning)
+        queue.stop()
+    }
+
+    @Test
+    fun queuedScreenControlExpiresWhilePredecessorBarrierIsBlocked() = runTest {
+        val predecessors = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val sender = RecordingSender()
+        val queue = SerializedOutboundQueue(
+            sender = sender,
+            scope = this,
+            monotonicNanos = { testScheduler.currentTime * 1_000_000L },
+            awaitPredecessors = { predecessors.await() }
+        )
+        val control = queue.sendEphemeral(
+            screenEnvelope("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2"),
+            SerializedOutboundQueue.EphemeralKind.CONTROL
+        ) { true }
+
+        runCurrent()
+        advanceTimeBy(1_000)
+        runCurrent()
+
+        assertTrue(runCatching { control.await() }.isFailure)
+        assertTrue(sender.sent.isEmpty())
+        assertTrue(queue.trySend(envelope("ordinary-after-expiry")))
+        predecessors.complete(Unit)
+        advanceUntilIdle()
+        assertEquals(listOf("ordinary-after-expiry"), sender.sent)
+        queue.stop()
+    }
+
+    @Test
+    fun screenTrafficNeverUsesOrdinaryQueueOrOutbox() = runTest {
+        val stored = mutableListOf<String>()
+        val outbox = object : EventOutbox {
+            override fun store(envelope: PlinkEnvelope): Boolean = true.also { stored += envelope.id }
+            override fun pending(): List<PlinkEnvelope> = emptyList()
+            override fun remove(id: String) = Unit
+            override fun removeTypes(types: Set<String>) = Unit
+        }
+        val sender = RecordingSender()
+        val queue = SerializedOutboundQueue(sender, this, outbox = outbox)
+        val screen = screenEnvelope("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3")
+
+        assertFalse(queue.trySend(screen))
+        assertTrue(runCatching { queue.sendAwaitable(screen) }.isFailure)
+        val volatile = queue.sendEphemeral(
+            screen,
+            SerializedOutboundQueue.EphemeralKind.CONTROL
+        ) { true }
+        advanceUntilIdle()
+        volatile.await()
+
+        assertTrue(stored.isEmpty())
+        assertEquals(listOf(screen.id), sender.sent)
+        queue.stop()
+    }
+
+    @Test
+    fun retryDropsPersistedScreenTrafficWithoutDispatch() = runTest {
+        val screen = screenEnvelope("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4")
+        val removed = mutableListOf<String>()
+        val outbox = object : EventOutbox {
+            override fun store(envelope: PlinkEnvelope) = true
+            override fun pending(): List<PlinkEnvelope> = listOf(screen)
+            override fun remove(id: String) { removed += id }
+            override fun removeTypes(types: Set<String>) = Unit
+        }
+        val sender = RecordingSender()
+        val queue = SerializedOutboundQueue(sender, this, outbox = outbox)
+
+        queue.retryPending()
+        advanceUntilIdle()
+
+        assertEquals(listOf(screen.id), removed)
+        assertTrue(sender.sent.isEmpty())
+        queue.stop()
+    }
+
+    @Test
+    fun ephemeralKindMatchesControlAndPullResponseTypes() = runTest {
+        val sender = RecordingSender()
+        val queue = SerializedOutboundQueue(sender, this)
+        val idle = screenEnvelope(
+            id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5",
+            type = PlinkEventType.ScreenIdle
+        )
+
+        val idleHandle = queue.sendEphemeral(
+            idle,
+            SerializedOutboundQueue.EphemeralKind.DATA
+        ) { true }
+        assertTrue(runCatching {
+            queue.sendEphemeral(
+                screenEnvelope("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa6"),
+                SerializedOutboundQueue.EphemeralKind.DATA
+            ) { true }
+        }.isFailure)
+        advanceUntilIdle()
+        idleHandle.await()
+
+        val frame = screenEnvelope(
+            id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa7",
+            type = PlinkEventType.ScreenFrame
+        )
+        val frameHandle = queue.sendEphemeral(
+            frame,
+            SerializedOutboundQueue.EphemeralKind.DATA
+        ) { true }
+        advanceUntilIdle()
+        frameHandle.await()
+
+        assertEquals(listOf(idle.id, frame.id), sender.sent)
+        queue.stop()
+    }
+
     @Test
     fun awaitableSendCompletesOnlyAfterTransportSend() = runTest {
         val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
@@ -206,7 +348,7 @@ class SerializedOutboundQueueTest {
     fun purgeSuppressesQueuedTypeAndPersistenceFailureDoesNotKillWorker() = runTest {
         val sender = RecordingSender()
         val dispatcher = StandardTestDispatcher(testScheduler)
-        val invalidDirectory = Files.createTempFile("plink-outbox-parent", ".tmp").toFile()
+        val invalidDirectory = temporaryFolder.newFile("plink-outbox-parent.tmp")
         val outbox = DurableEventOutbox(invalidDirectory, byteArrayOf(1, 2, 3), "mac")
         val queue = SerializedOutboundQueue(sender, CoroutineScope(dispatcher), capacity = 4, outbox = outbox)
 
@@ -255,7 +397,7 @@ class SerializedOutboundQueueTest {
 
     @Test
     fun laterSuccessfulTrafficRetriesPersistedFailure() = runTest {
-        val directory = Files.createTempDirectory("plink-retry").toFile()
+        val directory = temporaryFolder.newFolder("plink-retry")
         val outbox = DurableEventOutbox(directory, byteArrayOf(3, 2, 1), "mac")
         var online = false
         val attempts = mutableListOf<String>()
@@ -329,6 +471,36 @@ class SerializedOutboundQueueTest {
         sourceDeviceId = "pixel",
         targetDeviceId = "mac",
         payload = buildJsonObject {}
+    )
+
+    private fun screenEnvelope(
+        id: String,
+        type: String = PlinkEventType.ScreenState
+    ) = PlinkEnvelope(
+        id = id,
+        type = type,
+        sentAt = "2026-09-20T00:00:00Z",
+        sourceDeviceId = "pixel",
+        targetDeviceId = "mac",
+        payload = buildJsonObject {
+            put("v", 1)
+            put("requestId", "11111111-1111-4111-8111-111111111111")
+            when (type) {
+                PlinkEventType.ScreenIdle -> {
+                    put("streamId", "22222222-2222-4222-8222-222222222222")
+                    put("index", 1)
+                    put("reason", "no_new_frame")
+                }
+                PlinkEventType.ScreenFrame -> {
+                    put("streamId", "22222222-2222-4222-8222-222222222222")
+                    put("index", 1)
+                    put("width", 1)
+                    put("height", 1)
+                    put("data", "queue-test")
+                }
+                else -> put("state", "needs_consent")
+            }
+        }
     )
 
     private class RecordingSender(private val failId: String? = null) : OutboundPlinkSender {

@@ -1,0 +1,16 @@
+{
+  "forward": {
+    "local": "tcp:54345",
+    "phase": "absent",
+    "remote": "tcp:45791"
+  },
+  "install": {
+    "phase": "absent"
+  },
+  "instrumentStarted": true,
+  "mode": "screen",
+  "schemaVersion": 1,
+  "serial": "emulator-5580",
+  "testAPKSHA256": "55ec002891c3ae489468682c491d6f5bfa1a97521f36ce3da2e86d2527428508",
+  "testPackageAbsentBefore": true
+}

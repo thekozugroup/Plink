@@ -2,6 +2,7 @@ package app.plink.android.features
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import app.plink.android.permissions.PermissionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -87,7 +88,8 @@ object FeaturePolicy {
             feature != ContinuityFeature.Files &&
                 feature != ContinuityFeature.Sms &&
                 feature != ContinuityFeature.ScreenMirror
-        }
+        },
+        screenPreviewSupported: Boolean = Build.VERSION.SDK_INT >= 34
     ): List<FeatureAvailability> = listOf(
         FeatureAvailability(
             ContinuityFeature.Calls,
@@ -143,8 +145,9 @@ object FeaturePolicy {
         FeatureAvailability(
             ContinuityFeature.ScreenMirror,
             enabled = settings.isEnabled(ContinuityFeature.ScreenMirror),
-            available = false,
-            reason = "Screen mirroring is not implemented."
+            available = screenPreviewSupported,
+            reason = if (screenPreviewSupported) "View-only preview up to 2 fps. Approve each request in Plink and Android's screen-sharing dialog."
+                else "Screen preview requires Android 14 or later."
         )
     )
 }

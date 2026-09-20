@@ -1,0 +1,11 @@
+{
+  "featurePreferences": [
+    [
+      "boolean",
+      "background_connection_enabled",
+      "false",
+      null
+    ]
+  ],
+  "stateFiles": []
+}

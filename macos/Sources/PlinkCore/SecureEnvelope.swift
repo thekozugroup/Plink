@@ -80,6 +80,7 @@ public enum PayloadPolicy {
             throw PayloadPolicyError.envelopeTooLarge
         }
         try FileTransferPayloadPolicy.validate(envelope)
+        try ScreenPreviewPayloadPolicy.validate(envelope)
         if envelope.type == .webOpen {
             guard
                 let rawURL = envelope.payload["url"]?.stringValue,
@@ -275,7 +276,8 @@ public struct EncryptedFrameCodec: Sendable {
         now: Date = .now,
         expectedSourceDeviceId: String? = nil,
         expectedTargetDeviceId: String? = nil,
-        stateStore: (any FrameStateStoring)? = nil
+        stateStore: (any FrameStateStoring)? = nil,
+        wireBytes: Int? = nil
     ) throws -> PlinkEnvelope {
         guard frame.version == 1 else { throw PayloadPolicyError.unsupportedVersion }
         if let expectedSourceDeviceId, frame.sourceDeviceId != expectedSourceDeviceId {
@@ -294,7 +296,23 @@ public struct EncryptedFrameCodec: Sendable {
         }
         let sealed = try AES.GCM.SealedBox(combined: combined)
         let data = try AES.GCM.open(sealed, using: aesKey, authenticating: aad(frame))
-        let envelope = try PlinkEnvelope.decode(data)
+        let decoded = Result { try PlinkEnvelope.decode(data) }
+        guard let envelope = try? decoded.get() else {
+            if let rejection = ScreenPreviewPayloadPolicy.rejection(
+                fromAuthenticatedPlaintext: data,
+                sourceDeviceID: frame.sourceDeviceId,
+                targetDeviceID: frame.targetDeviceId
+            ) {
+                try acceptAuthenticatedFrame(
+                    frame,
+                    replayProtector: replayProtector,
+                    stateStore: stateStore,
+                    now: now
+                )
+                throw rejection
+            }
+            return try decoded.get()
+        }
         guard envelope.sourceDeviceId == frame.sourceDeviceId, envelope.targetDeviceId == frame.targetDeviceId else {
             throw PayloadPolicyError.deviceMismatch
         }
@@ -304,12 +322,43 @@ public struct EncryptedFrameCodec: Sendable {
         if let expectedTargetDeviceId, envelope.targetDeviceId != expectedTargetDeviceId {
             throw PayloadPolicyError.deviceMismatch
         }
-        try PayloadPolicy.validate(envelope)
+        if ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type) {
+            try acceptAuthenticatedFrame(frame, replayProtector: replayProtector, stateStore: stateStore, now: now)
+            do {
+                guard wireBytes.map({ $0 <= ScreenPreviewProtocol.maxScreenWireBytes }) ?? true else {
+                    throw PayloadPolicyError.envelopeTooLarge
+                }
+                try PayloadPolicy.validate(envelope)
+            } catch {
+                if let rejection = ScreenPreviewPayloadPolicy.rejection(
+                    fromAuthenticatedPlaintext: data,
+                    sourceDeviceID: frame.sourceDeviceId,
+                    targetDeviceID: frame.targetDeviceId
+                ) {
+                    throw rejection
+                }
+                throw error
+            }
+        } else {
+            try PayloadPolicy.validate(envelope)
+            try acceptAuthenticatedFrame(frame, replayProtector: replayProtector, stateStore: stateStore, now: now)
+        }
+        return envelope
+    }
+
+    private func acceptAuthenticatedFrame(
+        _ frame: EncryptedPlinkFrame,
+        replayProtector: ReplayProtector?,
+        stateStore: (any FrameStateStoring)?,
+        now: Date
+    ) throws {
         guard abs(now.timeIntervalSince(frame.issuedAt)) <= 300 else { throw PayloadPolicyError.staleFrame }
         try replayProtector?.accept(frame, now: now)
-        try stateStore?.accept(scope: stateScope(sourceDeviceId: frame.sourceDeviceId, targetDeviceId: frame.targetDeviceId),
-                               sequence: frame.sequence, nonce: frame.nonce)
-        return envelope
+        try stateStore?.accept(
+            scope: stateScope(sourceDeviceId: frame.sourceDeviceId, targetDeviceId: frame.targetDeviceId),
+            sequence: frame.sequence,
+            nonce: frame.nonce
+        )
     }
 
     private func signature(for frame: EncryptedPlinkFrame) -> String {

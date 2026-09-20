@@ -1,0 +1,30 @@
+{
+  "sourceReport": ".a5c/artifacts/iteration4-screen-harness-fixes.json",
+  "hostCasesPassed": 19,
+  "hostCasesTotal": 19,
+  "scope": "Fake ADB/receiver failure-injection cases run by independent harness agent before parent moved the early Android failure marker check. These supplement final real emulator runs; they do not prove physical behavior.",
+  "corrections": [
+    {
+      "finding": "SH-R01",
+      "change": "Both installed-APK validators accept the standard ~~ directory prefix while requiring one absolute /data/app APK path and a safe character set."
+    },
+    {
+      "finding": "SH-R05",
+      "change": "App-state scripts use non-PTY adb shell with a quoted sh -c argument and remote exit status; exec-out stdin is no longer used."
+    },
+    {
+      "finding": "SH-R02",
+      "change": "Package inventory must succeed and parse before absence is accepted. Existing test packages block the run. Installation uses no replacement flag; an explicit concurrent INSTALL_FAILED_ALREADY_EXISTS result is preserved and never uninstalled."
+    },
+    {
+      "finding": "SH-R03",
+      "change": "The inner Python supervisor atomically journals exact forward/reverse endpoints and the test APK hash before acquisition. Pending operations are reconciled after lost acknowledgments. Cleanup compares identities, preserves replacements/mismatches, and verifies absence. A recover operation lets the outer wrapper clean journaled artifacts after killing the inner process group; inner children do not start separate sessions."
+    },
+    {
+      "finding": "SH-R04",
+      "change": "Projection, optional force-stop, recovery, service inventory, app-state comparison, host result and Android cleanup marker each have independent error capture. One failure cannot skip remaining checks. Forced termination and all cleanup failures remain nonzero."
+    }
+  ],
+  "currentRuntimeEvidence": "screen-final-rerun/final-result.json",
+  "temporaryAgentHarnessRemoved": true
+}

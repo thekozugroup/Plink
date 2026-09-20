@@ -9,16 +9,19 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.nio.file.Files
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 
 class DurableEventOutboxTest {
+    @get:Rule val temporaryFolder = TemporaryFolder()
+
     @Test
     fun encryptedFileDoesNotContainNotificationTextOrReplyToken() {
-        val directory = Files.createTempDirectory("plink-outbox").toFile()
+        val directory = temporaryFolder.newFolder("plink-outbox")
         val outbox = DurableEventOutbox(directory, byteArrayOf(1, 2, 3), "mac", fixedClock())
 
         outbox.store(message("event-1", "private preview", "reply-secret"))
@@ -36,7 +39,7 @@ class DurableEventOutboxTest {
 
     @Test
     fun coalescesDeviceAndMediaStateAndExcludesCommands() {
-        val directory = Files.createTempDirectory("plink-outbox").toFile()
+        val directory = temporaryFolder.newFolder("plink-outbox")
         val outbox = DurableEventOutbox(directory, byteArrayOf(4, 5, 6), "mac", fixedClock())
 
         outbox.store(envelope("battery-1", PlinkEventType.DeviceStatus, buildJsonObject { put("batteryLevel", 10) }))
@@ -53,7 +56,7 @@ class DurableEventOutboxTest {
     @Test
     fun expiresNotificationFallbackAndCapsOldestEntries() {
         val clock = MutableClock(Instant.parse("2026-09-20T00:00:00Z"))
-        val directory = Files.createTempDirectory("plink-outbox").toFile()
+        val directory = temporaryFolder.newFolder("plink-outbox")
         val outbox = DurableEventOutbox(directory, byteArrayOf(7, 8, 9), "mac", clock, capacity = 2)
 
         outbox.store(message("one", "one", "token-1"))
@@ -67,7 +70,7 @@ class DurableEventOutboxTest {
 
     @Test
     fun keyedRemovalReplacesQueuedMessageWithoutReplyCapability() {
-        val directory = Files.createTempDirectory("plink-outbox").toFile()
+        val directory = temporaryFolder.newFolder("plink-outbox")
         val outbox = DurableEventOutbox(directory, byteArrayOf(7, 8, 9), "mac", fixedClock())
         outbox.store(message("posted", "private", "reply"))
         outbox.store(
@@ -94,7 +97,7 @@ class DurableEventOutboxTest {
     @Test
     fun expiryUsesOriginalSentAtAndFeaturePurgeRemovesQueuedEvents() {
         val clock = MutableClock(Instant.parse("2026-09-20T00:01:59Z"))
-        val directory = Files.createTempDirectory("plink-outbox").toFile()
+        val directory = temporaryFolder.newFolder("plink-outbox")
         val outbox = DurableEventOutbox(directory, byteArrayOf(7, 8, 9), "mac", clock)
 
         outbox.store(message("old", "old", "token"))

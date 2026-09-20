@@ -1,0 +1,488 @@
+{
+  "schemaVersion": 3,
+  "reviewType": "native_integration_resolution_with_bounded_android_sidecar",
+  "status": "no_unresolved_findings_in_reviewed_scope_compilation_and_test_gate_pending",
+  "repository": "/Users/michaelwong/Developer/Plink",
+  "outputPath": ".a5c/artifacts/iteration4-mac-integration-review.json",
+  "generatedAtUTC": "2026-09-20T07:58:28.784359+00:00",
+  "authority": {
+    "parentOwnsRun": true,
+    "parentLane": "I4-B",
+    "sourceFreeze": false,
+    "newBabysitterRunStarted": false,
+    "parentOwnsBuildsTestsDevicesAndMetrics": true,
+    "scope": "This report only. Native integration source status plus Android PlinkSessionController.kt, FeatureState.kt and main Manifest sidecar. No worker A service/core/capture/queue review. No further source expansion until parent frozen gate. Parent explicitly added the small MainActivity consent-attempt ViewModel change; only its exact lifecycle storage/result excerpts were inspected. Latest recheck is restricted to I4-MAC-E06 sender correction and its existing targeted test; no broader review.",
+    "parentReportedLaneFreezes": {
+      "I4-B": "Source frozen by explicit parent handoff request.",
+      "I4-C": "Source frozen as previously reported by parent."
+    },
+    "sourceFreezeMeaning": "No full canonical source gate asserted; lane freezes above are parent-reported."
+  },
+  "summary": {
+    "unresolvedFindings": 0,
+    "byPriority": {},
+    "unresolved": "None in the bounded reviewed source snapshots. I4-MAC-E06 is resolved by source inspection; compilation and test execution remain pending.",
+    "android": "Publication-order race corrected in the final inspected controller. No unresolved finding in the bounded parent Android sidecar.",
+    "verification": "Focused source recheck only. Sender correction and its targeted test were read, not compiled or run. No broader review, device/UI verification or acceptance pass."
+  },
+  "findings": [],
+  "pendingInterfaces": [],
+  "sourceStatuses": [
+    {
+      "id": "I4-MAC-E01",
+      "status": "resolved_by_source_inspection_tests_pending",
+      "evidence": "Generic untrusted receive failures return before MainActor Task creation; authenticated screen rejections retain bounded admission.",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "startLine": 721,
+          "endLine": 734,
+          "sha256": "b44bf68b1440426d33d4b1c919571a97e04fa0508da3bf192fafc3fdfd5fd581"
+        }
+      ]
+    },
+    {
+      "id": "I4-MAC-E02",
+      "status": "resolved_by_source_inspection_tests_pending",
+      "evidence": "Preview epoch is captured before ingress/task creation, checked for messages and nil-ID rejections, and synchronously invalidated on local terminal work.",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "startLine": 712,
+          "endLine": 728,
+          "sha256": "b44bf68b1440426d33d4b1c919571a97e04fa0508da3bf192fafc3fdfd5fd581"
+        },
+        {
+          "path": "macos/Sources/PlinkMac/ScreenPreviewController.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/ScreenPreviewController.swift",
+          "startLine": 103,
+          "endLine": 108,
+          "sha256": "20bf83728c7f6d3df4aa5aa4809658298c6f95835c4f0f91614a861c1cac2f7a"
+        },
+        {
+          "path": "macos/Sources/PlinkMac/ScreenPreviewController.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/ScreenPreviewController.swift",
+          "startLine": 165,
+          "endLine": 168,
+          "sha256": "20bf83728c7f6d3df4aa5aa4809658298c6f95835c4f0f91614a861c1cac2f7a"
+        }
+      ]
+    },
+    {
+      "id": "I4-MAC-E03",
+      "status": "resolved_by_source_inspection_tests_pending",
+      "evidence": "Original replacement-overlap and producer-join defects are corrected in source. App invalidates and retains the retiring sender and passes active-or-retiring predecessor. Sender shutdown awaits drain and predecessor. Controller cancels and joins captured producer tasks. The subsequent wait-placement issue E06 is now also resolved by the focused source recheck.",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "startLine": 324,
+          "endLine": 332,
+          "sha256": "b44bf68b1440426d33d4b1c919571a97e04fa0508da3bf192fafc3fdfd5fd581"
+        },
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "startLine": 680,
+          "endLine": 685,
+          "sha256": "b44bf68b1440426d33d4b1c919571a97e04fa0508da3bf192fafc3fdfd5fd581"
+        },
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 17,
+          "endLine": 47,
+          "sha256": "64a34abdca499cb7db008d6db178173b34490ec9e70eb9b126557c6767d14644"
+        },
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 209,
+          "endLine": 216,
+          "sha256": "64a34abdca499cb7db008d6db178173b34490ec9e70eb9b126557c6767d14644"
+        },
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 298,
+          "endLine": 320,
+          "sha256": "64a34abdca499cb7db008d6db178173b34490ec9e70eb9b126557c6767d14644"
+        },
+        {
+          "path": "macos/Sources/PlinkMac/ScreenPreviewController.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/ScreenPreviewController.swift",
+          "startLine": 173,
+          "endLine": 185,
+          "sha256": "20bf83728c7f6d3df4aa5aa4809658298c6f95835c4f0f91614a861c1cac2f7a"
+        }
+      ]
+    },
+    {
+      "id": "I4-MAC-E04",
+      "status": "resolved_by_source_inspection_tests_pending",
+      "evidence": "Both owners begin shutdown before either await. Webcam beginShutdown now exists, invalidates permission/discovery/start eligibility, and initiates teardown. Async shutdown still waits after prior beginShutdown; the missing interface is resolved.",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "startLine": 144,
+          "endLine": 158,
+          "sha256": "b44bf68b1440426d33d4b1c919571a97e04fa0508da3bf192fafc3fdfd5fd581"
+        },
+        {
+          "path": "macos/Sources/PlinkMac/PixelWebcamController.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/PixelWebcamController.swift",
+          "startLine": 166,
+          "endLine": 188,
+          "sha256": "8891dbe3eb14b1fc85b290fee543e9c0531704e7182dd8bc0eda9db7b65f3709"
+        }
+      ]
+    },
+    {
+      "id": "I4-MAC-E05",
+      "status": "resolved_by_source_inspection_tests_pending",
+      "evidence": "Visible occlusion restores eligibility only while key and app active. A new preview still requires explicit Start.",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "startLine": 290,
+          "endLine": 302,
+          "sha256": "b44bf68b1440426d33d4b1c919571a97e04fa0508da3bf192fafc3fdfd5fd581"
+        }
+      ]
+    },
+    {
+      "id": "I4-ANDROID-INTEGRATION-E01",
+      "status": "resolved_by_source_inspection_tests_pending",
+      "evidence": "Parent corrected the publication race: immutable screenSession is assigned, then READY published, then startReplyReceiver runs. Previously the receiver could run with current generation but null screen binding. The volatile getter remains; no controller monitor is added under the coordinator lock.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "startLine": 158,
+          "endLine": 165,
+          "sha256": "b1abae04fc30acfef6408d56cb708e47716917651e889cb2629868b49c743ff2"
+        }
+      ]
+    },
+    {
+      "id": "ANDROID-DISABLE-ROUTING",
+      "status": "parent_fix_present_source_only",
+      "evidence": "Purge runs before coordinator.featureDisabled. Outbound admission requires matching current local source and paired target. Disabled-feature exceptions are limited to screen.stop and screen.state whose state is rejected. This disable callback therefore cannot purge its subsequently created terminal notice.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "startLine": 100,
+          "endLine": 108,
+          "sha256": "b1abae04fc30acfef6408d56cb708e47716917651e889cb2629868b49c743ff2"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "startLine": 279,
+          "endLine": 287,
+          "sha256": "b1abae04fc30acfef6408d56cb708e47716917651e889cb2629868b49c743ff2"
+        }
+      ]
+    },
+    {
+      "id": "ANDROID-LOCK-AND-STOP-BARRIER",
+      "status": "parent_ordering_present_dependency_guarantees_not_certified",
+      "evidence": "Coordinator currentSession reads a volatile immutable binding without the controller monitor. stop invalidates binding/generation, closes/cancels receiver and detaches outbound. stopAndAwait captures tracked receivers under the monitor, then joins receivers, coordinator and SharedOutboundBridge outside it. configure is excluded while awaitingStop. No new controller/coordinator monitor inversion was identified within this scope.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "startLine": 65,
+          "endLine": 89,
+          "sha256": "b1abae04fc30acfef6408d56cb708e47716917651e889cb2629868b49c743ff2"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "startLine": 187,
+          "endLine": 220,
+          "sha256": "b1abae04fc30acfef6408d56cb708e47716917651e889cb2629868b49c743ff2"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "startLine": 386,
+          "endLine": 389,
+          "sha256": "b1abae04fc30acfef6408d56cb708e47716917651e889cb2629868b49c743ff2"
+        }
+      ]
+    },
+    {
+      "id": "ANDROID-RECEIVE-ROUTING",
+      "status": "no_actionable_issue_found_in_bounded_source_review",
+      "evidence": "Screen request/pull/stop, unexpected screen types and sanitized authenticated rejection results go directly to the coordinator with the captured receiver generation. Screen traffic does not fall through to the generic command handler.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "startLine": 359,
+          "endLine": 372,
+          "sha256": "b1abae04fc30acfef6408d56cb708e47716917651e889cb2629868b49c743ff2"
+        }
+      ]
+    },
+    {
+      "id": "ANDROID-FEATURE-MANIFEST",
+      "status": "no_actionable_issue_found_in_bounded_source_review",
+      "evidence": "ScreenMirror defaults off and availability is API 34+. Manifest declares projection foreground-service permission/type and a non-exported projection service.",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/features/FeatureState.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/features/FeatureState.kt",
+          "startLine": 73,
+          "endLine": 75,
+          "sha256": "a187919ee75f004ec9fba7b3cf2a7c3cbc1673ab67ca88cffe8484480225e36c"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/features/FeatureState.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/features/FeatureState.kt",
+          "startLine": 145,
+          "endLine": 150,
+          "sha256": "a187919ee75f004ec9fba7b3cf2a7c3cbc1673ab67ca88cffe8484480225e36c"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/AndroidManifest.xml",
+          "startLine": 10,
+          "endLine": 12,
+          "sha256": "d76aee6c819433be494ce3db3e01ca766b96a710fffb9248fe33e6d021c29e5d"
+        },
+        {
+          "path": "android/src/main/AndroidManifest.xml",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/AndroidManifest.xml",
+          "startLine": 62,
+          "endLine": 66,
+          "sha256": "d76aee6c819433be494ce3db3e01ca766b96a710fffb9248fe33e6d021c29e5d"
+        }
+      ]
+    },
+    {
+      "id": "ANDROID-CONSENT-ROTATION",
+      "status": "parent_fix_present_source_only_no_new_finding",
+      "locations": [
+        {
+          "path": "android/src/main/java/app/plink/android/MainActivity.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/MainActivity.kt",
+          "startLine": 39,
+          "endLine": 46,
+          "sha256": "0a000cce2beff79ea9eb907c75ff347ea46cba62170b0447a9809554dc43ef87"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/MainActivity.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/MainActivity.kt",
+          "startLine": 52,
+          "endLine": 63,
+          "sha256": "0a000cce2beff79ea9eb907c75ff347ea46cba62170b0447a9809554dc43ef87"
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/MainActivity.kt",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/MainActivity.kt",
+          "startLine": 81,
+          "endLine": 92,
+          "sha256": "0a000cce2beff79ea9eb907c75ff347ea46cba62170b0447a9809554dc43ef87"
+        }
+      ],
+      "evidence": "Activity-scoped ViewModel holds only the opaque ScreenConsentAttempt. It initializes null and has no SavedStateHandle, Bundle or persistence write. Result handling clears the attempt before forwarding it; launcher failure clears it before reporting cancellation. The consent Intent is used for launch and result forwarding without being retained by the ViewModel. This addresses the Activity-field loss on rotation by source inspection.",
+      "limitations": "No rotation/process-recreation execution, compile, dependency resolution or hardware consent test. Coordinator attempt/session validity remains worker A ownership and was not re-reviewed. Framework ActivityResult saved state is not claimed to be absent; the application itself does not persist this attempt or the consent Intent.",
+      "laterAssertions": [
+        "Rotate while consent is pending; the result forwards the same opaque attempt once.",
+        "Recreate the process and deliver a restored activity result; null local attempt prevents consent forwarding."
+      ]
+    },
+    {
+      "id": "I4-MAC-E06",
+      "status": "resolved_by_source_inspection_compilation_and_tests_pending",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 21,
+          "endLine": 42,
+          "sha256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c"
+        },
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 187,
+          "endLine": 202,
+          "sha256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c"
+        },
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 236,
+          "endLine": 276,
+          "sha256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c"
+        },
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 280,
+          "endLine": 295,
+          "sha256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c"
+        },
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 373,
+          "endLine": 405,
+          "sha256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c"
+        },
+        {
+          "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "absolutePath": "/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+          "startLine": 408,
+          "endLine": 421,
+          "sha256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c"
+        }
+      ],
+      "evidence": "Public send now enters Queue.send immediately. Cancellation registration, bounded admission and the one-second expiry are established before drain awaits dispatchBarrier. The suspended actor drain permits cancellation and expiry methods to remove queued entries and resume callers independently. No entry is removed for dispatch or made active until the predecessor finishes; expired/cancelled entries therefore cannot dispatch after barrier release.",
+      "shutdownBoundary": "Full sender shutdown still waits for the predecessor/drain, preserving replacement ordering. Scoped screen cancellation and its send callers no longer depend on that wait.",
+      "verification": "Static source trace only. No new issue found in this narrow correction; runtime and compile validation remain parent-owned."
+    }
+  ],
+  "androidSidecar": {
+    "paths": [
+      "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+      "android/src/main/java/app/plink/android/features/FeatureState.kt",
+      "android/src/main/AndroidManifest.xml",
+      "android/src/main/java/app/plink/android/MainActivity.kt"
+    ],
+    "unresolvedFindings": 0,
+    "excluded": "Worker A coordinator/service/capture/protocol/security core/shared queue are not re-reviewed or certified. Their own review and quiescence guarantees remain separate. Parent stopAndAwait ordering alone does not prove native or queue cleanup.",
+    "finalControllerReadAtUTC": "2026-09-20T07:52:58.625302+00:00",
+    "latestParentCorrections": "Source/target admission, terminal-message exception and purge-before-disable reviewed. Final publication order checked after parent fix.",
+    "mainActivityAddendum": "Small ViewModel storage/result-flow check only; no additional source expansion."
+  },
+  "testSourceStatus": {
+    "path": "macos/Tests/PlinkMacTests/ScreenPreviewControllerTests.swift",
+    "sha256": "63f92b374480be7b6dde7a9d887a74f46b02a3ad9919a6d3de6090b6d465e53e",
+    "reviewedTest": {
+      "name": "queuedAmbiguousRejectionCannotCrossLocalStartAndQuitIsTerminal",
+      "startLine": 126,
+      "endLine": 160
+    },
+    "sourceAssertions": "Captures a nil-ID rejection token in A, stops/starts B on the same connection, delivers the old epoch and expects B to stay requesting. beginShutdown must clear admission and prevent later visibility/enable/start calls from restarting.",
+    "parentReportedAdditionalCases": [
+      "Synthetic 8x8 JPEG through actual decoder then synchronous image clear",
+      "Delayed terminal frame",
+      "Hide/no automatic restart",
+      "Stale connection rejection",
+      "Disabled/inactive guards"
+    ],
+    "compilation": "not_run_by_reviewer",
+    "execution": "not_run_by_reviewer",
+    "evidenceBoundary": "Tests simulate controller/lifecycle/admission behavior. They do not prove native windows, OS lock coverage, TCC, device capture, physical cleanup or measured performance."
+  },
+  "snapshots": {
+    "files": [
+      {
+        "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+        "sha256": "b44bf68b1440426d33d4b1c919571a97e04fa0508da3bf192fafc3fdfd5fd581",
+        "lineCount": 1150
+      },
+      {
+        "path": "macos/Sources/PlinkMac/ScreenPreviewController.swift",
+        "sha256": "20bf83728c7f6d3df4aa5aa4809658298c6f95835c4f0f91614a861c1cac2f7a",
+        "lineCount": 258
+      },
+      {
+        "path": "macos/Sources/PlinkCore/SerializedPlinkSender.swift",
+        "sha256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c",
+        "lineCount": 450,
+        "priorSHA256": "64a34abdca499cb7db008d6db178173b34490ec9e70eb9b126557c6767d14644",
+        "readAtUTC": "2026-09-20T07:57:13.839560+00:00"
+      },
+      {
+        "path": "macos/Sources/PlinkMac/PixelWebcamController.swift",
+        "sha256": "8891dbe3eb14b1fc85b290fee543e9c0531704e7182dd8bc0eda9db7b65f3709",
+        "lineCount": 792
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+        "sha256": "b1abae04fc30acfef6408d56cb708e47716917651e889cb2629868b49c743ff2",
+        "lineCount": 462
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/features/FeatureState.kt",
+        "sha256": "a187919ee75f004ec9fba7b3cf2a7c3cbc1673ab67ca88cffe8484480225e36c",
+        "lineCount": 153
+      },
+      {
+        "path": "android/src/main/AndroidManifest.xml",
+        "sha256": "d76aee6c819433be494ce3db3e01ca766b96a710fffb9248fe33e6d021c29e5d",
+        "lineCount": 79
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/MainActivity.kt",
+        "sha256": "0a000cce2beff79ea9eb907c75ff347ea46cba62170b0447a9809554dc43ef87",
+        "lineCount": 155,
+        "readAtUTC": "2026-09-20T07:54:41.931003+00:00"
+      }
+    ],
+    "approvedDecisionsSHA256": "2699c174b9dd500b0f6742ca56890ed5405da0b63a6769b48ce4807ad3c71bbe",
+    "supersededReportSHA256": "8549373774f3b2656b4b142d493a71505da64134f880a47f29a1266d39e48528",
+    "consistency": "Mixed, explicitly hashed review snapshots. Only the sender correction and its targeted test were newly inspected in this recheck. Sender hash was checked immediately before the report update. No other source status was refreshed or expanded."
+  },
+  "acceptance": {
+    "original27CasesUnchanged": true,
+    "nineMetricsUnchanged": true,
+    "criteriaReduced": false,
+    "supplementalTestsDoNotReplaceOriginalAcceptance": true,
+    "matrixSHA256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+    "freezeSHA256": "1bca89b7246baa5eca82b740309738fadc4a0be366865e7a1b45f4fcdd9194fb",
+    "hardwareAndNativeUIStatus": "Pending. No UI/hardware evidence, capture/rate/memory measurements, lifecycle OS observation, camera permission or release-to-other-app claim.",
+    "sourceFreezeAndTestGate": "Still required after remediation; parent owns tests and later metric review."
+  },
+  "validation": {
+    "performed": [
+      "Read bounded parent Android integration and native resolution excerpts.",
+      "Trace admission, generation, replacement, cancellation and stop ordering.",
+      "Validate report JSON, location bounds and unresolved count.",
+      "Focused static recheck of Queue.drain dispatchBarrier placement and the targeted held-predecessor test source; no test execution."
+    ],
+    "sourceEdits": [],
+    "buildCommands": [],
+    "testsRun": [],
+    "devicesUsed": [],
+    "uiActions": [],
+    "gitWrites": [],
+    "newRuns": []
+  },
+  "tools": {
+    "defaults": "Babysitter, Context Mode, Caveman lite and Ponytail full guidance applied within explicit parent-run/read-only scope. No new run.",
+    "headroom": {
+      "hash": "2f86d7256fe00e074c14444f",
+      "originalRetrieved": true,
+      "proxyStatus": "unreachable",
+      "limitation": "Compression produced only a retrieval marker. Exact original was retrieved locally; no proxy-compression claim."
+    }
+  },
+  "nextGate": "JSON review complete. Await parent canonical gate after Android completes. No further source reads, expansion, builds or tests by reviewer. Preserve original 27 cases, nine metrics and all pass criteria.",
+  "focusedRecheck": {
+    "scope": "Only the I4-MAC-E06 predecessor/admission/expiry/cancellation correction and targeted source test.",
+    "sourceSHA256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c",
+    "testSource": {
+      "path": "macos/Tests/PlinkCoreTests/SerializedPlinkSenderTests.swift",
+      "sha256": "4944066f33084c1b6c160a87e19ef3040b32ce401e41b2471be5db894d38fd51",
+      "name": "successorScreenExpiryAndCancellationRunWhilePredecessorIsHeld",
+      "startLine": 80,
+      "endLine": 140,
+      "observedAssertions": "Held predecessor; cancellation completes with cancelled; screen queue expiry completes with expired; successor transport starts remain empty before release. Existing replacementWaitsForPredecessorShutdownCompletion also checks no overlap.",
+      "compiled": false,
+      "executed": false
+    },
+    "parentReportedStatus": "B is source-frozen by explicit parent handoff request; C is frozen. Parent started the Swift diagnostic build. No build result or test pass is claimed by reviewer.",
+    "remainingGate": "Full canonical gate remains pending until Android completes. Parent owns diagnostic build, compilation and test results."
+  }
+}

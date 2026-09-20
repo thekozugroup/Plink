@@ -1,0 +1,23 @@
+{
+  "checks": {
+    "androidCleanupMarker": "failed",
+    "appState": "passed",
+    "hostCleanup": "failed",
+    "ownedArtifactRecovery": "passed",
+    "ownershipInventory": "passed",
+    "projection": "passed",
+    "services": "passed"
+  },
+  "cleanupErrors": [
+    "hostCleanup: RuntimeError: Inner test or owned cleanup failed.",
+    "androidCleanupMarker: RuntimeError: Android did not confirm quiescence and owned-state cleanup."
+  ],
+  "forcedProcessStop": false,
+  "manifest": "manifest.json",
+  "manifestSHA256": "0229ca52f6e4b1b9a424fd44cd2e96f7e4101bb8fb2a2d88e4d74d229681df5c",
+  "nativeMacWindowVerified": false,
+  "passed": false,
+  "physicalPixelVerified": false,
+  "pixelSubResult": "screen-frames/summary.json",
+  "testExitCode": 1
+}

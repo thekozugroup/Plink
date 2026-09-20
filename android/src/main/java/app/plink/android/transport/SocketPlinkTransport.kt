@@ -3,6 +3,7 @@ package app.plink.android.transport
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.security.EncryptedFrameCodec
 import app.plink.android.security.EncryptedPlinkFrame
+import app.plink.android.security.AuthenticatedFrameResult
 import app.plink.android.security.FrameStateStore
 import app.plink.android.security.ReplayWindow
 import java.io.Closeable
@@ -23,7 +24,16 @@ import kotlinx.serialization.json.Json
 
 interface OutboundPlinkSender {
     suspend fun send(envelope: PlinkEnvelope)
+
+    suspend fun send(envelope: PlinkEnvelope, timeoutMillis: Int) {
+        send(envelope)
+    }
 }
+
+data class ReceivedPlinkMessage(
+    val result: AuthenticatedFrameResult,
+    val wireBytes: Int
+)
 
 object LengthPrefixedFrameCodec {
     const val maxFrameBytes = 128 * 1024
@@ -47,11 +57,13 @@ class SecureSocketPlinkClient(
     private val stateStore: FrameStateStore,
     private val json: Json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
 ) : OutboundPlinkSender {
-    override suspend fun send(envelope: PlinkEnvelope) = withContext(Dispatchers.IO) {
+    override suspend fun send(envelope: PlinkEnvelope) = send(envelope, 5_000)
+
+    override suspend fun send(envelope: PlinkEnvelope, timeoutMillis: Int) = withContext(Dispatchers.IO) {
         val sequence = stateStore.reserveSequence(codec.stateScope(envelope.sourceDeviceId, envelope.targetDeviceId))
         val frame = codec.seal(envelope, sequence = sequence)
         val payload = json.encodeToString(EncryptedPlinkFrame.serializer(), frame).toByteArray(Charsets.UTF_8)
-        sendLengthPrefixedFrame(host, port, payload)
+        sendLengthPrefixedFrame(host, port, payload, timeoutMillis)
     }
 }
 
@@ -115,7 +127,12 @@ class SecureSocketPlinkServer(
         } catch (error: Exception) { it.close(); throw error }
     }
 
-    suspend fun receiveOnce(): PlinkEnvelope = withContext(Dispatchers.IO) {
+    suspend fun receiveOnce(): PlinkEnvelope = when (val message = receiveAuthenticated().result) {
+        is AuthenticatedFrameResult.Message -> message.envelope
+        is AuthenticatedFrameResult.RejectedScreen -> throw IllegalArgumentException("Invalid screen message.")
+    }
+
+    suspend fun receiveAuthenticated(): ReceivedPlinkMessage = withContext(Dispatchers.IO) {
         val coroutine = currentCoroutineContext()
         coroutine.ensureActive()
         val server = synchronized(lock) {
@@ -159,8 +176,18 @@ class SecureSocketPlinkServer(
                 coroutine.ensureActive()
                 synchronized(lock) {
                     check(!closed) { "Receiver is closed." }
-                    codec.open(frame, replayWindow, Instant.now(clock), expectedSourceDeviceId,
-                        expectedTargetDeviceId, stateStore)
+                    ReceivedPlinkMessage(
+                        result = codec.openAuthenticated(
+                            frame = frame,
+                            replayWindow = replayWindow,
+                            now = Instant.now(clock),
+                            expectedSourceDeviceId = expectedSourceDeviceId,
+                            expectedTargetDeviceId = expectedTargetDeviceId,
+                            stateStore = stateStore,
+                            wireBytes = size
+                        ),
+                        wireBytes = size
+                    )
                 }
             }
         } finally {

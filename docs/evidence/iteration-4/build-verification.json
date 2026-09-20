@@ -1,0 +1,29 @@
+{
+  "command": "./scripts/verify.sh",
+  "exitCode": 0,
+  "log": "verification-4-final.log",
+  "logSHA256": "dddb31d74d7b6a86090263a9bd8cc86cd635d47b5e2911b2f54b3211b09d4c11",
+  "androidTests": 148,
+  "androidTestFailures": 0,
+  "lint": {
+    "Error": 0,
+    "Warning": 35
+  },
+  "swiftTests": {
+    "XCTest": 54,
+    "CoreSwiftTesting": 93,
+    "MacSwiftTesting": 11,
+    "total": 158
+  },
+  "priorFailures": [
+    {
+      "log": ".a5c/artifacts/iteration4-builds/full-gate-1.log",
+      "reason": "Malformed JPEG acceptance. Corrected baseline entropy, EXIF and quantization validation."
+    },
+    {
+      "log": ".a5c/artifacts/iteration4-builds/full-gate-2.log",
+      "reason": "Two NewApi lint errors in capture startup. Added explicit Android 14 guard at callback entry."
+    }
+  ],
+  "atUTC": "2026-09-20T08:30:52.648401+00:00"
+}

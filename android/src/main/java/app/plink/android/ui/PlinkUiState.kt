@@ -7,6 +7,7 @@ import app.plink.android.permissions.PermissionAction
 import app.plink.android.permissions.PermissionOnboardingStep
 import app.plink.android.services.BackgroundConnectionState
 import app.plink.android.services.SessionStatus
+import app.plink.android.screen.ScreenPreviewUiState
 
 data class PlinkUiState(
     val sessionStatus: SessionStatus,
@@ -14,7 +15,8 @@ data class PlinkUiState(
     val onboarding: List<PermissionOnboardingStep>,
     val backgroundConnectionEnabled: Boolean,
     val backgroundConnectionState: BackgroundConnectionState,
-    val fileTransferState: FileTransferState
+    val fileTransferState: FileTransferState,
+    val screenPreviewState: ScreenPreviewUiState
 )
 
 data class PlinkUiActions(
@@ -23,5 +25,7 @@ data class PlinkUiActions(
     val onOpenPermissionSettings: (PermissionAction) -> Unit,
     val onFeatureEnabledChange: (ContinuityFeature, Boolean) -> Unit,
     val onBackgroundConnectionEnabledChange: (Boolean) -> Unit,
-    val onCancelFileTransfer: () -> Unit
+    val onCancelFileTransfer: () -> Unit,
+    val onBeginScreenConsent: (String) -> Unit,
+    val onStopScreenPreview: () -> Unit
 )

@@ -46,7 +46,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-/** Platform tests use only synthetic PendingIntents and isolated transport identities. No screen, real notifications or saved pairings. */
+/** Synthetic platform checks use isolated transport identities and never message real recipients. */
 class PlinkDeviceTestRunner : Instrumentation() {
     private var arguments = Bundle()
     private val checks = mutableListOf<String>()
@@ -63,6 +63,18 @@ class PlinkDeviceTestRunner : Instrumentation() {
         val receiver = SyntheticReplyReceiver()
         targetContext.registerReceiver(receiver, IntentFilter("app.plink.TEST_REPLY"), Context.RECEIVER_NOT_EXPORTED)
         try {
+            if (arguments.getString("mode") == "screen") {
+                checks += runBlocking {
+                    checkScreenRoundtrip(this@PlinkDeviceTestRunner, arguments) { message ->
+                        sendStatus(1, Bundle().apply { putString("stream", "\n$message\n") })
+                    }
+                }
+                result.putString("stream", "\nPLINK DEVICE CHECKS PASSED: ${checks.joinToString(", ")}\n")
+                result.putInt("checks", checks.size)
+                targetContext.unregisterReceiver(receiver)
+                finish(0, result)
+                return
+            }
             testRemoteInput()
             testProtectedAndDataOnlyActions()
             testReplyAuthorityRevocation()

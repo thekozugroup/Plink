@@ -65,8 +65,8 @@
       "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/settingsScreen/screens/SettingsMainScreen.kt",
       "upstreamSha256": "2f37254b218df1f975ae91262cda0deb8b7170e9cff2467fa72230a1d6327ec0",
       "adaptedPath": "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt",
-      "adaptedSha256": "3ddc9e269cd447c57e6f0c5c9658235565d48172557bced62dae0b4c63463c80",
-      "changeNote": "Adapted expressive settings-list and card presentation patterns for Plink setup controls, including top-bar and destination effects motion use."
+      "adaptedSha256": "f7beb7fb2986b45de53822867bd431fcc7dfcbf113357b49db3140f7958a57b3",
+      "changeNote": "Adapted expressive settings-list and card presentation patterns for Plink setup controls, including top-bar and destination effects motion use. Uses the pinned surfaceContainer Settings background and surfaceBright inactive rows; adds original Plink screen-preview placement."
     }
   ],
   "fontReference": {

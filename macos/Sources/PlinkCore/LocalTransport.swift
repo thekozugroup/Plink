@@ -6,6 +6,10 @@ public protocol PlinkTransport: Sendable {
     func send(_ envelope: PlinkEnvelope) async throws
 }
 
+public protocol DeadlinePlinkTransport: PlinkTransport {
+    func send(_ envelope: PlinkEnvelope, timeout: TimeInterval) async throws
+}
+
 public protocol PlinkEventReceiver: Sendable {
     func start(onEnvelope: @escaping @Sendable (Result<PlinkEnvelope, Error>) -> Void) throws
     func stop()
@@ -58,7 +62,7 @@ public enum LengthPrefixedFrameCodec {
     }
 }
 
-public final class SecureNetworkPlinkClient: PlinkTransport, @unchecked Sendable {
+public final class SecureNetworkPlinkClient: DeadlinePlinkTransport, @unchecked Sendable {
     private let host: NWEndpoint.Host
     private let port: NWEndpoint.Port
     private let codec: EncryptedFrameCodec
@@ -73,15 +77,25 @@ public final class SecureNetworkPlinkClient: PlinkTransport, @unchecked Sendable
     }
 
     public func send(_ envelope: PlinkEnvelope) async throws {
+        try await send(envelope, timeout: 5)
+    }
+
+    public func send(_ envelope: PlinkEnvelope, timeout: TimeInterval) async throws {
         try Task.checkCancellation()
+        guard timeout > 0 else { throw FoundationPlinkServerError.timedOut }
         let sequence = try stateStore.reserveSequence(scope: codec.stateScope(
             sourceDeviceId: envelope.sourceDeviceId, targetDeviceId: envelope.targetDeviceId))
         let frame = try codec.seal(envelope, sequence: sequence)
-        let payload = try LengthPrefixedFrameCodec.encode(PlinkJSON.encoder().encode(frame))
+        let wire = try PlinkJSON.encoder().encode(frame)
+        if ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type),
+           wire.count > ScreenPreviewProtocol.maxScreenWireBytes {
+            throw PayloadPolicyError.envelopeTooLarge
+        }
+        let payload = try LengthPrefixedFrameCodec.encode(wire)
         let operation = NetworkSend(connection: NWConnection(host: host, port: port, using: .tcp))
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                operation.start(payload, continuation: continuation)
+                operation.start(payload, timeout: timeout, continuation: continuation)
             }
         } onCancel: { operation.finish(.failure(CancellationError())) }
     }
@@ -93,14 +107,17 @@ private final class NetworkSend: @unchecked Sendable {
     private var result: Result<Void, Error>?
     private var continuation: CheckedContinuation<Void, any Error>?
     private var timer: DispatchSourceTimer?
+    private var deadline: MonotonicSendDeadline?
     init(connection: NWConnection) { self.connection = connection }
-    func start(_ data: Data, continuation: CheckedContinuation<Void, any Error>) {
+    func start(_ data: Data, timeout: TimeInterval, continuation: CheckedContinuation<Void, any Error>) {
         lock.lock()
         if let result { lock.unlock(); continuation.resume(with: result); return }
         self.continuation = continuation
+        let deadline = MonotonicSendDeadline(timeout: timeout)
+        self.deadline = deadline
         let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
         self.timer = timer
-        timer.schedule(deadline: .now() + 5)
+        timer.schedule(deadline: deadline.dispatchTime)
         timer.setEventHandler { self.finish(.failure(FoundationPlinkServerError.timedOut)) }
         timer.resume()
         connection.stateUpdateHandler = { state in
@@ -115,14 +132,37 @@ private final class NetworkSend: @unchecked Sendable {
     func finish(_ value: Result<Void, Error>) {
         lock.lock()
         guard result == nil else { lock.unlock(); return }
-        result = value
+        let resolved: Result<Void, Error>
+        if case .success = value, deadline?.hasExpired() == true {
+            resolved = .failure(FoundationPlinkServerError.timedOut)
+        } else {
+            resolved = value
+        }
+        result = resolved
         let pending = continuation
         continuation = nil
         timer?.cancel(); timer = nil
+        deadline = nil
         lock.unlock()
         connection.stateUpdateHandler = nil
         connection.cancel()
-        pending?.resume(with: value)
+        pending?.resume(with: resolved)
+    }
+}
+
+struct MonotonicSendDeadline {
+    let dispatchTime: DispatchTime
+
+    init(timeout: TimeInterval, now: DispatchTime = .now()) {
+        dispatchTime = now + timeout
+    }
+
+    init(uptimeNanoseconds: UInt64) {
+        dispatchTime = DispatchTime(uptimeNanoseconds: uptimeNanoseconds)
+    }
+
+    func hasExpired(now: DispatchTime = .now()) -> Bool {
+        now.uptimeNanoseconds >= dispatchTime.uptimeNanoseconds
     }
 }
 
@@ -286,7 +326,7 @@ public final class FoundationSecurePlinkServer: PlinkEventReceiver, @unchecked S
                 let frame = try PlinkJSON.decoder().decode(EncryptedPlinkFrame.self, from: data)
                 return try self.codec.open(frame, replayProtector: self.replayProtector,
                     expectedSourceDeviceId: self.expectedSourceDeviceId, expectedTargetDeviceId: self.expectedTargetDeviceId,
-                    stateStore: self.stateStore)
+                    stateStore: self.stateStore, wireBytes: data.count)
             } })
         }
     }

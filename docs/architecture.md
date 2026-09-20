@@ -23,6 +23,7 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 - `ContinuityEventRepository` for calls, messages, clipboard, files, web links, battery, and media commands.
 - Android Keystore-backed paired-device storage for production metadata and secrets; local tests use injectable memory storage.
 - Secure socket client/server with encrypted length-prefixed frames.
+- Android 14+ screen projection service and request-bound, single-use in-memory consent. Screen frames use a bounded volatile send path rather than the durable notification outbox.
 
 ### macOS
 
@@ -32,10 +33,12 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 - `PairingStore` for remembered device metadata.
 - Keychain-backed session secret storage.
 - `NotificationBridge` using `UNUserNotificationCenter`.
-- Native call notifications with answer/decline actions.
+- Native call notifications whose available actions follow the selected Bluetooth HFP session.
 - Native message notifications with text reply action.
-- Pasteboard/file/URL handoff adapters.
+- Pasteboard/URL handoff adapters and consented file transfer with native file pickers.
 - Secure `Network.framework` sender and receiver using length-prefixed encrypted frames.
+- A shared serialized sender per paired peer, with bounded and cancellable screen work behind ordinary commands and file traffic.
+- Native view-only screen and external USB webcam windows, both foreground-only. Their implementation and physical verification status are recorded separately in the feature inventory.
 
 ## Pairing Flow
 
@@ -98,10 +101,12 @@ Runtime events are validated before send and after receive:
 - `message.reply`
 - `clipboard.updated`
 - `file.offer`
+- `file.accept`, `file.chunk`, `file.progress`, `file.complete`, `file.result`, `file.cancel`
 - `web.open`
 - `media.state`
 - `media.command`
 - `permission.state`
+- `screen.request`, `screen.state`, `screen.pull`, `screen.frame`, `screen.idle`, `screen.stop`
 - `ack`
 - `error`
 
@@ -114,28 +119,30 @@ Android:
 - SMS default app/SMS permissions: required for direct SMS texting.
 - SMS permissions are not declared in the Android manifest until the default-SMS-role flow exists.
 - Phone state: not requested in the current build; call mirroring uses notification access.
-- Accessibility: optional clipboard automation.
-- Shizuku: optional privileged helper path; app must work without it.
+- Clipboard handoff uses Android sharing and an explicit incoming notification action. The placeholder accessibility class is not registered and does not automate clipboard access.
+- Shizuku availability can be reported, but baseline behavior does not depend on it and there is no implemented privileged continuity path.
+- Screen preview requires fresh MediaProjection consent per session. Consent tokens, JPEG data and decoded frames remain in memory; no screen audio, recording or remote control is provided.
 
 macOS:
 
 - Notifications: required for call/message presentation and reply actions.
 - Local network: required for peer connection.
 - Pasteboard/files: used only when the user enables related features.
+- Camera: requested explicitly in the USB webcam window, separately from selecting a device or starting preview. Screen preview does not need Mac screen-recording access.
 
 ## Feature Strategy
 
 | Feature | Build Now | Notes |
 | --- | --- | --- |
 | Pairing | Yes | Emoji confirmation, paired state, protocol events |
-| Calls | Yes | Native macOS notification model; no cellular audio relay |
+| Calls | Experimental | Native Bluetooth HFP control and audio-route requests; carrier control and two-way laptop speech still need hardware verification |
 | Message replies | Yes | macOS text reply event; Android executes notification reply when available |
-| Clipboard | Yes | Event and local adapter; Android auto mode permission-gated |
-| Files | Yes | Offer/accept event model and local file adapter |
+| Clipboard | Yes | Explicit Android share/incoming action; no automatic Android clipboard monitor |
+| Files | Yes | Authenticated offer/accept/chunk/result flow, 16 MiB limit, size/SHA-256 checks and explicit native destination selection |
 | Web handoff | Yes | URL open event |
 | Battery/device | Yes | State event and UI |
 | Media controls | Yes | Event model and UI controls |
-| Screen mirroring | Documented | Future scrcpy integration |
+| Screen mirroring | Under development | Consented native MediaProjection/JPEG preview; see the feature inventory for verification status |
 
 ## Threat Model
 

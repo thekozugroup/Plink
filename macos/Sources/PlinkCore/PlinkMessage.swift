@@ -13,6 +13,7 @@ public struct PlinkEnvelope: Codable, Equatable, Sendable {
     /// Use for wire input so file numeric tokens are checked before typed decoding.
     public static func decode(_ data: Data) throws -> PlinkEnvelope {
         try FileTransferPayloadPolicy.validateRawJSON(data)
+        try ScreenPreviewPayloadPolicy.validateRawJSON(data)
         return try PlinkJSON.decoder().decode(PlinkEnvelope.self, from: data)
     }
 
@@ -79,6 +80,11 @@ public enum PayloadValue: Codable, Equatable, Sendable {
         if case .bool(let value) = self { return value }
         return nil
     }
+
+    public var intValue: Int? {
+        if case .int(let value) = self { return value }
+        return nil
+    }
 }
 
 public enum EventType: String, Codable, Sendable {
@@ -97,6 +103,12 @@ public enum EventType: String, Codable, Sendable {
     case fileComplete = "file.complete"
     case fileResult = "file.result"
     case fileCancel = "file.cancel"
+    case screenRequest = "screen.request"
+    case screenState = "screen.state"
+    case screenPull = "screen.pull"
+    case screenFrame = "screen.frame"
+    case screenIdle = "screen.idle"
+    case screenStop = "screen.stop"
     case webOpen = "web.open"
     case mediaState = "media.state"
     case mediaCommand = "media.command"

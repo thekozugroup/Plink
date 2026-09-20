@@ -24,6 +24,8 @@
     <string>14.0</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>Plink connects to the Bluetooth phone you select to manage calls and route call audio.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Plink uses the external Pixel USB webcam you select for a live preview.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Plink uses your Mac microphone when you choose laptop audio for a phone call.</string>
     <key>NSLocalNetworkUsageDescription</key>

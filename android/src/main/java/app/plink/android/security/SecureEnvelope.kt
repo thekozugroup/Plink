@@ -3,6 +3,7 @@ package app.plink.android.security
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
 import app.plink.android.protocol.FileTransferPayloadPolicy
+import app.plink.android.protocol.ScreenPreviewPayloadPolicy
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -84,7 +85,7 @@ object PayloadPolicy {
         PlinkEventType.PermissionState,
         PlinkEventType.Ack,
         PlinkEventType.Error
-    ) + FileTransferPayloadPolicy.eventTypes
+    ) + FileTransferPayloadPolicy.eventTypes + ScreenPreviewPayloadPolicy.eventTypes
 
     fun requireAcceptable(envelope: PlinkEnvelope) {
         require(envelope.version == 1) { "Unsupported protocol version." }
@@ -96,6 +97,7 @@ object PayloadPolicy {
             "Envelope exceeds $maxEnvelopeBytes bytes."
         }
         FileTransferPayloadPolicy.requireAcceptable(envelope)
+        ScreenPreviewPayloadPolicy.requireAcceptable(envelope)
 
         if (envelope.type == PlinkEventType.WebOpen) {
             val rawUrl = envelope.payload["url"]?.jsonPrimitive?.content.orEmpty()
@@ -175,6 +177,18 @@ data class EncryptedPlinkFrame(
     ).joinToString("\n")
 }
 
+sealed interface AuthenticatedFrameResult {
+    data class Message(val envelope: PlinkEnvelope) : AuthenticatedFrameResult
+    data class RejectedScreen(val rejection: AuthenticatedScreenRejection) : AuthenticatedFrameResult
+}
+
+data class AuthenticatedScreenRejection(
+    val sourceDeviceId: String,
+    val targetDeviceId: String,
+    val requestId: String?,
+    val streamId: String?
+)
+
 class ReplayWindow(
     private val maxClockSkewSeconds: Long = 300
 ) {
@@ -231,7 +245,27 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         expectedSourceDeviceId: String? = null,
         expectedTargetDeviceId: String? = null,
         stateStore: FrameStateStore? = null
-    ): PlinkEnvelope {
+    ): PlinkEnvelope = when (val result = openAuthenticated(
+        frame = frame,
+        replayWindow = replayWindow,
+        now = now,
+        expectedSourceDeviceId = expectedSourceDeviceId,
+        expectedTargetDeviceId = expectedTargetDeviceId,
+        stateStore = stateStore
+    )) {
+        is AuthenticatedFrameResult.Message -> result.envelope
+        is AuthenticatedFrameResult.RejectedScreen -> throw IllegalArgumentException("Invalid screen message.")
+    }
+
+    fun openAuthenticated(
+        frame: EncryptedPlinkFrame,
+        replayWindow: ReplayWindow? = null,
+        now: Instant = Instant.now(),
+        expectedSourceDeviceId: String? = null,
+        expectedTargetDeviceId: String? = null,
+        stateStore: FrameStateStore? = null,
+        wireBytes: Int? = null
+    ): AuthenticatedFrameResult {
         require(frame.version == 1) { "Unsupported frame version." }
         if (expectedSourceDeviceId != null) {
             require(frame.sourceDeviceId == expectedSourceDeviceId) { "Unexpected source device." }
@@ -250,7 +284,58 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(aesKey, "AES"), GCMParameterSpec(128, iv))
         cipher.updateAAD(aad(frame))
-        val envelope = PlinkEnvelope.decode(String(cipher.doFinal(encrypted), Charsets.UTF_8))
+        val raw = String(cipher.doFinal(encrypted), Charsets.UTF_8)
+        val screen = ScreenPreviewPayloadPolicy.inspectAuthenticated(raw)
+        if (screen == null) {
+            val envelope = PlinkEnvelope.decode(raw)
+            requireRouting(envelope, frame, expectedSourceDeviceId, expectedTargetDeviceId)
+            PayloadPolicy.requireAcceptable(envelope)
+            acceptFreshFrame(frame, replayWindow, now, stateStore)
+            return AuthenticatedFrameResult.Message(envelope)
+        }
+        require(screen.sourceDeviceId == frame.sourceDeviceId && screen.targetDeviceId == frame.targetDeviceId) {
+            "Screen routing mismatch."
+        }
+        if (expectedSourceDeviceId != null) {
+            require(screen.sourceDeviceId == expectedSourceDeviceId) { "Unexpected source device." }
+        }
+        if (expectedTargetDeviceId != null) {
+            require(screen.targetDeviceId == expectedTargetDeviceId) { "Unexpected target device." }
+        }
+        acceptFreshFrame(frame, replayWindow, now, stateStore)
+        val envelope = runCatching {
+            if (wireBytes != null) {
+                require(wireBytes in 1..ScreenPreviewPayloadPolicy.maxScreenWireBytes) {
+                    "Screen wire frame exceeds its limit."
+                }
+            }
+            ScreenPreviewPayloadPolicy.validateRawJSON(raw)
+            PlinkEnvelope.decodeUnchecked(raw).also {
+                require(screen.type != null && it.type == screen.type) { "Ambiguous screen type." }
+                requireRouting(it, frame, expectedSourceDeviceId, expectedTargetDeviceId)
+                PayloadPolicy.requireAcceptable(it)
+            }
+        }.getOrNull()
+        return if (envelope != null) {
+            AuthenticatedFrameResult.Message(envelope)
+        } else {
+            AuthenticatedFrameResult.RejectedScreen(
+                AuthenticatedScreenRejection(
+                    sourceDeviceId = screen.sourceDeviceId,
+                    targetDeviceId = screen.targetDeviceId,
+                    requestId = screen.requestId,
+                    streamId = screen.streamId
+                )
+            )
+        }
+    }
+
+    private fun requireRouting(
+        envelope: PlinkEnvelope,
+        frame: EncryptedPlinkFrame,
+        expectedSourceDeviceId: String?,
+        expectedTargetDeviceId: String?
+    ) {
         require(envelope.sourceDeviceId == frame.sourceDeviceId) { "Source device mismatch." }
         require(envelope.targetDeviceId == frame.targetDeviceId) { "Target device mismatch." }
         if (expectedSourceDeviceId != null) {
@@ -259,12 +344,18 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         if (expectedTargetDeviceId != null) {
             require(envelope.targetDeviceId == expectedTargetDeviceId) { "Unexpected target device." }
         }
-        PayloadPolicy.requireAcceptable(envelope)
+    }
+
+    private fun acceptFreshFrame(
+        frame: EncryptedPlinkFrame,
+        replayWindow: ReplayWindow?,
+        now: Instant,
+        stateStore: FrameStateStore?
+    ) {
         val issuedAt = Instant.parse(frame.issuedAt)
         require(issuedAt >= now.minusSeconds(300) && issuedAt <= now.plusSeconds(300)) { "Stale frame." }
         replayWindow?.accept(frame, now)
         stateStore?.accept(stateScope(frame.sourceDeviceId, frame.targetDeviceId), frame.sequence, frame.nonce)
-        return envelope
     }
 
     private fun aad(frame: EncryptedPlinkFrame): ByteArray = listOf(

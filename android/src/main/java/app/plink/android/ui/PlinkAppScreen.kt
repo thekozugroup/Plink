@@ -84,6 +84,7 @@ import app.plink.android.permissions.PermissionAction
 import app.plink.android.permissions.PermissionOnboardingStep
 import app.plink.android.services.BackgroundConnectionState
 import app.plink.android.services.SessionStatus
+import app.plink.android.screen.ScreenPreviewPhase
 import app.plink.android.ui.theme.PlinkShapeDefaults
 import app.plink.android.ui.theme.plinkTopBarTitleStyle
 
@@ -133,6 +134,11 @@ private fun ConnectionScreen(
     actions: PlinkUiActions,
     contentPadding: PaddingValues
 ) {
+    val hasActiveScreenPreview = when (state.screenPreviewState.phase) {
+        ScreenPreviewPhase.AWAITING_CONSENT, ScreenPreviewPhase.STARTING,
+        ScreenPreviewPhase.CAPTURING, ScreenPreviewPhase.STOPPING -> true
+        else -> false
+    }
     ScreenScaffold("Plink", "Pixel + Mac continuity", contentPadding) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -140,6 +146,13 @@ private fun ConnectionScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (hasActiveScreenPreview) {
+                item(key = "activeScreenPreview") {
+                    Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
+                        ScreenPreviewControls(state.screenPreviewState, actions.onBeginScreenConsent, actions.onStopScreenPreview)
+                    }
+                }
+            }
             item { ConnectionRing(state.sessionStatus) }
             item {
                 Text(
@@ -153,6 +166,13 @@ private fun ConnectionScreen(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.widthIn(max = 420.dp).padding(horizontal = 24.dp)
                 )
+            }
+            if (!hasActiveScreenPreview) {
+                item(key = "idleScreenPreview") {
+                    Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
+                        ScreenPreviewControls(state.screenPreviewState, actions.onBeginScreenConsent, actions.onStopScreenPreview)
+                    }
+                }
             }
             item {
                 Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
@@ -221,7 +241,12 @@ private fun SettingsScreen(
     actions: PlinkUiActions,
     contentPadding: PaddingValues
 ) {
-    ScreenScaffold("Settings", "Continuity controls", contentPadding) { innerPadding ->
+    ScreenScaffold(
+        title = "Settings",
+        subtitle = "Continuity controls",
+        outerPadding = contentPadding,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
+    ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = innerPadding,
@@ -422,6 +447,7 @@ private fun ScreenScaffold(
     title: String,
     subtitle: String,
     outerPadding: PaddingValues,
+    containerColor: Color = MaterialTheme.colorScheme.background,
     content: @Composable (PaddingValues) -> Unit
 ) {
     val titleStyle = plinkTopBarTitleStyle()
@@ -438,7 +464,7 @@ private fun ScreenScaffold(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = containerColor
     ) { inner ->
         Box(
             modifier = Modifier
@@ -495,7 +521,7 @@ private fun FeatureSettingRow(
         onClick = { onChange(!checked) },
         enabled = feature.available,
         shape = PlinkShapeDefaults.groupedItem(index, count),
-        color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+        color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceBright,
         modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp)
     ) {
         Row(

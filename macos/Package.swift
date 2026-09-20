@@ -14,6 +14,7 @@ let package = Package(
         .target(name: "PlinkCore"),
         .executableTarget(name: "PlinkMac", dependencies: ["PlinkCore"]),
         .executableTarget(name: "PlinkMacDebugReceiver", dependencies: ["PlinkCore"]),
-        .testTarget(name: "PlinkCoreTests", dependencies: ["PlinkCore"])
+        .testTarget(name: "PlinkCoreTests", dependencies: ["PlinkCore"]),
+        .testTarget(name: "PlinkMacTests", dependencies: ["PlinkMac", "PlinkCore"])
     ]
 )

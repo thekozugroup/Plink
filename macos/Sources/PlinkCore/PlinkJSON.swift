@@ -1,6 +1,11 @@
 import Foundation
 
 public enum PlinkJSON {
+    public static func isCanonicalTimestamp(_ value: String) -> Bool {
+        guard let date = iso8601Formatter(includeFractionalSeconds: false).date(from: value) else { return false }
+        return iso8601Formatter(includeFractionalSeconds: false).string(from: date) == value
+    }
+
     public static func encoder(sortedKeys: Bool = false) -> JSONEncoder {
         let encoder = JSONEncoder()
         // Base64 chunks can consist mostly of '/'; escaping doubles their wire size.

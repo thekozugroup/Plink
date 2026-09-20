@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
+        <activity
+            android:name=".debug.ScreenPreviewPatternActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
         <receiver
             android:name=".debug.DebugPairingReceiver"
             android:exported="false" />

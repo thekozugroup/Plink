@@ -1,0 +1,37 @@
+{
+  "atUTC": "2026-09-20T08:36:04.201289+00:00",
+  "device": "emulator-5580",
+  "physicalPixelTouched": false,
+  "sourceAndAPKRecord": "screen-final-rerun/manifest.json",
+  "note": "Four Settings screenshots from final canonical installed APK. Earlier connection-light screenshots are exploratory captures from the earlier screen-rerun1 build, excluded from final design evidence. Native Mac UI not captured.",
+  "images": {
+    "settings-dark-1.0.png": "0bab0a88e6085fe64b07ed410df7f001c4e9758e28fb65a6d6103bb205b39104",
+    "settings-light-1.0.png": "f0279dfef266be6acc875a83b71391a4efcf013207758b93a58fe87cf223ed4f",
+    "settings-light-1.5.png": "7cf6787b20175a509d08b6fda6a790f19ad544b57ddb902df1e9f21fb0f104a7",
+    "settings-dark-1.5.png": "52a5b1ad4a500840b62f946f4d9b4321c40c429855a3992242bda47d59333099"
+  },
+  "restoredSettings": {
+    "font_scale": "1.0",
+    "animator_duration_scale": "null",
+    "transition_animation_scale": "1.0",
+    "window_animation_scale": "1.0",
+    "screen_off_timeout": "2147483647",
+    "stay_on_while_plugged_in": "1",
+    "night": "yes"
+  },
+  "allCheckedSettingsRestored": true,
+  "temporaryUIDumpRemoved": true,
+  "limits": [
+    "Unpaired Android UI only",
+    "No TalkBack or physical-device verification",
+    "No exact motion equivalence claim"
+  ],
+  "settingsBeforeFinalCaptures": {
+    "font_scale": "1.0",
+    "night": "yes"
+  },
+  "settingsAfterFinalCaptures": {
+    "font_scale": "1.0",
+    "night": "yes"
+  }
+}

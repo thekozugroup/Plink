@@ -1,0 +1,49 @@
+{
+  "dateUTC": "2026-09-20T08:36:53.921802+00:00",
+  "evidence": [
+    {
+      "kind": "canonical build",
+      "path": "docs/evidence/iteration-4/build-verification.json",
+      "status": "passed148Android158Swift0lintErrors35warnings"
+    },
+    {
+      "kind": "screen synthetic end to end",
+      "path": "docs/evidence/iteration-4/screen-final-rerun/final-result.json",
+      "status": "passed capture normal OS consent, encrypted transport, native Mac decoding, moving pixels and orderly cleanup"
+    },
+    {
+      "kind": "reply synthetic end to end",
+      "path": "docs/evidence/iteration-4/reply-final/host-cleanup.json",
+      "status": "passed actual one-time synthetic RemoteInput and exact text acknowledgment"
+    },
+    {
+      "kind": "Android design",
+      "path": "docs/evidence/iteration-4/ui-capture.json",
+      "status": "four matching finalAPK Settings images, light/dark1.0/1.5; changed settings restored"
+    }
+  ],
+  "findings": [
+    "Early instrumentation startup and malformedJPEG failures corrected and rerun",
+    "Consent operator timeout retained failed; successful matching rerun separately retained"
+  ],
+  "changedFiles": [],
+  "physicalPixelTouched": false,
+  "nativeMacWindowVerified": false,
+  "blockers": [
+    "Mac session locked: native Notification Center/window/VoiceOver/camera permission and preview tests pending",
+    "Real carrier call with bidirectional laptop speech and controlled-recipient delivery need user",
+    "PhysicalPixel and otherAndroid acceptance pending",
+    "Automatic hotspot start restricted for ordinaryAndroid16app; wireless/virtualcamera/remoteinput/signing remain open"
+  ],
+  "cleanup": {
+    "screenHarnessAll7checksPassed": true,
+    "temporaryUIDumpRemoved": true,
+    "macScratchFilesRemoved": 10,
+    "obsoleteJVMTestFixturesRemoved": 164,
+    "twoTestSuitesNowAutoCleanup": true,
+    "activeEmulatorAndReferenceRetainedForOngoingWork": true,
+    "finalCleanupComplete": false
+  },
+  "sourceBinaryManifest": "docs/evidence/iteration-4/verification-manifest.json",
+  "fullProductVerified": false
+}

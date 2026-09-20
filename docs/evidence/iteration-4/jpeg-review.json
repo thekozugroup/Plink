@@ -1,0 +1,55 @@
+{
+  "scope": "Focused read-only JPEG review; no source edits, builds, production test execution, devices, or screen lifecycle review.",
+  "findings": [],
+  "source_checks": [
+    {
+      "file": "android/src/main/java/app/plink/android/protocol/BaselineJpegValidator.kt",
+      "sha256": "8f0710964227548708767eff2e9b3bb2454e5971ad22716807a84b7cd50bd9ed",
+      "checked": "All 237 final lines. Huffman construction, entropy completeness, scan block counts, AC bounds, stuffing, restarts, padding, exact EOI, EXIF bounds, and final DQT parsing/reference checks. No additional concrete entropy divergence found."
+    },
+    {
+      "file": "android/src/main/java/app/plink/android/protocol/ScreenPreviewPayloadPolicy.kt",
+      "sha256": "a4cd52bec0fa0c2cd6e9f27f4ae35e9d122ec97822736df53f140dafde52dd5a",
+      "checked": "Frame admission at 196-212 and scanner invocation at 316-317. Dimension/product and encoded/decoded byte limits precede scanning; canonical Base64 is required."
+    },
+    {
+      "file": "macos/Sources/PlinkCore/BaselineJPEGValidator.swift",
+      "sha256": "8d334e1cf8b6ba4d9c90def67524ff517dce0789b75210fc3dab43844ca9193f",
+      "checked": "All 249 final lines; entropy parity and matching bounded DQT parsing/reference checks."
+    },
+    {
+      "file": "macos/Sources/PlinkCore/ScreenFrameDecoder.swift",
+      "sha256": "c8efa5a3d21418b1645b9ef48aff79614d086084daf671fa71c8ff224459e1e9",
+      "checked": "Native dimension/orientation, image-count, pixel-decode and completeness checks at 50-83."
+    },
+    {
+      "file": "shared/protocol/v1/screen-preview/cases.json",
+      "sha256": "6b6fa52eebec0b14ed58e4538bcc788a6d502674f2d25c25b1701ca801ff119f",
+      "checked": "Baseline marker layout and eight decoder-invalid case categories, including new missing DQT and zero quantization entry cases. Verified exact mutation bytes. Corresponding Android and Swift fixture tests were read, not run."
+    }
+  ],
+  "other_results": [
+    "No concrete JPEG bounds or unbounded CPU/memory bug found. Input is capped at 40960 bytes; entropy progress consumes bits, segment progress consumes bytes, tables/components are bounded, and no pixels are allocated by the Kotlin scanner.",
+    "EXIF primary-IFD offsets remain unsigned Long values until segment-bounded; entry count and reads are bounded. Primary orientation requires SHORT/count 1/value 1 and rejects duplicate primary orientation tags. Thumbnail/GPS offsets are not followed. No concrete out-of-bounds access found.",
+    "No material valid-baseline regression established. This conclusion is source-based, not broad corpus or native decoder verification."
+  ],
+  "limitations": "Parent-reported focused5 success was not independently rerun. Only source inspection, in-memory fixture inspection and an initial narrow Python entropy trace were executed. No builds, native decoder runs, devices, or lifecycle audit. Babysitter run-file creation was omitted to preserve read-only scope; this JSON is the only workspace write by this reviewer.",
+  "result": "No unresolved concrete findings after source review of the parent DQT fix.",
+  "resolved_findings": [
+    {
+      "id": "JPEG-01",
+      "severity": "medium",
+      "priority": "P2",
+      "status": "resolved_by_parent_source_verified",
+      "title": "Missing or malformed quantization tables admitted by the entropy-only validator",
+      "resolution": "Both validators now retain each SOF quantization selector, parse complete 65-byte DQT definitions with IDs 0..3 and nonzero 8-bit entries, and require the referenced table before scanning its component.",
+      "source_locations": [
+        "android/src/main/java/app/plink/android/protocol/BaselineJpegValidator.kt:47,51,100-110,127",
+        "macos/Sources/PlinkCore/BaselineJPEGValidator.swift:68,72-73,135-148,166"
+      ],
+      "verification": "Source tracing confirms all three original mutations now fail: removing bytes [607,745) fails table existence; setting byte 611 to 0xff fails the DQT header check; setting byte 168 to 3 fails table existence. Offsets refer to decoded bytes of the shared baseline jpeg frame. No production validator execution was performed.",
+      "fixtures": "Verified missing quantization tables is exactly the reviewed 708-byte DQT-removal mutation; zero quantization entry differs only at byte 612 (2 becomes 0). Both are included in decoderInvalidCases consumed by existing Android and Swift rejection tests.",
+      "bounds_and_compatibility": "Each DQT iteration checks the remaining 64 entries before reading them and advances by 65 bytes. Empty/truncated definitions and invalid precision/IDs fail. Multiple definitions and table redefinitions remain allowed, including DQT after SOF but before the relevant scan. No additional concrete patch defect found."
+    }
+  ]
+}

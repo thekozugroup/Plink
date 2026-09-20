@@ -18,19 +18,19 @@ The Mac call UI can request answer, decline, hang up, audio-route, and mute acti
 
 Four Pixel synthetic `RemoteInput` checks passed: one-time delivery with reuse rejection, notification-replacement revocation, data-only `RemoteInput` rejection, and authentication-required action rejection. They do not prove that a reply started in macOS Notification Center reaches the original conversation or recipient. See the [development audit](docs/development-audit-2026-09-19.md).
 
-## Requested scope still unimplemented
+## Further integrations
 
-- Instant Hotspot
-- Continuity Camera
-- Screen mirroring
+- Screen preview uses explicit Android 14+ capture consent, encrypted bounded JPEG transport, and a native Mac window. A synthetic emulator-to-Mac stream passes; native window behavior and physical-device acceptance remain pending.
+- Pixel USB webcam preview provides external camera selection, explicit camera permission, and a native Mac preview. Controller regressions pass with a fake camera driver; physical UVC behavior, native rendering, and actual camera release remain pending.
+- Instant Hotspot, wireless Continuity Camera, a virtual webcam for other Mac apps, and remote screen input remain open.
 
 Background connection is an explicit optional Android UI switch. Foreground-service ownership is implemented and requires notification permission plus a paired Mac. Physical restart, process recreation, and Doze acceptance remain pending; Plink does not promise delivery in every background condition or claim full Apple Continuity parity.
 
 ## Evidence
 
-Development evidence includes [checkpoint 3 reply/call corrections and Android design checks](docs/evidence/iteration-3/README.md), the [checkpoint 2 file transfers](docs/evidence/2026-09-20/README.md), and the [earlier native Mac dashboard](docs/evidence/2026-09-19/README.md).
+Development evidence includes [checkpoint 4 screen/webcam development and final capture checks](docs/evidence/iteration-4/README.md), [checkpoint 3 reply/call corrections and Android design checks](docs/evidence/iteration-3/README.md), the [checkpoint 2 file transfers](docs/evidence/2026-09-20/README.md), and the [earlier native Mac dashboard](docs/evidence/2026-09-19/README.md).
 
-Checkpoint 3 passes 132 Android tests and 114 Swift tests (54 XCTest and 60 Swift Testing), with 0 Android lint errors and 32 warnings. The encrypted reply harness exercises actual synthetic RemoteInput delivery, exact Unicode/whitespace preservation and final-dispatch revocation. Checkpoint 2 separately verified ten encrypted file transfers across both directions and five size boundaries. Native notification interaction, physical-device behavior, and full hardware/accessibility acceptance remain open. See the [feature inventory](docs/feature-parity.md) and [manual acceptance plan](docs/manual-test-plan.md).
+Checkpoint 4 passes 148 Android tests and 158 Swift tests (54 XCTest and 104 Swift Testing), with 0 Android lint errors and 35 warnings. A consented emulator screen stream produces six distinct test frames through the encrypted transport and Mac decoder; projection and owned test state cleanup pass. The encrypted reply harness exercises actual synthetic RemoteInput delivery, exact Unicode/whitespace preservation and final-dispatch revocation. Checkpoint 2 separately verified ten encrypted file transfers across both directions and five size boundaries. Native notification interaction, physical-device behavior, and full hardware/accessibility acceptance remain open. See the [feature inventory](docs/feature-parity.md) and [manual acceptance plan](docs/manual-test-plan.md).
 
 ## Build and test
 

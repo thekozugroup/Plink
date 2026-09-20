@@ -1,0 +1,15 @@
+{
+  "originalAcceptanceFrozen": true,
+  "temporaryFilesRemaining": true,
+  "removedMacScratchReport": ".a5c/artifacts/cleanup-actions-4.json",
+  "removedJVMFixturesReport": ".a5c/artifacts/cleanup-jvm-actions-4.json",
+  "retainedForOngoingWork": [
+    "task-owned emulator5580 AVD",
+    "Tomato pinned source/referenceAPK",
+    "unconfirmed dependency inspection copies"
+  ],
+  "physicalPixelTouchedThisIteration": false,
+  "emulatorUICaptureTemporaryFileRemoved": true,
+  "harnessCleanup": "screen-final-rerun/final-result.json",
+  "note": "Final project cleanup remains open while next development iteration uses the emulator. Durable source and evidence are intended artifacts."
+}
