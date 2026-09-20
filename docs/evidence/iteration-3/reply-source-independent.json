@@ -1,0 +1,538 @@
+{
+  "schemaVersion": 1,
+  "lane": "L1",
+  "status": "bounded_fix_recheck_complete_no_residual_P1_P2_in_reviewed_fixes",
+  "reviewedAt": "2026-09-20T05:42:04.721211+00:00",
+  "existingBabysitterRun": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+  "baseCheckpoint": "c270fb9",
+  "verified": false,
+  "scope": "Frozen production changes, Mac unit sources, Kotlin reply unit delta, then explicitly released parent instrumentation. No source edits, builds, tests or device actions. Parent owns runtime validation.",
+  "reviewedFiles": [
+    {
+      "path": "macos/Sources/PlinkCore/ReplyRouter.swift",
+      "sha256": "1c7ad2a6b1864e9902cba1f855de1d7f26756b4bc9bf833b123f8354917ada4f"
+    },
+    {
+      "path": "macos/Sources/PlinkCore/MacNotificationBookkeeping.swift",
+      "sha256": "2c65321565ef34d80be5dc646edd9d406b94fe0078683b87fa7e4863c63ac312"
+    },
+    {
+      "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+      "sha256": "43ea1f869d5da3f46c01a98fa403ddf912e019c7b2b452bc08eacdb9c6476f0b"
+    },
+    {
+      "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+      "sha256": "ca55b89459dc3e9be4f04bf92badcbacd05671c26dd17acc88ba4fb3b94d45bb"
+    },
+    {
+      "path": "macos/Tests/PlinkCoreTests/ReplyRouterTests.swift",
+      "sha256": "2f43a8efd7f0c30b5e66d746b4e03e1ca30dca65b83970bb234124a71b70bec3"
+    },
+    {
+      "path": "macos/Tests/PlinkCoreTests/MacNotificationBookkeepingTests.swift",
+      "sha256": "618f4753efb2c8894a79a226f54ab5160b2abffb8230e125263f34a88351f2ab"
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/notifications/ReplyRoute.kt",
+      "sha256": "e5d6b300f6581f826a4ad5c77556324a60a0c37213f89201e7fd6ba00478d989"
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/notifications/RemoteInputReplyExecutor.kt",
+      "sha256": "9c62ad07cbee31324d6764d42e7fc05c22d44447eb9d6e47cd4f8dce33e5d309"
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt",
+      "sha256": "db6c6ed7a2acb3897bf8810b9fd54e25742da42b432cba37e6611d091c9a4b28"
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+      "sha256": "7d2fa4b89441f39e126481028b7319f71ddb9dd2d654c9049a95fb01b73817b4"
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/services/InboundCommandHandler.kt",
+      "sha256": "16b9fd174577a3694414e9814809467b35a26c61cc14b030614657ad8f7a1d3a"
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/permissions/AndroidPermissionReader.kt",
+      "sha256": "0f21943a1985217245db1cdb3df776735eaaef4af131ac7a8a37f8a8307eb310"
+    },
+    {
+      "path": "android/src/test/java/app/plink/android/notifications/ReplyRouteTest.kt",
+      "sha256": "6096b87406b9b565496d29db26818b58e210bb13210ad2dcffd1a9fb2dd33955"
+    },
+    {
+      "path": "android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt",
+      "sha256": "92b70a33161b03d832131bc9709cda6b2bfb1d29425eb6dc4c5c67f83d69175a"
+    }
+  ],
+  "findings": [
+    {
+      "id": "I3-L1-01",
+      "priority": "P2",
+      "title": "Message-only cleanup also removed startup and shutdown cleanup of stale native controls",
+      "status": "source_fix_verified_runtime_validation_pending",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "line": 51
+        },
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "line": 149
+        },
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 94
+        }
+      ],
+      "exactScenario": [
+        "Deliver an actionable message or HFP notification; force-quit/crash and relaunch. A new bridge has empty message bookkeeping, so message-only clearContexts cannot identify old OS notifications.",
+        "Parent restored configure-only removeAllDeliveredNotifications/removeAllPendingNotificationRequests at NotificationBridge.swift:35-36; this addresses the restart mechanism.",
+        "For orderly Quit with a displayed HFP notification, applicationWillTerminate calls calling.shutdown, which clears onCallChanged, followed by message-only clearContexts. The tracked call notification is not removed until a future launch."
+      ],
+      "expected": "Use startup cleanup and explicit call teardown cleanup while keeping routine message expiry/eviction scoped to message IDs.",
+      "evidenceKind": "static_call_path",
+      "runtimeReproduced": false,
+      "nativeControlDisappearanceProof": "pending",
+      "reportedToParent": true,
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+        "locations": [
+          {
+            "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+            "line": 35
+          },
+          {
+            "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+            "line": 55
+          },
+          {
+            "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+            "line": 150
+          }
+        ],
+        "assessment": "Startup removes prior-process delivered and pending notifications. The new shutdown method clears message entries and explicitly removes tracked HFP and mirrored IDs, resets call state, and is called from applicationWillTerminate after calling.shutdown. Ordinary message expiry/eviction stays scoped to message IDs. Both reported source paths are addressed.",
+        "nativeControlDisappearanceProof": "pending"
+      }
+    },
+    {
+      "id": "I3-L1-02",
+      "priority": "P2",
+      "title": "Mac validation accepts Unicode text exceeding the existing Android limit before consuming context",
+      "status": "source_fix_and_parent_unit_regression_verified_native_integration_pending",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkCore/ReplyRouter.swift",
+          "line": 99
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "line": 136
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/security/SecureEnvelope.kt",
+          "line": 139
+        }
+      ],
+      "exactScenario": [
+        "Submit a reply containing 2,001 U+1F600 characters through a live Mac notification.",
+        "Swift String.count is 2,001, so validateReplyText and existing Mac payload policy accept. NotificationBridge consumes the one-time context and removes its notification.",
+        "Android String.length is 4,002 UTF-16 units and its unchanged 4,000-unit payload limit rejects the envelope before dispatch."
+      ],
+      "expected": "Reject locally using the receiver-compatible bound before context consumption; preserve the original text and test 2,000/2,001 emoji plus combining text.",
+      "evidenceKind": "static_cross_runtime_length_semantics",
+      "runtimeReproduced": false,
+      "reportedToParent": true,
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+        "locations": [
+          {
+            "path": "macos/Sources/PlinkCore/ReplyRouter.swift",
+            "line": 99
+          },
+          {
+            "path": "macos/Sources/PlinkCore/SecureEnvelope.swift",
+            "line": 142
+          },
+          {
+            "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+            "line": 142
+          }
+        ],
+        "assessment": "Reply preflight and generic payload string limits use utf16.count, matching Android String.length. The 2,001-emoji case now rejects before messages.takeReply at line 144. Neither validation path changes the original text.",
+        "unicodeTests": "Completed source reviewed at ReplyRouterTests.swift:85-114; both cases pass in parent rerun-3 log:489. Native interaction/integration remains separate."
+      }
+    }
+  ],
+  "caseAssessment": [
+    {
+      "case": "I3-R01",
+      "status": "final_authority_source_mechanism_present_platform_execution_pending",
+      "evidence": [
+        "RemoteInputReplyExecutor.kt:136-164 holds ReplyDispatchLock across validation, final authority, one-time consumption, RemoteInput construction and PendingIntent.send.",
+        "PlinkSessionController.kt:263-284 rechecks listener/session epoch, live OS access, Messages, READY, captured receiver generation, current controller generation and active/route peer identities; dispatch uses Dispatchers.Main.immediate.",
+        "AndroidPermissionReader.kt:37-43 reuses the existing setting reader, parses ComponentName and fails closed."
+      ]
+    },
+    {
+      "case": "I3-R02",
+      "status": "single_current_listener_epoch_revocation_source_present_service_lifecycle_boundary_unverified",
+      "evidence": [
+        "Listener connect/disconnect/destroy and session changes clear both registries under the same lock. Reconnect increments epoch rather than restoring old tokens.",
+        "No suspension occurs between final check and PendingIntent.send. A side effect already invoked is not rolled back."
+      ],
+      "boundary": "SharedReplyDispatchAuthority contains a global epoch, not a listener-instance owner. Actual stale old service-instance callbacks after replacement are not exercised by the new tests. No supported Android ordering that makes this an actual defect was established in this bounded review; do not claim instance-lifecycle proof."
+    },
+    {
+      "case": "I3-R03",
+      "status": "identity_and_one_use_source_mechanism_present_runtime_pending",
+      "evidence": [
+        "Validator compares token route peer, source envelope, package, key and declared conversation before consumption.",
+        "Executor consumes both route and action before PendingIntent.send; failed send does not restore either. Handler returns Error rather than executed Ack on exception.",
+        "InboundCommandHandler sends the outcome once outside the execution catch; failed outcome transport does not re-execute the PendingIntent."
+      ]
+    },
+    {
+      "case": "I3-R04",
+      "status": "exact_text_UTF16_source_and_parent_unit_evidence_present_native_integration_pending",
+      "evidence": [
+        "Swift/Kotlin payload and RemoteInput bundle use original text; whitespace checks no longer mutate it.",
+        "Swift tests compare UTF-8 arrays, including a JSON encode/decode roundtrip, rather than only canonical-equivalence String equality.",
+        "Blank and UTF-16 length checks now run before Mac context consumption; the reported Unicode length mismatch is source-fixed. Completed Unicode boundary cases passed in the parent rerun-3 log; native entry and cross-runtime integration remain pending."
+      ]
+    },
+    {
+      "case": "I3-R05",
+      "status": "capacity_expiry_message_only_mechanism_present_native_retention_pending",
+      "evidence": [
+        "MacNotificationBookkeeping.swift:36-60 expires/replaces/evicts concrete message IDs and caps live entries at 128.",
+        "NotificationBridge stores messageReceived entries only; removeMessages removes explicit IDs without clearing HFP call context.",
+        "Expiry uses <= boundary; reply/dismissal/failure remove both indexed entries through removeEntry."
+      ],
+      "testLimit": "The unit call sentinel is not inserted into a real bridge/notification center. Static production wiring supports isolation; helper assertions alone do not prove native HFP retention."
+    },
+    {
+      "case": "I3-R06",
+      "status": "distinct_request_identity_cleanup_present_runtime_pending",
+      "evidence": [
+        "Bookkeeping keys include peer and notification key. removeEntry only drops a key index still pointing to the same request ID.",
+        "Submission-failure and dismissal callbacks remove the captured request ID; a delayed A1 callback cannot delete distinct A2 or peer B under the same key."
+      ],
+      "testLimit": "Tests cover helper removal ordering; native asynchronous delivery/removal and native control disappearance remain pending."
+    }
+  ],
+  "instrumentationAssessment": {
+    "sourcePresent": true,
+    "reviewerExecuted": false,
+    "path": "android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt",
+    "lines": [
+      182,
+      248,
+      337
+    ],
+    "coverage": [
+      "Eight ordered preflight/revocation scenarios produce two Error outcomes and zero synthetic receiver sends.",
+      "Reconnect makes a fresh token; consumed/revoked token retries fail.",
+      "Canceled PendingIntent does not produce executed Ack; failed outcome transport does not retry action.",
+      "Shared encrypted fixture compares exact UTF-8 bytes."
+    ],
+    "limits": [
+      "OS access, feature and peer flags are injected; tests do not call the complete production PlinkSessionController authorization closure. Production closure was separately statically traced.",
+      "Disconnect/destroy/queued variants manipulate shared authority and registries, not actual NotificationListenerService binding/instance callbacks.",
+      "This is source presence and intended assertions, not a passing test result or native user success."
+    ]
+  },
+  "parentCompileCorrection": {
+    "sourceMechanism": "Use existing AndroidPermissionReader.isNotificationListenerEnabled instead of unavailable Settings.Secure.ENABLED_NOTIFICATION_LISTENERS symbol.",
+    "status": "refreshed_and_sound_at_source_level",
+    "canonicalCompilation": "parent_running_not_claimed_passed"
+  },
+  "acceptance": {
+    "originalMatrixUnchanged": true,
+    "originalMetricsUnchanged": true,
+    "newAcceptanceCredit": false,
+    "nativeNotificationCenterInputAndRecipientDelivery": "unverified",
+    "physicalLifecycle": "unverified"
+  },
+  "changedFiles": [
+    ".a5c/artifacts/iteration3-L1-independent-review.json"
+  ],
+  "updatedAt": "2026-09-20T05:56:53.212989+00:00",
+  "openSourceFindingCount": 0,
+  "remediationReview": {
+    "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+    "scope": "Only the requested Unicode length and startup/orderly-Quit cleanup fixes and their direct call sites. No broad rereview.",
+    "reviewedFiles": [
+      {
+        "path": "macos/Sources/PlinkCore/ReplyRouter.swift",
+        "sha256": "d2793138fd3da24a08cfeaa7978e352fdad22e79102bcc6084cd764bf6f3572a"
+      },
+      {
+        "path": "macos/Sources/PlinkCore/SecureEnvelope.swift",
+        "sha256": "ca809a003ade187e5bffb898a05770d42fc163db6fe529e528bb24f97303acba"
+      },
+      {
+        "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+        "sha256": "352ecd9ebcaa8a5ce57929b617a31aaa4a017ec1a351824d657068215324e0c8"
+      },
+      {
+        "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+        "sha256": "9cbffc69364de1a1bfdf527eb5020ac828be39868003eff8d2e8070efff30060"
+      }
+    ],
+    "sourceStableDuringRecheck": true,
+    "residualP1P2": [],
+    "buildsRun": false,
+    "testsRun": false,
+    "devicesUsed": false,
+    "limits": [
+      "Completed Unicode tests were subsequently reviewed and their parent-run pass is recorded in unicodeBoundaryRegressionReview.",
+      "Native Notification Center disappearance and real user interaction remain pending.",
+      "Earlier listener-instance/platform lifecycle limits remain; the bounded test review does not recertify them."
+    ],
+    "originalMatrixAndMetricsUnchanged": true
+  },
+  "unicodeBoundaryRegressionReview": {
+    "status": "source_review_complete_parent_test_pass_observed",
+    "path": "macos/Tests/PlinkCoreTests/ReplyRouterTests.swift",
+    "sha256": "dd8ead714951bde36d0b8bc84ecd2565efe7c4aff3db37f6cd952ac1c76783a5",
+    "lines": [
+      85,
+      114
+    ],
+    "findings": [],
+    "observations": [
+      "Parameterized cases use U+1F600 and decomposed e plus U+0301, each two UTF-16 units per repetition.",
+      "2,000 repetitions explicitly assert 4,000 UTF-16 units, pass actual ReplyRouter.makeReplyEnvelope and PayloadPolicy.validate, and preserve UTF-8 bytes.",
+      "2,001 repetitions reject with the specific preflight error; bypassing preflight by editing envelope payload independently rejects in the generic payload policy. These fixtures remain well below the 64 KiB envelope limit.",
+      "The invalid-input path validates before takeReply and then proves the context remains available. The corresponding real NotificationBridge ordering was already traced at lines 142-144."
+    ],
+    "testLimit": "Retained-context test uses the production validator and bookkeeping with the same ordering; it does not instantiate or interact with native Notification Center.",
+    "runtimeEvidence": {
+      "path": ".a5c/artifacts/verification-3-rerun-3.log",
+      "sha256": "08e3f4e50c209dd447c16ba8435136a930832503b72275f0a37fd6504803ac1b",
+      "lines": [
+        431,
+        452,
+        453,
+        489
+      ],
+      "result": "Both parameterized cases passed in the parent run."
+    }
+  },
+  "parentCanonicalGateEvidence": {
+    "reviewedAt": "2026-09-20T05:49:33.308265+00:00",
+    "gateLog": {
+      "path": ".a5c/artifacts/verification-3-rerun-3.log",
+      "sha256": "08e3f4e50c209dd447c16ba8435136a930832503b72275f0a37fd6504803ac1b",
+      "startUTC": "2026-09-20T05:45:30Z",
+      "exitCodeReportedByParent": 0,
+      "observed": [
+        "line 233: BUILD SUCCESSFUL in 29s",
+        "lines 377-379: 54 XCTest tests with 0 failures",
+        "line 489: replyLengthMatchesAndroidUTF16Units with 2 cases passed",
+        "line 514: Swift Testing run with 60 tests passed"
+      ]
+    },
+    "androidUnitReports": {
+      "directory": "android/build/test-results/testDebugUnitTest",
+      "observedCounts": {
+        "suites": 30,
+        "tests": 132,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "snapshotFiles": [
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.continuity.ContinuityContractTest.xml",
+          "sha256": "ec33e9037b3fcb99fba01ba5c5a4fa08dbe2ad6f08a1c9b03039d6fe6f6bf0a0"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.continuity.ContinuityEnvelopeFactoryTest.xml",
+          "sha256": "d413c6f0a691d862611798cb605524367f41a6cd0727dc1bb758014442aab0bc"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.continuity.FileTransferCoordinatorTest.xml",
+          "sha256": "678afee47159cddc48331fe40beeb2c069e391803c76a2d421a05134c5b88add"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.features.FeaturePolicyTest.xml",
+          "sha256": "2ac937351153d6c9b912537861ffcf63ddc6bd4c0844fe52fe8581059fafea87"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.notifications.ReplyRouteRegistryTest.xml",
+          "sha256": "91b963070009200f24416193514ed39c88d94c142f0fe126bc7da55802dbc492"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.notifications.ReplyRouteTest.xml",
+          "sha256": "e463070214889f8feb7e552470e63b7d8148cf4b5b6e57cee11343f205d924ae"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.EmojiPairingTest.xml",
+          "sha256": "1bb5cacc0c7fda47c73d68bb37cb5a5adace091516e075856b49bcb438cbf274"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.NearbyPairingOfferParserTest.xml",
+          "sha256": "0eaebede09830229c090379bf8f8c425b6a7f890d9d98802bfba953afbac2fa4"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingConsentGateTest.xml",
+          "sha256": "3bb69345196a1e942f739160341d89297f6599e5848ec383b8227e65157f91c1"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingConsentTest.xml",
+          "sha256": "c58a482cad9d9e842c562c2d88b275d5198b01d0127941729d11bae2c171c509"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingCoordinatorTest.xml",
+          "sha256": "f21b49b555f6877179fc17ada4ee91e5d2a013e3a140336847af16ad37de51d9"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingMigrationTest.xml",
+          "sha256": "a2bcff766d57990408bc4aa2693c1077a220d505344196fd29596743890b3fa9"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingSecurityTest.xml",
+          "sha256": "28938bcef3f6354e1025e442ba124cf75cbf7701f720615983dc26fd57690e52"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.pairing.PairingStateMachineTest.xml",
+          "sha256": "4df299a56ae7cfb3c6fc9b98d65efc29969c07be1992844187b6c6aa1d366e37"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.permissions.PermissionModelTest.xml",
+          "sha256": "25ad25d5deb9915033cbff2b4ac52fef12c83cbc238c6c09e29399971e503036"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.protocol.FileTransferPayloadPolicyTest.xml",
+          "sha256": "dfe793f5483646e6e2fa9356c38c09ea759ef6165f24c0e70ab95faae6d5c798"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.protocol.PlinkMessageTest.xml",
+          "sha256": "1dae0d111e17b47a7980e0f95ff1fac65c6f8111975b734988403fdc3edc8460"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.security.DurableFrameStateTest.xml",
+          "sha256": "599dc76c9414aaa652752459904d820401c273917d3232a0983236e1ba7d79ac"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.security.SecureEnvelopeTest.xml",
+          "sha256": "33afe547bb94507f700576b5a5424cc3ad4f33b183bfb57686bcb7b266437189"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.BackgroundConnectionPolicyTest.xml",
+          "sha256": "cae372251556e4386c599310dcf8c5b904a64d2032935a3c1a8dac93e8e2b515"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.DurableEventOutboxTest.xml",
+          "sha256": "a1741cf2585f25006a013f6e308636e05794b76b52927873ce63fdd3f1c42910"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.HandoffDiagnosticsTest.xml",
+          "sha256": "09f46e037a55d70c30471126e4c7743213ac70019b3207318ad90cf7467883ab"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.InboundCommandHandlerTest.xml",
+          "sha256": "f40a2ef276d14fc5c4396f81786e5450a1ceea864f1d94b10e492021832793b9"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.PlinkEventForwarderTest.xml",
+          "sha256": "8d5846e714f4067af30cc8208b8eabea0c20a07ec2ac7ad7e97e4e1971747702"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.SerializedOutboundQueueTest.xml",
+          "sha256": "38dabd8795b38b06719b68eb5d17ab302a9cb9b4e6845e21e0a1e8f65023c960"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.services.SharedSessionStateTest.xml",
+          "sha256": "773edaf5df0f450abfa9dc0976e39c8f47b6d8ae61735eee1e3ff30646aee82a"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.storage.PairingSecretStoreTest.xml",
+          "sha256": "1a1802f87ed85c461f2e054670c1d8ba177233bbb8bd9e3fed7e59b14d479c8f"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.transport.InMemoryPlinkTransportTest.xml",
+          "sha256": "743386c0ef66e9e966ff93a7d673a43673d76a920b2d524510e0d116d7096e48"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.transport.LengthPrefixedFrameCodecTest.xml",
+          "sha256": "0530a6c6ab2053c7028382619fc12f2627148cb1237fd6650aadd04170f945f6"
+        },
+        {
+          "path": "android/build/test-results/testDebugUnitTest/TEST-app.plink.android.transport.SocketSecurityTest.xml",
+          "sha256": "d548fcab5818a181ec7a4b179f27fb422b050f685036f0efa957e478621a1178"
+        }
+      ],
+      "qualification": "These are current XML files observed after rerun 3; hashes preserve this snapshot. Do not reuse them as historical evidence after a later run overwrites them."
+    },
+    "lint": {
+      "path": "android/build/reports/lint-results-debug.xml",
+      "sha256": "ffa9319506c7a4763af9a11a6d83ebdfd9d8829240b214bfa6523c1c5f8dbed0",
+      "errors": 0,
+      "warnings": 32
+    },
+    "reviewerRanBuildOrTests": false,
+    "sourceBindingLimit": "Previously reviewed L1/L2 remediation source hashes still match. This records parent-run log/report results and current reviewed test source; a final manifest must separately bind the emulator-installed APK, test APK, Mac receiver and captures. No runtime binary/source binding is invented."
+  },
+  "runtimeEvidenceReviewPlan": {
+    "status": "ready_for_parent_emulator_roundtrip_and_UI_evidence",
+    "trigger": "Parent explicitly supplies completed evidence and final binary/manifest identities. No autonomous device or build action is planned.",
+    "boundedChecks": [
+      "Verify final manifest source/binary hashes and installed application/test APK identities; keep each log/capture tied to its actual build.",
+      "Inspect synthetic reply results for real PendingIntent dispatch count, revocation/error outcomes, one-use behavior and exact UTF-8 fixture including whitespace, decomposed acute and ZWJ emoji. Distinguish injected OS-access flags from actual permission/service lifecycle proof.",
+      "If parent supplies keyless raw captures, inspect only synthetic test frames and approved plaintext markers, counts, hashes and encrypted-envelope metadata; do not seek keys or inspect private user data.",
+      "Inspect matching-build UI captures for full Scan/Stop labels at 1.0x/1.5x, header/title fit, accessible controls and documented Tomato reference provenance. Motion claims require recordings and measured comparison, not still images.",
+      "Keep native Mac Notification Center control disappearance, real-recipient replies, physical lifecycle, carrier calls and two-way laptop audio open unless their specific original evidence is supplied."
+    ],
+    "originalMatrixAndMetricsUnchanged": true,
+    "fullProductVerified": false
+  },
+  "finalGateFollowup": {
+    "reviewedAt": "2026-09-20T05:56:53.212989+00:00",
+    "logPath": ".a5c/artifacts/verification-3-final.log",
+    "logSha256": "0c24c09eee3b18fbfc0c115d8df4f15367631c50149e8c27ac9b0274dfe93771",
+    "parentReportedExitCode": 0,
+    "observedLogResults": {
+      "gradleSuccessLine": 233,
+      "xCTest54ZeroFailureLine": 368,
+      "swiftTesting60PassLine": 505,
+      "unicodeBoundaryPassLine": 489,
+      "continuationPassLine": 271,
+      "reconnectPassLine": 279
+    },
+    "manifestPath": "docs/evidence/iteration-3/verification-manifest.json",
+    "manifestSha256": "861db12dce3c4f9d0e073f3fd836c6098a462e3466c7d860b210905f2892055e",
+    "sourceFilesMatching": 165,
+    "binariesMatching": 6,
+    "missing": 0,
+    "mismatched": 0,
+    "gateCounts": {
+      "exitCode": 0,
+      "androidTests": 132,
+      "swiftXCTest": 54,
+      "swiftTesting": 60,
+      "lintErrors": 0,
+      "lintWarnings": 32
+    },
+    "binarySha256": {
+      "android/build/outputs/apk/debug/android-debug.apk": "133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82",
+      "android/build/outputs/apk/release/android-release-unsigned.apk": "405adb28311184f7e5f156a7010b1c6fcb86539a82c7d6783ef078049f306a9f",
+      "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk": "793243e28fe05d2af78c04e75712433003470a628250f6f46844db733b3a27e6",
+      "macos/.build/debug/PlinkMacDebugReceiver": "0af575e9be9dc3b2dd351cf8c9e9e3585eea10184364e632eaa6e7b117b555ef",
+      "build/PlinkMac.app/Contents/MacOS/PlinkMac": "daf972dc8b3f830adfba47c7c72ca5e78360012bf3c1efb4f7da684278b0ce0b",
+      "build/PlinkMac.app.zip": "7f35d12fc97451e093b1ae06327477887ce879090601c8ae554f3426e313f036"
+    },
+    "installedApkSha256": null,
+    "reviewerRanBuild": false,
+    "finalWireRerun": "Parent plans a new run after UI release; no new roundtrip result has been reviewed yet."
+  },
+  "replyErrorCopyReview": {
+    "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+    "sha256": "4751c545926c7e1d19ddb2413fe8d5f033929ec54a83ed69b4495b669892164f",
+    "line": 111,
+    "assessment": "The error now says empty or too long without presenting a 4,000 user-perceived-character promise. This is consistent with UTF-16 validation.",
+    "findings": []
+  }
+}

@@ -19,7 +19,9 @@ package app.plink.android.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -28,8 +30,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.motionScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,12 +46,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.plink.android.services.SessionStatus
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ConnectionRing(status: SessionStatus, modifier: Modifier = Modifier) {
     val ready = status == SessionStatus.READY
+    val motionScheme = MaterialTheme.motionScheme
     val progress by animateFloatAsState(
         targetValue = if (ready) 1f else 0.08f,
-        animationSpec = spring(),
+        animationSpec = motionScheme.defaultSpatialSpec(),
         label = "connection ring"
     )
     val primary = MaterialTheme.colorScheme.primary
@@ -74,7 +80,14 @@ fun ConnectionRing(status: SessionStatus, modifier: Modifier = Modifier) {
             strokeWidth = 16.dp,
             gapSize = 8.dp
         )
-        AnimatedContent(targetState = status, label = "connection status") { currentStatus ->
+        AnimatedContent(
+            targetState = status,
+            transitionSpec = {
+                fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                    fadeOut(motionScheme.defaultEffectsSpec())
+            },
+            label = "connection status"
+        ) { currentStatus ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
                     Icons.Rounded.Devices,

@@ -20,11 +20,13 @@ package app.plink.android.ui.theme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.unit.sp
 import app.plink.android.R
 
 private val BaseTypography = Typography()
@@ -45,26 +47,16 @@ fun plinkTypography(): Typography {
             FontVariation.Setting("ROND", 100f)
         )
     )
-    val titleFont = Font(
-        R.font.google_sans_flex,
-        FontWeight.Bold,
-        variationSettings = FontVariation.Settings(
-            FontVariation.weight(800),
-            FontVariation.width(112.5f),
-            FontVariation.Setting("ROND", 35f)
-        )
-    )
     val regular = remember(regularFont) { FontFamily(regularFont) }
     val rounded = remember(roundedFont) { FontFamily(roundedFont) }
-    val title = remember(titleFont) { FontFamily(titleFont) }
 
-    return remember(regular, rounded, title) {
+    return remember(regular, rounded) {
         Typography(
             displayLarge = BaseTypography.displayLarge.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
             displayMedium = BaseTypography.displayMedium.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
             displaySmall = BaseTypography.displaySmall.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
-            headlineLarge = BaseTypography.headlineLarge.copy(fontFamily = title, fontFeatureSettings = "ss02, dlig"),
-            headlineMedium = BaseTypography.headlineMedium.copy(fontFamily = title, fontFeatureSettings = "ss02, dlig"),
+            headlineLarge = BaseTypography.headlineLarge.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
+            headlineMedium = BaseTypography.headlineMedium.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
             headlineSmall = BaseTypography.headlineSmall.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
             titleLarge = BaseTypography.titleLarge.copy(fontFamily = regular, fontFeatureSettings = "ss02, dlig"),
             titleMedium = BaseTypography.titleMedium.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
@@ -75,6 +67,29 @@ fun plinkTypography(): Typography {
             labelLarge = BaseTypography.labelLarge.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
             labelMedium = BaseTypography.labelMedium.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig"),
             labelSmall = BaseTypography.labelSmall.copy(fontFamily = rounded, fontFeatureSettings = "ss02, dlig")
+        )
+    }
+}
+
+@OptIn(ExperimentalTextApi::class)
+@Composable
+fun plinkTopBarTitleStyle(): TextStyle {
+    val topBarTitleFont = Font(
+        R.font.google_sans_flex,
+        FontWeight.Black,
+        variationSettings = FontVariation.Settings(
+            FontVariation.weight(900),
+            FontVariation.width(112.5f),
+            FontVariation.Setting("ROND", 35f)
+        )
+    )
+    val topBarTitle = remember(topBarTitleFont) { FontFamily(topBarTitleFont) }
+
+    return remember(topBarTitle) {
+        TextStyle(
+            fontFamily = topBarTitle,
+            fontSize = 32.sp,
+            lineHeight = 32.sp
         )
     }
 }

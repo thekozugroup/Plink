@@ -18,27 +18,42 @@ final class BluetoothCallController: ObservableObject {
     var onCallChanged: ((MacCallSession) -> Void)?
     private let worker = HFPWorker()
     private var gate = MacBluetoothOperationGate()
-    private var operation: UUID? { gate.current }
+    private var operation: MacBluetoothOperationGate.Operation? { gate.current }
     private var generation = UUID()
     private var deadline: Task<Void, Never>?
 
     init() {
-        worker.onEvent = { [weak self] generation, snapshot, message, completed in
+        worker.onEvent = { [weak self] generation, snapshot, message, completion, endedContext, phoneDisconnected in
             Task { @MainActor in
                 guard let self, generation == self.generation, !self.blocked else { return }
+                var snapshot = snapshot
+                if self.gate.requiresReconnect { snapshot.markUnconfirmed(context: snapshot.context) }
                 self.call = snapshot
                 self.status = message
-                if completed { self.finish() }
+                if let completion {
+                    if completion.action != nil && (endedContext != nil || phoneDisconnected) {
+                        self.cancelCall(completion)
+                    } else {
+                        self.finish(completion)
+                    }
+                } else if let current = self.gate.current,
+                          current.generation == generation,
+                          current.action != nil,
+                          phoneDisconnected || current.context == endedContext {
+                    self.cancelCall(current)
+                }
                 self.onCallChanged?(snapshot)
             }
+        }
+        worker.onReturned = { [weak self] operation in
+            Task { @MainActor in self?.invocationReturned(operation) }
         }
     }
 
     func discover() {
         guard !busy && !blocked, call.phoneID == nil else { status = "Disconnect calling before scanning again."; return }
-        guard start("Reading paired Bluetooth phones…") else { return }
-        let operation = operation
-        worker.submit { [weak self] worker in
+        guard let operation = start("Reading paired Bluetooth phones…") else { return }
+        guard worker.submit(operation: operation, { [weak self] worker in
             let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] ?? []
             let phones = devices.compactMap { device -> BluetoothPhone? in
                 guard device.isPaired(), device.isHandsFreeAudioGateway,
@@ -49,24 +64,25 @@ final class BluetoothCallController: ObservableObject {
                 guard let self, self.operation == operation, !self.blocked else { return }
                 self.phones = phones
                 self.status = phones.isEmpty ? "No paired HFP phone found. Pair your Pixel in Bluetooth settings, then retry." : "Select the intended phone, then connect."
-                self.finish()
+                self.finish(operation)
             }
-        }
+        }) else { cancelStart(operation); return }
     }
 
     func connect(_ phoneID: String) {
         guard phones.contains(where: { $0.id == phoneID }), !busy && !blocked,
               call.context == nil else { return }
-        guard start("Connecting to the selected phone…") else { return }
-        generation = UUID()
-        let generation = generation
-        worker.submit { $0.connect(phoneID: phoneID, generation: generation) }
+        let generation = UUID()
+        guard let operation = start("Connecting to the selected phone…", generation: generation) else { return }
+        gate.reconnecting()
+        self.generation = generation
+        guard worker.submit(operation: operation, { $0.connect(phoneID: phoneID, generation: generation, operation: operation) }) else { cancelStart(operation); return }
     }
 
     func disconnect() {
         guard call.phoneID != nil, !busy && !blocked else { return }
-        guard start("Disconnecting Bluetooth calling…") else { return }
-        worker.submit { $0.disconnect() }
+        guard let operation = start("Disconnecting Bluetooth calling…") else { return }
+        guard worker.submit(operation: operation, { $0.disconnect() }) else { cancelStart(operation); return }
     }
 
     func shutdown() {
@@ -80,53 +96,103 @@ final class BluetoothCallController: ObservableObject {
     }
 
     func perform(_ action: MacCallAction, context: MacCallContext) {
+        guard !gate.requiresReconnect else {
+            status = "Disconnect and reconnect Bluetooth calling before retrying."
+            return
+        }
         guard !busy && !blocked, call.permits(action, context: context) else {
             status = "That call action is no longer available."
             return
         }
-        guard start("Requesting \(action.rawValue)…") else { return }
-        worker.submit { $0.perform(action, context: context) }
+        guard let operation = start("Requesting \(action.rawValue)…", action: action, context: context) else { return }
+        guard worker.submit(operation: operation, { $0.perform(action, context: context, operation: operation) }) else { cancelStart(operation); return }
     }
 
-    private func start(_ message: String) -> Bool {
-        guard !worker.isExecuting else { status = "Bluetooth is still responding. Restart Plink if it remains unavailable."; return false }
-        guard let current = gate.begin() else { return false }
+    private func start(
+        _ message: String,
+        action: MacCallAction? = nil,
+        context: MacCallContext? = nil,
+        generation: UUID? = nil
+    ) -> MacBluetoothOperationGate.Operation? {
+        guard !worker.isBusy else { status = "Bluetooth is still responding. Restart Plink if it remains unavailable."; return nil }
+        guard let current = gate.begin(generation: generation ?? self.generation, action: action, context: context) else { return nil }
         busy = true; status = message
         deadline?.cancel()
         deadline = Task { [weak self] in
             try? await Task.sleep(for: .seconds(12))
-            guard !Task.isCancelled, let self, self.gate.timeout(current) else { return }
-            self.blocked = true
-            self.busy = false
-            self.call.disconnected()
-            self.onCallChanged?(self.call)
-            self.status = "Bluetooth timed out. Calling is disabled until Plink restarts. Check Bluetooth permission in System Settings."
-            // A framework call cannot be cancelled safely. Keep the single worker;
-            // never create replacement threads or queue more work behind a hung call.
+            guard !Task.isCancelled, let self,
+                  let invocation = self.worker.expire(current) else { return }
+            switch self.gate.timeout(current, invocation: invocation) {
+            case .quarantined:
+                self.blocked = true
+                self.busy = false
+                self.call.markUnconfirmed(context: current.context)
+                self.onCallChanged?(self.call)
+                self.status = "Bluetooth stopped responding. Calling is disabled until Plink restarts."
+            case .recoverable:
+                self.busy = false
+                self.call.markUnconfirmed(context: current.context)
+                self.onCallChanged?(self.call)
+                self.status = "Phone did not confirm the request. Disconnect and reconnect Bluetooth calling before another call action."
+            case .completed:
+                self.busy = false
+            case .ignored:
+                break
+            }
+            self.deadline = nil
         }
-        return true
+        return current
     }
 
-    private func finish() {
-        guard let operation, gate.complete(operation) else { return }
+    private func finish(_ completed: MacBluetoothOperationGate.Operation) {
+        guard let invocation = worker.state(of: completed) else { return }
+        guard gate.confirm(completed, invocation: invocation) else { return }
+        worker.release(completed)
+        finishUI()
+    }
+
+    private func invocationReturned(_ returned: MacBluetoothOperationGate.Operation) {
+        guard gate.invocationReturned(returned) else { return }
+        worker.release(returned)
+        finishUI()
+    }
+
+    private func cancelCall(_ operation: MacBluetoothOperationGate.Operation) {
+        guard let invocation = worker.cancel(operation) else { return }
+        if gate.cancelCall(operation, invocation: invocation) { finishUI() }
+    }
+
+    private func finishUI() {
         busy = false; deadline?.cancel(); deadline = nil
+    }
+
+    private func cancelStart(_ operation: MacBluetoothOperationGate.Operation) {
+        gate.abort(operation)
+        worker.cancel(operation)
+        finishUI()
     }
 }
 
 /// All IOBluetooth objects and delegate callbacks belong to one run-loop thread.
 /// No Bluetooth API is invoked by initialization or by tests.
 private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @unchecked Sendable {
-    var onEvent: (@Sendable (UUID, MacCallSession, String, Bool) -> Void)?
+    typealias Operation = MacBluetoothOperationGate.Operation
+    typealias InvocationState = MacBluetoothOperationGate.InvocationState
+
+    var onEvent: (@Sendable (UUID, MacCallSession, String, Operation?, MacCallContext?, Bool) -> Void)?
+    var onReturned: (@Sendable (Operation) -> Void)?
     private let lock = NSLock()
-    private var executing = false
+    private var work = MacBluetoothOperationGate.WorkTracker()
     private var stopping = false
     private var thread: Thread!
     private var phone: IOBluetoothHandsFreeDevice?
     private var session = MacCallSession()
     private var generation = UUID()
-    private var pendingAction: MacCallAction?
+    private var pendingOperation: Operation?
+    private var invalidatedOperations: Set<UUID> = []
+    private var uncertainCalls: Set<UUID> = []
 
-    var isExecuting: Bool { lock.lock(); defer { lock.unlock() }; return executing }
+    var isBusy: Bool { lock.lock(); defer { lock.unlock() }; return work.operation != nil }
 
     override init() {
         super.init()
@@ -140,25 +206,61 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     }
 
     private final class Work: NSObject, @unchecked Sendable {
+        let operation: Operation
         let body: @Sendable (HFPWorker) -> Void
-        init(_ body: @escaping @Sendable (HFPWorker) -> Void) { self.body = body }
+        init(operation: Operation, body: @escaping @Sendable (HFPWorker) -> Void) {
+            self.operation = operation
+            self.body = body
+        }
     }
 
-    func submit(_ body: @escaping @Sendable (HFPWorker) -> Void) {
+    @discardableResult
+    func submit(operation: Operation, _ body: @escaping @Sendable (HFPWorker) -> Void) -> Bool {
         lock.lock()
-        guard !executing, !stopping else { lock.unlock(); return }
-        executing = true
+        guard !stopping, work.enqueue(operation) else { lock.unlock(); return false }
         lock.unlock()
-        perform(#selector(run(_:)), on: thread, with: Work(body), waitUntilDone: false)
+        perform(#selector(run(_:)), on: thread, with: Work(operation: operation, body: body), waitUntilDone: false)
+        return true
     }
 
-    @objc private func run(_ work: Work) {
+    @objc private func run(_ queued: Work) {
         lock.lock()
-        let shouldRun = !stopping
+        let shouldRun = !stopping && work.start(queued.operation)
         lock.unlock()
         guard shouldRun else { return }
-        work.body(self)
-        lock.lock(); executing = false; lock.unlock()
+        queued.body(self)
+        lock.lock()
+        let returned = work.returned(queued.operation)
+        lock.unlock()
+        if returned { onReturned?(queued.operation) }
+    }
+
+    func state(of operation: Operation) -> InvocationState? {
+        lock.lock(); defer { lock.unlock() }
+        return work.state(of: operation)
+    }
+
+    @discardableResult
+    func release(_ operation: Operation) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return work.release(operation)
+    }
+
+    @discardableResult
+    func cancel(_ operation: Operation) -> InvocationState? {
+        lock.lock(); defer { lock.unlock() }
+        guard let state = work.cancel(operation) else { return nil }
+        invalidatedOperations.insert(operation.id)
+        return state
+    }
+
+    @discardableResult
+    func expire(_ operation: Operation) -> InvocationState? {
+        lock.lock(); defer { lock.unlock() }
+        guard let state = work.expire(operation) else { return nil }
+        invalidatedOperations.insert(operation.id)
+        if let context = operation.context { uncertainCalls.insert(context.callID) }
+        return state
     }
 
     func shutdown() {
@@ -173,61 +275,127 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
 
     @objc private func stopOnThread() {
         onEvent = nil
+        onReturned = nil
         thread.cancel()
         phone?.delegate = nil
         phone?.disconnect()
         phone = nil
     }
 
-    func connect(phoneID: String, generation: UUID) {
+    func connect(phoneID: String, generation: UUID, operation: Operation) {
         phone?.delegate = nil
+        guard permitsNextStep(operation) else { return }
         phone?.disconnect()
         phone = nil
+        guard permitsNextStep(operation) else { return }
         self.generation = generation
+        lock.lock()
+        pendingOperation = nil
+        uncertainCalls.removeAll()
+        lock.unlock()
         session.disconnected()
         guard let device = IOBluetoothDevice(addressString: phoneID), device.isPaired(), device.isHandsFreeAudioGateway else {
             emit("Selected phone is unavailable or does not advertise HFP.", completed: true); return
         }
+        guard permitsNextStep(operation) else { return }
         session.connected(phoneID: phoneID)
         phone = IOBluetoothHandsFreeDevice(device: device, delegate: self)
         guard let phone else { session.disconnected(); emit("Could not initialize Bluetooth calling.", completed: true); return }
+        guard permitsNextStep(operation) else { return }
         phone.connect()
     }
 
     func disconnect() {
         phone?.delegate = nil
         phone?.disconnect()
-        phone = nil; pendingAction = nil; session.disconnected()
+        phone = nil
+        lock.lock()
+        pendingOperation = nil
+        uncertainCalls.removeAll()
+        lock.unlock()
+        session.disconnected()
         emit("Bluetooth calling disconnected.", completed: true)
     }
 
-    func perform(_ action: MacCallAction, context: MacCallContext) {
+    func perform(_ action: MacCallAction, context: MacCallContext, operation: Operation) {
         guard let phone, phone.isConnected, session.begin(action, context: context) else {
-            emit("Call changed; action ignored.", completed: true); return
+            emit("Call changed; action ignored.", completion: operation); return
         }
-        pendingAction = action
+        lock.lock()
+        guard !stopping, work.permitsNextStep(operation) else { lock.unlock(); return }
+        pendingOperation = operation
+        lock.unlock()
         emit("Waiting for phone confirmation…")
         switch action {
-        case .answer: phone.acceptCall(); phone.transferAudioToComputer()
+        case .answer:
+            phone.acceptCall()
+            guard permitsNextStep(operation), session.context == context else { return }
+            phone.transferAudioToComputer()
         case .decline, .hangUp: phone.endCall()
         case .computerAudio:
             phone.transferAudioToComputer()
             if phone.isSCOConnected() {
-                session.setSCO(true); pendingAction = nil
-                emit("Bluetooth audio connected; two-way laptop audio has not been verified.", completed: true)
+                session.setSCO(true); clearPending(operation)
+                emit("Bluetooth audio connected; two-way laptop audio has not been verified.", completion: operation)
             }
         case .phoneAudio:
             phone.transferAudioToPhone()
-            if !phone.isSCOConnected() { session.setSCO(false); pendingAction = nil; emit("Bluetooth audio disconnected; check the phone route.", completed: true) }
+            if !phone.isSCOConnected() { session.setSCO(false); clearPending(operation); emit("Bluetooth audio disconnected; check the phone route.", completion: operation) }
         case .toggleMute:
-            phone.isInputMuted.toggle()
+            let muted = phone.isInputMuted
+            guard permitsNextStep(operation), session.context == context else { return }
+            phone.isInputMuted = !muted
+            guard permitsNextStep(operation), session.context == context else { return }
             session.setMuted(phone.isInputMuted)
-            pendingAction = nil
-            emit(session.muted ? "Mac HFP input muted." : "Mac HFP input unmuted.", completed: true)
+            clearPending(operation)
+            emit(session.muted ? "Mac HFP input muted." : "Mac HFP input unmuted.", completion: operation)
         }
     }
 
-    private func emit(_ message: String, completed: Bool = false) { onEvent?(generation, session, message, completed) }
+    private func permitsNextStep(_ operation: Operation) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return !stopping && work.permitsNextStep(operation)
+    }
+
+    private func emit(
+        _ message: String,
+        completed: Bool = false,
+        completion: Operation? = nil,
+        endedContext: MacCallContext? = nil,
+        phoneDisconnected: Bool = false
+    ) {
+        var snapshot = session
+        if isUncertain(snapshot.context) { snapshot.markUnconfirmed(context: snapshot.context) }
+        onEvent?(generation, snapshot, message, completion ?? (completed ? workOperation() : nil), endedContext, phoneDisconnected)
+    }
+    private func workOperation() -> Operation? {
+        lock.lock(); defer { lock.unlock() }
+        return work.operation
+    }
+    private func completePending(on observation: MacCallAction.Observation) -> Operation? {
+        lock.lock(); defer { lock.unlock() }
+        guard let pendingOperation, !invalidatedOperations.contains(pendingOperation.id),
+              pendingOperation.generation == generation,
+              (pendingOperation.context == session.context || observation == .callEnded),
+              pendingOperation.action?.completes(on: observation) == true else { return nil }
+        self.pendingOperation = nil
+        return pendingOperation
+    }
+    private func clearPending(_ operation: Operation) {
+        lock.lock(); defer { lock.unlock() }
+        if pendingOperation == operation { pendingOperation = nil }
+    }
+    private func isUncertain(_ context: MacCallContext?) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return context.map { uncertainCalls.contains($0.callID) } ?? false
+    }
+    private func applyUncertainty() {
+        if isUncertain(session.context) { session.markUnconfirmed(context: session.context) }
+    }
+    private func resolve(_ context: MacCallContext?) {
+        guard let context else { return }
+        lock.lock(); uncertainCalls.remove(context.callID); lock.unlock()
+    }
     private func owns(_ device: IOBluetoothHandsFree?) -> Bool { device != nil && device === phone }
 
     func handsFree(_ device: IOBluetoothHandsFree!, connected status: NSNumber!) {
@@ -245,23 +413,24 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     }
     func handsFree(_ device: IOBluetoothHandsFree!, disconnected status: NSNumber!) {
         guard owns(device) else { return }
-        session.disconnected(); pendingAction = nil
-        emit("Phone disconnected. Reconnect to enable calling.", completed: true)
+        let endedContext = session.context
+        let completion = completePending(on: .callEnded)
+        session.disconnected()
+        lock.lock(); uncertainCalls.removeAll(); lock.unlock()
+        emit("Phone disconnected. Reconnect to enable calling.", completion: completion ?? workOperation(), endedContext: endedContext, phoneDisconnected: true)
     }
     func handsFree(_ device: IOBluetoothHandsFree!, scoConnectionOpened status: NSNumber!) {
         guard owns(device) else { return }
         let success = status?.int32Value == 0
         session.setSCO(success)
-        let completed = pendingAction?.completesOnSCO(connected: success) == true
-        if completed { pendingAction = nil }
-        emit(success ? "Bluetooth audio connected; two-way laptop audio has not been verified." : "Bluetooth audio connection failed. Use phone audio or reconnect.", completed: completed)
+        let completion = completePending(on: .sco(connected: success))
+        emit(success ? "Bluetooth audio connected; two-way laptop audio has not been verified." : "Bluetooth audio connection failed. Use phone audio or reconnect.", completion: completion)
     }
     func handsFree(_ device: IOBluetoothHandsFree!, scoConnectionClosed status: NSNumber!) {
         guard owns(device) else { return }
         session.setSCO(false)
-        let completed = pendingAction?.completesOnSCO(connected: false) == true
-        if completed { pendingAction = nil }
-        emit("Bluetooth audio disconnected; check the phone audio route.", completed: completed)
+        let completion = completePending(on: .sco(connected: false))
+        emit("Bluetooth audio disconnected; check the phone audio route.", completion: completion)
     }
     func handsFree(_ device: IOBluetoothHandsFreeDevice!, incomingCallFrom number: String!) {
         guard owns(device) else { return }
@@ -277,25 +446,29 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         guard owns(device) else { return }
         if mode?.intValue == 1 { session.ringing(number: nil); emit("Incoming call") }
         if mode?.intValue == 0 {
+            let endedContext = session.context
             session.setupEnded()
-            let completed = session.context == nil
-            if completed { pendingAction = nil }
-            emit(session.context == nil ? "Call ended." : "Call active.", completed: completed)
+            let completion = session.context == nil ? completePending(on: .callEnded) : nil
+            emit(session.context == nil ? "Call ended." : "Call active.", completion: completion, endedContext: session.context == nil ? endedContext : nil)
         }
     }
     func handsFree(_ device: IOBluetoothHandsFreeDevice!, isCallActive active: NSNumber!) {
         guard owns(device) else { return }
-        session.setActive(active?.boolValue == true)
-        if active?.boolValue == true { session.setSCO(phone?.isSCOConnected() == true) }
-        let completed = (pendingAction == .answer && active?.boolValue == true) ||
-            ((pendingAction == .hangUp || pendingAction == .decline) && active?.boolValue == false)
-        if completed { pendingAction = nil }
-        emit(active?.boolValue == true ? "Call active; check laptop audio." : "Call ended.", completed: completed)
+        let isActive = active?.boolValue == true
+        let endedContext = isActive ? nil : session.context
+        let completion = completePending(on: isActive ? .callActive : .callEnded)
+        session.setActive(isActive)
+        if isActive { session.setSCO(phone?.isSCOConnected() == true) }
+        if !isActive { resolve(endedContext) }
+        applyUncertainty()
+        emit(isActive ? "Call active; check laptop audio." : "Call ended.", completion: completion, endedContext: endedContext)
     }
     func handsFree(_ device: IOBluetoothHandsFreeDevice!, currentCall call: [AnyHashable: Any]!) {
         guard owns(device), let call,
               let status = call[IOBluetoothHandsFreeCallStatus] as? NSNumber else { return }
         session.observeCall(index: (call[IOBluetoothHandsFreeCallIndex] as? NSNumber)?.intValue, status: status.intValue)
+        if status.intValue == 0, !session.hasWaitingCall { resolve(session.context) }
+        applyUncertainty()
         emit(session.hasWaitingCall ? "Multiple calls; manage calls on the phone." : "Phone call state received.")
     }
 }

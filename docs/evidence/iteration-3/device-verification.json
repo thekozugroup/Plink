@@ -1,0 +1,53 @@
+{
+  "status": "bounded_emulator_and_ui_verification_passed_full_acceptance_incomplete",
+  "atUTC": "2026-09-20T06:06:14.859369+00:00",
+  "canonicalGate": ".a5c/artifacts/verification-3.json",
+  "canonicalLog": "docs/evidence/iteration-3/verification-3-final.log",
+  "gateExitCode": 0,
+  "verificationManifest": "docs/evidence/iteration-3/verification-manifest.json",
+  "checks": [
+    {
+      "name": "Synthetic encrypted reply and actual RemoteInput final run",
+      "command": "PLINK_CAPTURE_TRANSPORT=1 ./scripts/verify-device.sh emulator-5580 docs/evidence/iteration-3/reply-roundtrip-final roundtrip",
+      "exitCode": 0,
+      "logs": [
+        "docs/evidence/iteration-3/reply-roundtrip-final/android-roundtrip.log",
+        "docs/evidence/iteration-3/reply-roundtrip-final/mac-roundtrip.log"
+      ],
+      "captureSummary": "docs/evidence/iteration-3/reply-roundtrip-final/capture/summary.json"
+    },
+    {
+      "name": "Matching-build UI, normal/large text, normal/animator-zero navigation",
+      "report": "docs/evidence/iteration-3/plink-ui.json",
+      "limits": "Full Scan/Stop labels and verified Settings captured. Surface-color mismatch, segmented-list behavior, precise motion equivalence and accessibility remain open."
+    },
+    {
+      "name": "Strict Mac signature verification",
+      "command": "codesign --verify --deep --strict build/PlinkMac.app",
+      "exitCode": 0,
+      "limit": "Local ad-hoc signing is not Developer ID/notarization."
+    }
+  ],
+  "emulatorCleanupChecks": {
+    "testPackage": {
+      "exitCode": 1,
+      "stdout": ""
+    },
+    "forwards": {
+      "exitCode": 0,
+      "stdout": ""
+    },
+    "reverse": {
+      "exitCode": 0,
+      "stdout": ""
+    }
+  },
+  "physicalPixelUseThisIteration": "None; no settings changed.",
+  "limitations": [
+    "Mac remains locked; no new native Mac UI evidence.",
+    "No actual cellular control, two-way laptop audio or controlled-recipient Notification Center reply.",
+    "Permission/lifecycle revocation tests inject authority conditions; they do not prove normal OS listener callbacks.",
+    "Original acceptance matrix unchanged."
+  ],
+  "rawCaptureCleanup": "raw-capture-cleanup.json"
+}

@@ -2,19 +2,23 @@ package app.plink.android.notifications
 
 import app.plink.android.protocol.PlinkEventType
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.time.Instant
 
 class ReplyRouteTest {
+    private val exactReply = "\t  Plink encrypted roundtrip ✓\nCafe\u0301 👩‍💻\n  "
+
     @Test
     fun replyCommandRequiresText() {
         val route = route(canReply = true)
-        val command = ReplyCommand(route, "On it", localDeviceId = "mac")
+        val command = ReplyCommand(route, exactReply, localDeviceId = "mac")
 
-        assertEquals("On it", command.text)
+        assertArrayEquals(exactReply.toByteArray(), command.text.toByteArray())
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -29,18 +33,18 @@ class ReplyRouteTest {
 
     @Test
     fun replyCommandTargetsPairedDeviceAndOriginalNotification() {
-        val command = ReplyCommand(route(canReply = true), " On it ", localDeviceId = "mac")
+        val command = ReplyCommand(route(canReply = true), exactReply, localDeviceId = "mac")
         val envelope = command.toEnvelope(id = "reply-1", sentAt = Instant.parse("2026-06-25T00:00:00Z"))
 
         assertEquals(PlinkEventType.MessageReply, envelope.type)
         assertEquals("mac", envelope.sourceDeviceId)
         assertEquals("pixel", envelope.targetDeviceId)
         assertEquals("evt-1", envelope.payload["sourceEnvelopeId"].toString().trim('"'))
-        assertEquals("On it", envelope.payload["text"].toString().trim('"'))
+        assertArrayEquals(exactReply.toByteArray(), envelope.payload.getValue("text").jsonPrimitive.content.toByteArray())
     }
 
     @Test
-    fun inboundReplyConsumesMatchingRoute() {
+    fun inboundReplyPreservesExactTextUntilFinalDispatch() {
         val registry = ReplyRouteRegistry()
         val route = registry.register(
             pairedDeviceId = "mac",
@@ -52,11 +56,11 @@ class ReplyRouteTest {
         )
         val reply = inboundReply(route.replyToken)
 
-        val validated = InboundReplyValidator.consume(reply, registry, localDeviceId = "pixel")
+        val validated = InboundReplyValidator.validate(reply, registry, localDeviceId = "pixel")
 
-        assertEquals("On it", validated.text)
+        assertArrayEquals(exactReply.toByteArray(), validated.text.toByteArray())
         assertEquals(route, validated.route)
-        assertEquals(0, registry.size())
+        assertEquals(1, registry.size())
     }
 
     @Test
@@ -66,7 +70,7 @@ class ReplyRouteTest {
         val reply = inboundReply(route.replyToken).copy(sourceDeviceId = "other-mac")
 
         assertThrows(IllegalArgumentException::class.java) {
-            InboundReplyValidator.consume(reply, registry, localDeviceId = "pixel")
+            InboundReplyValidator.validate(reply, registry, localDeviceId = "pixel")
         }
         assertEquals(1, registry.size())
     }
@@ -87,8 +91,24 @@ class ReplyRouteTest {
         )
 
         assertThrows(IllegalArgumentException::class.java) {
-            InboundReplyValidator.consume(reply, registry, localDeviceId = "pixel")
+            InboundReplyValidator.validate(reply, registry, localDeviceId = "pixel")
         }
+        assertEquals(1, registry.size())
+    }
+
+    @Test
+    fun blankInboundReplyDoesNotConsumeUsableRoute() {
+        val registry = ReplyRouteRegistry()
+        val route = registry.register("mac", "evt-1", "com.example.messages", "key", "thread", true)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            InboundReplyValidator.validate(
+                inboundReply(route.replyToken, text = "\t\r\n"),
+                registry,
+                localDeviceId = "pixel"
+            )
+        }
+
         assertEquals(1, registry.size())
     }
 
@@ -102,7 +122,7 @@ class ReplyRouteTest {
         replyToken = "token"
     )
 
-    private fun inboundReply(replyToken: String) = app.plink.android.protocol.PlinkEnvelope(
+    private fun inboundReply(replyToken: String, text: String = exactReply) = app.plink.android.protocol.PlinkEnvelope(
         id = "reply-1",
         type = PlinkEventType.MessageReply,
         sentAt = "2026-06-25T00:00:00Z",
@@ -115,7 +135,7 @@ class ReplyRouteTest {
             put("notificationKey", "key")
             put("conversationId", "thread")
             put("replyToken", replyToken)
-            put("text", " On it ")
+            put("text", text)
         }
     )
 }

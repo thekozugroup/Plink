@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Bounded reference-only UI capture of the official Tomato v2.0.1 release for later matching-Plink comparison.",
+  "status": "reference_captured_settings_restored_tomato_retained",
+  "reference": {
+    "source": "nsh07/Tomato official GitHub v2.0.1 release asset",
+    "tag": "v2.0.1",
+    "pinnedSourceCommit": "1bba8459cb20029f8544efa96c5d62181a769bed",
+    "publisherAssetPath": "/tmp/plink-tomato-reference-release/tomato-v2.0.1-release.apk",
+    "publisherAssetSha256": "36aa0e28055f6fadc8c634d2b94b024acc6ab52c2944f62f97227ccad5317892",
+    "installedPackageId": "org.nsh07.pomodoro",
+    "installedVersionName": "2.0.1",
+    "installedVersionCode": 40,
+    "installedBaseApkSha256": "36aa0e28055f6fadc8c634d2b94b024acc6ab52c2944f62f97227ccad5317892",
+    "provenanceLimit": "Publisher asset digest matches installed base APK; asset was not independently reproduced from source."
+  },
+  "device": {
+    "serial": "emulator-5580",
+    "model": "sdk_gphone64_arm64",
+    "device": "emu64a",
+    "apiLevel": "36",
+    "release": "16",
+    "physicalSize": "Physical size: 1080x2400",
+    "physicalDensity": "Physical density: 420"
+  },
+  "originalSettings": {
+    "fontScale": "1.0",
+    "nightMode": "2",
+    "windowAnimationScale": "1.0",
+    "transitionAnimationScale": "1.0",
+    "animatorDurationScale": "null",
+    "accelerometerRotation": "1",
+    "userRotation": "0"
+  },
+  "restoredSettingsObserved": {
+    "fontScale": "1.0",
+    "nightMode": "2",
+    "windowAnimationScale": "1.0",
+    "transitionAnimationScale": "1.0",
+    "animatorDurationScale": "null",
+    "accelerometerRotation": "1",
+    "userRotation": "0"
+  },
+  "captureProtocol": {
+    "states": [
+      "Timer top bar and Settings navigation at 1.0x and 1.5x",
+      "dark and light modes where quick"
+    ],
+    "navigationVideo": "Normal animation scale was 1.0 for captured Timer-to-Settings-to-Stats-to-Timer navigation.",
+    "restrictionsHonored": [
+      "Only emulator-5580 used",
+      "No Pixel or emulator-5584 access",
+      "No Plink source build or implementation edit",
+      "No sign-in, paid features, or network actions"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.0-navigation.mp4",
+      "sha256": "44fbba59594531753528aec3aeeb8636e6a2e34afc77651fa5ef5c0da02a0732",
+      "bytes": 1007806
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.0-settings.png",
+      "sha256": "ac460af725da92fe8b5ce11657ad7da0fe08b8689411b140a09414814d10a7f5",
+      "bytes": 159366
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.0-topbar.png",
+      "sha256": "c1ba08cb80d6b64fa4b9a18783f3adfc32eadb73455b9286069fe6c22d82396e",
+      "bytes": 133195
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.5-settings.png",
+      "sha256": "596a5574e9bc681cbddcca7916e7b8f1d3221f201ff216b38c651b0f5905e80a",
+      "bytes": 187869
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.5-topbar.png",
+      "sha256": "f290f88d52214295c6a33310a545f9fda3d8368dd69b1683a08793bdda6296dc",
+      "bytes": 143759
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-light-1.0-topbar.xml",
+      "sha256": "fee1c8757a12919a44781eba5950d2145a1a28afc08a6f50758cc5537f438355",
+      "bytes": 20438
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-light-1.5-settings.png",
+      "sha256": "a534cb75a7c38153ecce244f7c1a35e35877ee2cf0a881f35fac8e9b3661ef93",
+      "bytes": 186371
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-light-1.5-topbar.png",
+      "sha256": "6fbb88355f83d48d12bc408338a06123d707c7dbfc2896a72968a97ecbbbaf6b",
+      "bytes": 132018
+    }
+  ],
+  "temporaryFilesCleanup": {
+    "emulatorScreenrecordPath": "/sdcard/tomato-reference-navigation.mp4",
+    "removed": true,
+    "retained": [
+      "Official Tomato package org.nsh07.pomodoro remains installed for later matching-Plink comparison.",
+      "Evidence artifacts under docs/evidence/iteration-3/ remain intentionally."
+    ]
+  },
+  "limits": [
+    "Evidence only. This is not a full Tomato fidelity claim.",
+    "No reference-source Gradle build was performed.",
+    "No matching Plink APK was installed or compared in this capture slot.",
+    "No reduced-motion capture was taken; normal-scale navigation video is available for later comparison."
+  ],
+  "release": "RELEASED: emulator-5580 is restored and available to parent."
+}

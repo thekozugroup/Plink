@@ -35,6 +35,7 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.motionScheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
@@ -57,6 +58,8 @@ fun FloatingNavigation(
     onSelect: (PlinkDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val motionScheme = MaterialTheme.motionScheme
+
     HorizontalFloatingToolbar(
         expanded = true,
         modifier = modifier,
@@ -94,8 +97,8 @@ fun FloatingNavigation(
                         }
                         AnimatedVisibility(
                             visible = checked,
-                            enter = expandHorizontally(),
-                            exit = shrinkHorizontally()
+                            enter = expandHorizontally(motionScheme.defaultSpatialSpec()),
+                            exit = shrinkHorizontally(motionScheme.defaultSpatialSpec())
                         ) {
                             Text(
                                 destination.label,

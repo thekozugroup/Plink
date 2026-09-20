@@ -3,12 +3,16 @@ package app.plink.android.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Devices
@@ -39,6 +43,7 @@ import app.plink.android.pairing.PairingCoordinator
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ManualPairingCard() {
     val context = LocalContext.current
@@ -82,9 +87,11 @@ fun ManualPairingCard() {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Row(
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedButton(
                     onClick = {
@@ -99,7 +106,7 @@ fun ManualPairingCard() {
                         }
                     },
                     shape = RoundedCornerShape(22.dp),
-                    modifier = Modifier.size(width = 112.dp, height = 48.dp)
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                 ) {
                     Icon(Icons.Rounded.Devices, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
@@ -111,7 +118,7 @@ fun ManualPairingCard() {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.widthIn(min = 120.dp).weight(1f, fill = false)
                 )
             }
             if (discoveredOffers.isEmpty() && state.code == null) {

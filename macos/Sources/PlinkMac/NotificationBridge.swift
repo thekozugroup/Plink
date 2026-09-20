@@ -5,16 +5,16 @@ import UserNotifications
 @MainActor
 final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     private let center = UNUserNotificationCenter.current()
-    private var replyContexts = MacReplyContexts()
+    private var messages = MacNotificationBookkeeping()
     private var callContext: MacCallContext?
     private var callNotificationID: String?
     private var callNumber: String?
-    private var deliveredMessageIDs: [String: [String: String]] = [:]
     var onTextReply: ((ReplyContext, String) -> Void)?
     var onCallAction: ((MacCallAction, MacCallContext) -> Void)?
     var onAuthorizationChanged: ((Bool, Error?) -> Void)?
     var onDeliveryError: ((String, Error) -> Void)?
     var onStaleAction: (() -> Void)?
+    var onInvalidReply: (() -> Void)?
 
     func configure() {
         center.delegate = self
@@ -31,6 +31,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         ])
         // Live Android reply capabilities and call identities do not survive restart.
         clearContexts()
+        // Only startup clears all OS notifications. Message eviction must preserve live calls.
         center.removeAllDeliveredNotifications()
         center.removeAllPendingNotificationRequests()
         Task {
@@ -48,21 +49,23 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func clearContexts() {
-        replyContexts.removeAll()
-        deliveredMessageIDs.removeAll()
-        center.removeAllDeliveredNotifications()
-        center.removeAllPendingNotificationRequests()
-        updateCall(MacCallSession())
+        removeMessages(messages.removeAll())
+    }
+
+    func shutdown() {
+        clearContexts()
+        let ids = [callNotificationID, "plink.call.mirrored"].compactMap { $0 }
+        center.removeDeliveredNotifications(withIdentifiers: ids)
+        center.removePendingNotificationRequests(withIdentifiers: ids)
+        callContext = nil; callNotificationID = nil; callNumber = nil
     }
 
     func expireContexts() {
-        let ids = replyContexts.expire()
-        center.removeDeliveredNotifications(withIdentifiers: ids)
-        center.removePendingNotificationRequests(withIdentifiers: ids)
+        removeMessages(messages.expire())
     }
 
     func updateCall(_ call: MacCallSession) {
-        guard let context = call.context, [.ringing, .active].contains(call.phase), !call.hasWaitingCall else {
+        guard call.stateIsCertain, let context = call.context, [.ringing, .active].contains(call.phase), !call.hasWaitingCall else {
             if let id = callNotificationID {
                 center.removeDeliveredNotifications(withIdentifiers: [id])
                 center.removePendingNotificationRequests(withIdentifiers: [id])
@@ -103,23 +106,19 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         guard let plan = NotificationPlanner.plan(for: envelope) else { return }
         let id = "\(plan.categoryIdentifier)-\(envelope.id)"
         let context = ReplyRouter.context(from: envelope)
-        if let key = envelope.payload["notificationKey"]?.stringValue {
-            var obsolete = replyContexts.remove(notificationKey: key, peerID: envelope.sourceDeviceId)
-            if let old = deliveredMessageIDs[envelope.sourceDeviceId]?.removeValue(forKey: key) { obsolete.append(old) }
-            center.removeDeliveredNotifications(withIdentifiers: obsolete)
-            center.removePendingNotificationRequests(withIdentifiers: obsolete)
-            if envelope.payload["removed"]?.boolValue != true {
-                if deliveredMessageIDs.values.reduce(0, { $0 + $1.count }) >= 128 {
-                    clearContexts()
-                }
-                deliveredMessageIDs[envelope.sourceDeviceId, default: [:]][key] = id
-            }
+        if envelope.type == .messageReceived,
+           let key = envelope.payload["notificationKey"]?.stringValue {
+            let obsolete = envelope.payload["removed"]?.boolValue == true
+                ? messages.remove(notificationKey: key, peerID: envelope.sourceDeviceId)
+                : messages.store(
+                    notificationID: id,
+                    peerID: envelope.sourceDeviceId,
+                    notificationKey: key,
+                    context: context
+                )
+            removeMessages(obsolete)
         }
         if envelope.payload["removed"]?.boolValue == true { return }
-        if let context {
-            let obsolete = replyContexts.store(context, notificationID: id)
-            center.removeDeliveredNotifications(withIdentifiers: obsolete)
-        }
         let content = UNMutableNotificationContent()
         content.title = plan.title
         content.subtitle = plan.subtitle
@@ -138,9 +137,11 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
                 self.onCallAction?(callAction, context)
                 return
             }
-            if action == UNNotificationDismissActionIdentifier { _ = self.replyContexts.take(id); return }
+            if action == UNNotificationDismissActionIdentifier { _ = self.messages.remove(notificationID: id); return }
             guard action == "message.reply", let text else { return }
-            guard let context = self.replyContexts.take(id) else { self.onStaleAction?(); return }
+            do { try ReplyRouter.validateReplyText(text) }
+            catch { self.onInvalidReply?(); return }
+            guard let context = self.messages.takeReply(notificationID: id) else { self.onStaleAction?(); return }
             self.center.removeDeliveredNotifications(withIdentifiers: [id])
             self.onTextReply?(context, text)
         }
@@ -152,9 +153,15 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         center.add(UNNotificationRequest(identifier: id, content: content, trigger: nil)) { [weak self] error in
             guard let error else { return }
             Task { @MainActor in
-                _ = self?.replyContexts.take(id)
+                _ = self?.messages.remove(notificationID: id)
                 self?.onDeliveryError?(id, error)
             }
         }
+    }
+
+    private func removeMessages(_ ids: [String]) {
+        guard !ids.isEmpty else { return }
+        center.removeDeliveredNotifications(withIdentifiers: ids)
+        center.removePendingNotificationRequests(withIdentifiers: ids)
     }
 }

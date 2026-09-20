@@ -25,8 +25,8 @@
       "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/theme/Type.kt",
       "upstreamSha256": "560a492ef8933890dace2745fdf4d19b99001bc2a16658799487e95aaabd81c1",
       "adaptedPath": "android/src/main/java/app/plink/android/ui/theme/Type.kt",
-      "adaptedSha256": "929418925ab375cf867af1d29e75fb2067c1cf0c51592a05759376d7477ff471",
-      "changeNote": "Adapted Google Sans Flex typography roles for Plink's Android Compose screen."
+      "adaptedSha256": "05e90828d47a6c7b171efaca6fa8ed55fd0d2d221b5fb71b555d47b7c291e595",
+      "changeNote": "Adapted Google Sans Flex typography roles for Plink's Android Compose screen, including the pinned top-bar title axes."
     },
     {
       "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/theme/Shape.kt",
@@ -49,24 +49,24 @@
       "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/AppScreen.kt",
       "upstreamSha256": "16d55e570d9d46ae344af9c3ce351fbbca4abd2a2cfe61eb4f14fe1ff2e10c49",
       "adaptedPath": "android/src/main/java/app/plink/android/ui/FloatingNavigation.kt",
-      "adaptedSha256": "92d7cab21f1125792c29f93b5ad9aa572d0c1b7ceb19fe74327055e4db0adfe1",
-      "changeNote": "Adapted Compose application-screen structure and expressive navigation presentation for Plink pairing and continuity UI."
+      "adaptedSha256": "3309eafbb6f3471bbc7a7caf6db568d09d4feb0aac2431d7d25bf58089821275",
+      "changeNote": "Adapted Compose application-screen structure and expressive navigation presentation for Plink pairing and continuity UI, including mapped label motion."
     },
     {
       "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/timerScreen/TimerMainPane.kt",
       "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/timerScreen/TimerMainPane.kt",
       "upstreamSha256": "3720c080b282e8afe06c7bb696e63a60028d61412e1a3eb71562f45605c7c3cd",
       "adaptedPath": "android/src/main/java/app/plink/android/ui/ConnectionRing.kt",
-      "adaptedSha256": "8905f76755e0537c8a740aba52cf889b175c5a1856bca2dbfee7c04862a7f98e",
-      "changeNote": "Adapted animated Compose pane layout patterns for Plink's status and continuity content."
+      "adaptedSha256": "115374692b515960b4d66dbff616f68d5301c336c57ff7855e637990dd6346e7",
+      "changeNote": "Adapted animated Compose pane layout patterns for Plink's status and continuity content, including functional spatial and effects motion mappings."
     },
     {
       "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/settingsScreen/screens/SettingsMainScreen.kt",
       "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/settingsScreen/screens/SettingsMainScreen.kt",
       "upstreamSha256": "2f37254b218df1f975ae91262cda0deb8b7170e9cff2467fa72230a1d6327ec0",
       "adaptedPath": "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt",
-      "adaptedSha256": "1c198590ecd71a1cc9b696166add25fa1eae451a9d5f43e5a331d43ccacbe28e",
-      "changeNote": "Adapted expressive settings-list and card presentation patterns for Plink setup controls."
+      "adaptedSha256": "3ddc9e269cd447c57e6f0c5c9658235565d48172557bced62dae0b4c63463c80",
+      "changeNote": "Adapted expressive settings-list and card presentation patterns for Plink setup controls, including top-bar and destination effects motion use."
     }
   ],
   "fontReference": {

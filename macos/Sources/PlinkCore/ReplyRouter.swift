@@ -87,18 +87,25 @@ public final class UserDefaultsReplyContextStore: ReplyContextStoring, @unchecke
 
 public enum ReplyRouterError: Error, Equatable {
     case emptyReply
+    case replyTooLong
     case missingRoute
 }
 
 public enum ReplyRouter {
+    public static func validateReplyText(_ text: String) throws {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw ReplyRouterError.emptyReply
+        }
+        guard text.utf16.count <= 4_000 else { throw ReplyRouterError.replyTooLong }
+    }
+
     public static func makeReplyEnvelope(
         context: ReplyContext,
         text: String,
         sentAt: Date = .now,
         id: String = "reply_\(UUID().uuidString)"
     ) throws -> PlinkEnvelope {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { throw ReplyRouterError.emptyReply }
+        try validateReplyText(text)
         guard !context.pairedDeviceId.isEmpty, !context.macDeviceId.isEmpty, !context.sourceEnvelopeId.isEmpty else {
             throw ReplyRouterError.missingRoute
         }
@@ -108,7 +115,7 @@ public enum ReplyRouter {
             "packageName": .string(context.packageName),
             "notificationKey": .string(context.notificationKey),
             "replyToken": .string(context.replyToken),
-            "text": .string(trimmed)
+            "text": .string(text)
         ]
         if let conversationId = context.conversationId {
             payload["conversationId"] = .string(conversationId)

@@ -1,0 +1,1437 @@
+{
+  "schemaVersion": 1,
+  "status": "independent_metric_review_complete_checkpoint_supported_full_acceptance_incomplete",
+  "reviewedAt": "2026-09-20T06:19:38.152178+00:00",
+  "reviewer": "Goodall independent critic",
+  "existingBabysitterRun": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+  "effectId": "01M2YPS9RHSBHTB964ZD51XFJM",
+  "newRunCreated": false,
+  "verified": false,
+  "productComplete": false,
+  "allOriginalCasesClosed": false,
+  "metrics": {
+    "cellularCalls": 0.0,
+    "notificationReplies": 0.0,
+    "nativeMac": 0.0,
+    "tomatoAndroid": 0.0,
+    "continuity": 0.0,
+    "security": 0.0,
+    "stability": 33.33,
+    "deviceEndToEnd": 0.0,
+    "processIntegrity": 0.0
+  },
+  "overallScore": 2.33,
+  "metricDetails": {
+    "cellularCalls": {
+      "passed": 0,
+      "total": 4,
+      "score": 0.0,
+      "weight": 25,
+      "caseIds": [
+        "CALL-01",
+        "CALL-02",
+        "CALL-03",
+        "CALL-04"
+      ]
+    },
+    "notificationReplies": {
+      "passed": 0,
+      "total": 3,
+      "score": 0.0,
+      "weight": 15,
+      "caseIds": [
+        "MSG-01",
+        "MSG-02",
+        "MSG-03"
+      ]
+    },
+    "nativeMac": {
+      "passed": 0,
+      "total": 2,
+      "score": 0.0,
+      "weight": 8,
+      "caseIds": [
+        "MAC-01",
+        "MAC-02"
+      ]
+    },
+    "tomatoAndroid": {
+      "passed": 0,
+      "total": 3,
+      "score": 0.0,
+      "weight": 15,
+      "caseIds": [
+        "TOM-01",
+        "TOM-02",
+        "TOM-03"
+      ]
+    },
+    "continuity": {
+      "passed": 0,
+      "total": 3,
+      "score": 0.0,
+      "weight": 12,
+      "caseIds": [
+        "CON-01",
+        "CON-02",
+        "CON-03"
+      ]
+    },
+    "security": {
+      "passed": 0,
+      "total": 3,
+      "score": 0.0,
+      "weight": 8,
+      "caseIds": [
+        "SEC-01",
+        "SEC-02",
+        "SEC-03"
+      ]
+    },
+    "stability": {
+      "passed": 1,
+      "total": 3,
+      "score": 33.33,
+      "weight": 7,
+      "caseIds": [
+        "STAB-01",
+        "STAB-02",
+        "STAB-03"
+      ]
+    },
+    "deviceEndToEnd": {
+      "passed": 0,
+      "total": 4,
+      "score": 0.0,
+      "weight": 7,
+      "caseIds": [
+        "E2E-01",
+        "E2E-02",
+        "E2E-03",
+        "E2E-04"
+      ]
+    },
+    "processIntegrity": {
+      "passed": 0,
+      "total": 2,
+      "score": 0.0,
+      "weight": 3,
+      "caseIds": [
+        "PROC-01",
+        "PROC-02"
+      ]
+    }
+  },
+  "passedCases": 1,
+  "totalCases": 27,
+  "scoring": {
+    "rule": {
+      "withinMetric": "Equal case weight. Credit only for all case criteria supported by actual matching-build evidence and independent review.",
+      "overall": "Sum(metric weight * passed/total). Missing, blocked, failed, invalid, skipped and not-run earn zero. Incomplete score is capped below 100.",
+      "completion": "Every metric must be 100; an aggregate average cannot waive a case. Platform limits and missing human input remain open.",
+      "meaning": "Zero evidence-backed score is not a conclusion that the product has zero functionality."
+    },
+    "matrixPath": ".a5c/artifacts/acceptance/matrix.json",
+    "matrixSha256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+    "specSha256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+    "deviceConstraintsSha256": "c3be51adce89b8234fc3bb6001dcc88c78418582a953cbb7d13994e65c0da313",
+    "freezeHashesMatch": true,
+    "unchanged": true,
+    "changeFromCheckpoint2": "STAB-01 alone now passes: exact toolchain retention resolves its previously explicit remaining blocker. Stability rises from 0 to 33.33 and weighted overall from 0 to 2.33. All other original cases remain open.",
+    "interpretation": "Scores measure completed whole-case acceptance evidence, not implementation quality or the percentage of code working. Partial evidence receives zero numeric case credit.",
+    "formalEvidenceCheckerRun": false
+  },
+  "pendingEffectInspection": {
+    "path": ".a5c/artifacts/current-iteration.json",
+    "sha256": "d4e12b0ef9fa50931b0bf01ba526b06bfad133fea13144d84735c01eb251e023",
+    "label": "Astra adversarial metric review 3",
+    "taskSha256": "ccdd26e07f218071c5bb67c8731f785395dc55f32f69d91f6d660fd78c0783e6",
+    "taskCharacters": 67465,
+    "verbatimTaskRead": true,
+    "method": "Read embedded original SPEC and ARTIFACTS. Exact embedded contents matched the original spec, acceptance README/baseline/evaluator/freeze/matrix/verification files; remaining text is the diff stat and explicit comparison instruction. Original matrix criteria and addendum were read directly.",
+    "directArtifactLimit": "Embedded ARTIFACTS primarily contain a diff stat and frozen acceptance harness/baseline. They do not independently establish implementation success. Separately supplied final logs, manifest, raw captures, source reviews and UI media were directly inspected.",
+    "staleContextCorrection": "The embedded context.checks retains the 05:47:33 rerun-3 snapshot and pre-final Mac debug hash. Final verification-3.json, verification-3-final.log and current manifest supersede that snapshot; historical captures are not rebound to changed binaries."
+  },
+  "cases": [
+    {
+      "id": "CALL-01",
+      "metric": "cellularCalls",
+      "title": "Real incoming carrier call and native answer",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Production call ownership and notification eligibility have source/regression evidence. No consented carrier call, native Mac Answer interaction, peer observation or correlated physical call state was supplied.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CALL-01.1",
+        "CALL-01.2",
+        "CALL-01.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/device-evidence-3.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "CALL-02",
+      "metric": "cellularCalls",
+      "title": "Cellular audio on laptop",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No two-minute unpredictable spoken exchange using the laptop microphone/output with the Pixel acoustically isolated. SCO/control state and unit tests do not establish intelligible two-way cellular audio.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CALL-02.1",
+        "CALL-02.2",
+        "CALL-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/device-evidence-3.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "CALL-03",
+      "metric": "cellularCalls",
+      "title": "Native call lifecycle controls",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Terminal cancellation, late continuation and control cleanup mechanisms were corrected. Real decline/end/remote hang-up, mute/route effects and native control disappearance remain unobserved.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CALL-03.1",
+        "CALL-03.2",
+        "CALL-03.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/device-evidence-3.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "CALL-04",
+      "metric": "cellularCalls",
+      "title": "Call recovery and capability truthfulness",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Returned versus executing timeout behavior and reconnect requirements have production-used gate tests. Actual permission/connection recovery followed by a fresh carrier call with laptop audio is pending.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CALL-04.1",
+        "CALL-04.2",
+        "CALL-04.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/device-evidence-3.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "MSG-01",
+      "metric": "notificationReplies",
+      "title": "Native Notification Center text reply",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Final synthetic encrypted Swift/Android exchange delivers exact UTF-8 through a real synthetic PendingIntent/RemoteInput once. It does not exercise native Mac Notification Center text entry or confirm original-conversation receipt by a controlled recipient.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "MSG-01.1",
+        "MSG-01.2",
+        "MSG-01.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+        "docs/evidence/iteration-3/reply-roundtrip-final/android-roundtrip.log",
+        "docs/evidence/iteration-3/reply-roundtrip-final/mac-roundtrip.log",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "MSG-02",
+      "metric": "notificationReplies",
+      "title": "Conversation routing and message coverage",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Origin-bound one-use routes, exact whitespace/Unicode and no retry after outcome-send failure are supported in the bounded harness. Two real conversations in reverse order, account/app coverage, SMS/RCS coverage and recipient-confirmed absence of duplicate delivery remain pending.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "MSG-02.1",
+        "MSG-02.2",
+        "MSG-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "MSG-03",
+      "metric": "notificationReplies",
+      "title": "Stale reply and failure handling",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Eight injected final-dispatch revocations, replacement/removal, reconnect/new token, canceled PendingIntent and failure outcomes pass. Actual listener callbacks/OS revocation UI, native visible recovery and a fresh authorized real reply are not proved.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "MSG-03.1",
+        "MSG-03.2",
+        "MSG-03.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "MAC-01",
+      "metric": "nativeMac",
+      "title": "Native Swift app and OS controls",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Native Swift/SwiftUI/AppKit build provenance is established. macOS-owned call/reply action operation, keyboard access and VoiceOver interaction remain unverified while the Mac is locked.",
+      "supportedWholeCriteria": [
+        "MAC-01.1"
+      ],
+      "criteriaNotFullyClosed": [
+        "MAC-01.2",
+        "MAC-01.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/verification-3.json",
+        "docs/evidence/iteration-3/verification-3-final.log",
+        "docs/evidence/iteration-3/verification-manifest.json",
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/device-evidence-3.json"
+      ]
+    },
+    {
+      "id": "MAC-02",
+      "metric": "nativeMac",
+      "title": "HIG and permissions",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No matching native Mac first-launch, permission denial/recovery, light/dark/text-scaling or focus/accessibility evidence was supplied. Source cleanup/eligibility corrections do not close HIG and native UX acceptance.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "MAC-02.1",
+        "MAC-02.2",
+        "MAC-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/device-evidence-3.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "TOM-01",
+      "metric": "tomatoAndroid",
+      "title": "Pinned Tomato basis and provenance",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Pinned source/font/license provenance, official release identity, captured device/app versions and matching Plink APK are supported. Every relevant interface/interaction mapping is not closed; segmented-list behavior and complete reviewed functional adaptation remain open. The publisher APK was not independently rebuilt.",
+      "supportedWholeCriteria": [
+        "TOM-01.1",
+        "TOM-01.2"
+      ],
+      "criteriaNotFullyClosed": [
+        "TOM-01.3"
+      ],
+      "evidence": [
+        "third_party/tomato/PROVENANCE.json",
+        ".a5c/artifacts/iteration3-reference-ui.json",
+        "docs/evidence/iteration-3/plink-ui.json",
+        ".a5c/artifacts/iteration3-L3-independent-review.json",
+        "docs/evidence/iteration-3/verification-manifest.json"
+      ]
+    },
+    {
+      "id": "TOM-02",
+      "metric": "tomatoAndroid",
+      "title": "Interface, design and fonts",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Full Stop/Scan labels at 1.5x and correct Settings title/content are independently visible in the matching APK. Dark Settings background remains visibly darker than Tomato; complete mapped-state geometry/font/fallback equivalence and closure of unexplained differences are absent.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "TOM-02.1",
+        "TOM-02.2",
+        "TOM-02.3"
+      ],
+      "evidence": [
+        "docs/evidence/iteration-3/plink-ui.json",
+        ".a5c/artifacts/iteration3-L3-independent-review.json",
+        ".a5c/artifacts/iteration3-reference-ui.json"
+      ]
+    },
+    {
+      "id": "TOM-03",
+      "metric": "tomatoAndroid",
+      "title": "Animations and interaction",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Normal footage shows fades and Connection/Activity/Settings; animator-zero footage shows Connection/Activity only. Unequal clips do not prove measured motion equivalence, full reduced-motion behavior, TalkBack, focus order or real Pixel transitions.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "TOM-03.1",
+        "TOM-03.2",
+        "TOM-03.3"
+      ],
+      "evidence": [
+        "docs/evidence/iteration-3/plink-ui.json",
+        ".a5c/artifacts/iteration3-L3-independent-review.json",
+        ".a5c/artifacts/iteration3-reference-ui.json"
+      ]
+    },
+    {
+      "id": "CON-01",
+      "metric": "continuity",
+      "title": "Parity inventory and investigation",
+      "status": "partial",
+      "credit": 0,
+      "reason": "The inventory identifies material continuity capabilities and keeps camera/hotspot/mirroring and other gaps open. It still lacks linked feasibility evidence and public/private option research for every material feature.",
+      "supportedWholeCriteria": [
+        "CON-01.1",
+        "CON-01.3"
+      ],
+      "criteriaNotFullyClosed": [
+        "CON-01.2"
+      ],
+      "evidence": [
+        "docs/feature-parity.md",
+        "docs/manual-test-plan.md",
+        ".a5c/artifacts/adversarial-review-2.json"
+      ]
+    },
+    {
+      "id": "CON-02",
+      "metric": "continuity",
+      "title": "Clipboard, file and task handoff",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Checkpoint 2 retains ten successful file transfers and their historical bindings. Files were not rerun at checkpoint 3. Real paired-device clipboard/pasteboard and browser/task destination observations, native picker/consent flows and cancellation/failure coverage remain pending.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CON-02.1",
+        "CON-02.2",
+        "CON-02.3"
+      ],
+      "evidence": [
+        "docs/feature-parity.md",
+        ".a5c/artifacts/adversarial-review-2.json",
+        "docs/evidence/iteration-3/verification-manifest.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "CON-03",
+      "metric": "continuity",
+      "title": "Other integrations and remaining gaps",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Battery/media and other implemented paths lack complete positive/denied/offline real-destination evidence. Material requested hotspot, camera and mirroring gaps remain open; documenting them does not establish parity.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "CON-03.1",
+        "CON-03.2",
+        "CON-03.3"
+      ],
+      "evidence": [
+        "docs/feature-parity.md",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "SEC-01",
+      "metric": "security",
+      "title": "Pairing, authentication and confidentiality",
+      "status": "partial",
+      "credit": 0,
+      "reason": "The full final keyless capture contains no selected private route/text markers and exact outer framing is valid. Complete tested-build mismatched/unpaired pairing rejection, all protected content/media capture scope and independent OS-protected secret-storage acceptance are not closed by this bounded review.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "SEC-01.1",
+        "SEC-01.2",
+        "SEC-01.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+        "docs/evidence/iteration-3/reply-roundtrip-final/capture/summary.json",
+        "docs/evidence/iteration-3/verification-manifest.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "SEC-02",
+      "metric": "security",
+      "title": "Replay and malformed traffic",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Replay/counter checks, injected stale authority checks and protocol regressions support specific rejection paths. Captured traffic is the three-frame positive reply exchange, not complete malformed/oversized/wrong-session injections with externally observed absence of all call/reply/continuity side effects.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "SEC-02.1",
+        "SEC-02.2",
+        "SEC-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+        "docs/evidence/iteration-3/verification-3-final.log"
+      ]
+    },
+    {
+      "id": "SEC-03",
+      "metric": "security",
+      "title": "Consent, revocation and private data",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Injected permission/session/feature revocations and one-use route failures reject without execution. Actual OS permission/listener lifecycle, all-feature revocation, preview/log privacy and real user-data/pairing preservation through recovery are not comprehensively exercised.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "SEC-03.1",
+        "SEC-03.2",
+        "SEC-03.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+        ".a5c/artifacts/device-evidence-3.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "STAB-01",
+      "metric": "stability",
+      "title": "Build and regression evidence",
+      "status": "pass",
+      "credit": 100,
+      "reason": "The checkpoint-2 missing build-time tool-version blocker is resolved. Canonical assembly/lint/tests/Swift build/packaging pass with retained commands, exit code and exact versions. Independently reviewed regressions address concrete failure risks. The tested Android APK/test APK and Swift DebugReceiver match output hashes; installed APK hash agrees with UI evidence. This closes build/regression provenance only, not physical or native acceptance.",
+      "supportedWholeCriteria": [
+        "STAB-01.1",
+        "STAB-01.2",
+        "STAB-01.3"
+      ],
+      "criteriaNotFullyClosed": [],
+      "evidence": [
+        ".a5c/artifacts/verification-3.json",
+        "docs/evidence/iteration-3/verification-3-final.log",
+        "scripts/verify.sh",
+        "docs/evidence/iteration-3/verification-manifest.json",
+        ".a5c/artifacts/device-evidence-3.json",
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+        "docs/evidence/iteration-3/plink-ui.json",
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-L2-independent-review.json"
+      ]
+    },
+    {
+      "id": "STAB-02",
+      "metric": "stability",
+      "title": "Reconnect and lifecycle",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Core lifecycle/generation and synthetic reconnect behavior are tested. Three real network loss, sleep/wake, app restart and locked/background cycles followed by a carrier call with laptop audio and native reply are absent.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "STAB-02.1",
+        "STAB-02.2",
+        "STAB-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "STAB-03",
+      "metric": "stability",
+      "title": "Background and burst stability",
+      "status": "not_run",
+      "credit": 0,
+      "reason": "No frozen two-hour background soak plus 100-notification workload with resource/latency baselines, queue drain, fresh interaction and resolved degradation evidence was supplied. Short reply and unit runs do not satisfy this case.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "STAB-03.1",
+        "STAB-03.2",
+        "STAB-03.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-3.json",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "E2E-01",
+      "metric": "deviceEndToEnd",
+      "title": "Actual Pixel/Mac provenance",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "Iteration 3 used emulator-5580, not a physical Pixel. Same-build physical Pixel/Mac call, reply and continuity observations and preservation of existing user pairing/data are pending.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "E2E-01.1",
+        "E2E-01.2",
+        "E2E-01.3"
+      ],
+      "evidence": [
+        "docs/evidence/iteration-3/verification-manifest.json",
+        ".a5c/artifacts/device-evidence-3.json",
+        ".a5c/artifacts/iteration3-reply-runtime-independent.json"
+      ]
+    },
+    {
+      "id": "E2E-02",
+      "metric": "deviceEndToEnd",
+      "title": "Other Android support",
+      "status": "blocked",
+      "credit": 0,
+      "reason": "No physical non-Pixel Android demonstrates the claimed core calls/audio and native Mac reply journeys. Emulator model/API evidence is not additional physical-device acceptance.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "E2E-02.1",
+        "E2E-02.2",
+        "E2E-02.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-3.json",
+        "docs/feature-parity.md",
+        "docs/manual-test-plan.md"
+      ]
+    },
+    {
+      "id": "E2E-03",
+      "metric": "deviceEndToEnd",
+      "title": "Human-assisted completion ledger",
+      "status": "partial",
+      "credit": 0,
+      "reason": "The manual ledger now specifies prerequisites, owners, actions, expected observations and evidence collection, including two-minute audio and physical non-Pixel journeys. Human-dependent cases are still pending; a documented plan earns no whole-case completion.",
+      "supportedWholeCriteria": [
+        "E2E-03.1"
+      ],
+      "criteriaNotFullyClosed": [
+        "E2E-03.2",
+        "E2E-03.3"
+      ],
+      "evidence": [
+        "docs/manual-test-plan.md",
+        ".a5c/artifacts/device-evidence-3.json"
+      ]
+    },
+    {
+      "id": "PROC-01",
+      "metric": "processIntegrity",
+      "title": "Adversarial review and requested model mix",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Independent critiques preserve findings, fixes, rechecks and unresolved original metrics without invented 100 scores. Complete actual requested model-mix/decision-ownership dispatch evidence is not closed by the supplied bounded package; suggested assignments explicitly are not dispatch records.",
+      "supportedWholeCriteria": [
+        "PROC-01.2",
+        "PROC-01.3"
+      ],
+      "criteriaNotFullyClosed": [
+        "PROC-01.1"
+      ],
+      "evidence": [
+        ".a5c/artifacts/current-iteration.json",
+        ".a5c/artifacts/implementation-decisions-3.json",
+        ".a5c/artifacts/iteration3-L1-independent-review.json",
+        ".a5c/artifacts/iteration3-L2-independent-review.json",
+        ".a5c/artifacts/iteration3-L3-independent-review.json",
+        ".a5c/artifacts/adversarial-review-2.json"
+      ]
+    },
+    {
+      "id": "PROC-02",
+      "metric": "processIntegrity",
+      "title": "Checkpoints and honest completion",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Reviewer makes no commits/pushes and this report explicitly denies full completion. Current checkpoint-3 publication remains a parent action after this report; final published matching-evidence claims and publication record are not yet available at review time.",
+      "supportedWholeCriteria": [
+        "PROC-02.1",
+        "PROC-02.3"
+      ],
+      "criteriaNotFullyClosed": [
+        "PROC-02.2"
+      ],
+      "evidence": [
+        ".a5c/artifacts/current-iteration.json",
+        "docs/evidence/iteration-3/README.md",
+        "docs/evidence/iteration-3/verification-manifest.json",
+        ".a5c/artifacts/device-evidence-3.json"
+      ]
+    },
+    {
+      "id": "E2E-04",
+      "metric": "deviceEndToEnd",
+      "title": "Shared Pixel protection and temporary-file cleanup",
+      "status": "partial",
+      "credit": 0,
+      "reason": "Parent reports no physical Pixel use in iteration 3, restored emulator settings, absent test package and empty mappings. Final raw streams were independently scanned and removed with exact hashes preserved. Cross-team final scratch/reference/AVD/runtime cleanup and original shared-Pixel completion evidence remain open; safe retention during continuing work is not final cleanup closure.",
+      "supportedWholeCriteria": [],
+      "criteriaNotFullyClosed": [
+        "E2E-04.1",
+        "E2E-04.2",
+        "E2E-04.3"
+      ],
+      "evidence": [
+        ".a5c/artifacts/device-evidence-3.json",
+        ".a5c/artifacts/cleanup-inventory-3.json",
+        ".a5c/artifacts/ui-scratch-cleanup-3.json",
+        "docs/evidence/iteration-3/raw-capture-cleanup.json",
+        "docs/manual-test-plan.md"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "I3-UI-01",
+      "priority": "P2",
+      "status": "open_visual_fidelity_gap",
+      "title": "Dark Settings surface differs from the pinned Tomato reference",
+      "exactScenario": "Compare the retained official Tomato v2.0.1 dark Settings image and Plink final-APK dark Settings image at 1.5x on the same API36, 1080x2400, density420 emulator. Tomato has a visibly lighter gray overall background; Plink is substantially darker.",
+      "locations": [
+        {
+          "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.5-settings.png"
+        },
+        {
+          "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-settings.png"
+        }
+      ],
+      "impact": "TOM-02 full visual equivalence cannot be closed. This is an observed requested-fidelity gap, not a claim of broken navigation or a proven source-level color cause.",
+      "requestedCorrection": "Resolve or explicitly review the functional adaptation against the pinned reference, then retain matched evidence.",
+      "evidence": [
+        "docs/evidence/iteration-3/plink-ui.json",
+        ".a5c/artifacts/iteration3-reference-ui.json",
+        ".a5c/artifacts/iteration3-L3-independent-review.json"
+      ]
+    }
+  ],
+  "resolvedSourceAndUIFindings": [
+    {
+      "id": "I3-L1-01",
+      "priority": "P2",
+      "title": "Message-only cleanup also removed startup and shutdown cleanup of stale native controls",
+      "status": "source_fix_verified_runtime_validation_pending",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "line": 51
+        },
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "line": 149
+        },
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 94
+        }
+      ],
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+        "locations": [
+          {
+            "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+            "line": 35
+          },
+          {
+            "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+            "line": 55
+          },
+          {
+            "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+            "line": 150
+          }
+        ],
+        "assessment": "Startup removes prior-process delivered and pending notifications. The new shutdown method clears message entries and explicitly removes tracked HFP and mirrored IDs, resets call state, and is called from applicationWillTerminate after calling.shutdown. Ordinary message expiry/eviction stays scoped to message IDs. Both reported source paths are addressed.",
+        "nativeControlDisappearanceProof": "pending"
+      },
+      "evidence": ".a5c/artifacts/iteration3-L1-independent-review.json",
+      "qualification": "Source mechanism and stated parent regression evidence only; native platform/user outcomes remain pending where specified."
+    },
+    {
+      "id": "I3-L1-02",
+      "priority": "P2",
+      "title": "Mac validation accepts Unicode text exceeding the existing Android limit before consuming context",
+      "status": "source_fix_and_parent_unit_regression_verified_native_integration_pending",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkCore/ReplyRouter.swift",
+          "line": 99
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "line": 136
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/security/SecureEnvelope.kt",
+          "line": 139
+        }
+      ],
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+        "locations": [
+          {
+            "path": "macos/Sources/PlinkCore/ReplyRouter.swift",
+            "line": 99
+          },
+          {
+            "path": "macos/Sources/PlinkCore/SecureEnvelope.swift",
+            "line": 142
+          },
+          {
+            "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+            "line": 142
+          }
+        ],
+        "assessment": "Reply preflight and generic payload string limits use utf16.count, matching Android String.length. The 2,001-emoji case now rejects before messages.takeReply at line 144. Neither validation path changes the original text.",
+        "unicodeTests": "Completed source reviewed at ReplyRouterTests.swift:85-114; both cases pass in parent rerun-3 log:489. Native interaction/integration remains separate."
+      },
+      "evidence": ".a5c/artifacts/iteration3-L1-independent-review.json",
+      "qualification": "Source mechanism and stated parent regression evidence only; native platform/user outcomes remain pending where specified."
+    },
+    {
+      "id": "I3-L2-01",
+      "priority": "P1",
+      "title": "Expired Answer can start an additional native audio side effect after a stuck call returns",
+      "status": "source_fix_and_parent_gate_regression_verified_native_framework_execution_pending",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 326
+        },
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 228
+        },
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 258
+        }
+      ],
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+        "locations": [
+          {
+            "path": "macos/Sources/PlinkCore/MacContinuity.swift",
+            "line": 39
+          },
+          {
+            "path": "macos/Sources/PlinkCore/MacContinuity.swift",
+            "line": 57
+          },
+          {
+            "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+            "line": 332
+          },
+          {
+            "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+            "line": 355
+          }
+        ],
+        "assessment": "WorkTracker.permitsNextStep requires the same executing operation with neither quarantine nor sticky invalidation. cancel/expire set invalidation under the worker lock. Answer rechecks immediately after acceptCall returns, before audio transfer, and also requires the original call context. The worker wrapper rejects stopping. Mute getter/setter and connection substeps have corresponding guards. An expired/cancelled blocked first call therefore cannot authorize the reported subsequent side effect. Permanent executing-timeout quarantine remains.",
+        "regressionSource": {
+          "path": "macos/Tests/PlinkCoreTests/MacContinuityTests.swift",
+          "line": 293,
+          "assessment": "New production-used WorkTracker test asserts next-step denial for both cancel and expire, before and after return; release remains forbidden for expired work. This is helper-source coverage plus independently traced worker use, not executed native continuation proof."
+        },
+        "runtimeExecuted": false
+      },
+      "evidence": ".a5c/artifacts/iteration3-L2-independent-review.json",
+      "qualification": "Source mechanism and stated parent regression evidence only; native platform/user outcomes remain pending where specified."
+    },
+    {
+      "id": "I3-L2-02",
+      "priority": "P2",
+      "title": "Returned-timeout test expects an action that the new reconnect gate deliberately rejects",
+      "status": "test_assertion_fixed_parent_pass_observed",
+      "locations": [
+        {
+          "path": "macos/Tests/PlinkCoreTests/MacContinuityTests.swift",
+          "line": 199
+        },
+        {
+          "path": "macos/Sources/PlinkCore/MacContinuity.swift",
+          "line": 85
+        }
+      ],
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+        "locations": [
+          {
+            "path": "macos/Tests/PlinkCoreTests/MacContinuityTests.swift",
+            "line": 199
+          }
+        ],
+        "assessment": "The test now asserts requiresReconnect and rejection, explicitly reconnects, then begins with a fresh call context and checks the stale old deadline cannot affect the replacement. The production gate was not weakened.",
+        "testExecuted": false
+      },
+      "evidence": ".a5c/artifacts/iteration3-L2-independent-review.json",
+      "qualification": "Source mechanism and stated parent regression evidence only; native platform/user outcomes remain pending where specified."
+    },
+    {
+      "id": "I3-L2-03",
+      "priority": "P2",
+      "title": "Uncertain active-call notification bypasses removal through same-ID dedup",
+      "status": "source_fix_verified_final_gate_pass_native_UI_pending",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "line": 68
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "line": 79
+        },
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 132
+        }
+      ],
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:56:53.212989+00:00",
+        "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+        "sha256": "4fde1eca955907f0179327776e56f9aa959ec7178d946553c49b9cd7c8664f60",
+        "line": 68,
+        "assessment": "stateIsCertain is now required before phase/context/waiting eligibility and before ID/number dedup. An uncertain active context enters the existing removal branch, removes tracked delivered/pending HFP requests, resets call state and returns. The reported same-ID early return is unreachable for uncertain state.",
+        "nativeControlDisappearanceProof": "pending",
+        "canonicalGate": {
+          "path": ".a5c/artifacts/verification-3-final.log",
+          "sha256": "0c24c09eee3b18fbfc0c115d8df4f15367631c50149e8c27ac9b0274dfe93771",
+          "parentExitCode": 0
+        },
+        "residualP1P2InExactFix": []
+      },
+      "evidence": ".a5c/artifacts/iteration3-L2-independent-review.json",
+      "qualification": "Source mechanism and stated parent regression evidence only; native platform/user outcomes remain pending where specified."
+    },
+    {
+      "id": "checkpoint2-large-text-Stop",
+      "priority": "P2",
+      "status": "fixed_in_matching_APK_captured_state",
+      "evidence": [
+        "docs/evidence/iteration-3/plink-gate3-dark-1.5-connection-stop.png",
+        "docs/evidence/iteration-3/plink-gate3-dark-1.5-connection-scan.png",
+        "docs/evidence/iteration-3/plink-ui.json"
+      ],
+      "qualification": "Full Stop and Scan are visible at 1.5x in these states; this does not close every layout/accessibility case."
+    }
+  ],
+  "checkpointSpecificAssessment": {
+    "scope": "Iteration-3 reply authority, native-call operation ownership, Unicode bounds, bounded Android UI improvements and build provenance. No whole-product recertification.",
+    "openP1InReviewedDeltas": 0,
+    "residualP1P2InExactSourceFixes": [],
+    "sourceMechanisms": "Final reply authority rechecks and consumes under shared locking; call tracker invalidates later steps after cancel/expiry; startup/orderly-Quit cleanup and uncertainty guard before dedup are source-addressed. UTF-16 bounds reject oversize input before context consumption while preserving exact text.",
+    "regressionEvidence": {
+      "parentExitCode": 0,
+      "androidTests": 132,
+      "swiftXCTest": 54,
+      "swiftTesting": 60,
+      "lintErrors": 0,
+      "lintWarnings": 32,
+      "gateLog": "docs/evidence/iteration-3/verification-3-final.log",
+      "gateLogSha256": "0c24c09eee3b18fbfc0c115d8df4f15367631c50149e8c27ac9b0274dfe93771",
+      "exactLines": {
+        "toolVersions": [
+          34,
+          68
+        ],
+        "gradleSuccess": 233,
+        "nativeContinuationRegression": 271,
+        "returnedInvocationReconnectRegression": 279,
+        "xCTest54": 368,
+        "unicodeBoundaryCases": 489,
+        "swiftTesting60": 505,
+        "packagedZIP": 527
+      },
+      "reviewerRanBuildOrTests": false,
+      "androidXMLObservation": "30 current suites, 132 tests, 0 failures/errors/skips. Counts were read independently; no historical failing XML was rebound.",
+      "toolVersions": {
+        "macOS": "27.0 build26A428",
+        "Java": "OpenJDK17.0.20.1+0 Homebrew",
+        "Gradle": "9.3.1",
+        "Swift": "6.4 swiftlang-6.4.0.34.1",
+        "Xcode": "27.0 build27A266a",
+        "macOSSDK": "27.0",
+        "androidCompileSDK": 36,
+        "androidBuildTools": "36.0.0",
+        "androidMinSDK": 26,
+        "androidTargetSDK": 36
+      }
+    },
+    "runtimeEvidence": "Final encrypted emulator/Swift reply and actual synthetic RemoteInput checks pass. Three frames are independently scanned. Tests inject authority conditions; they do not exercise actual OS permission/listener lifecycle, native Mac reply input or recipient delivery.",
+    "nativeBoundaries": [
+      "Actual stale old listener-instance callbacks after replacement.",
+      "Native foreign-call scheduling, late callbacks, carrier controls and two-way laptop speech.",
+      "Native Notification Center message/HFP retention, removal on expiry/eviction/uncertainty/restart/Quit, and visible failure feedback."
+    ],
+    "ui": {
+      "reviewedAt": "2026-09-20T06:13:00.109298+00:00",
+      "report": {
+        "path": ".a5c/artifacts/iteration3-plink-ui.json",
+        "sha256": "1c09720c64b6a444e62b0d0ad52ad15dc37223af088b73148befbcb730b894ca"
+      },
+      "referenceReport": {
+        "path": ".a5c/artifacts/iteration3-reference-ui.json",
+        "sha256": "c551b84d9197c6aa2d0de4e1ce3c848b01e109c4d5f1e2a4a12146cc89b7df49"
+      },
+      "installedAPK": "133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82",
+      "reviewerDeviceOperations": false,
+      "imagesViewed": [
+        {
+          "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-connection-stop.png",
+          "sha256": "5ae7edc78c9302e4291de0981c8ee514f49dc50b0947988734809eb5b9da6c2b"
+        },
+        {
+          "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-connection-scan.png",
+          "sha256": "cdaae7a10abd38fb5af0dfb509292da66cb60be81ff2ebeae0bcbe736f5de60c"
+        },
+        {
+          "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-settings.png",
+          "sha256": "a5b256f07e9a1e4486742919dd75630763ae94d6c2195a44649acc86ea3ca116"
+        },
+        {
+          "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-settings-scrolled.png",
+          "sha256": "61af83f14281171dfd66a3426681543f2dc0b43ab23d7833ce1a1d05567701c0"
+        },
+        {
+          "path": "docs/evidence/iteration-3/plink-gate3-light-1.0-settings.png",
+          "sha256": "267f1686d98ea210cbc15e51b762cc968a08d2a8053b88347262e3795da13977"
+        },
+        {
+          "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.5-settings.png",
+          "sha256": "596a5574e9bc681cbddcca7916e7b8f1d3221f201ff216b38c651b0f5905e80a"
+        }
+      ],
+      "videosViewed": [
+        {
+          "path": "docs/evidence/iteration-3/plink-gate3-dark-1.0-navigation-normal.mp4",
+          "frames": 59,
+          "durationSeconds": 7.9978,
+          "independentInspection": "Every decoded frame viewed in two contact sheets. Connection fades into Activity near 2.63 seconds; Activity fades into Settings near 7.72 seconds; clip ends in Settings. Return to Connection is not captured.",
+          "sha256": "197abcc677b6a10f161e1393d9d50df4b5e0d81bcbbec67642ad76b7737485a0"
+        },
+        {
+          "path": "docs/evidence/iteration-3/plink-gate3-dark-1.0-navigation-animator0.mp4",
+          "frames": 16,
+          "durationSeconds": 5.274133,
+          "independentInspection": "Every decoded frame viewed. Connection changes directly to Activity near 2.53 seconds; clip ends in Activity. Settings and return to Connection are not captured.",
+          "sha256": "f38a24483089da648e3705b3b1cecf46f57b4c8b5d1b204dace0dc82d8e560df"
+        },
+        {
+          "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.0-navigation.mp4",
+          "frames": 149,
+          "durationSeconds": 10.644867,
+          "independentInspection": "One-second samples viewed; Timer, Settings and Stats appear. No frame-accurate easing/duration or full gesture comparison claimed.",
+          "sha256": "44fbba59594531753528aec3aeeb8636e6a2e34afc77651fa5ef5c0da02a0732"
+        }
+      ],
+      "confirmed": [
+        "Full Stop and Scan labels are visible at 1.5x in the captured Connection state; the historical Sto clipping is corrected in this tested APK.",
+        "The Settings title/subtitle and actual Continuity controls are present in dark 1.5x, scrolled dark 1.5x, and light 1.0x images.",
+        "Normal video shows actual fade/overlap and settled Activity/Settings; animator-zero video shows a direct transition to Activity."
+      ],
+      "open": [
+        "Dark Settings overall background is visibly lighter gray in the official Tomato reference than in Plink. Component surfaces and functional layouts also differ; no complete equivalence is established.",
+        "Floating navigation overlaps scroll content in these captures; screenshots do not establish the bottommost reachable scroll position. This observation alone is not a new confirmed inaccessible-control defect.",
+        "Stateful segmented-list behavior, full mapped-state/font-fallback comparison, measured motion tolerances, TalkBack and physical Pixel recordings remain open."
+      ],
+      "reportQualification": "In-app route checks reported by the capture operator may occur after retained clips end. Do not treat these clips as independent visual proof of the complete Activity/Settings/Connection sequence, particularly in animator-zero mode.",
+      "completeTomatoFidelity": false
+    },
+    "publicUIReport": {
+      "path": "docs/evidence/iteration-3/plink-ui.json",
+      "sha256": "f12a02d9ad4a0af6e683f3c29646f9801a8addbb529dc4a185865b98254d4802",
+      "originalAgentReport": {
+        "path": ".a5c/artifacts/iteration3-plink-ui.json",
+        "sha256": "1c09720c64b6a444e62b0d0ad52ad15dc37223af088b73148befbcb730b894ca"
+      },
+      "qualification": {
+        "reviewer": "Goodall Astra",
+        "normalClip": "All59frames inspected: Connection to Activity to Settings, then clip ends.",
+        "animatorZeroClip": "All16frames inspected: Connection to Activity only.",
+        "limit": "Later route checks may be outside clips. Neither video independently demonstrates the full three-destination sequence, and unequal durations/frame counts do not prove reduced-motion correctness."
+      },
+      "note": "Public qualification was added after independent viewing; original agent report remains historical. Unequal durations/frame counts do not establish reduced-motion correctness."
+    },
+    "fileTransferBoundary": "Checkpoint-2 ten-transfer evidence is retained under its original source/binary binding; not rerun or recertified at checkpoint3."
+  },
+  "buildBinding": {
+    "manifestPath": "docs/evidence/iteration-3/verification-manifest.json",
+    "manifestSha256": "88283fd016482a154324343439cece3c05eea6ffbf7b634c8929b1dcdcc0a323",
+    "sourceBuildResourceFilesIndependentlyMatched": 174,
+    "binariesIndependentlyMatched": 6,
+    "missing": 0,
+    "mismatches": 0,
+    "binarySha256": {
+      "android/build/outputs/apk/debug/android-debug.apk": "133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82",
+      "android/build/outputs/apk/release/android-release-unsigned.apk": "405adb28311184f7e5f156a7010b1c6fcb86539a82c7d6783ef078049f306a9f",
+      "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk": "793243e28fe05d2af78c04e75712433003470a628250f6f46844db733b3a27e6",
+      "macos/.build/debug/PlinkMacDebugReceiver": "0af575e9be9dc3b2dd351cf8c9e9e3585eea10184364e632eaa6e7b117b555ef",
+      "build/PlinkMac.app/Contents/MacOS/PlinkMac": "daf972dc8b3f830adfba47c7c72ca5e78360012bf3c1efb4f7da684278b0ce0b",
+      "build/PlinkMac.app.zip": "7f35d12fc97451e093b1ae06327477887ce879090601c8ae554f3426e313f036"
+    },
+    "installedApkSha256": "133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82",
+    "installedAPKReportMatchesLocalAndManifest": true,
+    "bindingMethod": "Independently hashed all manifest entries, then compared the UI operator installed-base-APK digest with the local debug APK, expected gate hash and manifest. Reviewer did not query a device.",
+    "baseCommit": "c270fb9cce5548ebd939467312b60dad4f081441",
+    "workingTreeQualifier": "Final build includes the frozen reviewed working-tree changes over c270fb9; parent checkpoint-3 commit/publication follows this report.",
+    "macExecutionBoundary": "Swift DebugReceiver is the tested integration endpoint. The packaged native Mac app/ZIP hashes are bound, but native Mac controls were not executed by this harness."
+  },
+  "finalRawCapture": {
+    "independentReport": {
+      "path": ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+      "sha256": "4f9fa10a790fbcdf27cf16e1d595f7f9911be8021c37a14332d24693691fc091"
+    },
+    "parentExitCode": 0,
+    "summary": {
+      "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/summary.json",
+      "sha256": "645b18299c3fe836ed64c045b895b3bae919fb1fc947506c09127c7517be45c2"
+    },
+    "directions": {
+      "android-to-mac": {
+        "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/android-to-mac.bin",
+        "frames": 2,
+        "wireBytes": 1620,
+        "maximumFrameBytes": 956,
+        "captureSha256": "0afbc8db22e8a2f5c9c7a8c474e16c1a31af59d022d21196ed0fb7d2310f112b",
+        "frameMetadata": [
+          {
+            "bodyBytes": 956,
+            "version": 1,
+            "sourceDeviceId": "test-pixel",
+            "targetDeviceId": "test-mac",
+            "sequence": 1,
+            "issuedAt": "2026-09-20T06:05:08Z",
+            "signatureBytes": 32,
+            "encryptedCombinedBytes": 537
+          },
+          {
+            "bodyBytes": 656,
+            "version": 1,
+            "sourceDeviceId": "test-pixel",
+            "targetDeviceId": "test-mac",
+            "sequence": 2,
+            "issuedAt": "2026-09-20T06:05:08Z",
+            "signatureBytes": 32,
+            "encryptedCombinedBytes": 312
+          }
+        ],
+        "matchesParentSummary": true,
+        "completeLengthPrefixesAndJSON": true,
+        "unexpectedOuterFields": 0,
+        "duplicateOuterKeys": 0,
+        "markerMatches": [],
+        "strictlyIncreasingSequence": true
+      },
+      "mac-to-android": {
+        "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/mac-to-android.bin",
+        "frames": 1,
+        "wireBytes": 980,
+        "maximumFrameBytes": 976,
+        "captureSha256": "9cf2c752ad73b76cae3e711784f1a131f4c53573753239dad3a9e898f2b9ea68",
+        "frameMetadata": [
+          {
+            "bodyBytes": 976,
+            "version": 1,
+            "sourceDeviceId": "test-mac",
+            "targetDeviceId": "test-pixel",
+            "sequence": 1,
+            "issuedAt": "2026-09-20T06:05:08Z",
+            "signatureBytes": 32,
+            "encryptedCombinedBytes": 550
+          }
+        ],
+        "matchesParentSummary": true,
+        "completeLengthPrefixesAndJSON": true,
+        "unexpectedOuterFields": 0,
+        "duplicateOuterKeys": 0,
+        "markerMatches": [],
+        "strictlyIncreasingSequence": true
+      }
+    },
+    "totalFrames": 3,
+    "totalWireBytes": 2600,
+    "knownPlaintextMarkersChecked": 21,
+    "plaintextMarkerMatches": 0,
+    "unexpectedFields": 0,
+    "duplicateOuterKeys": 0,
+    "malformedOrTruncatedFrames": 0,
+    "uniqueReplayNonces": 3,
+    "uniqueAESGCMIVs": 3,
+    "keysReadOrPrinted": false,
+    "ciphertextPrinted": false,
+    "decryptedByReviewer": false,
+    "boundary": "Keyless local TCP relay. Public device IDs/sequence/time/nonce remain visible. Three monotonic frames and selected-marker absence are bounded observations, not exhaustive replay/confidentiality proof. Endpoint logs establish authentication/decryption and execution acknowledgment.",
+    "cleanup": {
+      "ready": true,
+      "parentRemovedAfterIndependentScan": true,
+      "record": {
+        "path": "docs/evidence/iteration-3/raw-capture-cleanup.json",
+        "sha256": "9e4e63b1c86d91f493aec4ae486c11b73728471bca37a2dc355e1a38bab2c98f"
+      },
+      "files": [
+        {
+          "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/android-to-mac.bin",
+          "sha256": "0afbc8db22e8a2f5c9c7a8c474e16c1a31af59d022d21196ed0fb7d2310f112b",
+          "bytes": 1620,
+          "independentlyInspectedBeforeRemoval": true,
+          "currentlyAbsent": true
+        },
+        {
+          "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/mac-to-android.bin",
+          "sha256": "9cf2c752ad73b76cae3e711784f1a131f4c53573753239dad3a9e898f2b9ea68",
+          "bytes": 980,
+          "independentlyInspectedBeforeRemoval": true,
+          "currentlyAbsent": true
+        }
+      ],
+      "reviewerDeletedRawFiles": false
+    }
+  },
+  "rawCaptureCleanupReady": true,
+  "correctionsToStaleClaims": [
+    "Checkpoint2 Stop clipping is fixed in the captured final APK; complete Tomato fidelity remains open.",
+    "Build-time tool versions are now retained; STAB-01 has earned specific whole-case credit.",
+    "All five reported L1/L2 source findings have source corrections and stated regression evidence; native disappearance/platform behavior remains pending.",
+    "Final manifest has174 source/build/resource entries and6 binaries. Earlier165-entry lane snapshots are historical, not the final manifest assessment.",
+    "Public UI video coverage is qualified: normal59frames reaches Activity and Settings; animator-zero16frames reaches Activity only. No clip proves the full return sequence or exact reduced-motion fidelity.",
+    "Old baseline JSON zeros describe absent original submissions; scores here are independently reassessed from current evidence. It is not used as proof that no functionality works.",
+    "Feature-parity.md still describes checkpoint2 Stop clipping and older counts; current matching evidence supersedes that specific defect statement without altering historical checkpoint2 evidence."
+  ],
+  "blockers": [
+    "Real carrier call control and two-minute two-way laptop audio.",
+    "Native Notification Center exact-text recipient delivery, routing and recovery.",
+    "Actual OS permission/listener lifecycle and native control disappearance.",
+    "Complete HIG/accessibility and Tomato fidelity/motion/physical Pixel evidence.",
+    "Real paired-device continuity, native file-picker acceptance and unresolved parity integrations.",
+    "Three-cycle lifecycle recovery and frozen two-hour/100-notification stability evidence.",
+    "Physical non-Pixel core journeys, complete model-mix dispatch audit, final cleanup and parent checkpoint publication."
+  ],
+  "checkpointDecision": {
+    "eligibleForHonestDevelopmentCheckpoint": true,
+    "releaseOrFullAcceptanceApproved": false,
+    "reason": "Frozen source corrections, passing canonical regression gate, matching final synthetic runtime evidence and bounded UI improvements support a development checkpoint.26 original cases remain open; open fidelity gaps and human/platform boundaries are explicit."
+  },
+  "evidence": [
+    {
+      "id": "spec",
+      "path": ".a5c/spec.md",
+      "sha256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd"
+    },
+    {
+      "id": "addendum",
+      "path": ".a5c/device-constraints.md",
+      "sha256": "c3be51adce89b8234fc3bb6001dcc88c78418582a953cbb7d13994e65c0da313"
+    },
+    {
+      "id": "matrix",
+      "path": ".a5c/artifacts/acceptance/matrix.json",
+      "sha256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274"
+    },
+    {
+      "id": "freeze",
+      "path": ".a5c/artifacts/acceptance/freeze.json",
+      "sha256": "1bca89b7246baa5eca82b740309738fadc4a0be366865e7a1b45f4fcdd9194fb"
+    },
+    {
+      "id": "effect",
+      "path": ".a5c/artifacts/current-iteration.json",
+      "sha256": "d4e12b0ef9fa50931b0bf01ba526b06bfad133fea13144d84735c01eb251e023"
+    },
+    {
+      "id": "gate",
+      "path": ".a5c/artifacts/verification-3.json",
+      "sha256": "53ad21ba352eb1704b305c845e2fb9887d9e77012d4bcfbdbf788467bffd9eae"
+    },
+    {
+      "id": "gateLog",
+      "path": "docs/evidence/iteration-3/verification-3-final.log",
+      "sha256": "0c24c09eee3b18fbfc0c115d8df4f15367631c50149e8c27ac9b0274dfe93771"
+    },
+    {
+      "id": "manifest",
+      "path": "docs/evidence/iteration-3/verification-manifest.json",
+      "sha256": "88283fd016482a154324343439cece3c05eea6ffbf7b634c8929b1dcdcc0a323"
+    },
+    {
+      "id": "device",
+      "path": ".a5c/artifacts/device-evidence-3.json",
+      "sha256": "0f15e8ef633a608016881c1909071711166425d459580f137d3a246d562ebf53"
+    },
+    {
+      "id": "runtime",
+      "path": ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+      "sha256": "4f9fa10a790fbcdf27cf16e1d595f7f9911be8021c37a14332d24693691fc091"
+    },
+    {
+      "id": "L1",
+      "path": ".a5c/artifacts/iteration3-L1-independent-review.json",
+      "sha256": "99c3393a815bb244ee3ad73265a9b8b04318534a4a63a7c5c9f1a95b2363c4d3"
+    },
+    {
+      "id": "L2",
+      "path": ".a5c/artifacts/iteration3-L2-independent-review.json",
+      "sha256": "51ded5ca54af4c4dcdda93e1df98d215ac39b3f42d2083ce6887cd532f14b6be"
+    },
+    {
+      "id": "L3",
+      "path": ".a5c/artifacts/iteration3-L3-independent-review.json",
+      "sha256": "740d9e4d27127481eb4d5897718ea724d5dc24b574662a4773ebe0392eb5d9b0"
+    },
+    {
+      "id": "ui",
+      "path": "docs/evidence/iteration-3/plink-ui.json",
+      "sha256": "f12a02d9ad4a0af6e683f3c29646f9801a8addbb529dc4a185865b98254d4802"
+    },
+    {
+      "id": "originalUI",
+      "path": ".a5c/artifacts/iteration3-plink-ui.json",
+      "sha256": "1c09720c64b6a444e62b0d0ad52ad15dc37223af088b73148befbcb730b894ca"
+    },
+    {
+      "id": "referenceUI",
+      "path": ".a5c/artifacts/iteration3-reference-ui.json",
+      "sha256": "c551b84d9197c6aa2d0de4e1ce3c848b01e109c4d5f1e2a4a12146cc89b7df49"
+    },
+    {
+      "id": "provenance",
+      "path": "third_party/tomato/PROVENANCE.json",
+      "sha256": "aa8d2f199a72dd87315458fb8b0994323c2e17e6839d64bf3a2228326e01a28e"
+    },
+    {
+      "id": "manual",
+      "path": "docs/manual-test-plan.md",
+      "sha256": "61915b1e3793ad517d7c093a5b5b2a7f4869d95fee9cbc3e7d3c490caab9642d"
+    },
+    {
+      "id": "parity",
+      "path": "docs/feature-parity.md",
+      "sha256": "ee54cc3265cc1f762193ca4bdaa51cb0124181ff33f05741498f1393d021cc7a"
+    },
+    {
+      "id": "plan",
+      "path": ".a5c/artifacts/implementation-decisions-3.json",
+      "sha256": "651932467f03f7e7a288648959e755a54c28189009e18dc5e0a01b8f546ef5e4"
+    },
+    {
+      "id": "previous",
+      "path": ".a5c/artifacts/adversarial-review-2.json",
+      "sha256": "c0242c7791b32bcc768105e6a29b72093374967630a212f78e74374b0101d0ac"
+    },
+    {
+      "id": "androidLog",
+      "path": "docs/evidence/iteration-3/reply-roundtrip-final/android-roundtrip.log",
+      "sha256": "2aec3bdbee16cb38d075d48f0d1672f718b41cf086cc2de9e95348a844313256"
+    },
+    {
+      "id": "macLog",
+      "path": "docs/evidence/iteration-3/reply-roundtrip-final/mac-roundtrip.log",
+      "sha256": "ad7e4598223e42ad1f65fa6a96e6956f272f28dec3c2cbc592f4ade8a131f24c"
+    },
+    {
+      "id": "capture",
+      "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/summary.json",
+      "sha256": "645b18299c3fe836ed64c045b895b3bae919fb1fc947506c09127c7517be45c2"
+    },
+    {
+      "id": "rawCleanup",
+      "path": "docs/evidence/iteration-3/raw-capture-cleanup.json",
+      "sha256": "9e4e63b1c86d91f493aec4ae486c11b73728471bca37a2dc355e1a38bab2c98f"
+    },
+    {
+      "id": "cleanup",
+      "path": ".a5c/artifacts/cleanup-inventory-3.json",
+      "sha256": "5cdfeab7c257063070437e140cf91c027c991ed2ab3ea02994f5b6f45000defb"
+    },
+    {
+      "id": "uiCleanup",
+      "path": ".a5c/artifacts/ui-scratch-cleanup-3.json",
+      "sha256": "87e0a6b9833895e29462aa98aaa070aa2f24f09e63cdda8cb063907de236372d"
+    },
+    {
+      "id": "readme",
+      "path": "docs/evidence/iteration-3/README.md",
+      "sha256": "cb62171b2c08444c461c4d8163312c0dfac49b08614fc26ecff3d98b9e9247ac"
+    },
+    {
+      "id": "buildScript",
+      "path": "scripts/verify.sh",
+      "sha256": "07bea244b1f32c67885a7d57f07e503302a07a6ddc52cfe5238f5dea4fa60063"
+    },
+    {
+      "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-connection-stop.png",
+      "sha256": "5ae7edc78c9302e4291de0981c8ee514f49dc50b0947988734809eb5b9da6c2b"
+    },
+    {
+      "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-connection-scan.png",
+      "sha256": "cdaae7a10abd38fb5af0dfb509292da66cb60be81ff2ebeae0bcbe736f5de60c"
+    },
+    {
+      "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-settings.png",
+      "sha256": "a5b256f07e9a1e4486742919dd75630763ae94d6c2195a44649acc86ea3ca116"
+    },
+    {
+      "path": "docs/evidence/iteration-3/plink-gate3-dark-1.5-settings-scrolled.png",
+      "sha256": "61af83f14281171dfd66a3426681543f2dc0b43ab23d7833ce1a1d05567701c0"
+    },
+    {
+      "path": "docs/evidence/iteration-3/plink-gate3-light-1.0-settings.png",
+      "sha256": "267f1686d98ea210cbc15e51b762cc968a08d2a8053b88347262e3795da13977"
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.5-settings.png",
+      "sha256": "596a5574e9bc681cbddcca7916e7b8f1d3221f201ff216b38c651b0f5905e80a"
+    },
+    {
+      "path": "docs/evidence/iteration-3/plink-gate3-dark-1.0-navigation-normal.mp4",
+      "sha256": "197abcc677b6a10f161e1393d9d50df4b5e0d81bcbbec67642ad76b7737485a0",
+      "inspection": "Every decoded frame viewed in two contact sheets. Connection fades into Activity near 2.63 seconds; Activity fades into Settings near 7.72 seconds; clip ends in Settings. Return to Connection is not captured."
+    },
+    {
+      "path": "docs/evidence/iteration-3/plink-gate3-dark-1.0-navigation-animator0.mp4",
+      "sha256": "f38a24483089da648e3705b3b1cecf46f57b4c8b5d1b204dace0dc82d8e560df",
+      "inspection": "Every decoded frame viewed. Connection changes directly to Activity near 2.53 seconds; clip ends in Activity. Settings and return to Connection are not captured."
+    },
+    {
+      "path": "docs/evidence/iteration-3/tomato-reference-v2.0.1-dark-1.0-navigation.mp4",
+      "sha256": "44fbba59594531753528aec3aeeb8636e6a2e34afc77651fa5ef5c0da02a0732",
+      "inspection": "One-second samples viewed; Timer, Settings and Stats appear. No frame-accurate easing/duration or full gesture comparison claimed."
+    }
+  ],
+  "changedFiles": [
+    ".a5c/artifacts/adversarial-review-3.json",
+    ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+    ".a5c/artifacts/iteration3-L3-independent-review.json"
+  ],
+  "sourceEdits": [],
+  "deviceOperations": [],
+  "buildsOrProductTestsRunByReviewer": [],
+  "commitsOrPushes": [],
+  "reviewerTemporaryCleanup": {
+    "purpose": "Derived contact sheets for read-only visual inspection",
+    "removedFiles": [
+      "/tmp/plink-critic-ui-review-3/normal.png",
+      "/tmp/plink-critic-ui-review-3/zero.png",
+      "/tmp/plink-critic-ui-review-3/reference.png",
+      "/tmp/plink-critic-ui-review-3/normal-first.png",
+      "/tmp/plink-critic-ui-review-3/normal-last.png",
+      "/tmp/plink-critic-ui-review-3/zero-all.png"
+    ],
+    "directory": "/tmp/plink-critic-ui-review-3",
+    "directoryAbsent": true,
+    "originalMediaModified": false
+  }
+}

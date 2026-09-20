@@ -54,9 +54,11 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.motionScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -83,7 +85,9 @@ import app.plink.android.permissions.PermissionOnboardingStep
 import app.plink.android.services.BackgroundConnectionState
 import app.plink.android.services.SessionStatus
 import app.plink.android.ui.theme.PlinkShapeDefaults
+import app.plink.android.ui.theme.plinkTopBarTitleStyle
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlinkAppScreen(
     state: PlinkUiState,
@@ -91,6 +95,7 @@ fun PlinkAppScreen(
     modifier: Modifier = Modifier
 ) {
     var destination by remember { mutableStateOf(PlinkDestination.Connection) }
+    val motionScheme = MaterialTheme.motionScheme
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -105,7 +110,10 @@ fun PlinkAppScreen(
     ) { padding ->
         AnimatedContent(
             targetState = destination,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            transitionSpec = {
+                fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                    fadeOut(motionScheme.defaultEffectsSpec())
+            },
             label = "Plink destination",
             modifier = Modifier.fillMaxSize()
         ) { screen ->
@@ -416,12 +424,14 @@ private fun ScreenScaffold(
     outerPadding: PaddingValues,
     content: @Composable (PaddingValues) -> Unit
 ) {
+    val titleStyle = plinkTopBarTitleStyle()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                        Text(title, style = MaterialTheme.typography.headlineMedium)
+                        Text(title, style = titleStyle)
                         Text(subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },

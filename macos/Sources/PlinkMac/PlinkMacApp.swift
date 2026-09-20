@@ -107,6 +107,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         notificationBridge.onStaleAction = { [weak self] in
             self?.lastDeliveryState = "That action expired. Use the latest notification."
         }
+        notificationBridge.onInvalidReply = { [weak self] in
+            self?.lastReply = "Reply failed: the message is empty or too long."
+        }
         calling.onCallChanged = { [weak self] call in self?.notificationBridge.updateCall(call) }
         housekeeping = Task { [weak self] in
             while !Task.isCancelled {
@@ -144,7 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         activeTransport = nil
         pairedPeerID = nil
         calling.shutdown()
-        notificationBridge.clearContexts()
+        notificationBridge.shutdown()
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

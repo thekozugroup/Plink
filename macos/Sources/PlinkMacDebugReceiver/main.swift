@@ -85,7 +85,7 @@ try server.start { result in
                 Task {
                     do {
                         let reply = try ReplyRouter.makeReplyEnvelope(context: context,
-                            text: "Plink encrypted roundtrip ✓", id: "mac-roundtrip-reply")
+                            text: "\t  Plink encrypted roundtrip ✓\nCafe\u{0301} 👩‍💻\n  ", id: "mac-roundtrip-reply")
                         try await SecureNetworkPlinkClient(host: "127.0.0.1", port: replyPort,
                             codec: codec, stateStore: frameState).send(reply)
                         print("roundtrip: authenticated Android message; Swift reply sent")

@@ -13,6 +13,7 @@ import app.plink.android.continuity.OutgoingFileSource
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeatureSettings
 import app.plink.android.notifications.RemoteInputReplyExecutor
+import app.plink.android.notifications.ReplyDispatchLock
 import app.plink.android.pairing.PairedDevice
 import app.plink.android.protocol.PlinkEventType
 import app.plink.android.protocol.FileTransferPayloadPolicy
@@ -29,6 +30,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,8 +72,7 @@ class PlinkSessionController(
         featureSettings.addListener { feature, enabled ->
             if (!enabled) {
                 if (feature == ContinuityFeature.Messages) {
-                    SharedReplyRoutes.registry.clear()
-                    SharedReplyActions.registry.clear()
+                    revokeReplyCapabilities()
                 }
                 if (feature == ContinuityFeature.Files) fileTransferCoordinator.featureDisabled()
                 SharedOutboundBridge.purge(feature.eventTypes)
@@ -81,8 +82,7 @@ class PlinkSessionController(
             featureSettings.enabled.collectLatest { enabled ->
                 if (activeSession == null) return@collectLatest
                 if (enabled[ContinuityFeature.Messages] != true) {
-                    SharedReplyRoutes.registry.clear()
-                    SharedReplyActions.registry.clear()
+                    revokeReplyCapabilities()
                 }
                 if (enabled[ContinuityFeature.Battery] == true) batteryCollector.start() else batteryCollector.stop()
                 if (enabled[ContinuityFeature.Media] == true) mediaCollector.start() else mediaCollector.stop()
@@ -112,8 +112,6 @@ class PlinkSessionController(
             val server = createReplyServer(localDeviceId, pairedDevice.id, sessionKey, localReplyPort)
             server.start()
             replyServer = server
-            SharedReplyRoutes.registry.clear()
-            SharedReplyActions.registry.clear()
             activeSession = session
             outbox = DurableEventOutbox(
                 directory = File(context.filesDir, "event-outbox"),
@@ -129,6 +127,7 @@ class PlinkSessionController(
             SharedSessionState.configure(session)
             configureOutbound(pairedDevice, sessionKey)
             val generation = sessionGeneration.incrementAndGet()
+            setReplySession(generation, active = true)
             fileTransferCoordinator.activateSession(localDeviceId, pairedDevice.id, generation)
             startReplyReceiver(server, localDeviceId, pairedDevice.id, generation)
             _status.value = SessionStatus.READY
@@ -155,7 +154,8 @@ class PlinkSessionController(
 
     @Synchronized
     fun stop() {
-        sessionGeneration.incrementAndGet()
+        val generation = sessionGeneration.incrementAndGet()
+        setReplySession(generation, active = false)
         fileTransferCoordinator.deactivateSession()
         replyServer?.close()
         replyServer = null
@@ -165,8 +165,6 @@ class PlinkSessionController(
         mediaCollector.stop()
         SharedOutboundBridge.configure(null)
         SharedSessionState.clear()
-        SharedReplyRoutes.registry.clear()
-        SharedReplyActions.registry.clear()
         activeSession = null
         outbox = null
         _status.value = SessionStatus.DISCONNECTED
@@ -261,7 +259,19 @@ class PlinkSessionController(
         val executor = RemoteInputReplyExecutor(
             context = context.applicationContext,
             routes = SharedReplyRoutes.registry,
-            actions = SharedReplyActions.registry
+            actions = SharedReplyActions.registry,
+            isAuthorized = { action, reply ->
+                val session = activeSession
+                SharedReplyDispatchAuthority.isCurrent(action.capabilityGeneration) &&
+                    app.plink.android.permissions.AndroidPermissionReader.isNotificationListenerEnabled(context) &&
+                    featureSettings.isEnabled(ContinuityFeature.Messages) &&
+                    _status.value == SessionStatus.READY &&
+                    generation == action.capabilityGeneration.sessionGeneration &&
+                    sessionGeneration.get() == generation &&
+                    session?.localDeviceId == localDeviceId &&
+                    session.pairedDevice.id == pairedDeviceId &&
+                    reply.route.pairedDeviceId == pairedDeviceId
+            }
         )
         replyReceiverJob = scope.launch {
             previousJob?.join()
@@ -269,8 +279,9 @@ class PlinkSessionController(
                 localDeviceId = localDeviceId,
                 pairedDeviceId = pairedDeviceId,
                 executeReply = { envelope ->
-                    require(featureSettings.isEnabled(ContinuityFeature.Messages)) { "Messages are disabled." }
-                    executor.execute(envelope, localDeviceId)
+                    withContext(Dispatchers.Main.immediate) {
+                        executor.execute(envelope, localDeviceId)
+                    }
                 },
                 executeMedia = { sessionId, command ->
                     require(featureSettings.isEnabled(ContinuityFeature.Media)) { "Media is disabled." }
@@ -316,6 +327,21 @@ class PlinkSessionController(
         val port = endpoint.substring(separator + 1).toInt()
         require(port in 1..65535) { "Paired endpoint port is invalid." }
         return host to port
+    }
+
+    private fun revokeReplyCapabilities() {
+        ReplyDispatchLock.serialized {
+            SharedReplyRoutes.registry.clear()
+            SharedReplyActions.registry.clear()
+        }
+    }
+
+    private fun setReplySession(generation: Long, active: Boolean) {
+        ReplyDispatchLock.serialized {
+            SharedReplyDispatchAuthority.sessionChanged(generation, active)
+            SharedReplyRoutes.registry.clear()
+            SharedReplyActions.registry.clear()
+        }
     }
 
     private companion object {

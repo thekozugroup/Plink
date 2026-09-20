@@ -7,6 +7,7 @@ Pixel-to-Mac continuity with native Android and macOS apps.
 - Two-sided, authenticated pairing consent with code comparison.
 - Android notification mirroring and a validated inbound reply server for eligible free-form `RemoteInput` actions.
 - Android battery and media collectors, plus text and URL share handoff in both directions.
+- Bidirectional encrypted file transfer with explicit consent, native file selection, a 16 MiB limit, and verified saved results.
 - Explicit Android background-connection control backed by an application-owned foreground service.
 - Native macOS call controls through an experimental Bluetooth HFP controller.
 - Tomato-derived Android Compose UI under GPL-3.0-or-later.
@@ -19,7 +20,6 @@ Four Pixel synthetic `RemoteInput` checks passed: one-time delivery with reuse r
 
 ## Requested scope still unimplemented
 
-- File transfer
 - Instant Hotspot
 - Continuity Camera
 - Screen mirroring
@@ -28,9 +28,9 @@ Background connection is an explicit optional Android UI switch. Foreground-serv
 
 ## Evidence
 
-Development evidence, including the native Mac dashboard, Android emulator UI, and synthetic encrypted roundtrip logs: [2026-09-19 checkpoint](docs/evidence/2026-09-19/README.md).
+Development evidence includes [checkpoint 3 reply/call corrections and Android design checks](docs/evidence/iteration-3/README.md), the [checkpoint 2 file transfers](docs/evidence/2026-09-20/README.md), and the [earlier native Mac dashboard](docs/evidence/2026-09-19/README.md).
 
-The latest canonical source gate passed 111 Android tests and 82 Swift tests (31 XCTest and 51 Swift Testing). Android lint completed with 0 errors and 27 warnings. The latest isolated emulator roundtrip passed seven synthetic platform checks. These results are development evidence, not full hardware or accessibility acceptance.
+Checkpoint 3 passes 132 Android tests and 114 Swift tests (54 XCTest and 60 Swift Testing), with 0 Android lint errors and 32 warnings. The encrypted reply harness exercises actual synthetic RemoteInput delivery, exact Unicode/whitespace preservation and final-dispatch revocation. Checkpoint 2 separately verified ten encrypted file transfers across both directions and five size boundaries. Native notification interaction, physical-device behavior, and full hardware/accessibility acceptance remain open. See the [feature inventory](docs/feature-parity.md) and [manual acceptance plan](docs/manual-test-plan.md).
 
 ## Build and test
 

@@ -1,0 +1,49 @@
+{
+  "atUTC": "2026-09-20T05:56:20.207128+00:00",
+  "reason": "Only task-owned synthetic raw capture, independently inspected before removal. Historical pre-final-Mac-guard run.",
+  "independentReport": ".a5c/artifacts/iteration3-reply-runtime-independent.json",
+  "removed": [
+    {
+      "path": "docs/evidence/iteration-3/reply-roundtrip/capture/android-to-mac.bin",
+      "bytes": 1620,
+      "sha256": "a64ae4a15defc8989b8b01be8725d888c59b5c81e8c7fe4e74b109db28a1f144"
+    },
+    {
+      "path": "docs/evidence/iteration-3/reply-roundtrip/capture/mac-to-android.bin",
+      "bytes": 980,
+      "sha256": "2ab754ca23799bf208f36144747990c4eae9233d4608df898cb16288f788b83e"
+    }
+  ],
+  "finalRunRemoved": [
+    {
+      "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/android-to-mac.bin",
+      "sha256": "0afbc8db22e8a2f5c9c7a8c474e16c1a31af59d022d21196ed0fb7d2310f112b",
+      "bytes": 1620
+    },
+    {
+      "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/mac-to-android.bin",
+      "sha256": "9cf2c752ad73b76cae3e711784f1a131f4c53573753239dad3a9e898f2b9ea68",
+      "bytes": 980
+    }
+  ],
+  "finalRunIndependentInspection": "Goodall final independent scan, reported2026-09-20 before cleanup; full final review follows.",
+  "finalCleanupAtUTC": "2026-09-20T06:11:19.305728+00:00",
+  "relayScratchRemoved": [
+    {
+      "path": "docs/evidence/iteration-3/reply-roundtrip/capture/ready.json",
+      "bytes": 50
+    },
+    {
+      "path": "docs/evidence/iteration-3/reply-roundtrip/capture.log",
+      "bytes": 0
+    },
+    {
+      "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture/ready.json",
+      "bytes": 50
+    },
+    {
+      "path": "docs/evidence/iteration-3/reply-roundtrip-final/capture.log",
+      "bytes": 0
+    }
+  ]
+}

@@ -182,24 +182,161 @@ final class MacContinuityTests: XCTestCase {
         XCTAssertFalse(call.begin(.hangUp, context: context))
     }
 
-    func testBluetoothDeadlineBlocksRetriesAndIgnoresLateCompletion() {
+    func testReturnedInvocationTimesOutRecoverablyAndInvalidatesCallActions() {
         var gate = MacBluetoothOperationGate()
-        let first = gate.begin()!
-        XCTAssertNil(gate.begin())
-        XCTAssertFalse(gate.timeout(UUID()))
-        XCTAssertTrue(gate.timeout(first))
-        XCTAssertNil(gate.begin())
-        XCTAssertFalse(gate.complete(first))
-        XCTAssertTrue(gate.blocked)
+        let generation = UUID()
+        var call = activeCall()
+        let context = call.context!
+        let operation = gate.begin(generation: generation, action: .computerAudio, context: context)!
+        XCTAssertTrue(call.begin(.computerAudio, context: context))
+
+        XCTAssertEqual(gate.timeout(operation, invocation: .returned), .recoverable)
+        XCTAssertTrue(call.markUnconfirmed(context: context))
+        XCTAssertFalse(gate.blocked)
+        XCTAssertNil(gate.current)
+        XCTAssertFalse(call.permits(.phoneAudio, context: context))
+
+        XCTAssertTrue(gate.requiresReconnect)
+        XCTAssertNil(gate.begin(generation: UUID(), action: .hangUp, context: context))
+        gate.reconnecting()
+        let fresh = gate.begin(generation: UUID(), action: .hangUp, context: activeCall().context!)
+        XCTAssertNotNil(fresh)
+        XCTAssertEqual(gate.timeout(operation, invocation: .executing), .ignored)
+        XCTAssertEqual(gate.current, fresh)
     }
 
-    func testBluetoothCompletionAllowsOnlyNextOperation() {
+    func testExecutingInvocationQuarantinesEvenAfterRemoteEnd() {
         var gate = MacBluetoothOperationGate()
-        let first = gate.begin()!
-        XCTAssertTrue(gate.complete(first))
-        let next = gate.begin()!
-        XCTAssertFalse(gate.complete(first))
-        XCTAssertTrue(gate.complete(next))
+        let call = activeCall()
+        let operation = gate.begin(generation: UUID(), action: .phoneAudio, context: call.context!)!
+
+        XCTAssertFalse(gate.cancelCall(operation, invocation: .executing))
+        XCTAssertFalse(gate.hasCallOwnership)
+        XCTAssertEqual(gate.timeout(operation, invocation: .executing), .quarantined)
+        XCTAssertTrue(gate.blocked)
+        XCTAssertNil(gate.begin(generation: UUID()))
+        XCTAssertFalse(gate.invocationReturned(operation))
+    }
+
+    func testEveryCallActionCancelsOnTerminalStateWithoutMigratingIdentity() {
+        for action in [MacCallAction.answer, .decline, .hangUp, .computerAudio, .phoneAudio] {
+            var call = action == .answer || action == .decline ? ringingCall() : activeCall()
+            let context = call.context!
+            var gate = MacBluetoothOperationGate()
+            let operation = gate.begin(generation: UUID(), action: action, context: context)!
+            XCTAssertTrue(call.begin(action, context: context), action.rawValue)
+            XCTAssertTrue(gate.cancelCall(operation, invocation: .returned), action.rawValue)
+            call.setActive(false)
+            XCTAssertNil(gate.current, action.rawValue)
+            XCTAssertFalse(call.permits(action, context: context), action.rawValue)
+
+            call.connected(phoneID: "phone")
+            call.setActive(true)
+            XCTAssertNotEqual(call.context, context, action.rawValue)
+            XCTAssertFalse(call.permits(action, context: context), action.rawValue)
+        }
+    }
+
+    func testLateOperationAndOldGenerationCannotCompleteReplacement() {
+        var gate = MacBluetoothOperationGate()
+        let callA = activeCall()
+        let operationA = gate.begin(generation: UUID(), action: .hangUp, context: callA.context!)!
+        XCTAssertTrue(gate.cancelCall(operationA, invocation: .returned))
+
+        let callB = activeCall()
+        let operationB = gate.begin(generation: UUID(), action: .hangUp, context: callB.context!)!
+        XCTAssertFalse(gate.confirm(operationA, invocation: .returned))
+        XCTAssertFalse(gate.invocationReturned(operationA))
+        XCTAssertEqual(gate.timeout(operationA, invocation: .executing), .ignored)
+        XCTAssertEqual(gate.current, operationB)
+        XCTAssertFalse(gate.confirm(operationB, invocation: .executing))
+        XCTAssertEqual(gate.current, operationB)
+        XCTAssertTrue(gate.invocationReturned(operationB))
+    }
+
+    func testQueuedExpiredWorkNeverStartsAndReturnedCompletionCanBeDelayed() {
+        let generation = UUID()
+        let operation = MacBluetoothOperationGate.Operation(
+            id: UUID(), generation: generation, action: nil, context: nil
+        )
+        var work = MacBluetoothOperationGate.WorkTracker()
+        XCTAssertTrue(work.enqueue(operation))
+        XCTAssertEqual(work.expire(operation), .queued)
+        XCTAssertFalse(work.start(operation))
+
+        let returned = MacBluetoothOperationGate.Operation(
+            id: UUID(), generation: generation, action: nil, context: nil
+        )
+        XCTAssertTrue(work.enqueue(returned))
+        XCTAssertTrue(work.start(returned))
+        XCTAssertTrue(work.returned(returned))
+        XCTAssertEqual(work.state(of: returned), .returned)
+        XCTAssertTrue(work.release(returned))
+    }
+
+    func testExpiredExecutingWorkStaysQuarantinedAfterLateReturn() {
+        let operation = MacBluetoothOperationGate.Operation(
+            id: UUID(), generation: UUID(), action: nil, context: nil
+        )
+        var work = MacBluetoothOperationGate.WorkTracker()
+        XCTAssertTrue(work.enqueue(operation))
+        XCTAssertTrue(work.start(operation))
+        XCTAssertEqual(work.expire(operation), .executing)
+        XCTAssertTrue(work.quarantined)
+        XCTAssertTrue(work.returned(operation))
+        XCTAssertFalse(work.release(operation))
+        XCTAssertFalse(work.enqueue(MacBluetoothOperationGate.Operation(
+            id: UUID(), generation: UUID(), action: nil, context: nil
+        )))
+    }
+
+    func testNativeContinuationIsDeniedAfterExpiryOrCancellation() {
+        for expire in [true, false] {
+            var gate = MacBluetoothOperationGate()
+            let operation = gate.begin(generation: UUID(), action: .answer, context: ringingCall().context!)!
+            var work = MacBluetoothOperationGate.WorkTracker()
+            XCTAssertTrue(work.enqueue(operation))
+            XCTAssertTrue(work.start(operation))
+            XCTAssertTrue(work.permitsNextStep(operation))
+            // The first native invocation is still executing when the deadline or call end arrives.
+            if expire { XCTAssertEqual(work.expire(operation), .executing) }
+            else { XCTAssertEqual(work.cancel(operation), .executing) }
+            XCTAssertFalse(work.permitsNextStep(operation))
+            XCTAssertTrue(work.returned(operation))
+            XCTAssertFalse(work.permitsNextStep(operation))
+            XCTAssertEqual(work.release(operation), !expire)
+        }
+    }
+
+    func testSCOAndGenericActiveCannotResolveUnconfirmedAnswer() {
+        var call = ringingCall()
+        let context = call.context!
+        XCTAssertTrue(call.begin(.answer, context: context))
+        call.setSCO(true)
+        XCTAssertEqual(call.phase, .answering)
+        XCTAssertTrue(call.markUnconfirmed(context: context))
+        call.setActive(true)
+        XCTAssertFalse(call.stateIsCertain)
+        XCTAssertFalse(call.permits(.hangUp, context: context))
+
+        call.observeCall(index: 1, status: 0)
+        XCTAssertTrue(call.stateIsCertain)
+        XCTAssertNotEqual(call.context, context)
+        XCTAssertTrue(call.permits(.hangUp, context: call.context!))
+    }
+
+    private func ringingCall() -> MacCallSession {
+        var call = MacCallSession()
+        call.connected(phoneID: "phone")
+        call.ringing(number: nil)
+        return call
+    }
+
+    private func activeCall() -> MacCallSession {
+        var call = MacCallSession()
+        call.connected(phoneID: "phone")
+        call.setActive(true)
+        return call
     }
 
     private func envelope(_ type: EventType, id: String = "event", payload: [String: PayloadValue]) -> PlinkEnvelope {

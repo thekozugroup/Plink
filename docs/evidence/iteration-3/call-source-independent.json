@@ -1,0 +1,291 @@
+{
+  "schemaVersion": 1,
+  "lane": "L2",
+  "status": "bounded_source_findings_addressed_parent_gate_pass_native_acceptance_pending",
+  "reviewedAt": "2026-09-20T05:42:04.721211+00:00",
+  "existingBabysitterRun": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+  "verified": false,
+  "baseCheckpoint": "c270fb9",
+  "scope": "Frozen Bluetooth controller, production-used operation gate/worker tracker/call-state changes and actual MacContinuityTests delta. No test/build/device execution.",
+  "reviewedInitialSourceHashes": {
+    "macos/Sources/PlinkCore/MacContinuity.swift": "a79ae5824f22d36a397c83f2486e722e1ab8c67719d688ac624b9d37b9eec4c6",
+    "macos/Sources/PlinkMac/BluetoothCallController.swift": "d6d52c2506d1b80db4399135ba75c2c746efdd0ae54d00588cf3fd69034f97c4",
+    "macos/Tests/PlinkCoreTests/MacContinuityTests.swift": "8a249971128f707af51637938eb2aea4339509890c50fb46972062b2e107883b"
+  },
+  "findings": [
+    {
+      "id": "I3-L2-01",
+      "priority": "P1",
+      "title": "Expired Answer can start an additional native audio side effect after a stuck call returns",
+      "status": "source_fix_and_parent_gate_regression_verified_native_framework_execution_pending",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 326
+        },
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 228
+        },
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 258
+        }
+      ],
+      "exactScenario": [
+        "O1 Answer starts phone.acceptCall on the single worker.",
+        "acceptCall remains executing beyond the 12-second deadline; expire invalidates O1, quarantines the worker and disables controller actions.",
+        "The phone call may change while blocked. When acceptCall eventually returns, the same body unconditionally starts phone.transferAudioToComputer despite O1 invalidation."
+      ],
+      "expected": "Do not undo an already-entered foreign call, but recheck sticky operation ownership before beginning a subsequent side-effecting API after that foreign call returns. Keep permanent quarantine.",
+      "evidenceKind": "static_ordered_call_path",
+      "runtimeReproduced": false,
+      "reportedToParent": true,
+      "regressionNeeded": "Count two sequential synthetic native steps; expire/cancel while step one is blocked, then release it. Step two must remain at zero. Use the production-used authorization mechanism.",
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+        "locations": [
+          {
+            "path": "macos/Sources/PlinkCore/MacContinuity.swift",
+            "line": 39
+          },
+          {
+            "path": "macos/Sources/PlinkCore/MacContinuity.swift",
+            "line": 57
+          },
+          {
+            "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+            "line": 332
+          },
+          {
+            "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+            "line": 355
+          }
+        ],
+        "assessment": "WorkTracker.permitsNextStep requires the same executing operation with neither quarantine nor sticky invalidation. cancel/expire set invalidation under the worker lock. Answer rechecks immediately after acceptCall returns, before audio transfer, and also requires the original call context. The worker wrapper rejects stopping. Mute getter/setter and connection substeps have corresponding guards. An expired/cancelled blocked first call therefore cannot authorize the reported subsequent side effect. Permanent executing-timeout quarantine remains.",
+        "regressionSource": {
+          "path": "macos/Tests/PlinkCoreTests/MacContinuityTests.swift",
+          "line": 293,
+          "assessment": "New production-used WorkTracker test asserts next-step denial for both cancel and expire, before and after return; release remains forbidden for expired work. This is helper-source coverage plus independently traced worker use, not executed native continuation proof."
+        },
+        "runtimeExecuted": false
+      }
+    },
+    {
+      "id": "I3-L2-02",
+      "priority": "P2",
+      "category": "regression_test_mismatch",
+      "title": "Returned-timeout test expects an action that the new reconnect gate deliberately rejects",
+      "status": "test_assertion_fixed_parent_pass_observed",
+      "locations": [
+        {
+          "path": "macos/Tests/PlinkCoreTests/MacContinuityTests.swift",
+          "line": 199
+        },
+        {
+          "path": "macos/Sources/PlinkCore/MacContinuity.swift",
+          "line": 85
+        }
+      ],
+      "exactScenario": [
+        "The test times out an unconfirmed returned .computerAudio action. timeout sets requiresReconnect=true.",
+        "It immediately calls begin(.hangUp) and expects nonnil without reconnecting. begin rejects nonnil actions while requiresReconnect."
+      ],
+      "expected": "Assert rejection while reconnect is required; explicitly reset through the approved reconnect path before testing a fresh operation identity. Do not weaken the production guard to satisfy the test.",
+      "evidenceKind": "static_deterministic_assertion_contradiction",
+      "runtimeReproduced": false,
+      "reportedToParent": true,
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+        "locations": [
+          {
+            "path": "macos/Tests/PlinkCoreTests/MacContinuityTests.swift",
+            "line": 199
+          }
+        ],
+        "assessment": "The test now asserts requiresReconnect and rejection, explicitly reconnects, then begins with a fresh call context and checks the stale old deadline cannot affect the replacement. The production gate was not weakened.",
+        "testExecuted": false
+      }
+    },
+    {
+      "id": "I3-L2-03",
+      "priority": "P2",
+      "title": "Uncertain active-call notification bypasses removal through same-ID dedup",
+      "status": "source_fix_verified_final_gate_pass_native_UI_pending",
+      "initialSourceHash": "352ecd9ebcaa8a5ce57929b617a31aaa4a017ec1a351824d657068215324e0c8",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "line": 68
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "line": 79
+        },
+        {
+          "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+          "line": 132
+        }
+      ],
+      "exactScenario": [
+        "Recoverable computerAudio timeout marks the same active call context uncertain and publishes it.",
+        "Before the fix, updateCall checked context/phase/waiting only, then returned on unchanged ID+number; existing End Call controls were not removed despite the controller rejecting actions until reconnect."
+      ],
+      "evidenceKind": "static_ordered_call_path",
+      "runtimeReproduced": false,
+      "reportedToParent": true,
+      "resolution": {
+        "reviewedAt": "2026-09-20T05:56:53.212989+00:00",
+        "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+        "sha256": "4fde1eca955907f0179327776e56f9aa959ec7178d946553c49b9cd7c8664f60",
+        "line": 68,
+        "assessment": "stateIsCertain is now required before phase/context/waiting eligibility and before ID/number dedup. An uncertain active context enters the existing removal branch, removes tracked delivered/pending HFP requests, resets call state and returns. The reported same-ID early return is unreachable for uncertain state.",
+        "nativeControlDisappearanceProof": "pending",
+        "canonicalGate": {
+          "path": ".a5c/artifacts/verification-3-final.log",
+          "sha256": "0c24c09eee3b18fbfc0c115d8df4f15367631c50149e8c27ac9b0274dfe93771",
+          "parentExitCode": 0
+        },
+        "residualP1P2InExactFix": []
+      }
+    }
+  ],
+  "caseAssessment": [
+    {
+      "case": "I3-C01",
+      "status": "returned_deadline_mechanism_and_reconnect_assertion_source_addressed_runtime_pending",
+      "assessment": "Actual worker return state remains independent of MainActor callback timing. Returned unconfirmed expiry is recoverable and requires explicit reconnect. The corrected C01 assertion now verifies this requirement before allowing fresh ownership; no test execution is claimed."
+    },
+    {
+      "case": "I3-C02",
+      "status": "quarantine_and_late_continuation_source_addressed_runtime_pending",
+      "assessment": "Executing cancellation preserves worker ownership and deadline while invalidating subsequent steps; expiry adds permanent quarantine. The actual Answer body now checks the same production-used tracker after the foreign call returns. Late return cannot authorize the reported audio transfer or release expired quarantine."
+    },
+    {
+      "case": "I3-C03",
+      "status": "terminal_cancellation_wired_static_runtime_pending",
+      "assessment": "Terminal call/disconnect events carry operation and ended context to cancelCall for every pending call action. Returned/queued cancellation releases ownership; executing cancellation retains stuck safety. New tests cover answer, decline, hangUp, computerAudio and phoneAudio at the production-used gate/session level."
+    },
+    {
+      "case": "I3-C04",
+      "status": "operation_generation_guards_present_delegate_runtime_boundary_pending",
+      "assessment": "Operation equality includes UUID, phone generation, action and call context; gate and WorkTracker reject O1 after O2. Worker delegates require object identity with current phone; MainActor events reject old generation. Native delegate scheduling and same-phone delayed observations remain unexecuted."
+    },
+    {
+      "case": "I3-C05",
+      "status": "queued_and_returned_worker_mechanism_present_runtime_pending",
+      "assessment": "WorkTracker.start still rejects queued work removed by expiry; actual return state is recorded before the delayed UI callback. New permitsNextStep checks close the reported multi-step continuation path. Unit source covers tracker transitions and next-step denial; full controller/platform execution remains pending."
+    },
+    {
+      "case": "I3-C06",
+      "status": "truthful_state_source_present_human_audio_unverified",
+      "assessment": "Answer completion uses call-active/end observations, not SCO alone. SCO is explicitly unverified audio; held/waiting/multiple-call checks remain. Generic active retains uncertain existing context. Controller additionally requires explicit reconnect after timeout; a core fresh-index test alone does not demonstrate controller action recovery."
+    }
+  ],
+  "testReportReconciliation": "Actual MacContinuityTests.swift contains the new regressions; the worker report claiming it unchanged is stale. Parent integration artifact records the actual test hash. No test pass is inferred.",
+  "unverifiedBoundaries": [
+    "Canonical compilation and unit results pending parent gate.",
+    "Production worker/controller event-order integration, including expired sequential API continuation.",
+    "Real carrier answer/end/route effect and two-way laptop audio.",
+    "Native notification action eligibility/disappearance and late platform callbacks."
+  ],
+  "acceptance": {
+    "originalMatrixUnchanged": true,
+    "originalMetricsUnchanged": true,
+    "newAcceptanceCredit": false
+  },
+  "changedFiles": [
+    ".a5c/artifacts/iteration3-L2-independent-review.json"
+  ],
+  "updatedAt": "2026-09-20T05:56:53.212989+00:00",
+  "openSourceFindingCount": 0,
+  "remediationReview": {
+    "reviewedAt": "2026-09-20T05:46:49.604169+00:00",
+    "scope": "Only the requested sticky next-step guards, their native call sites and corrected/new MacContinuity test source. No broad rereview.",
+    "reviewedFiles": [
+      {
+        "path": "macos/Sources/PlinkCore/MacContinuity.swift",
+        "sha256": "fe28aea24a0c811c9e8076cd6f2ff796ccb8f8566a872804c320db10eb38b7d3"
+      },
+      {
+        "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+        "sha256": "22b6ee58f246f7529614b54f3cc8e3424e2979aa0c7549c0b34285e2112a367b"
+      },
+      {
+        "path": "macos/Tests/PlinkCoreTests/MacContinuityTests.swift",
+        "sha256": "307f4fe635a13d747ff6ccff1e7406bd3131c8e156df614f8c767883de8b7d59"
+      }
+    ],
+    "sourceStableDuringRecheck": true,
+    "residualP1P2": [],
+    "buildsRun": false,
+    "testsRun": false,
+    "devicesUsed": false,
+    "limits": [
+      "Canonical compilation and regression execution remain parent-owned and unverified by this recheck.",
+      "Native framework timing and physical call/audio acceptance remain unverified."
+    ],
+    "originalMatrixAndMetricsUnchanged": true
+  },
+  "parentUnitEvidence": {
+    "path": ".a5c/artifacts/verification-3-rerun-3.log",
+    "sha256": "08e3f4e50c209dd447c16ba8435136a930832503b72275f0a37fd6504803ac1b",
+    "testsSourcePath": "macos/Tests/PlinkCoreTests/MacContinuityTests.swift",
+    "testsSourceSha256": "307f4fe635a13d747ff6ccff1e7406bd3131c8e156df614f8c767883de8b7d59",
+    "specificResults": [
+      {
+        "name": "testNativeContinuationIsDeniedAfterExpiryOrCancellation",
+        "line": 280,
+        "result": "passed"
+      },
+      {
+        "name": "testReturnedInvocationTimesOutRecoverablyAndInvalidatesCallActions",
+        "line": 288,
+        "result": "passed"
+      }
+    ],
+    "productionHashesStillMatchPreviousRemediationReview": true,
+    "reviewerExecutedTests": false,
+    "qualification": "Production-used gate/WorkTracker assertions passed in the parent run. This is not evidence of native HFP invocation timing, carrier-call controls, or two-way audio."
+  },
+  "runtimeEvidenceReviewPlanReference": ".a5c/artifacts/iteration3-L1-independent-review.json#runtimeEvidenceReviewPlan",
+  "finalGuardAndGateReview": {
+    "reviewedAt": "2026-09-20T05:56:53.212989+00:00",
+    "logPath": ".a5c/artifacts/verification-3-final.log",
+    "logSha256": "0c24c09eee3b18fbfc0c115d8df4f15367631c50149e8c27ac9b0274dfe93771",
+    "parentReportedExitCode": 0,
+    "observedLogResults": {
+      "gradleSuccessLine": 233,
+      "xCTest54ZeroFailureLine": 368,
+      "swiftTesting60PassLine": 505,
+      "unicodeBoundaryPassLine": 489,
+      "continuationPassLine": 271,
+      "reconnectPassLine": 279
+    },
+    "manifestPath": "docs/evidence/iteration-3/verification-manifest.json",
+    "manifestSha256": "861db12dce3c4f9d0e073f3fd836c6098a462e3466c7d860b210905f2892055e",
+    "sourceFilesMatching": 165,
+    "binariesMatching": 6,
+    "missing": 0,
+    "mismatched": 0,
+    "gateCounts": {
+      "exitCode": 0,
+      "androidTests": 132,
+      "swiftXCTest": 54,
+      "swiftTesting": 60,
+      "lintErrors": 0,
+      "lintWarnings": 32
+    },
+    "binarySha256": {
+      "android/build/outputs/apk/debug/android-debug.apk": "133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82",
+      "android/build/outputs/apk/release/android-release-unsigned.apk": "405adb28311184f7e5f156a7010b1c6fcb86539a82c7d6783ef078049f306a9f",
+      "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk": "793243e28fe05d2af78c04e75712433003470a628250f6f46844db733b3a27e6",
+      "macos/.build/debug/PlinkMacDebugReceiver": "0af575e9be9dc3b2dd351cf8c9e9e3585eea10184364e632eaa6e7b117b555ef",
+      "build/PlinkMac.app/Contents/MacOS/PlinkMac": "daf972dc8b3f830adfba47c7c72ca5e78360012bf3c1efb4f7da684278b0ce0b",
+      "build/PlinkMac.app.zip": "7f35d12fc97451e093b1ae06327477887ce879090601c8ae554f3426e313f036"
+    },
+    "installedApkSha256": null,
+    "reviewerRanBuild": false,
+    "finalWireRerun": "Parent plans a new run after UI release; no new roundtrip result has been reviewed yet."
+  }
+}

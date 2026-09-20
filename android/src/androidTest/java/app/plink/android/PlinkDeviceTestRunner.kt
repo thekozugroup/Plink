@@ -16,6 +16,9 @@ import app.plink.android.notifications.NotificationMapper
 import app.plink.android.notifications.RemoteInputReplyExecutor
 import app.plink.android.notifications.RemoteInputReplyRegistry
 import app.plink.android.notifications.ReplyRouteRegistry
+import app.plink.android.notifications.ReplyCapabilityGeneration
+import app.plink.android.notifications.ReplyDispatchLock
+import app.plink.android.notifications.InboundReplyValidator
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
 import app.plink.android.security.InMemoryFrameStateStore
@@ -25,6 +28,7 @@ import app.plink.android.security.PayloadPolicy
 import app.plink.android.transport.SecureSocketPlinkClient
 import app.plink.android.transport.SecureSocketPlinkServer
 import app.plink.android.services.InboundCommandHandler
+import app.plink.android.services.SharedReplyDispatchAuthority
 import java.time.Instant
 import java.io.File
 import java.util.UUID
@@ -35,6 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -44,6 +50,8 @@ import kotlinx.serialization.json.put
 class PlinkDeviceTestRunner : Instrumentation() {
     private var arguments = Bundle()
     private val checks = mutableListOf<String>()
+    private val syntheticGeneration = ReplyCapabilityGeneration(1, 91)
+    private val exactReplyText = "\t  Plink encrypted roundtrip ✓\nCafe\u0301 👩‍💻\n  "
 
     override fun onCreate(arguments: Bundle?) {
         this.arguments = arguments ?: Bundle()
@@ -57,6 +65,8 @@ class PlinkDeviceTestRunner : Instrumentation() {
         try {
             testRemoteInput()
             testProtectedAndDataOnlyActions()
+            testReplyAuthorityRevocation()
+            testReplyReconnectAndFailure()
             testDurableFrameState()
             if (arguments.containsKey("macPort")) {
                 if (arguments.getString("mode") == "files") {
@@ -101,7 +111,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
     private fun testRemoteInput() {
         SyntheticReplyReceiver.reset()
         val routes = ReplyRouteRegistry()
-        val actions = RemoteInputReplyRegistry()
+        val actions = syntheticActions()
         val mapper = NotificationMapper("test-pixel", "test-mac", routes, actions)
         val pending = pendingIntent()
         try {
@@ -109,7 +119,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
             val action = Notification.Action.Builder(null, "Reply", pending).addRemoteInput(input).build()
             val handoff = requireNotNull(mapper.map(notification(action)))
             check(handoff.replyRoute != null && handoff.envelope.payload["canReply"] == JsonPrimitive(true))
-            val executor = RemoteInputReplyExecutor(targetContext, routes, actions)
+            val executor = syntheticExecutor(routes, actions)
             val command = reply(handoff.envelope, "Plink synthetic reply ✓")
             executor.execute(command, "test-pixel")
             check(SyntheticReplyReceiver.latch.await(5, TimeUnit.SECONDS)) { "Synthetic reply PendingIntent was not delivered." }
@@ -138,7 +148,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
 
     private fun testProtectedAndDataOnlyActions() {
         val routes = ReplyRouteRegistry()
-        val actions = RemoteInputReplyRegistry()
+        val actions = syntheticActions()
         val mapper = NotificationMapper("test-pixel", "test-mac", routes, actions)
         val pending = pendingIntent()
         try {
@@ -151,6 +161,149 @@ class PlinkDeviceTestRunner : Instrumentation() {
             check(mapper.map(notification(protected))?.replyRoute == null)
             checks += "Authentication-required action rejected"
         } finally { pending.cancel() }
+    }
+
+    // Synthetic tests opt into explicit authority. Production has no allow-all default.
+    private fun syntheticActions() = RemoteInputReplyRegistry(
+        capabilityGeneration = { syntheticGeneration }
+    )
+
+    private fun syntheticExecutor(routes: ReplyRouteRegistry, actions: RemoteInputReplyRegistry) =
+        RemoteInputReplyExecutor(targetContext, routes, actions) { action, reply ->
+            action.capabilityGeneration == syntheticGeneration && reply.route.pairedDeviceId == "test-mac"
+        }
+
+    private fun <T> onMain(block: () -> T): T {
+        var result: Result<T>? = null
+        runOnMainSync { result = runCatching(block) }
+        return requireNotNull(result).getOrThrow()
+    }
+
+    private fun testReplyAuthorityRevocation() = runBlocking {
+        val scenarios = listOf("disconnect", "destroy", "denied", "unknown", "disabled", "session", "peer", "queued")
+        for (scenario in scenarios) {
+            SyntheticReplyReceiver.reset()
+            val routes = ReplyRouteRegistry()
+            val actions = RemoteInputReplyRegistry(capabilityGeneration = SharedReplyDispatchAuthority::capture)
+            var access: Boolean? = true
+            var messages = true
+            var peer = "test-mac"
+            val pending = pendingIntent()
+            try {
+                val input = RemoteInput.Builder("text").setAllowFreeFormInput(true).build()
+                val action = Notification.Action.Builder(null, "Reply", pending).addRemoteInput(input).build()
+                val mapper = NotificationMapper("test-pixel", "test-mac", routes, actions)
+                val message = onMain {
+                    ReplyDispatchLock.serialized {
+                        SharedReplyDispatchAuthority.listenerConnected()
+                        SharedReplyDispatchAuthority.sessionChanged(91, active = true)
+                        requireNotNull(mapper.map(notification(action))).envelope
+                    }
+                }
+                val command = reply(message, exactReplyText)
+                // A valid receiver preflight must not authorize a later, queued dispatch.
+                InboundReplyValidator.validate(command, routes, "test-pixel")
+                onMain {
+                    ReplyDispatchLock.serialized {
+                        when (scenario) {
+                            "disconnect", "destroy", "queued" -> {
+                                SharedReplyDispatchAuthority.listenerDisconnected()
+                                routes.clear()
+                                actions.clear()
+                            }
+                            "denied" -> access = false
+                            "unknown" -> access = null
+                            "disabled" -> messages = false
+                            "session" -> SharedReplyDispatchAuthority.sessionChanged(92, active = true)
+                            "peer" -> peer = "another-mac"
+                        }
+                    }
+                }
+                val executor = RemoteInputReplyExecutor(targetContext, routes, actions) { live, inbound ->
+                    access == true && messages && inbound.route.pairedDeviceId == peer &&
+                        SharedReplyDispatchAuthority.isCurrent(live.capabilityGeneration)
+                }
+                val outcomes = mutableListOf<PlinkEnvelope>()
+                val handler = InboundCommandHandler("test-pixel", "test-mac", executeReply = {
+                    withContext(Dispatchers.Main.immediate) { executor.execute(it, "test-pixel") }
+                }, executeMedia = { _, _ -> error("Unexpected media") }, send = { outcomes += it })
+                handler.handle(command)
+                handler.handle(command)
+                check(outcomes.size == 2 && outcomes.all { it.type == PlinkEventType.Error }) { scenario }
+                check(!SyntheticReplyReceiver.latch.await(150, TimeUnit.MILLISECONDS)) { "Revoked $scenario reply sent" }
+                check(SyntheticReplyReceiver.count.get() == 0 && routes.size() == 0 && actions.size() == 0) { scenario }
+            } finally {
+                pending.cancel()
+                onMain {
+                    ReplyDispatchLock.serialized {
+                        SharedReplyDispatchAuthority.listenerDisconnected()
+                        SharedReplyDispatchAuthority.sessionChanged(0, active = false)
+                    }
+                }
+            }
+        }
+        checks += "Synthetic final-dispatch lifecycle, permission, feature, session, peer and queued revocations reject without sends or executed acks"
+    }
+
+    private fun testReplyReconnectAndFailure() = runBlocking {
+        SyntheticReplyReceiver.reset()
+        val routes = ReplyRouteRegistry()
+        val actions = RemoteInputReplyRegistry(capabilityGeneration = SharedReplyDispatchAuthority::capture)
+        val pending = pendingIntent()
+        try {
+            val input = RemoteInput.Builder("text").setAllowFreeFormInput(true).build()
+            val action = Notification.Action.Builder(null, "Reply", pending).addRemoteInput(input).build()
+            val mapper = NotificationMapper("test-pixel", "test-mac", routes, actions)
+            fun post() = onMain { ReplyDispatchLock.serialized { requireNotNull(mapper.map(notification(action))).envelope } }
+            onMain { ReplyDispatchLock.serialized {
+                SharedReplyDispatchAuthority.listenerConnected()
+                SharedReplyDispatchAuthority.sessionChanged(91, active = true)
+            } }
+            val old = reply(post(), exactReplyText)
+            val executor = RemoteInputReplyExecutor(targetContext, routes, actions) { live, inbound ->
+                inbound.route.pairedDeviceId == "test-mac" && SharedReplyDispatchAuthority.isCurrent(live.capabilityGeneration)
+            }
+            onMain { ReplyDispatchLock.serialized {
+                SharedReplyDispatchAuthority.listenerDisconnected()
+                routes.clear()
+                actions.clear()
+                SharedReplyDispatchAuthority.listenerConnected()
+            } }
+            check(onMain { runCatching { executor.execute(old, "test-pixel") }.isFailure })
+            val fresh = reply(post(), exactReplyText)
+            check(fresh.payload["replyToken"] != old.payload["replyToken"])
+            var outcomeAttempts = 0
+            val handler = InboundCommandHandler("test-pixel", "test-mac", executeReply = {
+                withContext(Dispatchers.Main.immediate) { executor.execute(it, "test-pixel") }
+            }, executeMedia = { _, _ -> error("Unexpected media") }, send = {
+                outcomeAttempts += 1
+                error("Synthetic outcome transport unavailable")
+            })
+            check(runCatching { handler.handle(fresh) }.isFailure)
+            check(outcomeAttempts == 1) { "Outcome failure caused automatic retry" }
+            check(SyntheticReplyReceiver.latch.await(5, TimeUnit.SECONDS))
+            check(SyntheticReplyReceiver.text?.toByteArray(Charsets.UTF_8)
+                ?.contentEquals(exactReplyText.toByteArray(Charsets.UTF_8)) == true)
+            check(onMain { runCatching { executor.execute(fresh, "test-pixel") }.isFailure })
+            check(onMain { runCatching { executor.execute(old, "test-pixel") }.isFailure })
+            val cancelled = reply(post(), "cancelled")
+            pending.cancel()
+            val outcomes = mutableListOf<PlinkEnvelope>()
+            val cancelledHandler = InboundCommandHandler("test-pixel", "test-mac", executeReply = {
+                withContext(Dispatchers.Main.immediate) { executor.execute(it, "test-pixel") }
+            }, executeMedia = { _, _ -> error("Unexpected media") }, send = { outcomes += it })
+            cancelledHandler.handle(cancelled)
+            cancelledHandler.handle(cancelled)
+            check(outcomes.size == 2 && outcomes.all { it.type == PlinkEventType.Error })
+            check(SyntheticReplyReceiver.count.get() == 1 && routes.size() == 0 && actions.size() == 0)
+            checks += "Reconnect issues a fresh one-time route, exact UTF-8 survives, and send failures never restore consumed routes"
+        } finally {
+            pending.cancel()
+            onMain { ReplyDispatchLock.serialized {
+                SharedReplyDispatchAuthority.listenerDisconnected()
+                SharedReplyDispatchAuthority.sessionChanged(0, active = false)
+            } }
+        }
     }
 
     private fun testMacTransport() = runBlocking {
@@ -191,7 +344,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
         val client = SecureSocketPlinkClient(arguments.getString("macHost") ?: "127.0.0.1",
             requireNotNull(arguments.getString("macPort")).toInt(), codec, state)
         val routes = ReplyRouteRegistry()
-        val actions = RemoteInputReplyRegistry()
+        val actions = syntheticActions()
         val pending = pendingIntent()
         try {
             withTimeout(20_000) {
@@ -203,11 +356,12 @@ class PlinkDeviceTestRunner : Instrumentation() {
                 val message = requireNotNull(mapper.map(notification(action))).envelope
                 client.send(message)
                 val received = command.await()
-                val executor = RemoteInputReplyExecutor(targetContext, routes, actions)
+                val executor = syntheticExecutor(routes, actions)
                 InboundCommandHandler("test-pixel", "test-mac", executeReply = { reply ->
                     executor.execute(reply, "test-pixel")
                     check(SyntheticReplyReceiver.latch.await(5, TimeUnit.SECONDS))
-                    check(SyntheticReplyReceiver.text == "Plink encrypted roundtrip ✓")
+                    check(SyntheticReplyReceiver.text?.toByteArray(Charsets.UTF_8)
+                        ?.contentEquals(exactReplyText.toByteArray(Charsets.UTF_8)) == true)
                     check(SyntheticReplyReceiver.count.get() == 1)
                 }, executeMedia = { _, _ -> error("Unexpected media command") }, send = { outcome ->
                     check(outcome.type == PlinkEventType.Ack) { "RemoteInput execution failed" }

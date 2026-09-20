@@ -6,11 +6,11 @@
 - Sign, notarize, and staple the macOS app with a Developer ID.
 - Complete paired Pixel/Mac tests for call controls, real cellular two-way laptop audio, and native macOS Notification Center replies to a controlled recipient.
 - Complete physical Android restart, process recreation, and Doze acceptance for the implemented foreground-service ownership path.
-- Remove the integration-summary two-line ellipsis so important guidance fully wraps at 1.5× font scale, then repeat the three-destination large-text check.
+- Complete the matching-build visual and assistive-technology checks. Checkpoint 3 corrects the Connection Stop/Scan width at 1.5× font scale; this does not establish complete layout, motion or accessibility acceptance.
 
 Legacy pairings use security version 0. Preserve their records and keys, but do not activate them automatically: re-pair every existing device to create a security-version-2 pairing.
 
-The latest canonical source gate passed 111 Android tests and 82 Swift tests (31 XCTest and 51 Swift Testing). Android lint completed with 0 errors and 27 warnings. The latest isolated emulator roundtrip passed seven synthetic platform checks. Keep the large-text truncation open for the next UI checkpoint; these counts do not establish full product or accessibility acceptance.
+Checkpoint 3 passes 132 Android tests and 114 Swift tests (54 XCTest and 60 Swift Testing), with 0 Android lint errors and 32 warnings. It strengthens final reply authorization, bounds Bluetooth execution and removes stale call controls. Its [evidence](evidence/iteration-3/README.md) includes exact-text synthetic RemoteInput checks and final-dispatch revocation scenarios. Checkpoint 2 (`c270fb9`) separately passed ten bidirectional encrypted file transfers; its [evidence](evidence/2026-09-20/README.md) remains bound to that earlier build. These counts do not establish full product or accessibility acceptance. Use the [manual acceptance plan](manual-test-plan.md) for exact prerequisites, actions, observations, ownership, and cleanup.
 
 ## Required hardware pass
 

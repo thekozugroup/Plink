@@ -1,30 +1,171 @@
 import Foundation
 
 /// A timed-out foreign-framework call cannot be cancelled by a Swift Task.
-/// Quarantine the worker instead of spawning replacement threads.
+/// Quarantine only when that call is still executing; otherwise release its
+/// identity so a late callback cannot finish a later operation.
 public struct MacBluetoothOperationGate: Sendable {
-    public private(set) var current: UUID?
+    public struct Operation: Equatable, Sendable {
+        public let id: UUID
+        public let generation: UUID
+        public let action: MacCallAction?
+        public let context: MacCallContext?
+    }
+
+    public enum InvocationState: Equatable, Sendable { case queued, executing, returned }
+    public enum Deadline: Equatable, Sendable { case ignored, completed, recoverable, quarantined }
+
+    /// Worker-side execution ownership. `start` is the final authorization
+    /// before native code runs, so an expired queued operation cannot run late.
+    public struct WorkTracker: Sendable {
+        public private(set) var operation: Operation?
+        public private(set) var state: InvocationState?
+        public private(set) var quarantined = false
+        private var invalidated = false
+
+        public init() {}
+        public mutating func enqueue(_ operation: Operation) -> Bool {
+            guard self.operation == nil, !quarantined else { return false }
+            self.operation = operation
+            state = .queued
+            invalidated = false
+            return true
+        }
+        public mutating func start(_ operation: Operation) -> Bool {
+            guard self.operation == operation, state == .queued, !quarantined else { return false }
+            state = .executing
+            return true
+        }
+        /// Recheck after each foreign call before starting another native action.
+        public func permitsNextStep(_ operation: Operation) -> Bool {
+            self.operation == operation && state == .executing && !quarantined && !invalidated
+        }
+        public mutating func returned(_ operation: Operation) -> Bool {
+            guard self.operation == operation, state == .executing else { return false }
+            state = .returned
+            return true
+        }
+        public func state(of operation: Operation) -> InvocationState? {
+            self.operation == operation ? state : nil
+        }
+        @discardableResult
+        public mutating func release(_ operation: Operation) -> Bool {
+            guard self.operation == operation, state == .returned, !quarantined else { return false }
+            self.operation = nil
+            state = nil
+            return true
+        }
+        public mutating func cancel(_ operation: Operation) -> InvocationState? {
+            guard self.operation == operation, let state else { return nil }
+            invalidated = true
+            if state != .executing {
+                self.operation = nil
+                self.state = nil
+            }
+            return state
+        }
+        public mutating func expire(_ operation: Operation) -> InvocationState? {
+            guard self.operation == operation, let state else { return nil }
+            invalidated = true
+            if state == .executing {
+                quarantined = true
+            } else {
+                self.operation = nil
+                self.state = nil
+            }
+            return state
+        }
+    }
+
+    public private(set) var current: Operation?
     public private(set) var blocked = false
+    public private(set) var hasCallOwnership = false
+    public private(set) var requiresReconnect = false
+    private var confirmed = false
     public init() {}
-    public mutating func begin() -> UUID? {
+    public mutating func begin(
+        id: UUID = UUID(),
+        generation: UUID,
+        action: MacCallAction? = nil,
+        context: MacCallContext? = nil
+    ) -> Operation? {
         guard current == nil, !blocked else { return nil }
-        let id = UUID(); current = id; return id
+        guard action == nil || context != nil else { return nil }
+        guard action == nil || !requiresReconnect else { return nil }
+        let operation = Operation(id: id, generation: generation, action: action, context: context)
+        current = operation
+        hasCallOwnership = action != nil
+        confirmed = false
+        return operation
     }
-    public mutating func complete(_ id: UUID) -> Bool {
-        guard !blocked, current == id else { return false }
-        current = nil; return true
+    public mutating func confirm(_ operation: Operation, invocation: InvocationState) -> Bool {
+        guard !blocked, current == operation else { return false }
+        confirmed = true
+        guard invocation == .returned else { return false }
+        clear()
+        return true
     }
-    public mutating func timeout(_ id: UUID) -> Bool {
-        guard !blocked, current == id else { return false }
-        blocked = true; return true
+    public mutating func invocationReturned(_ operation: Operation) -> Bool {
+        guard !blocked, current == operation else { return false }
+        guard confirmed else { return false }
+        clear()
+        return true
+    }
+    public mutating func cancelCall(_ operation: Operation, invocation: InvocationState) -> Bool {
+        guard !blocked, current == operation, operation.action != nil else { return false }
+        hasCallOwnership = false
+        confirmed = true
+        guard invocation != .executing else { return false }
+        clear()
+        return true
+    }
+    public mutating func abort(_ operation: Operation) -> Bool {
+        guard !blocked, current == operation else { return false }
+        clear()
+        return true
+    }
+    public mutating func timeout(_ operation: Operation, invocation: InvocationState) -> Deadline {
+        guard !blocked, current == operation else { return .ignored }
+        if invocation == .executing {
+            blocked = true
+            clear(keepBlocked: true)
+            return .quarantined
+        }
+        if confirmed {
+            clear()
+            return .completed
+        }
+        if operation.action != nil { requiresReconnect = true }
+        clear()
+        return .recoverable
+    }
+    public mutating func reconnecting() { requiresReconnect = false }
+    private mutating func clear(keepBlocked: Bool = false) {
+        current = nil
+        hasCallOwnership = false
+        confirmed = false
+        if !keepBlocked { blocked = false }
     }
 }
 
 public enum MacCallAction: String, Sendable { case answer, decline, hangUp, computerAudio, phoneAudio, toggleMute }
 
 extension MacCallAction {
+    public enum Observation: Equatable, Sendable {
+        case callActive
+        case callEnded
+        case sco(connected: Bool)
+    }
+
+    public func completes(on observation: Observation) -> Bool {
+        switch observation {
+        case .callActive: return self == .answer
+        case .callEnded: return true
+        case .sco(let connected): return self == .computerAudio || (self == .phoneAudio && !connected)
+        }
+    }
+
     public func completesOnSCO(connected: Bool) -> Bool {
-        self == .computerAudio || (self == .phoneAudio && !connected)
+        completes(on: .sco(connected: connected))
     }
 }
 
@@ -44,6 +185,7 @@ public struct MacCallSession: Equatable, Sendable {
     public private(set) var number: String?
     public private(set) var muted = false
     public private(set) var hasWaitingCall = false
+    public private(set) var stateIsCertain = true
     private var active = false
     private var observedCallIndex: Int?
 
@@ -53,7 +195,10 @@ public struct MacCallSession: Equatable, Sendable {
     public mutating func ringing(number: String?) {
         guard let phoneID else { return }
         if active { hasWaitingCall = true; return }
-        if context == nil { context = MacCallContext(phoneID: phoneID, callID: UUID()) }
+        if context == nil {
+            context = MacCallContext(phoneID: phoneID, callID: UUID())
+            stateIsCertain = true
+        }
         if phase != .answering && phase != .ending { phase = .ringing }
         if let number, !number.isEmpty { self.number = String(number.prefix(128)) }
     }
@@ -62,6 +207,7 @@ public struct MacCallSession: Equatable, Sendable {
         if !active && !hasWaitingCall { clearCall() }
     }
     public mutating func observeCall(index: Int?, status: Int) {
+        let wasUncertain = !stateIsCertain
         if let index {
             if let previous = observedCallIndex, previous != index { hasWaitingCall = true }
             observedCallIndex = index
@@ -69,11 +215,19 @@ public struct MacCallSession: Equatable, Sendable {
         if status == 1 || status == 5 { hasWaitingCall = true }
         if status == 0 { setActive(true) }
         if status == 4 || status == 5 { ringing(number: nil) }
+        if wasUncertain, index != nil, status == 0, !hasWaitingCall, let phoneID {
+            context = MacCallContext(phoneID: phoneID, callID: UUID())
+            phase = .active
+            stateIsCertain = true
+        }
     }
     public mutating func setActive(_ value: Bool) {
         active = value
         if value, let phoneID {
-            if context == nil { context = MacCallContext(phoneID: phoneID, callID: UUID()) }
+            if context == nil {
+                context = MacCallContext(phoneID: phoneID, callID: UUID())
+                stateIsCertain = true
+            }
             if phase != .ending { phase = .active }
         } else if !value { clearCall() }
     }
@@ -81,8 +235,14 @@ public struct MacCallSession: Equatable, Sendable {
         audio = connected ? .scoConnectedUnverified : (context == nil ? .unavailable : .phone)
     }
     public mutating func setMuted(_ value: Bool) { muted = value }
+    @discardableResult
+    public mutating func markUnconfirmed(context expected: MacCallContext?) -> Bool {
+        guard let expected, context == expected else { return false }
+        stateIsCertain = false
+        return true
+    }
     public func permits(_ action: MacCallAction, context expected: MacCallContext) -> Bool {
-        guard context == expected, phoneID == expected.phoneID, !hasWaitingCall else { return false }
+        guard stateIsCertain, context == expected, phoneID == expected.phoneID, !hasWaitingCall else { return false }
         switch action {
         case .answer, .decline: return phase == .ringing && !hasWaitingCall
         case .hangUp: return phase == .active && !hasWaitingCall
@@ -102,7 +262,7 @@ public struct MacCallSession: Equatable, Sendable {
     }
     private mutating func clearCall() {
         context = nil; phase = .idle; audio = .unavailable; number = nil; muted = false; hasWaitingCall = false
-        observedCallIndex = nil
+        stateIsCertain = true; observedCallIndex = nil
     }
 }
 

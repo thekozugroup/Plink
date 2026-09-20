@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "lane": "L3",
+  "status": "bounded_static_review_complete_no_concrete_P1_P2_found",
+  "reviewedAt": "2026-09-20T05:33:27.740289+00:00",
+  "existingBabysitterRun": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+  "baseCheckpoint": "c270fb9",
+  "verified": false,
+  "scope": "Six frozen L3 files, their diff from checkpoint 2, approved L3 contract, pinned local Tomato sources, unchanged theme/dependency context and cached API presence. Production was read-only. No build, tests, device operation or render performed.",
+  "reviewedFiles": [
+    {
+      "path": "android/src/main/java/app/plink/android/ui/ManualPairingCard.kt",
+      "sha256": "0d2da6e9dfcbec97643232aba2cd90bbb8fe892429e01ba02c677d3234d35c0c",
+      "matchesOwnerFreeze": true
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/ui/theme/Type.kt",
+      "sha256": "05e90828d47a6c7b171efaca6fa8ed55fd0d2d221b5fb71b555d47b7c291e595",
+      "matchesOwnerFreeze": true
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/ui/FloatingNavigation.kt",
+      "sha256": "3309eafbb6f3471bbc7a7caf6db568d09d4feb0aac2431d7d25bf58089821275",
+      "matchesOwnerFreeze": true
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/ui/ConnectionRing.kt",
+      "sha256": "115374692b515960b4d66dbff616f68d5301c336c57ff7855e637990dd6346e7",
+      "matchesOwnerFreeze": true
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt",
+      "sha256": "3ddc9e269cd447c57e6f0c5c9658235565d48172557bced62dae0b4c63463c80",
+      "matchesOwnerFreeze": true
+    },
+    {
+      "path": "third_party/tomato/PROVENANCE.json",
+      "sha256": "aa8d2f199a72dd87315458fb8b0994323c2e17e6839d64bf3a2228326e01a28e",
+      "matchesOwnerFreeze": true
+    }
+  ],
+  "findings": [],
+  "sourceAssessment": [
+    {
+      "id": "U1",
+      "status": "source_mechanism_addressed_rendered_closure_pending",
+      "evidence": [
+        "android/src/main/java/app/plink/android/ui/ManualPairingCard.kt:90-122"
+      ],
+      "assessment": "Scan/Stop now has content-driven width and height with 48dp minimums; FlowRow permits the adjacent status to wrap. The original start/stop callbacks and full labels are unchanged. No max height or font-scale override was added. Actual 1.0x/1.5x fit, touch size and one-action behavior remain unobserved."
+    },
+    {
+      "id": "T1",
+      "status": "source_mechanism_addressed_rendered_closure_pending",
+      "evidence": [
+        "android/src/main/java/app/plink/android/ui/theme/Type.kt:42-69",
+        "android/src/main/java/app/plink/android/ui/theme/Type.kt:76-93",
+        "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt:427-435"
+      ],
+      "assessment": "Generic headlines use the rounded 600/ROND=100 family. The top-bar helper supplies the separate 900/112.5/35 face and 32sp/32sp style to actual title text. The original font asset and role ss02/dlig settings remain. This matches the approved source mapping, not a rendered font/fallback match."
+    },
+    {
+      "id": "T2",
+      "status": "source_mapping_addressed_motion_comparison_pending",
+      "evidence": [
+        "android/src/main/java/app/plink/android/ui/FloatingNavigation.kt:98-101",
+        "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt:111-118",
+        "android/src/main/java/app/plink/android/ui/ConnectionRing.kt:52-57",
+        "android/src/main/java/app/plink/android/ui/ConnectionRing.kt:75-89"
+      ],
+      "assessment": "Navigation label sizing and ring geometry use defaultSpatialSpec; destination/status fades use defaultEffectsSpec. Icon Crossfade, circle toggle shapes, 16dp stroke and 8dp gap remain. Connection motion is an approved functional adaptation. No custom clock or system-scale bypass is introduced."
+    },
+    {
+      "id": "T3",
+      "status": "open_outside_lane",
+      "assessment": "Stateful segmented-list shape parity remains open; neither Shape.kt nor dependency pins changed."
+    }
+  ],
+  "provenance": {
+    "path": "third_party/tomato/PROVENANCE.json",
+    "allSixAdaptationHashesMatch": true,
+    "allSixUpstreamHashesMatchPinnedGitObjects": true,
+    "fontBytesMatchPinnedUpstream": true,
+    "pinnedCommit": "1bba8459cb20029f8544efa96c5d62181a769bed",
+    "unchangedFromBase": [
+      "android/src/main/java/app/plink/android/ui/theme/Theme.kt",
+      "android/src/main/java/app/plink/android/ui/theme/Shape.kt",
+      "gradle/libs.versions.toml",
+      "android/src/main/res/font/google_sans_flex.ttf"
+    ]
+  },
+  "releaseReference": {
+    "artifact": ".a5c/artifacts/tomato-reference-release-3.json",
+    "localApkSha256": "36aa0e28055f6fadc8c634d2b94b024acc6ab52c2944f62f97227ccad5317892",
+    "localBytesIndependentlyChecked": 6050950,
+    "localTagAndHeadResolveToPinnedCommit": true,
+    "publisherDigestAndRemoteTagEvidence": "Reported by parent; not independently refetched in this review. Local bytes and local tag target were independently checked.",
+    "reproducedBuild": false,
+    "reviewerInstalledOrViewedReleaseUI": false
+  },
+  "apiCheck": {
+    "method": "Read existing cached AAR classes.jar entries and method markers; no compilation or app execution.",
+    "observed": [
+      "Material3 1.5.0-alpha10 contains MotionScheme defaultSpatialSpec/defaultEffectsSpec, getMotionScheme and ExperimentalMaterial3ExpressiveApi.",
+      "Cached foundation-layout 1.11.3 contains FlowRow, itemVerticalAlignment and FlowRowScope."
+    ],
+    "limit": "Symbol presence is not Kotlin overload/type/opt-in or resolved dependency proof; canonical compilation remains required."
+  },
+  "captureChecks": [
+    {
+      "path": "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt:431",
+      "check": "At 1.5x, confirm the new 32sp title plus subtitle fit inside TopAppBar and do not reintroduce overlap/clipping. No clipping is asserted from source alone."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/ui/ManualPairingCard.kt:90",
+      "check": "Capture full Stop and Scan at narrow 1.0x/1.5x, long status and reachable pairing controls. Existing fixed Confirm/Cancel/Use buttons also need the approved reachability capture; no new defect is asserted without observation."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/ui/FloatingNavigation.kt:98",
+      "check": "Capture rapid navigation and full label/action visibility; check normal and animator-scale-zero final states. Measure motion against the pinned reference with disclosed tolerance/frame quantization."
+    }
+  ],
+  "acceptance": {
+    "originalMatrixUnchanged": true,
+    "originalMetricsUnchanged": true,
+    "newAcceptanceCredit": false,
+    "criteriaStillPending": [
+      "TOM-01 matched reference/app capture and build binding",
+      "TOM-02 rendered states/font/fallback independent comparison",
+      "TOM-03 measured motion, reduced motion, TalkBack and real Pixel recordings"
+    ]
+  },
+  "otherLanes": "L1 review starts separately after its explicit freeze. L2 remains pending. No instrumentation read or test claim.",
+  "changedFiles": [
+    ".a5c/artifacts/iteration3-L3-independent-review.json"
+  ]
+}

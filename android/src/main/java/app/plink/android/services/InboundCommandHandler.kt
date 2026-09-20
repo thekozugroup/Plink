@@ -13,7 +13,7 @@ import java.util.UUID
 class InboundCommandHandler(
     private val localDeviceId: String,
     private val pairedDeviceId: String,
-    private val executeReply: (PlinkEnvelope) -> Unit,
+    private val executeReply: suspend (PlinkEnvelope) -> Unit,
     private val executeMedia: (sessionId: String, command: String) -> Unit,
     private val executeHandoff: (PlinkEnvelope) -> Unit = {},
     private val send: suspend (PlinkEnvelope) -> Unit

@@ -1,0 +1,10 @@
+{
+  "timeUTC": "2026-09-20T06:05:22.261251+00:00",
+  "basis": "Owned temporary frame extraction and discarded mislabeled capture paths identified in final UI agent report; durable validated reports/images/videos retained.",
+  "removed": [],
+  "verifiedAbsent": [
+    "/tmp/plink-ui-inspection-final-3",
+    "/tmp/plink-ui-capture-discard-3"
+  ],
+  "note": "Paths were already absent at parent cleanup check; no claim that this check deleted them."
+}

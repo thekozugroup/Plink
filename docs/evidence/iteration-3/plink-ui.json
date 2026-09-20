@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Bounded matching Plink UI evidence using emulator-5580 only, compared qualitatively with previously captured official Tomato v2.0.1 reference evidence.",
+  "status": "captured_settings_restored_released",
+  "apk": {
+    "localPath": "android/build/outputs/apk/debug/android-debug.apk",
+    "expectedGate3Sha256": "133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82",
+    "localSha256": "133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82",
+    "installedPackageId": "app.plink.android",
+    "installedBaseApkPath": "/data/app/~~UbvHb60HouWcTF0PeUm1Uw==/app.plink.android-xET27wbHlKWDdwvo98nVMQ==/base.apk",
+    "installedBaseApkSha256": "133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82",
+    "versionName": "0.1.0",
+    "versionCode": 1,
+    "binding": "Local gate-3 APK, expected hash, and installed base APK all match 133abe68a38283861ebf3b30f90f0adecfe09673bcf5e9ac43159013c7fd4c82."
+  },
+  "device": {
+    "serial": "emulator-5580",
+    "model": "sdk_gphone64_arm64",
+    "apiLevel": "36",
+    "release": "16",
+    "physicalSize": "Physical size: 1080x2400",
+    "physicalDensity": "Physical density: 420"
+  },
+  "settings": {
+    "originalAndRestored": {
+      "fontScale": "1.0",
+      "nightMode": "2",
+      "windowAnimationScale": "1.0",
+      "transitionAnimationScale": "1.0",
+      "animatorDurationScale": "null",
+      "accelerometerRotation": "1",
+      "userRotation": "0"
+    },
+    "observedRestored": {
+      "fontScale": "1.0",
+      "nightMode": "2",
+      "windowAnimationScale": "1.0",
+      "transitionAnimationScale": "1.0",
+      "animatorDurationScale": "null",
+      "accelerometerRotation": "1",
+      "userRotation": "0"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "large-text-stop",
+      "artifact": "docs/evidence/iteration-3/plink-gate3-dark-1.5-connection-stop.png",
+      "finding": "In-app Connection screen; full Stop label is visible at 1.5x font scale."
+    },
+    {
+      "id": "large-text-scan",
+      "artifact": "docs/evidence/iteration-3/plink-gate3-dark-1.5-connection-scan.png",
+      "finding": "In-app Connection screen; full Scan label is visible at 1.5x font scale after Stop action."
+    },
+    {
+      "id": "settings-dark-large",
+      "artifact": "docs/evidence/iteration-3/plink-gate3-dark-1.5-settings.png",
+      "finding": "Verified in-app Settings / Continuity controls state at 1.5x."
+    },
+    {
+      "id": "settings-dark-large-scrolled",
+      "artifact": "docs/evidence/iteration-3/plink-gate3-dark-1.5-settings-scrolled.png",
+      "finding": "Verified Settings list after scroll. Files, Web links, Battery, and Media content remains visible above the floating navigation; lower content continues beneath it."
+    },
+    {
+      "id": "settings-light-normal",
+      "artifact": "docs/evidence/iteration-3/plink-gate3-light-1.0-settings.png",
+      "finding": "Verified in-app Settings / Continuity controls state at 1.0x light mode."
+    },
+    {
+      "id": "navigation-normal",
+      "artifact": "docs/evidence/iteration-3/plink-gate3-dark-1.0-navigation-normal.mp4",
+      "finding": "Normal-scale capture. In-app route verification immediately after each tap confirmed Activity, Settings, then Connection."
+    },
+    {
+      "id": "navigation-animator-zero",
+      "artifact": "docs/evidence/iteration-3/plink-gate3-dark-1.0-navigation-animator0.mp4",
+      "finding": "Animator-duration-scale-zero capture. In-app route verification immediately after each tap confirmed Activity, Settings, then Connection."
+    }
+  ],
+  "frameInspection": {
+    "normalNavigation": "Extracted frames show an overlap/fade during transition and settled Activity/Settings states. This demonstrates animated transition content, not a frame-accurate Tomato timing match.",
+    "reducedMotion": "Animator-zero video contains fewer frames than normal video and reaches verified destination states. It does not establish a full accessibility or animation smoothness result.",
+    "largeFont": "Reviewed stop and scan captures show full action labels. Status wraps/reflows beside the control; this does not prove every narrow device or dynamic discovery string."
+  },
+  "qualitativeReferenceComparison": {
+    "reference": "Official Tomato v2.0.1 evidence in .a5c/artifacts/iteration3-reference-ui.json, captured on same emulator before Plink capture.",
+    "matchesObserved": [
+      "Dedicated large top-bar title and subtitle are present in Plink captures.",
+      "Floating blue navigation shares the expressive selected-pill presentation.",
+      "Normal navigation capture visibly overlaps/fades while transitions settle."
+    ],
+    "gapsObserved": [
+      "Same dark-mode Settings captures show Tomato Settings with a lighter gray overall background than Plink Settings/Connection black background. This is a visible surface-color mismatch, qualified because the apps use different Settings content and surface layouts.",
+      "Plink Settings uses large colored feature cards and Tomato Settings reference uses a different timer/settings composition; no complete visual-equivalence conclusion follows.",
+      "No frame-quantized timing tolerance or pixel-level comparison was performed."
+    ]
+  },
+  "cleanup": {
+    "testPackage": "app.plink.android.test absent from emulator package query.",
+    "adbForwardList": "empty after capture; no port maps were removed because none existed.",
+    "adbReverseList": "empty after capture; no port maps were removed because none existed.",
+    "deviceTemporaryFilesRemoved": [
+      "/sdcard/plink-route-navigation.mp4",
+      "/sdcard/plink-route-verify.xml",
+      "/sdcard/plink-settings-verify.xml",
+      "/sdcard/plink-scroll-verify.xml"
+    ],
+    "localTemporaryFiles": "Frame-extraction and invalid/mislabeled-capture files are staged under /tmp/plink-ui-inspection-final-3 and /tmp/plink-ui-capture-discard-3 for cleanup after durable report review; durable evidence listed here remains under docs/evidence/iteration-3/.",
+    "installedAppsRetained": [
+      "app.plink.android (final gate APK)",
+      "org.nsh07.pomodoro (Tomato reference APK)"
+    ]
+  },
+  "limits": [
+    "Evidence only; no full Tomato fidelity claim.",
+    "No source change, build, Pixel access, emulator-5584 access, sign-in, paid feature, or network action during this capture slot.",
+    "Mac DebugReceiver changes are outside this Android UI capture and not assessed."
+  ],
+  "release": "RELEASED: emulator-5580 settings restored and available to parent.",
+  "independentVideoQualification": {
+    "reviewer": "Goodall Astra",
+    "normalClip": "All59frames inspected: Connection to Activity to Settings, then clip ends.",
+    "animatorZeroClip": "All16frames inspected: Connection to Activity only.",
+    "limit": "Later route checks may be outside clips. Neither video independently demonstrates the full three-destination sequence, and unequal durations/frame counts do not prove reduced-motion correctness."
+  }
+}

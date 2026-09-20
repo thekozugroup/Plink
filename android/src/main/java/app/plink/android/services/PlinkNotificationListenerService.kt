@@ -7,6 +7,8 @@ import app.plink.android.PlinkApplication
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.notifications.NotificationMapper
 import app.plink.android.notifications.RemoteInputReplyRegistry
+import app.plink.android.notifications.ReplyCapabilityGeneration
+import app.plink.android.notifications.ReplyDispatchLock
 import app.plink.android.notifications.ReplyRouteRegistry
 
 class PlinkNotificationListenerService : NotificationListenerService() {
@@ -15,12 +17,23 @@ class PlinkNotificationListenerService : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        ReplyDispatchLock.serialized {
+            SharedReplyDispatchAuthority.listenerConnected()
+            replyRoutes.clear()
+            replyActions.clear()
+        }
         (applicationContext as PlinkApplication).sessionController.refreshMediaSessions()
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
+        revokeListenerReplies()
         requestRebind(ComponentName(this, PlinkNotificationListenerService::class.java))
+    }
+
+    override fun onDestroy() {
+        revokeListenerReplies()
+        super.onDestroy()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -33,30 +46,76 @@ class PlinkNotificationListenerService : NotificationListenerService() {
 
     private fun forward(sbn: StatusBarNotification?, removed: Boolean) {
         sbn ?: return
-        replyRoutes.replaceForNotification(sbn.key)
-        replyActions.replaceForNotification(sbn.key)
         val app = applicationContext as PlinkApplication
         val session = app.sessionController.snapshot() ?: return
         try {
-            val feature = if (sbn.notification?.category == android.app.Notification.CATEGORY_CALL) {
-                ContinuityFeature.Calls
-            } else {
-                ContinuityFeature.Messages
+            val handoff = ReplyDispatchLock.serialized {
+                replyRoutes.replaceForNotification(sbn.key)
+                replyActions.replaceForNotification(sbn.key)
+                val feature = if (sbn.notification?.category == android.app.Notification.CATEGORY_CALL) {
+                    ContinuityFeature.Calls
+                } else {
+                    ContinuityFeature.Messages
+                }
+                if (!app.featureSettings.isEnabled(feature)) return@serialized null
+                val mapper = NotificationMapper(
+                    localDeviceId = session.localDeviceId,
+                    pairedMacDeviceId = session.pairedDevice.id,
+                    replyRoutes = replyRoutes,
+                    replyActions = replyActions
+                )
+                if (removed) mapper.removed(sbn) else mapper.map(sbn)
             }
-            if (!app.featureSettings.isEnabled(feature)) return
-            val mapper = NotificationMapper(
-                localDeviceId = session.localDeviceId,
-                pairedMacDeviceId = session.pairedDevice.id,
-                replyRoutes = replyRoutes,
-                replyActions = replyActions
-            )
-            val handoff = (if (removed) mapper.removed(sbn) else mapper.map(sbn)) ?: return
+            handoff ?: return
             SharedNotificationEvents.trySend(handoff.envelope)
             app.sessionController.sendEnvelope(handoff.envelope)
         } finally {
             session.sessionKey.fill(0)
         }
     }
+
+    private fun revokeListenerReplies() {
+        ReplyDispatchLock.serialized {
+            SharedReplyDispatchAuthority.listenerDisconnected()
+            replyRoutes.clear()
+            replyActions.clear()
+        }
+    }
+}
+
+internal object SharedReplyDispatchAuthority {
+    private var listenerConnected = false
+    private var listenerEpoch = 0L
+    private var sessionGeneration = 0L
+    private var sessionActive = false
+
+    fun listenerConnected() {
+        listenerEpoch += 1
+        listenerConnected = true
+    }
+
+    fun listenerDisconnected() {
+        listenerEpoch += 1
+        listenerConnected = false
+    }
+
+    fun sessionChanged(generation: Long, active: Boolean) {
+        sessionGeneration = generation
+        sessionActive = active
+    }
+
+    fun capture(): ReplyCapabilityGeneration? =
+        if (listenerConnected && sessionActive) {
+            ReplyCapabilityGeneration(listenerEpoch, sessionGeneration)
+        } else {
+            null
+        }
+
+    fun isCurrent(generation: ReplyCapabilityGeneration): Boolean =
+        listenerConnected &&
+            sessionActive &&
+            generation.listenerEpoch == listenerEpoch &&
+            generation.sessionGeneration == sessionGeneration
 }
 
 object SharedReplyRoutes {
@@ -64,5 +123,7 @@ object SharedReplyRoutes {
 }
 
 object SharedReplyActions {
-    val registry = RemoteInputReplyRegistry()
+    val registry = RemoteInputReplyRegistry(
+        capabilityGeneration = SharedReplyDispatchAuthority::capture
+    )
 }

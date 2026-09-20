@@ -1,0 +1,3 @@
+
+PLINK DEVICE CHECKS PASSED: RemoteInput text delivered once, Notification replacement revokes reply, Keyed notification removal revokes reply, Data-only RemoteInput rejected, Authentication-required action rejected, Synthetic final-dispatch lifecycle, permission, feature, session, peer and queued revocations reject without sends or executed acks, Reconnect issues a fresh one-time route, exact UTF-8 survives, and send failures never restore consumed routes, Android filesystem retains counters and replay rejection across store recreation, Encrypted Android–Swift reply roundtrip, real RemoteInput delivery and execution ack
+

@@ -138,7 +138,8 @@ public enum PayloadPolicy {
         guard let value = payload[key]?.stringValue, !value.isEmpty else {
             throw PayloadPolicyError.missingDeviceId
         }
-        guard value.count <= maxLength else {
+        // Android String.length counts UTF-16 code units, not grapheme clusters.
+        guard value.utf16.count <= maxLength else {
             throw PayloadPolicyError.envelopeTooLarge
         }
     }

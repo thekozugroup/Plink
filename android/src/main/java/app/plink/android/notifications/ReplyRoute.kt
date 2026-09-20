@@ -59,7 +59,7 @@ data class ReplyCommand(
             put("notificationKey", route.notificationKey)
             route.conversationId?.let { put("conversationId", it) }
             put("replyToken", route.replyToken)
-            put("text", text.trim())
+            put("text", text)
         }
     )
 }
@@ -72,7 +72,7 @@ data class ValidatedInboundReply(
 )
 
 object InboundReplyValidator {
-    fun consume(
+    fun validate(
         envelope: PlinkEnvelope,
         routes: ReplyRouteRegistry,
         localDeviceId: String
@@ -89,10 +89,8 @@ object InboundReplyValidator {
         route.conversationId?.let { conversationId ->
             require(envelope.requiredString("conversationId") == conversationId) { "Reply conversation mismatch." }
         }
-        val text = envelope.requiredString("text").trim()
+        val text = envelope.requiredString("text")
         require(text.isNotBlank()) { "Reply text cannot be blank." }
-        val consumed = routes.consume(replyToken) ?: throw IllegalArgumentException("Reply route was already consumed.")
-        require(consumed == route) { "Reply route changed during validation." }
         return ValidatedInboundReply(
             route = route,
             text = text,
@@ -103,7 +101,7 @@ object InboundReplyValidator {
 
     private fun PlinkEnvelope.requiredString(key: String): String {
         val value = payload[key]?.jsonPrimitive?.contentOrNull
-        require(!value.isNullOrBlank()) { "payload.$key is required." }
+        require(value != null) { "payload.$key is required." }
         return value
     }
 }

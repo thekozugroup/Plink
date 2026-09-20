@@ -34,11 +34,11 @@ object AndroidPermissionReader {
         Build.VERSION.SDK_INT < 33 ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-    private fun isNotificationListenerEnabled(context: Context): Boolean {
-        val expected = ComponentName(context, PlinkNotificationListenerService::class.java).flattenToString()
+    internal fun isNotificationListenerEnabled(context: Context): Boolean = runCatching {
+        val expected = ComponentName(context, PlinkNotificationListenerService::class.java)
         val enabled = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners").orEmpty()
-        return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
-    }
+        enabled.split(':').any { ComponentName.unflattenFromString(it) == expected }
+    }.getOrDefault(false)
 
     private fun isAccessibilityServiceEnabled(context: Context): Boolean {
         val expected = ComponentName(context, PlinkClipboardAccessibilityService::class.java).flattenToString()

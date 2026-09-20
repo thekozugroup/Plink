@@ -1,0 +1,3 @@
+listening mode=roundtrip port=50662 expectedSource=test-pixel expectedTarget=test-mac
+roundtrip: authenticated Android message; Swift reply sent
+ROUNDTRIP PASSED: Android RemoteInput execution acknowledged over encrypted transport

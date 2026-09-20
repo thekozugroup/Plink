@@ -82,3 +82,14 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
 }
+
+tasks.register("printBuildEnvironment") {
+    group = "verification"
+    description = "Records the resolved Android SDK and build tools in the verification log."
+    doLast {
+        println("Android compile SDK: ${android.compileSdk}")
+        println("Android build tools: ${android.buildToolsVersion}")
+        println("Android minimum SDK: ${android.defaultConfig.minSdk}")
+        println("Android target SDK: ${android.defaultConfig.targetSdk}")
+    }
+}
