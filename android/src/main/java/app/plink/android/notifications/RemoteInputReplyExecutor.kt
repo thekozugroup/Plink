@@ -51,8 +51,11 @@ class RemoteInputReplyRegistry(
 
     @Synchronized
     fun register(replyToken: String, notificationKey: String, action: Notification.Action): Boolean {
-        val remoteInputs = action.remoteInputs ?: return false
-        if (remoteInputs.isEmpty()) return false
+        val remoteInputs = action.remoteInputs?.filter { it.allowFreeFormInput }?.toTypedArray() ?: return false
+        if (action.actionIntent == null || remoteInputs.isEmpty()) {
+            return false
+        }
+        if (android.os.Build.VERSION.SDK_INT >= 31 && action.isAuthenticationRequired) return false
         val now = Instant.now(clock)
         prune(now)
         actions[replyToken] = LiveRemoteInputAction(
@@ -76,6 +79,16 @@ class RemoteInputReplyRegistry(
     @Synchronized
     fun removeByNotificationKey(notificationKey: String) {
         actions.entries.removeIf { it.value.notificationKey == notificationKey }
+    }
+
+    fun replaceForNotification(notificationKey: String) = removeByNotificationKey(notificationKey)
+
+    @Synchronized
+    fun clear() = actions.clear()
+
+    @Synchronized
+    fun remove(replyToken: String) {
+        actions.remove(replyToken)
     }
 
     @Synchronized

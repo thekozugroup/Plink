@@ -86,6 +86,9 @@ object InboundReplyValidator {
         require(envelope.requiredString("sourceEnvelopeId") == route.sourceEnvelopeId) { "Reply source envelope mismatch." }
         require(envelope.requiredString("packageName") == route.packageName) { "Reply package mismatch." }
         require(envelope.requiredString("notificationKey") == route.notificationKey) { "Reply notification mismatch." }
+        route.conversationId?.let { conversationId ->
+            require(envelope.requiredString("conversationId") == conversationId) { "Reply conversation mismatch." }
+        }
         val text = envelope.requiredString("text").trim()
         require(text.isNotBlank()) { "Reply text cannot be blank." }
         val consumed = routes.consume(replyToken) ?: throw IllegalArgumentException("Reply route was already consumed.")

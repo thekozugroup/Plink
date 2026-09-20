@@ -1,0 +1,494 @@
+/*
+ * Copyright (c) 2025-2026 Nishant Mishra
+ *
+ * This file is adapted from Tomato - a minimalist pomodoro timer for Android.
+ *
+ * Tomato is free software: you can redistribute it and/or modify it under the terms of the GNU
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * Tomato is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+ * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with Tomato.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package app.plink.android.ui
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Message
+import androidx.compose.material.icons.rounded.BatteryChargingFull
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Phone
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import app.plink.android.features.ContinuityFeature
+import app.plink.android.features.FeatureAvailability
+import app.plink.android.permissions.PermissionAction
+import app.plink.android.permissions.PermissionOnboardingStep
+import app.plink.android.services.BackgroundConnectionState
+import app.plink.android.services.SessionStatus
+import app.plink.android.ui.theme.PlinkShapeDefaults
+
+@Composable
+fun PlinkAppScreen(
+    state: PlinkUiState,
+    actions: PlinkUiActions,
+    modifier: Modifier = Modifier
+) {
+    var destination by remember { mutableStateOf(PlinkDestination.Connection) }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        bottomBar = {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                FloatingNavigation(destination, { destination = it })
+            }
+        }
+    ) { padding ->
+        AnimatedContent(
+            targetState = destination,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            label = "Plink destination",
+            modifier = Modifier.fillMaxSize()
+        ) { screen ->
+            when (screen) {
+                PlinkDestination.Connection -> ConnectionScreen(state, actions, padding)
+                PlinkDestination.Activity -> ActivityScreen(state, padding)
+                PlinkDestination.Settings -> SettingsScreen(state, actions, padding)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConnectionScreen(
+    state: PlinkUiState,
+    actions: PlinkUiActions,
+    contentPadding: PaddingValues
+) {
+    ScreenScaffold("Plink", "Pixel + Mac continuity", contentPadding) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = innerPadding,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item { ConnectionRing(state.sessionStatus) }
+            item {
+                Text(
+                    when (state.sessionStatus) {
+                        SessionStatus.READY -> "Pairing is configured. Plink will open secure local sessions when needed."
+                        SessionStatus.REPAIR_REQUIRED -> "Pair again to enable updated security. Your previous pairing record is preserved."
+                        SessionStatus.DISCONNECTED -> "Select a nearby Mac and confirm the same code on both devices."
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.widthIn(max = 420.dp).padding(horizontal = 24.dp)
+                )
+            }
+            item {
+                Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
+                    ManualPairingCard()
+                }
+            }
+            item {
+                PermissionsGroup(state.onboarding, actions, Modifier.padding(horizontal = 16.dp))
+            }
+            item { Spacer(Modifier.height(4.dp)) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ActivityScreen(state: PlinkUiState, contentPadding: PaddingValues) {
+    ScreenScaffold("Activity", "Live device state", contentPadding) { innerPadding ->
+        val enabled = state.features.count { it.enabled && it.available }
+        val blocked = state.features.count { !it.available }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = innerPadding,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                SummaryCard(
+                    title = when (state.sessionStatus) {
+                        SessionStatus.READY -> "Paired configuration ready"
+                        SessionStatus.REPAIR_REQUIRED -> "Pair again for security update"
+                        SessionStatus.DISCONNECTED -> "No paired Mac"
+                    },
+                    detail = when (state.sessionStatus) {
+                        SessionStatus.READY -> "Secure session material is available on this device."
+                        SessionStatus.REPAIR_REQUIRED -> "Pair again to enable updated security. Your previous pairing record is preserved."
+                        SessionStatus.DISCONNECTED -> "Pair a Mac from the Connection tab."
+                    },
+                    icon = Icons.Rounded.Devices,
+                    container = MaterialTheme.colorScheme.primaryContainer
+                )
+            }
+            item {
+                SummaryCard(
+                    title = "$enabled integrations enabled",
+                    detail = if (blocked == 0) "All listed integrations are available." else "$blocked need permission or platform support.",
+                    icon = Icons.Rounded.Tune,
+                    container = MaterialTheme.colorScheme.secondaryContainer
+                )
+            }
+            item {
+                SummaryCard(
+                    title = "No local activity history",
+                    detail = "This release shows live connection and integration status above.",
+                    icon = Icons.Rounded.History,
+                    container = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsScreen(
+    state: PlinkUiState,
+    actions: PlinkUiActions,
+    contentPadding: PaddingValues
+) {
+    ScreenScaffold("Settings", "Continuity controls", contentPadding) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = innerPadding,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            item { SectionTitle("Connection") }
+            item {
+                BackgroundConnectionSettingRow(
+                    enabled = state.backgroundConnectionEnabled,
+                    state = state.backgroundConnectionState,
+                    onChange = actions.onBackgroundConnectionEnabledChange
+                )
+            }
+            item { Spacer(Modifier.height(14.dp)) }
+            item { SectionTitle("Integrations") }
+            itemsIndexed(state.features, key = { _, feature -> feature.feature.name }) { index, feature ->
+                FeatureSettingRow(
+                    feature = feature,
+                    index = index,
+                    count = state.features.size,
+                    onChange = { actions.onFeatureEnabledChange(feature.feature, it) }
+                )
+            }
+            item { Spacer(Modifier.height(14.dp)) }
+            item { SectionTitle("Permissions") }
+            itemsIndexed(state.onboarding, key = { _, step -> step.title }) { index, step ->
+                PermissionSettingRow(
+                    step = step,
+                    index = index,
+                    count = state.onboarding.size,
+                    onClick = {
+                        if (step.action == PermissionAction.RequestPostNotifications) {
+                            actions.onRequestPostNotifications()
+                        } else {
+                            actions.onOpenPermissionSettings(step.action)
+                        }
+                    }
+                )
+            }
+            item {
+                FilledTonalButton(
+                    onClick = actions.onRefreshPermissions,
+                    modifier = Modifier.padding(top = 12.dp).heightIn(min = 48.dp)
+                ) {
+                    Icon(Icons.Rounded.Refresh, contentDescription = null)
+                    Text("Refresh permissions", modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BackgroundConnectionSettingRow(
+    enabled: Boolean,
+    state: BackgroundConnectionState,
+    onChange: (Boolean) -> Unit
+) {
+    val summary = when (state) {
+        BackgroundConnectionState.Disabled -> "Keep continuity available while Plink is closed."
+        BackgroundConnectionState.Starting -> "Starting background connection…"
+        BackgroundConnectionState.Running -> "Active in the background."
+        is BackgroundConnectionState.RePairRequired ->
+            "Pair again to enable updated security. Your previous pairing record is preserved."
+        is BackgroundConnectionState.ActionRequired -> state.message
+        is BackgroundConnectionState.Failed -> state.message
+    }
+    val problem = state is BackgroundConnectionState.RePairRequired ||
+        state is BackgroundConnectionState.ActionRequired ||
+        state is BackgroundConnectionState.Failed
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = if (problem) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Column(Modifier.weight(1f)) {
+                Text("Background connection", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(checked = enabled, onCheckedChange = onChange)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ScreenScaffold(
+    title: String,
+    subtitle: String,
+    outerPadding: PaddingValues,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Text(title, style = MaterialTheme.typography.headlineMedium)
+                        Text(subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { inner ->
+        content(
+            PaddingValues(
+                start = 16.dp,
+                top = inner.calculateTopPadding() + 8.dp,
+                end = 16.dp,
+                bottom = outerPadding.calculateBottomPadding() + 16.dp
+            )
+        )
+    }
+}
+
+@Composable
+private fun PermissionsGroup(
+    onboarding: List<PermissionOnboardingStep>,
+    actions: PlinkUiActions,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        SectionTitle("Device access")
+        onboarding.forEachIndexed { index, step ->
+            PermissionSettingRow(
+                step,
+                index,
+                onboarding.size,
+                onClick = {
+                    if (step.action == PermissionAction.RequestPostNotifications) {
+                        actions.onRequestPostNotifications()
+                    } else {
+                        actions.onOpenPermissionSettings(step.action)
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeatureSettingRow(
+    feature: FeatureAvailability,
+    index: Int,
+    count: Int,
+    onChange: (Boolean) -> Unit
+) {
+    val checked = feature.enabled && feature.available
+    Surface(
+        onClick = { onChange(!checked) },
+        enabled = feature.available,
+        shape = PlinkShapeDefaults.groupedItem(index, count),
+        color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Icon(feature.feature.icon(), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Column(Modifier.weight(1f)) {
+                Text(feature.feature.label(), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    feature.reason ?: if (feature.available) "Available for paired Macs" else "Unavailable",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Switch(checked = checked, enabled = feature.available, onCheckedChange = null)
+        }
+    }
+}
+
+@Composable
+private fun PermissionSettingRow(
+    step: PermissionOnboardingStep,
+    index: Int,
+    count: Int,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        enabled = step.enabled,
+        shape = PlinkShapeDefaults.groupedItem(index, count),
+        color = if (step.completed) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Icon(
+                if (step.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Notifications,
+                contentDescription = null,
+                tint = if (step.completed) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+            )
+            Column(Modifier.weight(1f)) {
+                Text(step.title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    step.summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(if (step.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Settings, contentDescription = null)
+        }
+    }
+}
+
+@Composable
+private fun SummaryCard(title: String, detail: String, icon: ImageVector, container: Color) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = container),
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(36.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                Text(detail, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String) {
+    Text(
+        title,
+        style = MaterialTheme.typography.titleLarge,
+        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 8.dp, bottom = 8.dp)
+    )
+}
+
+private fun ContinuityFeature.label(): String = when (this) {
+    ContinuityFeature.Calls -> "Calls"
+    ContinuityFeature.Messages -> "Messages"
+    ContinuityFeature.Clipboard -> "Clipboard"
+    ContinuityFeature.Files -> "Files"
+    ContinuityFeature.Web -> "Web links"
+    ContinuityFeature.Battery -> "Battery"
+    ContinuityFeature.Media -> "Media"
+    ContinuityFeature.Sms -> "SMS"
+    ContinuityFeature.ScreenMirror -> "Screen mirror"
+}
+
+private fun ContinuityFeature.icon(): ImageVector = when (this) {
+    ContinuityFeature.Calls -> Icons.Rounded.Phone
+    ContinuityFeature.Messages, ContinuityFeature.Sms -> Icons.AutoMirrored.Rounded.Message
+    ContinuityFeature.Clipboard -> Icons.Rounded.ContentCopy
+    ContinuityFeature.Files -> Icons.Rounded.Folder
+    ContinuityFeature.Web -> Icons.Rounded.Link
+    ContinuityFeature.Battery -> Icons.Rounded.BatteryChargingFull
+    ContinuityFeature.Media -> Icons.Rounded.MusicNote
+    ContinuityFeature.ScreenMirror -> Icons.Rounded.Devices
+}

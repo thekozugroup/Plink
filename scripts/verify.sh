@@ -4,6 +4,14 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+# Homebrew keeps its JDK outside macOS's java_home search path.
+if [ -z "${JAVA_HOME:-}" ] && [ -x /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin/java ]; then
+  export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+fi
+if [ -z "${DEVELOPER_DIR:-}" ] && [ -d /Applications/Xcode.app/Contents/Developer ]; then
+  export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+fi
+
 if [ ! -f local.properties ] && [ -d "$HOME/Library/Android/sdk" ]; then
   printf 'sdk.dir=%s/Library/Android/sdk\n' "$HOME" > local.properties
 fi

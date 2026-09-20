@@ -22,6 +22,10 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Plink connects to the Bluetooth phone you select to manage calls and route call audio.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Plink uses your Mac microphone when you choose laptop audio for a phone call.</string>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Plink connects to your paired Pixel on your local network.</string>
     <key>NSUserNotificationAlertStyle</key>

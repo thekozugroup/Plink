@@ -45,6 +45,8 @@ public struct PairedDevice: Codable, Equatable, Sendable, Identifiable {
     public var peerPublicKey: String
     public var localPublicKey: String
     public var trusted: Bool
+    /// Legacy keys have no durable replay history and require a new pairing.
+    public var securityVersion: Int
 
     public init(
         id: String,
@@ -54,7 +56,8 @@ public struct PairedDevice: Codable, Equatable, Sendable, Identifiable {
         sessionId: String,
         peerPublicKey: String,
         localPublicKey: String,
-        trusted: Bool
+        trusted: Bool,
+        securityVersion: Int = 0
     ) {
         self.id = id
         self.name = name
@@ -64,6 +67,24 @@ public struct PairedDevice: Codable, Equatable, Sendable, Identifiable {
         self.peerPublicKey = peerPublicKey
         self.localPublicKey = localPublicKey
         self.trusted = trusted
+        self.securityVersion = securityVersion
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, platform, endpoint, sessionId, peerPublicKey, localPublicKey, trusted, securityVersion
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        platform = try c.decode(String.self, forKey: .platform)
+        endpoint = try c.decode(String.self, forKey: .endpoint)
+        sessionId = try c.decode(String.self, forKey: .sessionId)
+        peerPublicKey = try c.decode(String.self, forKey: .peerPublicKey)
+        localPublicKey = try c.decode(String.self, forKey: .localPublicKey)
+        trusted = try c.decode(Bool.self, forKey: .trusted)
+        securityVersion = try c.decodeIfPresent(Int.self, forKey: .securityVersion) ?? 0
     }
 }
 
@@ -168,6 +189,7 @@ public final class PairingStateMachine: @unchecked Sendable {
     private let lock = NSLock()
     private var current: PairingStatus = .idle
     private let localPrivateKey: P256.KeyAgreement.PrivateKey
+    private var localReplyEndpoint = ""
     public private(set) var lastSessionKey: SymmetricKey?
 
     public init(localPrivateKey: P256.KeyAgreement.PrivateKey = P256.KeyAgreement.PrivateKey()) {
@@ -197,7 +219,9 @@ public final class PairingStateMachine: @unchecked Sendable {
         )
     }
 
-    public func receive(_ offer: PairingOffer) -> PairingStatus {
+    public func receive(_ offer: PairingOffer, localEndpoint: String = "") -> PairingStatus {
+        localReplyEndpoint = localEndpoint
+        lastSessionKey = nil
         let code = offer.emojiCode
         let next = PairingStatus.showingCode(
             offer,
@@ -215,9 +239,11 @@ public final class PairingStateMachine: @unchecked Sendable {
             return nil
         }
         guard let offer else { throw PairingError.noOfferToConfirm }
+        guard offer.protocolVersion == 1 else { throw PairingPayloadError.invalidPayload }
         let session = try Self.deriveSession(
             offer,
-            localPrivateKey: localPrivateKey
+            localPrivateKey: localPrivateKey,
+            targetEndpoint: localReplyEndpoint
         )
         lastSessionKey = session.key
         let device = PairedDevice(
@@ -228,7 +254,8 @@ public final class PairingStateMachine: @unchecked Sendable {
             sessionId: session.sessionId,
             peerPublicKey: offer.publicKey,
             localPublicKey: localPublicKeyBase64,
-            trusted: true
+            trusted: true,
+            securityVersion: 2
         )
         let next = PairingStatus.paired(device)
         lock.withLock { current = next }
@@ -244,12 +271,15 @@ public final class PairingStateMachine: @unchecked Sendable {
                 nonce: offer.nonce,
                 sourcePublicKey: offer.publicKey,
                 targetPublicKey: confirmation.publicKey,
-                protocolVersion: offer.protocolVersion
+                protocolVersion: offer.protocolVersion,
+                targetEndpoint: confirmation.endpoint
             )
         )
     }
 
     public func accept(_ confirmation: PairingConfirmation, for offer: PairingOffer) throws -> PairingStatus {
+        guard offer.protocolVersion == 1, confirmation.protocolVersion == offer.protocolVersion,
+              !confirmation.endpoint.isEmpty else { throw PairingPayloadError.invalidPayload }
         guard confirmation.offerNonce == offer.nonce else { throw PairingPayloadError.staleOffer }
         guard confirmation.targetDeviceId == offer.deviceId else { throw PairingPayloadError.wrongTarget }
         let session = try Self.deriveSession(
@@ -261,7 +291,8 @@ public final class PairingStateMachine: @unchecked Sendable {
             sourcePublicKey: offer.publicKey,
             targetPublicKey: confirmation.publicKey,
             protocolVersion: offer.protocolVersion,
-            localPrivateKey: localPrivateKey
+            localPrivateKey: localPrivateKey,
+            targetEndpoint: confirmation.endpoint
         )
         guard session.sessionId == confirmation.sessionId else { throw PairingPayloadError.sessionMismatch }
         lastSessionKey = session.key
@@ -273,7 +304,8 @@ public final class PairingStateMachine: @unchecked Sendable {
             sessionId: session.sessionId,
             peerPublicKey: confirmation.publicKey,
             localPublicKey: localPublicKeyBase64,
-            trusted: true
+            trusted: true,
+            securityVersion: 2
         )
         let next = PairingStatus.paired(device)
         lock.withLock { current = next }
@@ -281,6 +313,7 @@ public final class PairingStateMachine: @unchecked Sendable {
     }
 
     public func reject(_ reason: String) -> PairingStatus {
+        lastSessionKey = nil
         let next = PairingStatus.rejected(reason)
         lock.withLock { current = next }
         return next
@@ -298,13 +331,15 @@ public final class PairingStateMachine: @unchecked Sendable {
             nonce: offer.nonce,
             sourcePublicKey: offer.publicKey,
             targetPublicKey: localPublicKeyBase64,
-            protocolVersion: offer.protocolVersion
+            protocolVersion: offer.protocolVersion,
+            targetEndpoint: localReplyEndpoint
         )
     }
 
     private static func deriveSession(
         _ offer: PairingOffer,
-        localPrivateKey: P256.KeyAgreement.PrivateKey
+        localPrivateKey: P256.KeyAgreement.PrivateKey,
+        targetEndpoint: String
     ) throws -> (sessionId: String, key: SymmetricKey) {
         try deriveSession(
             peerPublicKey: offer.publicKey,
@@ -315,7 +350,8 @@ public final class PairingStateMachine: @unchecked Sendable {
             sourcePublicKey: offer.publicKey,
             targetPublicKey: localPrivateKey.publicKey.derRepresentation.base64EncodedString(),
             protocolVersion: offer.protocolVersion,
-            localPrivateKey: localPrivateKey
+            localPrivateKey: localPrivateKey,
+            targetEndpoint: targetEndpoint
         )
     }
 
@@ -328,7 +364,8 @@ public final class PairingStateMachine: @unchecked Sendable {
         sourcePublicKey: String,
         targetPublicKey: String,
         protocolVersion: Int,
-        localPrivateKey: P256.KeyAgreement.PrivateKey
+        localPrivateKey: P256.KeyAgreement.PrivateKey,
+        targetEndpoint: String
     ) throws -> (sessionId: String, key: SymmetricKey) {
         guard !peerPublicKey.isEmpty else { throw PairingError.invalidPublicKey }
         let peerKey = try P256.KeyAgreement.PublicKey(derRepresentation: Data(base64Encoded: peerPublicKey) ?? Data())
@@ -340,7 +377,8 @@ public final class PairingStateMachine: @unchecked Sendable {
             nonce: nonce,
             sourcePublicKey: sourcePublicKey,
             targetPublicKey: targetPublicKey,
-            protocolVersion: protocolVersion
+            protocolVersion: protocolVersion,
+            targetEndpoint: targetEndpoint
         )
         let key = sharedSecret.hkdfDerivedSymmetricKey(
             using: SHA256.self,

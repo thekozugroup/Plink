@@ -1,25 +1,29 @@
 # Feature Parity
 
-## Simple Summary
+Plink does not claim full Apple Continuity parity. This table records current implementation and verification boundaries.
 
-Plink’s current build has the security, protocol, local discovery, native notification, and storage foundations for Pixel-to-Mac continuity. Live end-to-end parity still depends on permission-gated device testing and signed distribution. It cannot become Apple Continuity internally because Apple does not expose those private services to Android.
+| Capability | Current state | Verification boundary |
+| --- | --- | --- |
+| Local pairing | Implemented | Fresh pairings use security version 2 after two-sided code/consent confirmation. Legacy records and keys are preserved as version 0 but are not activated; re-pair each device. |
+| Call controls on Mac | Experimental native HFP controller | Real carrier-call answer, decline, and hangup require hardware evidence. |
+| Laptop call audio | Experimental route control | SCO connection does not establish two-way laptop microphone/output speech. Real two-way speech testing remains open. |
+| Message reply | Inbound Android reply server validates one-time, origin-bound free-form `RemoteInput` routes | Four Pixel synthetic checks passed: one-time delivery with reuse rejection, replacement revocation, data-only rejection, and authentication-required rejection. Native Notification Center delivery to the original conversation/recipient remains open. |
+| Battery and device status | Android collector implemented | Real paired-device continuity pass remains open. |
+| Media state and controls | Android `MediaSession` collector implemented | Real paired-device continuity pass remains open. |
+| Text and URL handoff | Android share target and inbound handoff implemented | Real paired-device continuity pass remains open. |
+| Clipboard | Existing continuity path | Real paired-device continuity pass remains open. |
+| Background connection | Optional UI-controlled foreground service implemented with application-owned session controller | Requires a paired Mac and notification permission. Emulator UI and explicit failure feedback are verified; physical restart, process recreation, and Doze acceptance remain open. |
+| File transfer | Unimplemented requested scope | Implementation required. |
+| Instant Hotspot | Unimplemented requested scope | Implementation required. |
+| Continuity Camera | Unimplemented requested scope | Implementation required. |
+| Screen mirroring | Unimplemented requested scope | Implementation required. |
 
-## Parity Matrix
+The latest canonical source gate passed 111 Android tests and 82 Swift tests; Android lint reported 0 errors and 27 warnings. The isolated emulator roundtrip passed seven synthetic platform checks. A 1.5× font-scale check found an open P2: important integration guidance is truncated by a two-line ellipsis. This is not a complete accessibility pass.
 
-| Apple Continuity Feature | Plink Status | Public-API Implementation | Gap |
-| --- | --- | --- | --- |
-| Local device pairing | Partial | macOS Bonjour advertises `_plink._tcp.` offers; Android NSD scan imports nearby Mac offers; both sides require matching emoji/numeric confirmation | Same-network hardware discovery pass still required |
-| iPhone call appears on Mac | Foundation built | Android notification mapper, secure transport, and macOS notification presenter exist | Permission-gated notification device proof still required |
-| Answer iPhone call from Mac | Limited | Event model supports action; Android cannot route cellular audio through macOS with public APIs | True call audio handoff unavailable |
-| SMS/iMessage reply from Mac notification | Foundation built | macOS text reply sends `message.reply`; Android has one-time route validation and `RemoteInput` executor | Android inbound reply receiver and device proof still required; iMessage relay unavailable |
-| Universal Clipboard | Partial | Clipboard event and macOS pasteboard adapter | Android collector is permission-gated and not release-proven |
-| Handoff web pages | Partial | `web.open` event and URL validation exist | Live Android collector and device proof still required |
-| AirDrop-style file handoff | Model only | `file.offer` event boundary exists | File transfer implementation still required; no Apple AirDrop protocol |
-| Instant Hotspot | Not planned | Documented out of scope | Carrier/network APIs unavailable |
-| Sidecar/Continuity Camera | Not planned | Future external-tool path only | Private Apple stack |
-| Battery/device status | Model only | `device.status` event exists | Android collectors and macOS display handling still required |
-| Media controls | Model only | `media.state` and `media.command` event names exist | MediaSession collectors/controllers still required |
+Release signing, macOS notarization, and human hardware testing remain open. Current evidence: [2026-09-19 checkpoint](evidence/2026-09-19/README.md).
 
-## Release Boundary
+See the [development audit](development-audit-2026-09-19.md) for implementation and test boundaries.
 
-Release-ready Plink means the Android and macOS apps are native, buildable, tested on real devices, locally pairable without demo constants, use encrypted local transport, and are honest about permission-gated behavior. Private Apple service parity is not claimed.
+## Licensing
+
+The Android distribution is GPL-3.0-or-later because it includes Tomato-derived UI. The independent Mac distribution remains MIT-licensed. Google Sans Flex assets are licensed under SIL Open Font License 1.1. See `android/NOTICE.md` and `third_party/` notices.

@@ -1,0 +1,103 @@
+{
+  "checkedAt": "2026-09-20T03:39:12.904786+00:00",
+  "baselineCommit": "93f61c33a693dddb2f4c05965c3c5f1e615a2399",
+  "scope": "Development checkpoint. Build/test evidence is not product acceptance.",
+  "command": "./scripts/verify.sh",
+  "exitCode": 0,
+  "log": ".a5c/artifacts/checkpoint-1-full-gate-rerun.log",
+  "logSha256": "0cff787b5b61d2677651a66690d0642db1b7af685942cc51dfda981cb8dfa108",
+  "androidUnitTests": {
+    "tests": 111,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "androidLint": {
+    "errors": 0,
+    "warnings": 27,
+    "warningKinds": [
+      "AndroidGradlePluginVersion",
+      "ApplySharedPref",
+      "GradleDependency",
+      "HardwareIds",
+      "NewerVersionAvailable",
+      "UnusedResources",
+      "UseKtx"
+    ]
+  },
+  "swiftTests": {
+    "XCTest": 31,
+    "SwiftTesting": 51,
+    "failures": 0
+  },
+  "packaging": "Debug/release builds and strict ad-hoc Mac codesign verification passed; no notarization/release identity claimed.",
+  "binaries": [
+    {
+      "path": "android/build/outputs/apk/debug/android-debug.apk",
+      "sha256": "49d19dbb66e02da30695650ebb387e236014068454c471b0e1d2eb85a571c1fb",
+      "bytes": 21363066
+    },
+    {
+      "path": "android/build/outputs/apk/release/android-release-unsigned.apk",
+      "sha256": "ea5889682c9da167073821bea2b6430a8f01701cf43957c32d5c265a5ccd31ff",
+      "bytes": 4133279
+    },
+    {
+      "path": "build/PlinkMac.app/Contents/MacOS/PlinkMac",
+      "sha256": "75de9366996e0bd44e59664b6e98864d66b57d56e1f49889e83bfa7452312513",
+      "bytes": 1663104
+    },
+    {
+      "path": "build/PlinkMac.app.zip",
+      "sha256": "8af9e0e0e4d11af44d7f6daa7056df80104a0dbfb8bbf0f8476592133f5de90d",
+      "bytes": 474980
+    },
+    {
+      "path": "macos/.build/debug/PlinkMacDebugReceiver",
+      "sha256": "78bbd665f06879a3b36e091ce2e93bcf24020000afc91b2a9000a40d0f395454",
+      "bytes": 1284192
+    },
+    {
+      "path": "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk",
+      "sha256": "6cbb5200c84de94b23f480344fd501d2d270795014b5c0b4e4cd4899ce7f3228",
+      "bytes": 21968
+    }
+  ],
+  "deviceAcceptance": "Seven synthetic platform checks passed on emulator-5580 using the checkpoint debug APK. Prior Pixel four checks remain separately scoped. No actual call audio, real recipient or native Notification Center acceptance claimed.",
+  "macUiBlocker": "Mac is locked; native automation cannot unlock it. User unlock required before native UI checks.",
+  "emulatorRoundtrip": {
+    "checks": 7,
+    "exitCode": 0,
+    "command": "./scripts/verify-device.sh emulator-5580 docs/evidence/2026-09-19/checkpoint-1-roundtrip",
+    "logs": [
+      {
+        "path": "docs/evidence/2026-09-19/checkpoint-1-roundtrip/test-package-cleanup.log",
+        "sha256": "7fc0023a6402c7bd7abd98bb3e580968de4833eed07d88d1cc8d70819d69c7a0"
+      },
+      {
+        "path": "docs/evidence/2026-09-19/checkpoint-1-roundtrip/test-install.log",
+        "sha256": "781a31c82430c97897af612ece5e0ca2205e301cb5ff121ce2660541ea5182c7"
+      },
+      {
+        "path": "docs/evidence/2026-09-19/checkpoint-1-roundtrip/android-roundtrip.log",
+        "sha256": "985163b7c7a9dbfcb505dc6333780074f20c331f672a06af59e2c68fc5c778f1"
+      },
+      {
+        "path": "docs/evidence/2026-09-19/checkpoint-1-roundtrip/mac-roundtrip.log",
+        "sha256": "2443ebd63a7fd1beda025330af41fd7f40ff74ca836f55bf6af395f9830a0953"
+      }
+    ],
+    "cleanup": "Test package absent; ADB forward and reverse mappings empty."
+  },
+  "pixelCleanup": {
+    "screenState": "OFF",
+    "screenBrightness": 0.0,
+    "screenTimeoutMs": 1800000,
+    "stayAwake": 0,
+    "settingsChanged": false,
+    "testPackageAbsent": true,
+    "portMappingsEmpty": true
+  },
+  "compiledSourceBundleSha256": "7e1531a61954b62073633fa2d7e0c170943886a99a6f95878c559dec97398b3c",
+  "compiledSourceBundleDefinition": "SHA-256 of sorted relative file path + NUL + bytes + NUL for all files under android/src, macos/Sources, macos/Resources at successful gate and latest emulator test."
+}

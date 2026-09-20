@@ -8,6 +8,8 @@ import android.util.Log
 import app.plink.android.pairing.PairedDevice
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
+import app.plink.android.security.FileFrameStateStore
+import java.io.File
 import app.plink.android.security.EncryptedFrameCodec
 import app.plink.android.security.PlinkTime
 import app.plink.android.storage.KeystorePairingSecretStore
@@ -80,7 +82,8 @@ class DebugPairingReceiver : BroadcastReceiver() {
         SecureSocketPlinkClient(
             host = host,
             port = port,
-            codec = EncryptedFrameCodec(sessionKey)
+            codec = EncryptedFrameCodec(sessionKey),
+            stateStore = FileFrameStateStore(File(context.filesDir, "transport-state"))
         ).send(envelope)
         Log.i(TAG, "Sent debug clipboard event to ${device.id} via ${device.endpoint}")
     }

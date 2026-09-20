@@ -62,7 +62,8 @@ public enum PairingTranscript {
         nonce: String,
         sourcePublicKey: String,
         targetPublicKey: String,
-        protocolVersion: Int
+        protocolVersion: Int,
+        targetEndpoint: String = ""
     ) -> String {
         [
             "plink-pairing-v\(protocolVersion)",
@@ -71,8 +72,9 @@ public enum PairingTranscript {
             endpoint,
             nonce,
             sourcePublicKey,
-            targetPublicKey
-        ].joined(separator: "|")
+            targetPublicKey,
+            targetEndpoint
+        ].map { "\($0.utf8.count):\($0)" }.joined()
     }
 
     public static func verificationCode(transcript: String) -> PairingVerificationCode {

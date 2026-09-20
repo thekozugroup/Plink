@@ -62,124 +62,87 @@ public final class SecureNetworkPlinkClient: PlinkTransport, @unchecked Sendable
     private let host: NWEndpoint.Host
     private let port: NWEndpoint.Port
     private let codec: EncryptedFrameCodec
-    private let lock = NSLock()
-    private var sequence: Int64 = 0
+    private let stateStore: any FrameStateStoring
 
-    public init(host: String, port: UInt16, codec: EncryptedFrameCodec) {
+    public init(host: String, port: UInt16, codec: EncryptedFrameCodec,
+                stateStore: any FrameStateStoring = FileFrameStateStore.applicationDefault) {
         self.host = NWEndpoint.Host(host)
-        self.port = NWEndpoint.Port(rawValue: port) ?? NWEndpoint.Port(rawValue: 45731)!
+        self.port = NWEndpoint.Port(rawValue: port)!
         self.codec = codec
+        self.stateStore = stateStore
     }
 
     public func send(_ envelope: PlinkEnvelope) async throws {
-        let nextSequence = lock.withLock {
-            sequence += 1
-            return sequence
-        }
-        let frame = try codec.seal(envelope, sequence: nextSequence)
+        try Task.checkCancellation()
+        let sequence = try stateStore.reserveSequence(scope: codec.stateScope(
+            sourceDeviceId: envelope.sourceDeviceId, targetDeviceId: envelope.targetDeviceId))
+        let frame = try codec.seal(envelope, sequence: sequence)
         let payload = try LengthPrefixedFrameCodec.encode(PlinkJSON.encoder().encode(frame))
-        let connection = NWConnection(host: host, port: port, using: .tcp)
-        connection.start(queue: .global(qos: .utility))
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            connection.send(content: payload, completion: .contentProcessed { error in
-                connection.cancel()
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: ())
-                }
-            })
-        }
+        let operation = NetworkSend(connection: NWConnection(host: host, port: port, using: .tcp))
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                operation.start(payload, continuation: continuation)
+            }
+        } onCancel: { operation.finish(.failure(CancellationError())) }
     }
 }
 
+private final class NetworkSend: @unchecked Sendable {
+    private let connection: NWConnection
+    private let lock = NSLock()
+    private var result: Result<Void, Error>?
+    private var continuation: CheckedContinuation<Void, any Error>?
+    private var timer: DispatchSourceTimer?
+    init(connection: NWConnection) { self.connection = connection }
+    func start(_ data: Data, continuation: CheckedContinuation<Void, any Error>) {
+        lock.lock()
+        if let result { lock.unlock(); continuation.resume(with: result); return }
+        self.continuation = continuation
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
+        self.timer = timer
+        timer.schedule(deadline: .now() + 5)
+        timer.setEventHandler { self.finish(.failure(FoundationPlinkServerError.timedOut)) }
+        timer.resume()
+        connection.stateUpdateHandler = { state in
+            if case .failed(let error) = state { self.finish(.failure(error)) }
+        }
+        connection.start(queue: .global(qos: .utility))
+        connection.send(content: data, completion: .contentProcessed { error in
+            if let error { self.finish(.failure(error)) } else { self.finish(.success(())) }
+        })
+        lock.unlock()
+    }
+    func finish(_ value: Result<Void, Error>) {
+        lock.lock()
+        guard result == nil else { lock.unlock(); return }
+        result = value
+        let pending = continuation
+        continuation = nil
+        timer?.cancel(); timer = nil
+        lock.unlock()
+        connection.stateUpdateHandler = nil
+        connection.cancel()
+        pending?.resume(with: value)
+    }
+}
+
+/// Shares the bounded, closeable receiver implementation used by the live app.
 public final class SecureNetworkPlinkServer: PlinkEventReceiver, @unchecked Sendable {
-    private let listener: NWListener
-    private let codec: EncryptedFrameCodec
-    private let replayProtector: ReplayProtector
-    private let expectedSourceDeviceId: String?
-    private let expectedTargetDeviceId: String?
-    private let queue = DispatchQueue(label: "app.plink.secure-network-server", qos: .utility)
-
-    public init(
-        port: UInt16,
-        codec: EncryptedFrameCodec,
-        replayProtector: ReplayProtector = ReplayProtector(),
-        expectedSourceDeviceId: String? = nil,
-        expectedTargetDeviceId: String? = nil
-    ) throws {
-        guard let port = NWEndpoint.Port(rawValue: port) else {
-            throw NetworkPlinkServerError.invalidPort
-        }
-        self.listener = try NWListener(using: .tcp, on: port)
-        self.codec = codec
-        self.replayProtector = replayProtector
-        self.expectedSourceDeviceId = expectedSourceDeviceId
-        self.expectedTargetDeviceId = expectedTargetDeviceId
+    private let server: FoundationSecurePlinkServer
+    public init(port: UInt16, codec: EncryptedFrameCodec,
+                replayProtector: ReplayProtector = ReplayProtector(),
+                expectedSourceDeviceId: String? = nil, expectedTargetDeviceId: String? = nil,
+                stateStore: any FrameStateStoring = FileFrameStateStore.applicationDefault,
+                readTimeout: TimeInterval = 5) throws {
+        guard port > 0 else { throw NetworkPlinkServerError.invalidPort }
+        server = FoundationSecurePlinkServer(port: port, codec: codec, replayProtector: replayProtector,
+            expectedSourceDeviceId: expectedSourceDeviceId, expectedTargetDeviceId: expectedTargetDeviceId,
+            stateStore: stateStore, readTimeout: readTimeout)
     }
-
     public func start(onEnvelope: @escaping @Sendable (Result<PlinkEnvelope, Error>) -> Void) throws {
-        listener.newConnectionHandler = { connection in
-            connection.start(queue: self.queue)
-            self.receiveFrame(from: connection, buffer: Data(), onEnvelope: onEnvelope)
-        }
-        listener.start(queue: queue)
+        try server.start(onEnvelope: onEnvelope)
     }
-
-    public func stop() {
-        listener.cancel()
-    }
-
-    private func receiveFrame(
-        from connection: NWConnection,
-        buffer: Data,
-        onEnvelope: @escaping @Sendable (Result<PlinkEnvelope, Error>) -> Void
-    ) {
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 16 * 1024) { data, _, isComplete, error in
-            if let error {
-                connection.cancel()
-                onEnvelope(.failure(error))
-                return
-            }
-            guard let data, !data.isEmpty else {
-                if isComplete {
-                    connection.cancel()
-                    onEnvelope(.failure(NetworkPlinkServerError.emptyPayload))
-                } else {
-                    self.receiveFrame(from: connection, buffer: buffer, onEnvelope: onEnvelope)
-                }
-                return
-            }
-
-            var nextBuffer = buffer
-            nextBuffer.append(data)
-            do {
-                if let expectedLength = try LengthPrefixedFrameCodec.expectedTotalLength(nextBuffer),
-                   nextBuffer.count >= expectedLength {
-                    let payload = try LengthPrefixedFrameCodec.decode(nextBuffer.prefix(expectedLength))
-                    let frame = try PlinkJSON.decoder().decode(EncryptedPlinkFrame.self, from: payload)
-                    let envelope = try self.codec.open(
-                        frame,
-                        replayProtector: self.replayProtector,
-                        expectedSourceDeviceId: self.expectedSourceDeviceId,
-                        expectedTargetDeviceId: self.expectedTargetDeviceId
-                    )
-                    connection.cancel()
-                    onEnvelope(.success(envelope))
-                    return
-                }
-                if isComplete {
-                    connection.cancel()
-                    onEnvelope(.failure(NetworkPlinkServerError.invalidFrame))
-                    return
-                }
-                self.receiveFrame(from: connection, buffer: nextBuffer, onEnvelope: onEnvelope)
-            } catch {
-                connection.cancel()
-                onEnvelope(.failure(error))
-            }
-        }
-    }
+    public func stop() { server.stop() }
 }
 
 public enum NetworkPlinkServerError: Error, Equatable {
@@ -188,262 +151,146 @@ public enum NetworkPlinkServerError: Error, Equatable {
     case invalidFrame
 }
 
+/// A single bounded reader owns all closes. stop() shuts down IO and joins it.
+/// start() binds synchronously, so a successful return means the listener exists.
 public final class FoundationLengthPrefixedMessageServer: LengthPrefixedMessageReceiver, @unchecked Sendable {
     private let port: UInt16
-    private let queue = DispatchQueue(label: "app.plink.length-prefixed-message-server", qos: .utility)
+    private let readTimeout: TimeInterval
+    private let queue = DispatchQueue(label: "app.plink.frame-reader", qos: .utility)
+    private let queueKey = DispatchSpecificKey<Bool>()
     private let lock = NSLock()
-    private var listenerSocket: Int32 = -1
-    private var isStopped = false
+    private var listener: Int32 = -1
+    private var client: Int32 = -1
+    private var stopped = false
+    private var started = false
 
-    public init(port: UInt16) {
+    public init(port: UInt16, readTimeout: TimeInterval = 5) {
         self.port = port
+        self.readTimeout = readTimeout
+        queue.setSpecific(key: queueKey, value: true)
     }
 
     public func start(onMessage: @escaping @Sendable (Result<Data, Error>) -> Void) throws {
-        lock.withLock {
-            isStopped = false
+        lock.lock(); defer { lock.unlock() }
+        guard !started, !stopped else { throw FoundationPlinkServerError.stopped }
+        guard port > 0, readTimeout > 0 else { throw NetworkPlinkServerError.invalidPort }
+        let fd = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        guard fd >= 0 else { throw FoundationPlinkServerError.socketSetupFailed }
+        var reuse: Int32 = 1
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout<Int32>.size))
+        var address = sockaddr_in(sin_len: UInt8(MemoryLayout<sockaddr_in>.size),
+            sin_family: sa_family_t(AF_INET), sin_port: port.bigEndian,
+            sin_addr: in_addr(s_addr: INADDR_ANY.bigEndian), sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
+        let bound = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                Darwin.bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
         }
-        queue.async {
-            self.run(onMessage: onMessage)
-        }
+        guard bound == 0 else { Darwin.close(fd); throw FoundationPlinkServerError.bindFailed }
+        guard Darwin.listen(fd, SOMAXCONN) == 0 else { Darwin.close(fd); throw FoundationPlinkServerError.listenFailed }
+        listener = fd
+        started = true
+        queue.async { self.run(fd, onMessage: onMessage) }
     }
 
     public func stop() {
-        let socket = lock.withLock {
-            isStopped = true
-            let socket = listenerSocket
-            listenerSocket = -1
-            return socket
+        lock.lock()
+        stopped = true
+        if client >= 0 { Darwin.shutdown(client, SHUT_RDWR) }
+        if listener >= 0 { Darwin.shutdown(listener, SHUT_RDWR) }
+        lock.unlock()
+        if DispatchQueue.getSpecific(key: queueKey) == nil { queue.sync {} }
+    }
+
+    private var isStopped: Bool { lock.lock(); defer { lock.unlock() }; return stopped }
+
+    private func run(_ fd: Int32, onMessage: @escaping @Sendable (Result<Data, Error>) -> Void) {
+        defer {
+            lock.lock()
+            listener = -1
+            Darwin.close(fd)
+            lock.unlock()
         }
-        if socket >= 0 {
-            Darwin.shutdown(socket, SHUT_RDWR)
-            Darwin.close(socket)
+        while !isStopped {
+            var descriptor = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
+            let ready = Darwin.poll(&descriptor, 1, 100)
+            if ready <= 0 { continue }
+            if isStopped { break }
+            let accepted = Darwin.accept(fd, nil, nil)
+            if accepted < 0 { continue }
+            lock.lock()
+            if stopped { Darwin.close(accepted); lock.unlock(); break }
+            client = accepted
+            lock.unlock()
+            let result: Result<Data, Error> = Result {
+                let deadline = DispatchTime.now().uptimeNanoseconds + UInt64(readTimeout * 1_000_000_000)
+                let header = try readExact(count: 4, from: accepted, deadline: deadline)
+                let size = header.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
+                guard size > 0, size <= 128 * 1024 else { throw NetworkPlinkServerError.invalidFrame }
+                return try readExact(count: Int(size), from: accepted, deadline: deadline)
+            }
+            lock.lock()
+            client = -1
+            Darwin.close(accepted)
+            lock.unlock()
+            if !isStopped { onMessage(result) }
         }
     }
 
-    private func run(onMessage: @escaping @Sendable (Result<Data, Error>) -> Void) {
-        let serverSocket = Darwin.socket(AF_INET, SOCK_STREAM, 0)
-        guard serverSocket >= 0 else {
-            onMessage(.failure(FoundationPlinkServerError.socketSetupFailed))
-            return
-        }
-
-        var reuse: Int32 = 1
-        setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout<Int32>.size))
-
-        var address = sockaddr_in(
-            sin_len: UInt8(MemoryLayout<sockaddr_in>.size),
-            sin_family: sa_family_t(AF_INET),
-            sin_port: port.bigEndian,
-            sin_addr: in_addr(s_addr: INADDR_ANY.bigEndian),
-            sin_zero: (0, 0, 0, 0, 0, 0, 0, 0)
-        )
-
-        let bound = withUnsafePointer(to: &address) { pointer in
-            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockAddress in
-                Darwin.bind(serverSocket, sockAddress, socklen_t(MemoryLayout<sockaddr_in>.size))
-            }
-        }
-        guard bound == 0 else {
-            Darwin.close(serverSocket)
-            onMessage(.failure(FoundationPlinkServerError.bindFailed))
-            return
-        }
-
-        guard Darwin.listen(serverSocket, SOMAXCONN) == 0 else {
-            Darwin.close(serverSocket)
-            onMessage(.failure(FoundationPlinkServerError.listenFailed))
-            return
-        }
-
-        lock.withLock {
-            listenerSocket = serverSocket
-        }
-
-        while !lock.withLock({ isStopped }) {
-            let clientSocket = Darwin.accept(serverSocket, nil, nil)
-            guard clientSocket >= 0 else {
-                if !lock.withLock({ isStopped }) {
-                    onMessage(.failure(FoundationPlinkServerError.acceptFailed))
-                }
-                continue
-            }
-            receiveOne(clientSocket, onMessage: onMessage)
-        }
-        Darwin.close(serverSocket)
-    }
-
-    private func receiveOne(
-        _ clientSocket: Int32,
-        onMessage: @escaping @Sendable (Result<Data, Error>) -> Void
-    ) {
-        defer { Darwin.close(clientSocket) }
-        do {
-            let header = try readExact(count: 4, from: clientSocket)
-            let frameSize = header.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
-            guard frameSize > 0, frameSize <= 128 * 1024 else {
-                throw NetworkPlinkServerError.invalidFrame
-            }
-            onMessage(.success(try readExact(count: Int(frameSize), from: clientSocket)))
-        } catch {
-            onMessage(.failure(error))
-        }
-    }
-
-    private func readExact(count: Int, from socket: Int32) throws -> Data {
+    private func readExact(count: Int, from fd: Int32, deadline: UInt64) throws -> Data {
         var output = Data(count: count)
         var offset = 0
         while offset < count {
-            let bytesRead = output.withUnsafeMutableBytes { rawBuffer in
-                Darwin.read(socket, rawBuffer.baseAddress!.advanced(by: offset), count - offset)
+            if isStopped { throw FoundationPlinkServerError.stopped }
+            let now = DispatchTime.now().uptimeNanoseconds
+            guard now < deadline else { throw FoundationPlinkServerError.timedOut }
+            var descriptor = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
+            let wait = Int32(min(100, max(1, (deadline - now) / 1_000_000)))
+            let ready = Darwin.poll(&descriptor, 1, wait)
+            if ready < 0 { if errno == EINTR { continue }; throw FoundationPlinkServerError.readFailed }
+            if ready == 0 { continue }
+            let read = output.withUnsafeMutableBytes {
+                Darwin.recv(fd, $0.baseAddress!.advanced(by: offset), count - offset, MSG_DONTWAIT)
             }
-            guard bytesRead > 0 else {
-                throw FoundationPlinkServerError.readFailed
-            }
-            offset += bytesRead
+            if read < 0 && (errno == EAGAIN || errno == EINTR) { continue }
+            guard read > 0 else { throw FoundationPlinkServerError.readFailed }
+            offset += read
         }
         return output
     }
 }
 
 public final class FoundationSecurePlinkServer: PlinkEventReceiver, @unchecked Sendable {
-    private let port: UInt16
+    private let server: FoundationLengthPrefixedMessageServer
     private let codec: EncryptedFrameCodec
     private let replayProtector: ReplayProtector
+    private let stateStore: any FrameStateStoring
     private let expectedSourceDeviceId: String?
     private let expectedTargetDeviceId: String?
-    private let queue = DispatchQueue(label: "app.plink.foundation-network-server", qos: .utility)
-    private let lock = NSLock()
-    private var listenerSocket: Int32 = -1
-    private var isStopped = false
 
-    public init(
-        port: UInt16,
-        codec: EncryptedFrameCodec,
-        replayProtector: ReplayProtector = ReplayProtector(),
-        expectedSourceDeviceId: String? = nil,
-        expectedTargetDeviceId: String? = nil
-    ) {
-        self.port = port
+    public init(port: UInt16, codec: EncryptedFrameCodec,
+                replayProtector: ReplayProtector = ReplayProtector(),
+                expectedSourceDeviceId: String? = nil, expectedTargetDeviceId: String? = nil,
+                stateStore: any FrameStateStoring = FileFrameStateStore.applicationDefault,
+                readTimeout: TimeInterval = 5) {
+        server = FoundationLengthPrefixedMessageServer(port: port, readTimeout: readTimeout)
         self.codec = codec
         self.replayProtector = replayProtector
+        self.stateStore = stateStore
         self.expectedSourceDeviceId = expectedSourceDeviceId
         self.expectedTargetDeviceId = expectedTargetDeviceId
     }
-
     public func start(onEnvelope: @escaping @Sendable (Result<PlinkEnvelope, Error>) -> Void) throws {
-        lock.withLock {
-            isStopped = false
-        }
-        queue.async {
-            self.run(onEnvelope: onEnvelope)
-        }
-    }
-
-    public func stop() {
-        let socket = lock.withLock {
-            isStopped = true
-            let socket = listenerSocket
-            listenerSocket = -1
-            return socket
-        }
-        if socket >= 0 {
-            Darwin.shutdown(socket, SHUT_RDWR)
-            Darwin.close(socket)
+        try server.start { result in
+            onEnvelope(result.flatMap { data in Result {
+                let frame = try PlinkJSON.decoder().decode(EncryptedPlinkFrame.self, from: data)
+                return try self.codec.open(frame, replayProtector: self.replayProtector,
+                    expectedSourceDeviceId: self.expectedSourceDeviceId, expectedTargetDeviceId: self.expectedTargetDeviceId,
+                    stateStore: self.stateStore)
+            } })
         }
     }
-
-    private func run(onEnvelope: @escaping @Sendable (Result<PlinkEnvelope, Error>) -> Void) {
-        let serverSocket = Darwin.socket(AF_INET, SOCK_STREAM, 0)
-        guard serverSocket >= 0 else {
-            onEnvelope(.failure(FoundationPlinkServerError.socketSetupFailed))
-            return
-        }
-
-        var reuse: Int32 = 1
-        setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, socklen_t(MemoryLayout<Int32>.size))
-
-        var address = sockaddr_in(
-            sin_len: UInt8(MemoryLayout<sockaddr_in>.size),
-            sin_family: sa_family_t(AF_INET),
-            sin_port: port.bigEndian,
-            sin_addr: in_addr(s_addr: INADDR_ANY.bigEndian),
-            sin_zero: (0, 0, 0, 0, 0, 0, 0, 0)
-        )
-
-        let bound = withUnsafePointer(to: &address) { pointer in
-            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockAddress in
-                Darwin.bind(serverSocket, sockAddress, socklen_t(MemoryLayout<sockaddr_in>.size))
-            }
-        }
-        guard bound == 0 else {
-            Darwin.close(serverSocket)
-            onEnvelope(.failure(FoundationPlinkServerError.bindFailed))
-            return
-        }
-
-        guard Darwin.listen(serverSocket, SOMAXCONN) == 0 else {
-            Darwin.close(serverSocket)
-            onEnvelope(.failure(FoundationPlinkServerError.listenFailed))
-            return
-        }
-
-        lock.withLock {
-            listenerSocket = serverSocket
-        }
-
-        while !lock.withLock({ isStopped }) {
-            let clientSocket = Darwin.accept(serverSocket, nil, nil)
-            guard clientSocket >= 0 else {
-                if !lock.withLock({ isStopped }) {
-                    onEnvelope(.failure(FoundationPlinkServerError.acceptFailed))
-                }
-                continue
-            }
-            receiveOne(clientSocket, onEnvelope: onEnvelope)
-        }
-        Darwin.close(serverSocket)
-    }
-
-    private func receiveOne(
-        _ clientSocket: Int32,
-        onEnvelope: @escaping @Sendable (Result<PlinkEnvelope, Error>) -> Void
-    ) {
-        defer { Darwin.close(clientSocket) }
-        do {
-            let header = try readExact(count: 4, from: clientSocket)
-            let frameSize = header.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
-            guard frameSize > 0, frameSize <= 128 * 1024 else {
-                throw NetworkPlinkServerError.invalidFrame
-            }
-            let payload = try readExact(count: Int(frameSize), from: clientSocket)
-            let frame = try PlinkJSON.decoder().decode(EncryptedPlinkFrame.self, from: payload)
-            let envelope = try codec.open(
-                frame,
-                replayProtector: replayProtector,
-                expectedSourceDeviceId: expectedSourceDeviceId,
-                expectedTargetDeviceId: expectedTargetDeviceId
-            )
-            onEnvelope(.success(envelope))
-        } catch {
-            onEnvelope(.failure(error))
-        }
-    }
-
-    private func readExact(count: Int, from socket: Int32) throws -> Data {
-        var output = Data(count: count)
-        var offset = 0
-        while offset < count {
-            let bytesRead = output.withUnsafeMutableBytes { rawBuffer in
-                Darwin.read(socket, rawBuffer.baseAddress!.advanced(by: offset), count - offset)
-            }
-            guard bytesRead > 0 else {
-                throw FoundationPlinkServerError.readFailed
-            }
-            offset += bytesRead
-        }
-        return output
-    }
+    public func stop() { server.stop() }
 }
 
 public enum FoundationPlinkServerError: Error, Equatable {
@@ -452,12 +299,6 @@ public enum FoundationPlinkServerError: Error, Equatable {
     case listenFailed
     case acceptFailed
     case readFailed
-}
-
-private extension NSLock {
-    func withLock<T>(_ body: () throws -> T) rethrows -> T {
-        lock()
-        defer { unlock() }
-        return try body()
-    }
+    case timedOut
+    case stopped
 }

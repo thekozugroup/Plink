@@ -39,7 +39,8 @@ class KeystorePairingSecretStore(
     override suspend fun save(sessionKey: ByteArray, sessionId: String) {
         prefs.edit()
             .putString(sessionId, Base64.getEncoder().encodeToString(encrypt(sessionKey)))
-            .apply()
+            .commit()
+            .also { check(it) { "Could not persist pairing secret." } }
     }
 
     override suspend fun load(sessionId: String): ByteArray? {
@@ -48,7 +49,7 @@ class KeystorePairingSecretStore(
     }
 
     override suspend fun remove(sessionId: String) {
-        prefs.edit().remove(sessionId).apply()
+        check(prefs.edit().remove(sessionId).commit()) { "Could not remove pairing secret." }
     }
 
     private fun encrypt(value: ByteArray): ByteArray {

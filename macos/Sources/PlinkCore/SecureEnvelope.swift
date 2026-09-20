@@ -200,8 +200,7 @@ public struct SecureEnvelopeCodec: Sendable {
 public final class ReplayProtector: @unchecked Sendable {
     private let lock = NSLock()
     private let maxClockSkew: TimeInterval
-    private var highestSequence: Int64 = 0
-    private var seenNonces: [String] = []
+    private let state = InMemoryFrameStateStore()
 
     public init(maxClockSkew: TimeInterval = 300) {
         self.maxClockSkew = maxClockSkew
@@ -212,14 +211,7 @@ public final class ReplayProtector: @unchecked Sendable {
             guard abs(now.timeIntervalSince(frame.issuedAt)) <= maxClockSkew else {
                 throw PayloadPolicyError.staleFrame
             }
-            guard frame.sequence > highestSequence, !seenNonces.contains(frame.nonce) else {
-                throw PayloadPolicyError.replayDetected
-            }
-            highestSequence = frame.sequence
-            seenNonces.append(frame.nonce)
-            if seenNonces.count > 256 {
-                seenNonces.removeFirst(seenNonces.count - 256)
-            }
+            try state.accept(scope: "replay", sequence: frame.sequence, nonce: frame.nonce)
         }
     }
 }
@@ -227,10 +219,16 @@ public final class ReplayProtector: @unchecked Sendable {
 public struct EncryptedFrameCodec: Sendable {
     private let aesKey: SymmetricKey
     private let hmacKey: SymmetricKey
+    private let keyScope: String
 
     public init(sessionKey: Data) {
+        self.keyScope = Data(SHA256.hash(data: sessionKey)).base64EncodedString()
         self.aesKey = SymmetricKey(data: SHA256.hash(data: sessionKey))
         self.hmacKey = SymmetricKey(data: SHA256.hash(data: Data("plink-frame-hmac".utf8) + sessionKey))
+    }
+
+    public func stateScope(sourceDeviceId: String, targetDeviceId: String) -> String {
+        [keyScope, sourceDeviceId, targetDeviceId].map { "\($0.utf8.count):\($0)" }.joined()
     }
 
     public func seal(
@@ -274,7 +272,8 @@ public struct EncryptedFrameCodec: Sendable {
         replayProtector: ReplayProtector? = nil,
         now: Date = .now,
         expectedSourceDeviceId: String? = nil,
-        expectedTargetDeviceId: String? = nil
+        expectedTargetDeviceId: String? = nil,
+        stateStore: (any FrameStateStoring)? = nil
     ) throws -> PlinkEnvelope {
         guard frame.version == 1 else { throw PayloadPolicyError.unsupportedVersion }
         if let expectedSourceDeviceId, frame.sourceDeviceId != expectedSourceDeviceId {
@@ -285,8 +284,9 @@ public struct EncryptedFrameCodec: Sendable {
         }
         var unsigned = frame
         unsigned.signature = ""
-        guard signature(for: unsigned) == frame.signature else { throw PayloadPolicyError.invalidSignature }
-        try replayProtector?.accept(frame, now: now)
+        guard let signatureBytes = Data(base64Encoded: frame.signature),
+              HMAC<SHA256>.isValidAuthenticationCode(signatureBytes, authenticating: Data(signingInput(unsigned).utf8), using: hmacKey)
+        else { throw PayloadPolicyError.invalidSignature }
         guard let combined = Data(base64Encoded: frame.cipherText) else {
             throw PayloadPolicyError.malformedFrame
         }
@@ -303,6 +303,10 @@ public struct EncryptedFrameCodec: Sendable {
             throw PayloadPolicyError.deviceMismatch
         }
         try PayloadPolicy.validate(envelope)
+        guard abs(now.timeIntervalSince(frame.issuedAt)) <= 300 else { throw PayloadPolicyError.staleFrame }
+        try replayProtector?.accept(frame, now: now)
+        try stateStore?.accept(scope: stateScope(sourceDeviceId: frame.sourceDeviceId, targetDeviceId: frame.targetDeviceId),
+                               sequence: frame.sequence, nonce: frame.nonce)
         return envelope
     }
 

@@ -1,38 +1,30 @@
 # Production Handoff
 
-Plink is ready for a final release pass once user-controlled permissions and signing credentials are available.
+## Open release work
 
-## Current Installed State
+- Configure Android release signing credentials.
+- Sign, notarize, and staple the macOS app with a Developer ID.
+- Complete paired Pixel/Mac tests for call controls, real cellular two-way laptop audio, and native macOS Notification Center replies to a controlled recipient.
+- Complete physical Android restart, process recreation, and Doze acceptance for the implemented foreground-service ownership path.
+- Remove the integration-summary two-line ellipsis so important guidance fully wraps at 1.5× font scale, then repeat the three-destination large-text check.
 
-- macOS app: `/Applications/PlinkMac.app`
-- Android package: `app.plink.android`
-- Public repo branch: `main`
-- Latest local verification command: `./scripts/verify.sh`
+Legacy pairings use security version 0. Preserve their records and keys, but do not activate them automatically: re-pair every existing device to create a security-version-2 pairing.
 
-## Final Hardware Pass
+The latest canonical source gate passed 111 Android tests and 82 Swift tests (31 XCTest and 51 Swift Testing). Android lint completed with 0 errors and 27 warnings. The latest isolated emulator roundtrip passed seven synthetic platform checks. Keep the large-text truncation open for the next UI checkpoint; these counts do not establish full product or accessibility acceptance.
 
-1. Put Pixel and Mac on the same local network.
-2. Open Plink on macOS and confirm it is discoverable.
-3. Open Plink on Pixel and tap `Scan`.
-4. Tap the discovered Mac offer, or copy/paste the Mac offer manually if discovery is unavailable.
-5. Confirm the emoji and six-digit code match on both devices.
-6. Tap `Confirm` on Pixel and paste the Pixel response into macOS.
-7. Click `Finish Pairing` on macOS.
-8. Use Android `Preview events` diagnostics for `Call`, `Message`, and `Clipboard`.
-9. Confirm macOS receives native notifications for call/message diagnostics and updates the pasteboard for clipboard.
+## Required hardware pass
 
-## Permission-Gated Pass
+1. Pair Pixel and Mac through the two-sided consent and matching-code flow.
+2. Grant ordinary Android and macOS OS permissions needed for the selected capabilities.
+   Enable the optional Android background-connection switch, restart the app and device, exercise process recreation, and test an appropriate Doze interval. Record recovery and delivery behavior; current evidence does not establish Doze delivery.
+3. Confirm real Android notification mirroring.
+4. Send a reply from macOS Notification Center and verify Android applies it to the originating conversation and the controlled recipient receives it.
+5. Place a controlled cellular call. Verify answer, decline, hangup, and a two-way laptop microphone/output spoken-phrase check without phone acoustic leakage.
+6. Verify battery, media, text, and URL handoff on the paired devices.
 
-Only run after explicit approval to change Pixel settings.
+The existing four Pixel synthetic `RemoteInput` checks cover one-time delivery with reuse rejection, notification replacement revocation, data-only `RemoteInput` rejection, and authentication-required action rejection. The emulator integration harness also verifies filesystem-backed sequence/replay persistence across store recreation and an encrypted Android-Swift reply/execution acknowledgment. These checks do not replace the Notification Center recipient test or physical restart/Doze acceptance. See the [development audit](development-audit-2026-09-19.md).
 
-1. Grant Android notification runtime permission.
-2. Grant Android notification listener access for Plink.
-3. Generate a real replyable Android notification.
-4. Confirm macOS shows the mirrored message with a reply action.
-5. Reply from the macOS notification.
-6. Confirm Android executes the `RemoteInput` reply once and rejects replay.
-
-## Android Release
+## Android release
 
 Set one of each pair before building:
 
@@ -41,33 +33,23 @@ Set one of each pair before building:
 - `PLINK_ANDROID_KEY_ALIAS` or `plink.android.keyAlias`
 - `PLINK_ANDROID_KEY_PASSWORD` or `plink.android.keyPassword`
 
-Then run:
-
 ```sh
 ./gradlew --project-dir android :android:assembleRelease
 ```
 
-## macOS Release
+## macOS release
 
-Set:
-
-- `MACOS_CODESIGN_IDENTITY`
-- `MACOS_NOTARY_APPLE_ID`
-- `MACOS_NOTARY_TEAM_ID`
-- `MACOS_NOTARY_PASSWORD`
-
-Then run:
+Set `MACOS_CODESIGN_IDENTITY`, `MACOS_NOTARY_APPLE_ID`, `MACOS_NOTARY_TEAM_ID`, and `MACOS_NOTARY_PASSWORD`.
 
 ```sh
 ./scripts/package-macos.sh
 ./scripts/notarize-macos.sh build/PlinkMac.app.zip
 ```
 
-## Do Not Claim
+## Licensing
 
-- iMessage relay
-- cellular audio handoff
-- Instant Hotspot
-- Continuity Camera
-- Sidecar
-- private Apple Continuity protocol parity
+Ship Android GPL-3.0-or-later notices with Tomato-derived UI and the Google Sans Flex OFL notice. Keep the independent Mac distribution under its MIT notice.
+
+## Evidence
+
+[Development checkpoint, 2026-09-19](evidence/2026-09-19/README.md).

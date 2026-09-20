@@ -2,6 +2,6 @@
     <application>
         <receiver
             android:name=".debug.DebugPairingReceiver"
-            android:exported="true" />
+            android:exported="false" />
     </application>
 </manifest>

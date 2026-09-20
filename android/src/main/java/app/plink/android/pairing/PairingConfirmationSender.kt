@@ -1,11 +1,6 @@
 package app.plink.android.pairing
 
-import app.plink.android.transport.LengthPrefixedFrameCodec
-import java.io.DataOutputStream
-import java.net.InetSocketAddress
-import java.net.Socket
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import app.plink.android.transport.sendLengthPrefixedFrame
 
 class PairingConfirmationSender(
     private val connectTimeoutMillis: Int = 5_000,
@@ -14,14 +9,7 @@ class PairingConfirmationSender(
     suspend fun send(offer: PairingOffer, confirmation: PairingConfirmation) {
         val (host, port) = parseEndpoint(offer.endpoint)
         val payload = PairingPayloadCodec.encodeConfirmation(confirmation).toByteArray(Charsets.UTF_8)
-        withContext(Dispatchers.IO) {
-            Socket().use { socket ->
-                socket.connect(InetSocketAddress(host, port), connectTimeoutMillis)
-                socket.soTimeout = socketTimeoutMillis
-                socket.tcpNoDelay = true
-                LengthPrefixedFrameCodec.write(DataOutputStream(socket.getOutputStream()), payload)
-            }
-        }
+        sendLengthPrefixedFrame(host, port, payload, minOf(connectTimeoutMillis, socketTimeoutMillis))
     }
 
     private fun parseEndpoint(endpoint: String): Pair<String, Int> {

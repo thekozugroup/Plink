@@ -29,7 +29,9 @@ data class PairedDevice(
     val sessionId: String,
     val peerPublicKey: String,
     val localPublicKey: String,
-    val trusted: Boolean
+    val trusted: Boolean,
+    // Older records cannot supply replay history for keys used before durable transport.
+    val securityVersion: Int = 0
 )
 
 @Serializable

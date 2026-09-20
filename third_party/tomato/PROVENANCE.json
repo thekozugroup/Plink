@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "component": "Tomato-derived Android UI",
+  "upstream": {
+    "repository": "https://github.com/nsh07/Tomato.git",
+    "commit": "1bba8459cb20029f8544efa96c5d62181a769bed",
+    "webUrl": "https://github.com/nsh07/Tomato/tree/1bba8459cb20029f8544efa96c5d62181a769bed",
+    "license": "GPL-3.0-or-later",
+    "licenseFile": "LICENSE",
+    "licenseSha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+  },
+  "copyright": "Copyright (c) 2025-2026 Nishant Mishra; SettingsMainScreen.kt: Copyright (c) 2026 Nishant Mishra",
+  "distribution": {
+    "scope": "Android application only",
+    "license": "GPL-3.0-or-later",
+    "licenseFile": "android/LICENSE",
+    "noticeFile": "android/NOTICE.md",
+    "rootLicense": "LICENSE",
+    "rootLicenseScope": "Original Plink MIT notice; it remains separate from the Android distribution.",
+    "macosScope": "Independent macOS distribution remains under the original MIT notice."
+  },
+  "adaptations": [
+    {
+      "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/theme/Type.kt",
+      "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/theme/Type.kt",
+      "upstreamSha256": "560a492ef8933890dace2745fdf4d19b99001bc2a16658799487e95aaabd81c1",
+      "adaptedPath": "android/src/main/java/app/plink/android/ui/theme/Type.kt",
+      "adaptedSha256": "929418925ab375cf867af1d29e75fb2067c1cf0c51592a05759376d7477ff471",
+      "changeNote": "Adapted Google Sans Flex typography roles for Plink's Android Compose screen."
+    },
+    {
+      "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/theme/Shape.kt",
+      "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/theme/Shape.kt",
+      "upstreamSha256": "21e7ab4737f662b1d68ce660ee61d9b34f0efbbd32f9be2d0f031cb429dd1461",
+      "adaptedPath": "android/src/main/java/app/plink/android/ui/theme/Shape.kt",
+      "adaptedSha256": "afdee1c7da2f0e54022b30fef074d0fcc3bbad555993190b682685544baa7d85",
+      "changeNote": "Adapted rounded expressive shape scale for Plink cards and controls."
+    },
+    {
+      "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/theme/Theme.kt",
+      "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/theme/Theme.kt",
+      "upstreamSha256": "473ef7873852f5c8550e65af73488267793a0b52263a37b6de3129f37aef3ae9",
+      "adaptedPath": "android/src/main/java/app/plink/android/ui/theme/Theme.kt",
+      "adaptedSha256": "337135ae9f060f6f23126b2f635c7da23b13c5501fc72cf7ba023e6c39681b54",
+      "changeNote": "Adapted system-aware Material color and typography theme setup for Plink."
+    },
+    {
+      "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/AppScreen.kt",
+      "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/AppScreen.kt",
+      "upstreamSha256": "16d55e570d9d46ae344af9c3ce351fbbca4abd2a2cfe61eb4f14fe1ff2e10c49",
+      "adaptedPath": "android/src/main/java/app/plink/android/ui/FloatingNavigation.kt",
+      "adaptedSha256": "92d7cab21f1125792c29f93b5ad9aa572d0c1b7ceb19fe74327055e4db0adfe1",
+      "changeNote": "Adapted Compose application-screen structure and expressive navigation presentation for Plink pairing and continuity UI."
+    },
+    {
+      "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/timerScreen/TimerMainPane.kt",
+      "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/timerScreen/TimerMainPane.kt",
+      "upstreamSha256": "3720c080b282e8afe06c7bb696e63a60028d61412e1a3eb71562f45605c7c3cd",
+      "adaptedPath": "android/src/main/java/app/plink/android/ui/ConnectionRing.kt",
+      "adaptedSha256": "8905f76755e0537c8a740aba52cf889b175c5a1856bca2dbfee7c04862a7f98e",
+      "changeNote": "Adapted animated Compose pane layout patterns for Plink's status and continuity content."
+    },
+    {
+      "upstreamPath": "shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/settingsScreen/screens/SettingsMainScreen.kt",
+      "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/settingsScreen/screens/SettingsMainScreen.kt",
+      "upstreamSha256": "2f37254b218df1f975ae91262cda0deb8b7170e9cff2467fa72230a1d6327ec0",
+      "adaptedPath": "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt",
+      "adaptedSha256": "c087568ef7e6fe4cdfd2f154dc7a15df1fb1fa4adbb56c5ff20becb2368149cd",
+      "changeNote": "Adapted expressive settings-list and card presentation patterns for Plink setup controls."
+    }
+  ],
+  "fontReference": {
+    "upstreamPath": "shared/src/commonMain/composeResources/font/google_sans_flex.ttf",
+    "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/composeResources/font/google_sans_flex.ttf",
+    "upstreamSha256": "7551c307350329c6cf05de9cda1add37277b31e130d46c3532fd4914955df3bf",
+    "adaptedPath": "android/src/main/res/font/google_sans_flex.ttf",
+    "adaptedSha256": "7551c307350329c6cf05de9cda1add37277b31e130d46c3532fd4914955df3bf",
+    "note": "Copied from the pinned Tomato checkout byte-for-byte. Its font license is separately recorded in third_party/google_sans_flex/OFL.txt."
+  }
+}

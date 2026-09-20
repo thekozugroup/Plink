@@ -80,7 +80,7 @@ func acceptsManualPairingConfirmation() throws {
         targetDeviceId: "pixel-1",
         nonce: "abc"
     )
-    let pixelStatus = pixel.receive(offer)
+    let pixelStatus = pixel.receive(offer, localEndpoint: "192.168.1.20:45731")
     let pixelPaired = try pixel.confirm()
     guard
         case .showingCode(_, _, _, let pixelCode) = pixelStatus,

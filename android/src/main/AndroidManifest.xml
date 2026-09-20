@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
 
     <application
         android:name=".PlinkApplication"
@@ -27,6 +29,31 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".continuity.ShareHandoffActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.Plink">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".continuity.HandoffActionActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:theme="@style/Theme.Plink" />
+
+        <service
+            android:name=".services.BackgroundConnectionService"
+            android:exported="false"
+            android:foregroundServiceType="remoteMessaging"
+            android:stopWithTask="false" />
+
         <service
             android:name=".services.PlinkNotificationListenerService"
             android:exported="true"
@@ -37,17 +64,5 @@
             </intent-filter>
         </service>
 
-        <service
-            android:name=".services.PlinkClipboardAccessibilityService"
-            android:exported="false"
-            android:label="@string/clipboard_accessibility_name"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/clipboard_accessibility_service" />
-        </service>
     </application>
 </manifest>

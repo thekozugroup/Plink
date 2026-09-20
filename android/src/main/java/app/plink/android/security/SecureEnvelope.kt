@@ -176,25 +176,23 @@ data class EncryptedPlinkFrame(
 class ReplayWindow(
     private val maxClockSkewSeconds: Long = 300
 ) {
-    private var highestSequence: Long = 0
-    private val seenNonces = linkedSetOf<String>()
+    private val state = InMemoryFrameStateStore()
 
     @Synchronized
     fun accept(frame: EncryptedPlinkFrame, now: Instant = Instant.now()) {
         val issuedAt = Instant.parse(frame.issuedAt)
-        require(kotlin.math.abs(now.epochSecond - issuedAt.epochSecond) <= maxClockSkewSeconds) {
+        require(issuedAt >= now.minusSeconds(maxClockSkewSeconds) && issuedAt <= now.plusSeconds(maxClockSkewSeconds)) {
             "Frame timestamp is outside the allowed clock skew."
         }
-        require(frame.sequence > highestSequence) { "Frame sequence replay detected." }
-        require(seenNonces.add(frame.nonce)) { "Frame nonce replay detected." }
-        highestSequence = frame.sequence
-        while (seenNonces.size > 256) {
-            seenNonces.remove(seenNonces.first())
-        }
+        state.accept("replay", frame.sequence, frame.nonce)
     }
 }
 
 class EncryptedFrameCodec(sessionKey: ByteArray) {
+    private val keyScope = Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(sessionKey))
+    fun stateScope(sourceDeviceId: String, targetDeviceId: String): String =
+        listOf(keyScope, sourceDeviceId, targetDeviceId).joinToString("") { "${it.toByteArray(Charsets.UTF_8).size}:$it" }
+
     private val aesKey = MessageDigest.getInstance("SHA-256").digest(sessionKey)
     private val hmacKey = MessageDigest.getInstance("SHA-256").digest("plink-frame-hmac".toByteArray() + sessionKey)
 
@@ -229,7 +227,8 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         replayWindow: ReplayWindow? = null,
         now: Instant = Instant.now(),
         expectedSourceDeviceId: String? = null,
-        expectedTargetDeviceId: String? = null
+        expectedTargetDeviceId: String? = null,
+        stateStore: FrameStateStore? = null
     ): PlinkEnvelope {
         require(frame.version == 1) { "Unsupported frame version." }
         if (expectedSourceDeviceId != null) {
@@ -242,7 +241,6 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         require(MessageDigest.isEqual(expected.toByteArray(), frame.signature.toByteArray())) {
             "Frame signature failed verification."
         }
-        replayWindow?.accept(frame, now)
         val combined = Base64.getDecoder().decode(frame.cipherText)
         require(combined.size > 12) { "Encrypted frame is malformed." }
         val iv = combined.copyOfRange(0, 12)
@@ -260,6 +258,10 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
             require(envelope.targetDeviceId == expectedTargetDeviceId) { "Unexpected target device." }
         }
         PayloadPolicy.requireAcceptable(envelope)
+        val issuedAt = Instant.parse(frame.issuedAt)
+        require(issuedAt >= now.minusSeconds(300) && issuedAt <= now.plusSeconds(300)) { "Stale frame." }
+        replayWindow?.accept(frame, now)
+        stateStore?.accept(stateScope(frame.sourceDeviceId, frame.targetDeviceId), frame.sequence, frame.nonce)
         return envelope
     }
 

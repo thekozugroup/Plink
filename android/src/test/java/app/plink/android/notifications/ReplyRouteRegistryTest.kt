@@ -36,5 +36,26 @@ class ReplyRouteRegistryTest {
         assertEquals(0, registry.size())
     }
 
+    @Test
+    fun notificationUpdateRevokesEveryOlderRoute() {
+        val registry = ReplyRouteRegistry(clock = fixedClock(), ttl = Duration.ofMinutes(10))
+        registry.register("mac", "old-1", "pkg", "key", null, true)
+        registry.register("mac", "old-2", "pkg", "key", null, true)
+
+        registry.replaceForNotification("key")
+
+        assertEquals(0, registry.size())
+    }
+
+    @Test
+    fun featureDisableClearsAllRoutes() {
+        val registry = ReplyRouteRegistry(clock = fixedClock(), ttl = Duration.ofMinutes(10))
+        registry.register("mac", "evt", "pkg", "key", null, true)
+
+        registry.clear()
+
+        assertEquals(0, registry.size())
+    }
+
     private fun fixedClock(): Clock = Clock.fixed(Instant.parse("2026-06-25T00:00:00Z"), ZoneOffset.UTC)
 }

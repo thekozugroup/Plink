@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.time.Instant
+import java.net.URI
 import java.util.UUID
 
 sealed interface ContinuityEvent {
@@ -83,6 +84,45 @@ data class DeviceStatusEvent(
         put("batteryLevel", batteryLevel)
         put("charging", charging)
         put("network", network)
+    }
+}
+
+data class MediaStateEvent(
+    val sessionId: String,
+    val title: String,
+    val artist: String,
+    val playing: Boolean,
+    val canPlay: Boolean,
+    val canPause: Boolean,
+    val canNext: Boolean,
+    val canPrevious: Boolean
+) : ContinuityEvent {
+    override val type: String = PlinkEventType.MediaState
+    override val requiresAck: Boolean = false
+
+    override fun payload(): JsonObject = buildJsonObject {
+        put("sessionId", sessionId)
+        put("title", title)
+        put("artist", artist)
+        put("playing", playing)
+        put("canPlay", canPlay)
+        put("canPause", canPause)
+        put("canNext", canNext)
+        put("canPrevious", canPrevious)
+    }
+}
+
+sealed interface SharedText {
+    data class Clipboard(val text: String) : SharedText
+    data class Web(val url: String) : SharedText
+}
+
+object SharedTextClassifier {
+    fun classify(text: String): SharedText {
+        val value = text.trim()
+        require(value.isNotEmpty()) { "Shared text cannot be blank." }
+        val scheme = runCatching { URI(value).scheme?.lowercase() }.getOrNull()
+        return if (scheme == "http" || scheme == "https") SharedText.Web(value) else SharedText.Clipboard(value)
     }
 }
 

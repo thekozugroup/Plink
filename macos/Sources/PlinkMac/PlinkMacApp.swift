@@ -30,13 +30,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         domainName: "com.thekozugroup.plink.mac"
     )
     let pairingSecretStore = KeychainPairingSecretStore()
-    private let localMacDeviceId = "mac-demo"
+    // Resolved after durable pairing recovery; unavailable identity blocks setup.
+    private var localMacDeviceId = ""
     private let receiverPort: UInt16 = 45731
-    private let demoPixelPrivateKey = P256.KeyAgreement.PrivateKey()
+    private let frameStateStore: any FrameStateStoring = FileFrameStateStore.applicationDefault
     private var activeTransport: (any PlinkTransport)?
     private var receiver: (any PlinkEventReceiver)?
     private var pendingManualOffer: PairingOffer?
     private var pendingManualConfirmation: PairingConfirmation?
+    private var pendingConsent: PairingConsent?
+    private var consentDeadline: ContinuousClock.Instant?
+    private var consentIsFresh: Bool { consentDeadline.map { ContinuousClock.now < $0 } ?? false }
+    private var activePairing: (device: PairedDevice, key: Data)?
+    private var priorPairing: (device: PairedDevice, key: Data)?
+    @Published private(set) var pairingRecoveryComplete = false
+    private lazy var pairingFinalization = MacPairingFinalization(devices: pairingStore, secrets: pairingSecretStore)
+    private var pairingInFlight = false
+    private var pairingAttempt = UUID()
+    private var pairingExpiryTask: Task<Void, Never>?
+    let calling = BluetoothCallController()
+    @Published var deviceStatus: MacDeviceStatus?
+    @Published var mediaState: MacMediaState?
+    @Published var mediaSessions: [String: MacMediaState] = [:]
+    @Published var commandStatus = "No command pending"
+    @Published var pairedPeerID: String?
+    @Published var lastPeerActivity: Date?
+    @Published var sharingURL = ""
+    @Published var receiveClipboard = UserDefaults.standard.bool(forKey: "plink.receiveClipboard") {
+        didSet { UserDefaults.standard.set(receiveClipboard, forKey: "plink.receiveClipboard") }
+    }
+    @Published var receiveURLs = UserDefaults.standard.bool(forKey: "plink.receiveURLs") {
+        didSet { UserDefaults.standard.set(receiveURLs, forKey: "plink.receiveURLs") }
+    }
+    private var commands = MacCommandTracker()
+    private var housekeeping: Task<Void, Never>?
+    private var latestCommandID: String?
+    private var latestReplyID: String?
+    private var connectionGeneration = UUID()
     private var pairingAdvertiser: NetService?
     private var pairingConfirmationReceiver: (any LengthPrefixedMessageReceiver)?
     @Published var lastReply: String = "None"
@@ -47,7 +77,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     @Published var canConfirmPairing: Bool = false
     private var dashboardWindow: NSWindow?
     private var pairingWindow: NSWindow?
-    private var allowsTermination = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
@@ -58,7 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
             Task { @MainActor in
                 self?.lastDeliveryState = granted
                     ? "Notifications enabled"
-                    : (error?.localizedDescription ?? "Notifications denied")
+                    : (error?.localizedDescription ?? "Notifications are not enabled. If access was denied, open System Settings → Notifications → Plink and enable Allow Notifications. Asking again does not reset a denial.")
             }
         }
         notificationBridge.onDeliveryError = { [weak self] _, error in
@@ -67,36 +96,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
             }
         }
         notificationBridge.onTextReply = { [weak self] context, text in
-            Task {
-                do {
-                    let reply = try ReplyRouter.makeReplyEnvelope(context: context, text: text)
-                    guard let transport = await MainActor.run(body: { self?.activeTransport }) else {
-                        throw AppDeliveryError.transportUnavailable
-                    }
-                    try await transport.send(reply)
-                    await MainActor.run {
-                        self?.lastReply = "Sent: \(text)"
-                    }
-                } catch {
-                    await MainActor.run {
-                        self?.lastReply = "Reply failed"
-                        self?.lastDeliveryState = error.localizedDescription
-                    }
+            guard let self, context.pairedDeviceId == self.pairedPeerID else { return }
+            do { self.sendCommand(try ReplyRouter.makeReplyEnvelope(context: context, text: text)) }
+            catch { self.lastReply = "Reply failed: invalid reply context." }
+        }
+        notificationBridge.onCallAction = { [weak self] action, context in
+            self?.calling.perform(action, context: context)
+        }
+        notificationBridge.onStaleAction = { [weak self] in
+            self?.lastDeliveryState = "That action expired. Use the latest notification."
+        }
+        calling.onCallChanged = { [weak self] call in self?.notificationBridge.updateCall(call) }
+        housekeeping = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(5))
+                guard !Task.isCancelled, let self else { return }
+                self.notificationBridge.expireContexts()
+                for result in self.commands.expire() { self.showCommandResult(result) }
+                self.mediaSessions = self.mediaSessions.filter { Date().timeIntervalSince($0.value.receivedAt) <= 120 }
+                if let selected = self.mediaState, self.mediaSessions[selected.sessionID] == nil {
+                    self.mediaState = self.mediaSessions.values.sorted { $0.sessionID < $1.sessionID }.first
                 }
             }
         }
         showDashboardWindow()
-        if restoreDebugEnvironmentPairing() {
-            stopPairingAdvertiser()
-            stopPairingConfirmationReceiver()
-        } else {
-            startNearbyPairing()
-            restoreSavedPairingAsync()
-        }
+        restoreSavedPairingAsync()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        allowsTermination ? .terminateNow : .terminateCancel
+        .terminateNow
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        housekeeping?.cancel()
+        clearPairingAttempt() // Prevent a suspended final send from establishing trust.
+        connectionGeneration = UUID()
+        stopPairingAdvertiser()
+        stopPairingConfirmationReceiver()
+        receiver?.stop()
+        receiver = nil
+        activeTransport = nil
+        pairedPeerID = nil
+        calling.shutdown()
+        notificationBridge.clearContexts()
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -105,16 +151,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     }
 
     func quit() {
-        allowsTermination = true
         NSApplication.shared.terminate(nil)
-    }
-
-    func simulateCall() {
-        notificationBridge.showCall(caller: "Alex Morgan", handle: "+1 555 123 4567")
-    }
-
-    func simulateMessage() {
-        notificationBridge.showMessage(sender: "Alex Morgan", preview: "Can you send the deck?")
     }
 
     func openSettings() {
@@ -124,7 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     func showDashboardWindow() {
         if dashboardWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 420, height: 520),
+                contentRect: NSRect(x: 0, y: 0, width: 500, height: 760),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],
                 backing: .buffered,
                 defer: false
@@ -163,140 +200,240 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     }
 
     func startNearbyPairing() {
+        guard pairingRecoveryComplete else { pairingStatusText = "Waiting for saved pairing recovery."; return }
+        guard !pairingInFlight else { return }
+        if pendingManualOffer == nil { priorPairing = activePairing }
+        stopPairingConfirmationReceiver()
+        stopPairingAdvertiser()
         receiver?.stop()
         receiver = nil
         activeTransport = nil
-        let offer = pendingManualOffer ?? prepareManualPairing()
+        pairedPeerID = nil
+        connectionGeneration = UUID()
+        commands.removeAll()
+        deviceStatus = nil; mediaState = nil; mediaSessions.removeAll(); lastPeerActivity = nil
+        notificationBridge.clearContexts()
+        let offer = prepareManualPairing()
         publishPairingOffer(offer)
         startPairingConfirmationReceiver()
-        pairingStatusText = "Open Plink on your Pixel. This Mac should appear automatically."
-        pairingVerificationCode = nil
-        pairingPeerName = "Pixel"
-        canConfirmPairing = false
-    }
-
-    @discardableResult
-    func prepareDemoPairing() -> PairingVerificationCode {
-        let status = pairingMachine.receive(demoPairingOffer())
-        if case .showingCode(_, _, _, let code) = status {
-            return code
-        }
-        return PairingTranscript.verificationCode(transcript: "plink-demo")
-    }
-
-    func confirmDemoPairing() {
-        if case .showingCode = pairingMachine.status {} else {
-            _ = pairingMachine.receive(demoPairingOffer())
-        }
-        if case .paired(let device) = try? pairingMachine.confirm() {
-            try? pairingStore.save(device)
-            guard let sessionKey = pairingMachine.lastSessionKey else { return }
-            let sessionKeyData = data(from: sessionKey)
-            try? pairingSecretStore.save(sessionKey: sessionKeyData, sessionId: device.sessionId)
-            activeTransport = makeTransport(for: device, sessionKey: sessionKeyData)
-            startReceiver(sessionKey: sessionKeyData, pairedDeviceId: device.id)
-        }
+        pairingStatusText = "Open Plink on your Pixel and select this Mac."
     }
 
     @discardableResult
     func prepareManualPairing() -> PairingOffer {
-        let offer = pairingMachine.makeOffer(
-            deviceId: localMacDeviceId,
-            deviceName: Host.current().localizedName ?? "Mac",
-            endpoint: localMacEndpoint()
-        )
-        pendingManualOffer = offer
+        pairingAttempt = UUID()
         pendingManualConfirmation = nil
+        pendingConsent = nil
+        canConfirmPairing = false
+        pairingVerificationCode = nil
+        pairingPeerName = "Pixel"
+        let offer = pairingMachine.makeOffer(deviceId: localMacDeviceId,
+            deviceName: Host.current().localizedName ?? "Mac", endpoint: localMacEndpoint())
+        pendingManualOffer = offer
+        consentDeadline = ContinuousClock.now.advanced(by: .seconds(120))
+        pairingExpiryTask?.cancel()
+        let attempt = pairingAttempt
+        pairingExpiryTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(120))
+            guard !Task.isCancelled, let self, self.pairingAttempt == attempt, !self.pairingInFlight else { return }
+            self.cancelPairing()
+            self.pairingStatusText = "Pairing expired. Start a new attempt."
+        }
         return offer
     }
 
     func previewManualResponse(_ payload: String) throws -> PairingVerificationCode {
-        guard let offer = pendingManualOffer else {
+        guard !pairingInFlight, let offer = pendingManualOffer, consentIsFresh else {
             throw AppDeliveryError.pairingOfferUnavailable
         }
-        let confirmation = try PairingPayloadCodec.decodeConfirmation(payload)
+        let consent = try PairingConsent.decode(payload)
+        let confirmation = consent.confirmation
+        guard confirmation.offerNonce == offer.nonce,
+              confirmation.targetDeviceId == localMacDeviceId,
+              confirmation.protocolVersion == offer.protocolVersion,
+              confirmation.protocolVersion == 1, confirmation.platform == "android",
+              !confirmation.deviceId.isEmpty, confirmation.deviceId != localMacDeviceId,
+              !confirmation.endpoint.isEmpty else { throw PairingPayloadError.invalidPayload }
+        if let pinned = pendingManualConfirmation, pinned != confirmation { throw PairingPayloadError.invalidPayload }
+        // A confirmed stage cannot be downgraded by a delayed preview.
+        if pendingConsent?.stage == .confirmed && consent.stage == .preview {
+            return pairingMachine.verificationCode(for: offer, confirmation: confirmation)
+        }
+        if consent.stage == .confirmed {
+            guard pendingManualConfirmation != nil,
+                  case .paired = try pairingMachine.accept(confirmation, for: offer),
+                  let key = pairingMachine.lastSessionKey,
+                  try consent.verified(using: data(from: key)) else { throw PairingPayloadError.invalidPayload }
+        }
         pendingManualConfirmation = confirmation
+        pendingConsent = consent
+        canConfirmPairing = consent.stage == .confirmed
         return pairingMachine.verificationCode(for: offer, confirmation: confirmation)
     }
 
     func receiveNearbyConfirmation(_ payload: String) {
         do {
-            let code = try previewManualResponse(payload)
+            pairingVerificationCode = try previewManualResponse(payload)
             pairingPeerName = pendingManualConfirmation?.deviceName ?? "Pixel"
-            pairingVerificationCode = code
-            pairingStatusText = "\(pairingPeerName) is ready. Confirm only if the code matches on both devices."
-            canConfirmPairing = true
-            lastDeliveryState = "Pairing code ready"
+            pairingStatusText = canConfirmPairing
+                ? "Pixel confirmed. Confirm here only if both codes match."
+                : "Compare both codes, then confirm on your Pixel first."
             showPairingWindow()
         } catch {
-            pairingStatusText = error.localizedDescription
-            lastDeliveryState = "Pairing confirmation failed"
+            lastDeliveryState = "Pairing response rejected. The current attempt was not changed."
         }
     }
 
-    func confirmManualPairing() throws {
-        guard let offer = pendingManualOffer else {
-            throw AppDeliveryError.pairingOfferUnavailable
-        }
-        guard let confirmation = pendingManualConfirmation else {
-            throw AppDeliveryError.pairingResponseUnavailable
-        }
-        if case .paired(let device) = try pairingMachine.accept(confirmation, for: offer) {
-            try pairingStore.save(device)
-            guard let sessionKey = pairingMachine.lastSessionKey else { return }
-            let sessionKeyData = data(from: sessionKey)
-            try pairingSecretStore.save(sessionKey: sessionKeyData, sessionId: device.sessionId)
-            activeTransport = makeTransport(for: device, sessionKey: sessionKeyData)
-            startReceiver(sessionKey: sessionKeyData, pairedDeviceId: device.id)
-            stopPairingAdvertiser()
-            stopPairingConfirmationReceiver()
-            pairingStatusText = "Paired with \(device.name)."
-            canConfirmPairing = false
-            lastDeliveryState = "Paired with \(device.name)"
-        }
-    }
-
-    @discardableResult
-    private func restoreSavedPairing() -> Bool {
-        let devices: [PairedDevice]
-        do {
-            devices = try pairingStore.all()
-        } catch {
-            NSLog("Plink restore pairing failed to load devices: \(error.localizedDescription)")
-            return false
-        }
-        guard let device = devices.first else {
-            NSLog("Plink restore pairing found no saved devices")
-            return false
-        }
-        let storedSessionKey: Data?
-        do {
-            storedSessionKey = try pairingSecretStore.load(sessionId: device.sessionId)
-        } catch {
-            NSLog("Plink restore pairing failed to load session key: \(error.localizedDescription)")
-            return false
-        }
-        guard let sessionKey = storedSessionKey else { return false }
-        NSLog("Plink restore pairing loaded \(device.id); starting receiver")
-        activeTransport = makeTransport(for: device, sessionKey: sessionKey)
-        startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id)
-        stopPairingAdvertiser()
+    func confirmManualPairing() async throws {
+        guard !pairingInFlight, canConfirmPairing,
+              let offer = pendingManualOffer, let consent = pendingConsent,
+              let confirmation = pendingManualConfirmation, consent.confirmation == confirmation,
+              consent.stage == .confirmed, consentIsFresh,
+              case .paired(let device) = try pairingMachine.accept(confirmation, for: offer),
+              let key = pairingMachine.lastSessionKey else { throw PairingPayloadError.invalidPayload }
+        let sessionKey = data(from: key)
+        guard try consent.verified(using: sessionKey),
+              let transport = makeTransport(for: device, sessionKey: sessionKey) else { throw PairingPayloadError.invalidPayload }
+        let attempt = pairingAttempt
+        pairingInFlight = true
+        canConfirmPairing = false
+        pairingExpiryTask?.cancel()
         stopPairingConfirmationReceiver()
-        return true
+        stopPairingAdvertiser()
+        let final = PlinkEnvelope(id: "pairing_\(UUID().uuidString)", type: .pairingConfirm, sentAt: .now,
+            sourceDeviceId: localMacDeviceId, targetDeviceId: device.id,
+            payload: ["sessionId": .string(device.sessionId), "offerNonce": .string(offer.nonce), "status": .string("confirmed")])
+        do {
+            try await transport.send(final)
+            try Task.checkCancellation()
+            guard pairingAttempt == attempt, pairingInFlight, consentIsFresh else { throw CancellationError() }
+            // Journal prior metadata before touching the independent durable stores.
+            // Keep the journal until receiver activation succeeds.
+            try pairingFinalization.save(device, key: sessionKey, localDeviceID: localMacDeviceId)
+            try MacPairingFinalization.activateAndCommit(activate: {
+                activeTransport = transport
+                guard startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id) else {
+                    throw AppDeliveryError.transportUnavailable
+                }
+            }, commit: {
+                try pairingFinalization.commit()
+            }, invalidate: {
+                invalidateActiveSession()
+            })
+            activePairing = (device, sessionKey)
+            priorPairing = nil
+            clearPairingAttempt()
+            pairingStatusText = "Paired with \(device.name)."
+        } catch {
+            // Cancel/restart may have already restored the old session. Never roll
+            // back a subsequent attempt from this suspended send's completion.
+            guard pairingAttempt == attempt else { throw error }
+            invalidateActiveSession()
+            do { try pairingFinalization.rollback() }
+            catch {
+                pairingRecoveryComplete = false
+                lastDeliveryState = "Pairing recovery failed. Restart Plink before pairing again."
+            }
+            clearPairingAttempt()
+            restorePriorPairing()
+            _ = pairingMachine.reject("Final confirmation failed")
+            pairingStatusText = "Pairing did not finish; prior pairing was preserved. Start a new attempt on both devices."
+            throw error
+        }
+    }
+
+    func cancelPairing() {
+        stopPairingConfirmationReceiver()
+        stopPairingAdvertiser()
+        clearPairingAttempt() // Invalidates any suspended final send before it can save.
+        restorePriorPairing()
+        _ = pairingMachine.reject("Cancelled")
+        pairingStatusText = "Pairing cancelled."
+    }
+
+    private func restorePriorPairing() {
+        let previous = priorPairing
+        priorPairing = nil
+        guard let previous else { return }
+        activePairing = previous
+        applyRestoredPairing(device: previous.device, sessionKey: previous.key)
+    }
+
+    private func invalidateActiveSession() {
+        connectionGeneration = UUID()
+        receiver?.stop()
+        receiver = nil
+        activeTransport = nil
+        activePairing = nil
+        pairedPeerID = nil
+        commands.removeAll()
+        notificationBridge.clearContexts()
+        deviceStatus = nil
+        mediaState = nil
+        mediaSessions.removeAll()
+        lastPeerActivity = nil
+    }
+
+    private func clearPairingAttempt() {
+        pairingExpiryTask?.cancel()
+        pairingAttempt = UUID()
+        pendingManualOffer = nil
+        pendingManualConfirmation = nil
+        pendingConsent = nil
+        consentDeadline = nil
+        pairingVerificationCode = nil
+        canConfirmPairing = false
+        pairingInFlight = false
     }
 
     private func restoreSavedPairingAsync() {
+        let attempt = pairingAttempt
         Task.detached { [domainName = "com.thekozugroup.plink.mac"] in
             let store = UserDefaultsPairingStore(domainName: domainName)
             let secretStore = KeychainPairingSecretStore()
+            let finalization = MacPairingFinalization(devices: store, secrets: secretStore)
+            do {
+                try finalization.rollback()
+            } catch {
+                await MainActor.run {
+                    self.lastDeliveryState = "Saved pairing recovery failed. Pairing is disabled until recovery succeeds."
+                }
+                return
+            }
             let devices: [PairedDevice]
             do {
                 devices = try store.all()
             } catch {
                 NSLog("Plink async restore failed to load devices: \(error.localizedDescription)")
+                await MainActor.run { self.lastDeliveryState = "Saved pairing data could not be read. Device identity was not changed." }
                 return
             }
-            guard let device = devices.first else {
+            let identity: String
+            do {
+                guard let defaults = UserDefaults(suiteName: domainName) else { throw MacDeviceIdentity.Failure.persistenceFailed }
+                identity = try MacDeviceIdentity.resolve(defaults: defaults, hasSavedPairings: !devices.isEmpty)
+            } catch {
+                await MainActor.run { self.lastDeliveryState = "Device identity could not be restored. Existing pairing data was preserved." }
+                return
+            }
+            await MainActor.run {
+                self.localMacDeviceId = identity
+                self.pairingRecoveryComplete = true
+            }
+            let selected: PairedDevice?
+            do { selected = try finalization.selectedDevice(localDeviceID: identity) }
+            catch {
+                await MainActor.run { self.lastDeliveryState = "Saved phone selection could not be read. Existing pairing records were preserved." }
+                return
+            }
+            guard let device = selected else {
+                if !devices.isEmpty {
+                    await MainActor.run {
+                        self.lastDeliveryState = devices.contains(where: { $0.trusted && $0.securityVersion == 2 })
+                            ? "Pair your intended phone again to select it. Saved phones were preserved."
+                            : "Pair again to enable updated transport security."
+                    }
+                }
                 NSLog("Plink async restore found no saved devices")
                 return
             }
@@ -309,43 +446,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
             }
             guard let sessionKey = storedSessionKey else { return }
             await MainActor.run {
+                guard self.pairingAttempt == attempt, self.pendingManualOffer == nil else { return }
                 self.applyRestoredPairing(device: device, sessionKey: sessionKey)
             }
         }
     }
 
     private func applyRestoredPairing(device: PairedDevice, sessionKey: Data) {
-        guard canConfirmPairing == false else { return }
+        guard device.trusted, device.securityVersion == 2 else {
+            lastDeliveryState = "Pair again to enable updated transport security."
+            return
+        }
+        guard let selected = try? pairingFinalization.selectedDevice(localDeviceID: localMacDeviceId),
+              selected.id == device.id, selected.sessionId == device.sessionId else {
+            lastDeliveryState = "Pair your intended phone again to select it. Saved phones were preserved."
+            return
+        }
+        guard canConfirmPairing == false, sessionKey.count == 32 else { return }
+        activePairing = (device, sessionKey)
         activeTransport = makeTransport(for: device, sessionKey: sessionKey)
-        startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id)
+        guard activeTransport != nil else { lastDeliveryState = "Saved phone endpoint is invalid."; return }
         stopPairingAdvertiser()
         stopPairingConfirmationReceiver()
-        lastDeliveryState = "Paired with \(device.name)"
-    }
-
-    private func restoreDebugEnvironmentPairing() -> Bool {
-        let environment = ProcessInfo.processInfo.environment
-        guard
-            let sessionKeyBase64 = environment["PLINK_DEBUG_SESSION_KEY_BASE64"],
-            let sessionKey = Data(base64Encoded: sessionKeyBase64),
-            let pairedDeviceId = environment["PLINK_DEBUG_PAIRED_DEVICE_ID"]
-        else {
-            return false
+        if startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id) {
+            lastDeliveryState = "Paired with \(device.name); waiting for phone traffic."
         }
-        let device = PairedDevice(
-            id: pairedDeviceId,
-            name: environment["PLINK_DEBUG_PAIRED_DEVICE_NAME"] ?? "Pixel",
-            platform: "android",
-            endpoint: environment["PLINK_DEBUG_PAIRED_ENDPOINT"] ?? "127.0.0.1:45731",
-            sessionId: environment["PLINK_DEBUG_SESSION_ID"] ?? "debug-session",
-            peerPublicKey: "debug-pixel-public-key",
-            localPublicKey: "debug-mac-public-key",
-            trusted: true
-        )
-        NSLog("Plink debug restore loaded \(device.id); starting receiver")
-        activeTransport = makeTransport(for: device, sessionKey: sessionKey)
-        startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id)
-        return true
     }
 
     private func publishPairingOffer(_ offer: PairingOffer) {
@@ -411,37 +536,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
     private func makeTransport(for device: PairedDevice, sessionKey: Data) -> (any PlinkTransport)? {
         guard
             let separator = device.endpoint.lastIndex(of: ":"),
-            let port = UInt16(device.endpoint[device.endpoint.index(after: separator)...])
+            let port = UInt16(device.endpoint[device.endpoint.index(after: separator)...]), port > 0,
+            separator != device.endpoint.startIndex
         else { return nil }
 
         let host = String(device.endpoint[..<separator])
+        guard !host.contains(where: { $0.isWhitespace }), !host.contains("/") else { return nil }
         return SecureNetworkPlinkClient(
             host: host,
             port: port,
-            codec: EncryptedFrameCodec(sessionKey: sessionKey)
+            codec: EncryptedFrameCodec(sessionKey: sessionKey),
+            stateStore: frameStateStore
         )
     }
 
-    private func startReceiver(sessionKey: Data, pairedDeviceId: String) {
+    @discardableResult
+    private func startReceiver(sessionKey: Data, pairedDeviceId: String) -> Bool {
+        stopPairingConfirmationReceiver()
         receiver?.stop()
+        pairedPeerID = pairedDeviceId
+        connectionGeneration = UUID()
+        let generation = connectionGeneration
+        commands.removeAll()
+        notificationBridge.clearContexts()
         do {
             let server = FoundationSecurePlinkServer(
                 port: receiverPort,
                 codec: EncryptedFrameCodec(sessionKey: sessionKey),
                 expectedSourceDeviceId: pairedDeviceId,
-                expectedTargetDeviceId: localMacDeviceId
+                expectedTargetDeviceId: localMacDeviceId,
+                stateStore: frameStateStore
             )
             try server.start { [weak self] result in
                 Task { @MainActor in
+                    guard self?.connectionGeneration == generation else { return }
                     self?.handleInbound(result)
                 }
             }
             receiver = server
             lastDeliveryState = "Receiver listening"
             NSLog("Plink receiver listening on \(receiverPort)")
+            return true
         } catch {
+            receiver = nil
+            activeTransport = nil
+            pairedPeerID = nil
             lastDeliveryState = error.localizedDescription
             NSLog("Plink receiver failed: \(error.localizedDescription)")
+            return false
         }
     }
 
@@ -452,214 +594,278 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @preconcurrency NetSer
         return "\(address):\(receiverPort)"
     }
 
-    private func handleInbound(_ result: Result<PlinkEnvelope, Error>) {
+    func handleInbound(_ result: Result<PlinkEnvelope, Error>) {
         switch result {
         case .success(let envelope):
-            if let action = HandoffPlanner.action(for: envelope) {
-                perform(action)
+            guard envelope.sourceDeviceId == pairedPeerID, envelope.targetDeviceId == localMacDeviceId else { return }
+            lastPeerActivity = .now
+            if let result = commands.resolve(envelope) { showCommandResult(result); return }
+            switch envelope.type {
+            case .deviceStatus:
+                guard let state = MacDeviceStatus(envelope: envelope) else { lastDeliveryState = "Invalid device status ignored."; return }
+                deviceStatus = state
+            case .mediaState:
+                guard let state = MacMediaState(envelope: envelope) else { lastDeliveryState = "Invalid media state ignored."; return }
+                let removed = state.title.isEmpty && state.artist.isEmpty && !state.playing &&
+                    !["play", "pause", "next", "previous"].contains(where: state.allows)
+                if removed { mediaSessions.removeValue(forKey: state.sessionID) }
+                else if !state.sessionID.isEmpty { mediaSessions[state.sessionID] = state }
+                if mediaState?.sessionID == state.sessionID { mediaState = removed ? nil : state }
+                if mediaState == nil { mediaState = mediaSessions.values.sorted { $0.sessionID < $1.sessionID }.first }
+            case .clipboardUpdated, .webOpen, .fileOffer:
+                let executed = HandoffPlanner.action(for: envelope).map(perform) ?? false
+                if envelope.requiresAck { sendOutcome(for: envelope, executed: executed) }
+                return
+            default:
+                notificationBridge.show(envelope: envelope)
             }
-            notificationBridge.show(envelope: envelope)
             lastDeliveryState = "Received \(envelope.type.rawValue)"
         case .failure(let error):
             lastDeliveryState = error.localizedDescription
         }
     }
 
-    private func perform(_ action: HandoffAction) {
+    private func perform(_ action: HandoffAction) -> Bool {
         switch action.kind {
         case .clipboard(let text):
+            guard receiveClipboard, text.utf8.count <= 32_768 else { lastDeliveryState = "Clipboard receiving is off or text is too large."; return false }
             NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(text, forType: .string)
+            let result = NSPasteboard.general.setString(text, forType: .string)
+            lastDeliveryState = result ? "Copied text from phone." : "Could not write clipboard."
+            return result
         case .openURL(let url):
-            NSWorkspace.shared.open(url)
+            guard receiveURLs else { lastDeliveryState = "Link receiving is off."; return false }
+            let result = NSWorkspace.shared.open(url)
+            lastDeliveryState = result ? "Opened link from phone." : "Could not open link."
+            return result
         case .fileOffer:
-            break
+            lastDeliveryState = "File transfer is not implemented yet."
+            return false
         }
+    }
+
+    private func sendOutcome(for original: PlinkEnvelope, executed: Bool) {
+        guard let transport = activeTransport else { return }
+        let payload: [String: PayloadValue] = executed
+            ? ["eventId": .string(original.id), "status": .string("executed"), "action": .string(original.type.rawValue)]
+            : ["eventId": .string(original.id), "code": .string("handoff_unavailable"), "message": .string("Receiving is disabled or this action is unavailable.")]
+        let envelope = PlinkEnvelope(id: "result_\(UUID().uuidString)", type: executed ? .ack : .error, sentAt: .now,
+            sourceDeviceId: localMacDeviceId, targetDeviceId: original.sourceDeviceId, payload: payload)
+        Task { do { try await transport.send(envelope) } catch { lastDeliveryState = "Could not report handoff outcome." } }
+    }
+
+    func sendCommand(_ envelope: PlinkEnvelope) {
+        guard envelope.targetDeviceId == pairedPeerID, let transport = activeTransport else {
+            commandStatus = "Pair your phone before sending."; return
+        }
+        let generation = connectionGeneration
+        commands.begin(envelope)
+        latestCommandID = envelope.id
+        commandStatus = "Sending request…"
+        if envelope.type == .messageReply {
+            latestReplyID = envelope.id
+            lastReply = "Waiting for Android reply execution…"
+        }
+        Task {
+            do {
+                try await transport.send(envelope)
+                guard generation == connectionGeneration else { return }
+                // A fast ack may already have resolved this request. Never overwrite it.
+                if latestCommandID == envelope.id && commandStatus == "Sending request…" { commandStatus = "Sent to transport; waiting for Android execution." }
+            } catch {
+                guard generation == connectionGeneration else { return }
+                commands.remove(envelope.id)
+                let failure = "Transport failed. Execution was not confirmed."
+                if latestCommandID == envelope.id,
+                   commandStatus == "Sending request…" || commandStatus == "Sent to transport; waiting for Android execution." {
+                    commandStatus = failure
+                }
+                if latestReplyID == envelope.id, lastReply == "Waiting for Android reply execution…" { lastReply = failure }
+            }
+        }
+    }
+
+    private func showCommandResult(_ result: MacCommandResult) {
+        guard result.eventID == latestCommandID || result.eventID == latestReplyID else { return }
+        let status: String
+        switch result.status {
+        case .executed:
+            status = result.action == .messageReply ? "Android executed the reply action; recipient delivery is not confirmed." : "Android executed the action."
+        case .awaitingUser:
+            status = "Ready on Pixel; tap the notification. The action has not been applied."
+        case .failed(let code): status = "Phone could not execute the action (\(code))."
+        case .unconfirmed: status = "No execution confirmation. Check the phone before retrying."
+        }
+        if result.eventID == latestCommandID { commandStatus = status }
+        if result.eventID == latestReplyID { lastReply = status }
+    }
+
+    private func send(_ type: EventType, payload: [String: PayloadValue]) {
+        guard let peer = pairedPeerID else { commandStatus = "Pair your phone first."; return }
+        sendCommand(PlinkEnvelope(id: "command_\(UUID().uuidString)", type: type, sentAt: .now,
+            sourceDeviceId: localMacDeviceId, targetDeviceId: peer, requiresAck: true, payload: payload))
+    }
+
+    func sendClipboard() {
+        guard let text = NSPasteboard.general.string(forType: .string), !text.isEmpty, text.utf8.count <= 32_768 else {
+            commandStatus = "Copy text first (up to 32 KB)."; return
+        }
+        send(.clipboardUpdated, payload: ["text": .string(text), "localOnly": .bool(false)])
+    }
+
+    func sendURL() {
+        let value = sharingURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.utf8.count <= 8192, PayloadPolicy.isAllowedURL(value),
+              let url = URL(string: value), url.host != nil else { commandStatus = "Enter an http or https link."; return }
+        send(.webOpen, payload: ["url": .string(value)])
+    }
+
+    func selectMediaSession(_ id: String) { mediaState = mediaSessions[id] }
+
+    func mediaCommand(_ command: String) {
+        guard let media = mediaState, media.allows(command), Date().timeIntervalSince(media.receivedAt) <= 120 else {
+            commandStatus = "Media state is stale or the command is unavailable."; return
+        }
+        send(.mediaCommand, payload: ["sessionId": .string(media.sessionID), "command": .string(command)])
     }
 
     private func data(from key: SymmetricKey) -> Data {
         key.withUnsafeBytes { Data($0) }
     }
 
-    private func demoPairingOffer() -> PairingOffer {
-        PairingOffer(
-            deviceId: "pixel-demo",
-            deviceName: "Pixel",
-            platform: "android",
-            endpoint: "192.168.1.24:45731",
-            nonce: "demo-nonce",
-            publicKey: demoPixelPrivateKey.publicKey.derRepresentation.base64EncodedString(),
-            targetDeviceId: localMacDeviceId
-        )
-    }
+
 }
 
 struct DashboardWindow: View {
     @ObservedObject var appDelegate: AppDelegate
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack(spacing: 14) {
-                Image(systemName: "link.circle.fill")
-                    .font(.system(size: 42, weight: .semibold))
-                    .foregroundStyle(.blue)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Plink")
-                        .font(.largeTitle.weight(.semibold))
-                    Text("Pixel + Mac continuity")
-                        .foregroundStyle(.secondary)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("Plink").font(.largeTitle.bold())
+                Text("Pixel + Mac continuity").foregroundStyle(.secondary)
+                Text(appDelegate.lastDeliveryState).font(.callout)
+                HStack {
+                    Button("Pair Phone") { appDelegate.showPairingWindow() }.disabled(!appDelegate.pairingRecoveryComplete)
+                    Button("Enable Notifications") { appDelegate.notificationBridge.requestAuthorization() }
+                    Spacer()
+                    Button("Quit") { appDelegate.quit() }
                 }
-                Spacer()
+                Button("Open System Settings for Notifications…") {
+                    NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/System Settings.app"))
+                }.help("Open Notifications → Plink and enable Allow Notifications. Requesting access again cannot reset a denial.")
+                BluetoothCallingView(controller: appDelegate.calling)
+                ContinuityPanel(appDelegate: appDelegate)
             }
-
-            VStack(alignment: .leading, spacing: 12) {
-                StatusRow(title: "Status", value: appDelegate.lastDeliveryState, symbol: "dot.radiowaves.left.and.right")
-                StatusRow(title: "Last reply", value: appDelegate.lastReply, symbol: "arrowshape.turn.up.left")
-            }
-            .padding(14)
-            .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
-
-            VStack(spacing: 12) {
-                Button {
-                    appDelegate.showPairingWindow()
-                } label: {
-                    Label("Pair Pixel", systemImage: "iphone.gen3.radiowaves.left.and.right")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-
-                HStack(spacing: 12) {
-                    Button {
-                        appDelegate.simulateCall()
-                    } label: {
-                        Label("Simulate Call", systemImage: "phone")
-                            .frame(maxWidth: .infinity)
-                    }
-
-                    Button {
-                        appDelegate.simulateMessage()
-                    } label: {
-                        Label("Simulate Message", systemImage: "message")
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-
-                HStack(spacing: 12) {
-                    Button {
-                        appDelegate.openSettings()
-                    } label: {
-                        Label("Settings", systemImage: "gearshape")
-                            .frame(maxWidth: .infinity)
-                    }
-
-                    Button(role: .destructive) {
-                        appDelegate.quit()
-                    } label: {
-                        Label("Quit", systemImage: "power")
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-            }
-
-            Spacer()
+            .padding(24)
         }
-        .padding(24)
-        .frame(minWidth: 380, minHeight: 460)
+        .frame(minWidth: 440, minHeight: 620)
     }
 }
 
 struct MenuBarPanel: View {
     @ObservedObject var appDelegate: AppDelegate
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: "link.circle.fill")
-                    .font(.system(size: 34, weight: .semibold))
-                    .foregroundStyle(.blue)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Plink")
-                        .font(.title2.weight(.semibold))
-                    Text("Pixel + Mac continuity")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Plink", systemImage: "link.circle.fill").font(.title2)
+            Text(appDelegate.lastDeliveryState).font(.callout)
+            if let battery = appDelegate.deviceStatus {
+                Text("Last phone battery: \(battery.batteryLevel)%\(battery.charging ? " · Charging" : "")")
+                Text(battery.receivedAt, style: .relative).font(.caption).foregroundStyle(.secondary)
             }
-
-            VStack(alignment: .leading, spacing: 10) {
-                StatusRow(title: "Status", value: appDelegate.lastDeliveryState, symbol: "dot.radiowaves.left.and.right")
-                StatusRow(title: "Last reply", value: appDelegate.lastReply, symbol: "arrowshape.turn.up.left")
-            }
-
-            Divider()
-
-            VStack(spacing: 10) {
-                Button {
-                    appDelegate.showPairingWindow()
-                } label: {
-                    Label("Pair Pixel", systemImage: "iphone.gen3.radiowaves.left.and.right")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.borderedProminent)
-
-                HStack(spacing: 10) {
-                    Button {
-                        appDelegate.simulateCall()
-                    } label: {
-                        Label("Call", systemImage: "phone")
-                            .frame(maxWidth: .infinity)
-                    }
-
-                    Button {
-                        appDelegate.simulateMessage()
-                    } label: {
-                        Label("Message", systemImage: "message")
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-
-                HStack(spacing: 10) {
-                    Button {
-                        appDelegate.openSettings()
-                    } label: {
-                        Label("Settings", systemImage: "gearshape")
-                            .frame(maxWidth: .infinity)
-                    }
-
-                    Button(role: .destructive) {
-                        appDelegate.quit()
-                    } label: {
-                        Label("Quit", systemImage: "power")
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-            }
-        }
-        .padding(18)
-        .frame(width: 340)
+            Text(appDelegate.lastReply).font(.caption).foregroundStyle(.secondary)
+            Button("Open Plink") { appDelegate.showDashboardWindow() }
+            Button("Send Clipboard") { appDelegate.sendClipboard() }.disabled(appDelegate.pairedPeerID == nil)
+            Button("Quit") { appDelegate.quit() }
+        }.padding(18).frame(width: 320)
     }
 }
 
-private struct StatusRow: View {
-    var title: String
-    var value: String
-    var symbol: String
-
+struct BluetoothCallingView: View {
+    @ObservedObject var controller: BluetoothCallController
+    @State private var selectedPhone = ""
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: symbol)
-                .foregroundStyle(.secondary)
-                .frame(width: 18)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.callout)
-                    .lineLimit(2)
-            }
-            Spacer(minLength: 0)
+        GroupBox("Cellular calls") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(controller.status).textSelection(.enabled)
+                Picker("Bluetooth phone", selection: $selectedPhone) {
+                    Text("Select phone").tag("")
+                    ForEach(controller.phones) { phone in Text("\(phone.name) · \(phone.id)").tag(phone.id) }
+                }
+                HStack {
+                    Button("Find Paired Phones") { controller.discover() }
+                    Button("Connect") { controller.connect(selectedPhone) }.disabled(selectedPhone.isEmpty || controller.call.context != nil)
+                    Button("Disconnect") { controller.disconnect() }
+                        .disabled(controller.call.phoneID == nil)
+                }.disabled(controller.busy || controller.blocked)
+                if let context = controller.call.context {
+                    Text(controller.call.number ?? "Unknown caller").font(.headline)
+                    Text(controller.call.phase.rawValue.capitalized)
+                    HStack {
+                        callButton("Answer on Mac", .answer, context)
+                        callButton("Decline", .decline, context)
+                        callButton("End Call", .hangUp, context)
+                    }
+                    HStack {
+                        callButton("Audio on Mac", .computerAudio, context)
+                        callButton("Audio on Phone", .phoneAudio, context)
+                        callButton(controller.call.muted ? "Unmute" : "Mute", .toggleMute, context)
+                    }
+                    Text(controller.call.audio == .scoConnectedUnverified
+                         ? "Bluetooth audio is connected. Two-way laptop audio still needs verification."
+                         : "Audio: \(controller.call.audio.rawValue)")
+                    .font(.caption).foregroundStyle(.secondary)
+                }
+                Text("Select the same phone you paired with Plink. Bluetooth calling uses a separate Bluetooth connection.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
+        }
+    }
+    private func callButton(_ title: String, _ action: MacCallAction, _ context: MacCallContext) -> some View {
+        Button(title) { controller.perform(action, context: context) }
+            .disabled(controller.busy || controller.blocked || !controller.call.permits(action, context: context))
+    }
+}
+
+struct ContinuityPanel: View {
+    @ObservedObject var appDelegate: AppDelegate
+    var body: some View {
+        GroupBox("Phone continuity") {
+            VStack(alignment: .leading, spacing: 12) {
+                TimelineView(.periodic(from: .now, by: 10)) { timeline in
+                    if let battery = appDelegate.deviceStatus {
+                        Label("\(battery.batteryLevel)%\(battery.charging ? " · Charging" : "") · \(battery.network)", systemImage: battery.charging ? "battery.100percent.bolt" : "battery.100percent")
+                        Text("Last received \(battery.receivedAt.formatted(date: .omitted, time: .shortened))\(timeline.date.timeIntervalSince(battery.receivedAt) > 120 ? " · May be stale" : "")")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else { Text("Battery status has not arrived.").foregroundStyle(.secondary) }
+                    if let media = appDelegate.mediaState {
+                        if appDelegate.mediaSessions.count > 1 {
+                            Picker("Phone media session", selection: Binding(get: { media.sessionID }, set: { appDelegate.selectMediaSession($0) })) {
+                                ForEach(appDelegate.mediaSessions.values.sorted { $0.sessionID < $1.sessionID }, id: \.sessionID) { session in
+                                    Text(session.title.isEmpty ? "Phone media" : session.title).tag(session.sessionID)
+                                }
+                            }
+                        }
+                        Text(media.title.isEmpty ? "Phone media" : media.title).font(.headline)
+                        Text(media.artist).foregroundStyle(.secondary)
+                        HStack {
+                            ForEach(["previous", media.playing ? "pause" : "play", "next"], id: \.self) { command in
+                                Button(command.capitalized) { appDelegate.mediaCommand(command) }
+                                    .disabled(!media.allows(command) || timeline.date.timeIntervalSince(media.receivedAt) > 120)
+                            }
+                        }
+                    } else { Text("No active phone media session.").foregroundStyle(.secondary) }
+                }
+                Divider()
+                Button("Send Clipboard to Phone") { appDelegate.sendClipboard() }.disabled(appDelegate.pairedPeerID == nil)
+                HStack {
+                    TextField("https://example.com", text: $appDelegate.sharingURL).textFieldStyle(.roundedBorder)
+                    Button("Open on Phone") { appDelegate.sendURL() }.disabled(appDelegate.pairedPeerID == nil)
+                }
+                Toggle("Receive clipboard text from phone", isOn: $appDelegate.receiveClipboard)
+                Toggle("Open web links received from phone", isOn: $appDelegate.receiveURLs)
+                Text(appDelegate.commandStatus).font(.caption).textSelection(.enabled)
+                Text("Last reply: \(appDelegate.lastReply)").font(.caption)
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
         }
     }
 }
@@ -716,14 +922,14 @@ struct PairingView: View {
             .foregroundStyle(.secondary)
 
             HStack(spacing: 12) {
+                Button("Cancel") { appDelegate.cancelPairing() }
                 Button("Restart Discovery") {
                     appDelegate.startNearbyPairing()
                 }
                 Button("Confirm Pairing") {
-                    do {
-                        try appDelegate.confirmManualPairing()
-                    } catch {
-                        appDelegate.pairingStatusText = error.localizedDescription
+                    Task {
+                        do { try await appDelegate.confirmManualPairing() }
+                        catch { appDelegate.lastDeliveryState = "Pairing failed: \(error.localizedDescription)" }
                     }
                 }
                 .buttonStyle(.borderedProminent)

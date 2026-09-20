@@ -1,28 +1,38 @@
 # Plink
 
-Pixel-to-Mac continuity, built with native Android and native macOS apps.
+Pixel-to-Mac continuity with native Android and macOS apps.
 
-## What It Does
+## Current capability
 
-- Pairs a Pixel and Mac on the local network with matching emoji confirmation.
-- Mirrors call and message events to macOS as native notifications.
-- Sends message replies from macOS back to Android when Android exposes a safe reply route.
-- Models clipboard, file, web, device, battery, and media handoff events.
-- Shows a macOS menu bar companion and a Google-style Android companion app.
+- Two-sided, authenticated pairing consent with code comparison.
+- Android notification mirroring and a validated inbound reply server for eligible free-form `RemoteInput` actions.
+- Android battery and media collectors, plus text and URL share handoff in both directions.
+- Explicit Android background-connection control backed by an application-owned foreground service.
+- Native macOS call controls through an experimental Bluetooth HFP controller.
+- Tomato-derived Android Compose UI under GPL-3.0-or-later.
 
-## Reality Boundary
+Fresh pairings use durable transport security version 2. Existing legacy pairing records and keys are preserved, but default to security version 0 and are not activated automatically; re-pair each legacy device.
 
-Plink uses public Android and macOS APIs. It cannot clone Apple private Continuity services such as iPhone cellular audio relay, iCloud identity relay, or private Messages relay. It implements the closest public-API equivalent and documents each gap.
+The Mac call UI can request answer, decline, hang up, audio-route, and mute actions. Real cellular-call control and two-way laptop microphone/output speech remain unverified on hardware. A connected SCO route alone does not verify two-way laptop audio.
 
-## Project Layout
+Four Pixel synthetic `RemoteInput` checks passed: one-time delivery with reuse rejection, notification-replacement revocation, data-only `RemoteInput` rejection, and authentication-required action rejection. They do not prove that a reply started in macOS Notification Center reaches the original conversation or recipient. See the [development audit](docs/development-audit-2026-09-19.md).
 
-- `android/`: Kotlin Jetpack Compose Pixel companion.
-- `macos/`: SwiftUI/AppKit macOS menu bar companion.
-- `shared/`: Protocol fixtures and cross-platform examples.
-- `docs/`: Architecture, research, parity, release readiness, and manual test notes.
-- `scripts/verify.sh`: Local verification gate.
+## Requested scope still unimplemented
 
-## Build And Test
+- File transfer
+- Instant Hotspot
+- Continuity Camera
+- Screen mirroring
+
+Background connection is an explicit optional Android UI switch. Foreground-service ownership is implemented and requires notification permission plus a paired Mac. Physical restart, process recreation, and Doze acceptance remain pending; Plink does not promise delivery in every background condition or claim full Apple Continuity parity.
+
+## Evidence
+
+Development evidence, including the native Mac dashboard, Android emulator UI, and synthetic encrypted roundtrip logs: [2026-09-19 checkpoint](docs/evidence/2026-09-19/README.md).
+
+The latest canonical source gate passed 111 Android tests and 82 Swift tests (31 XCTest and 51 Swift Testing). Android lint completed with 0 errors and 27 warnings. The latest isolated emulator roundtrip passed seven synthetic platform checks. These results are development evidence, not full hardware or accessibility acceptance.
+
+## Build and test
 
 Android:
 
@@ -38,43 +48,20 @@ swift test
 swift build
 ```
 
-Everything:
+All local checks:
 
 ```sh
 ./scripts/verify.sh
 ```
 
-macOS local-test package:
+## Permissions and release work
 
-```sh
-./scripts/package-macos.sh
-```
+Enable the Android and macOS permissions required by the capability you choose to use, including Android notification access for mirroring and reply routes. Ordinary OS permission grants require the user's normal system confirmation; no extra Plink approval is required.
 
-The script prints the strict-verified app path and exports `build/PlinkMac.app.zip`.
+Open release work: Android release signing, macOS Developer ID signing and notarization, and real paired-device tests for calls, audio, and Notification Center reply recipient delivery.
 
-## Release Status
+## Licensing
 
-This repo is a verified foundation build. Public end-user release still needs:
+Android distributions containing Tomato-derived UI are GPL-3.0-or-later. See `android/LICENSE`, `android/NOTICE.md`, and `third_party/tomato/PROVENANCE.json`.
 
-- real Pixel plus Mac E2E test evidence
-- Android release signing credentials
-- macOS Developer ID signing and notarization
-- passing GitHub Actions after push
-
-See `docs/release-readiness.md`.
-
-## Permissions
-
-Android users must explicitly enable capabilities:
-
-- Notification listener for notification and message mirroring.
-- Notification reply actions for supported app replies.
-- SMS/default SMS role only for a future direct-SMS mode.
-- Accessibility or share sheet for clipboard automation.
-- Optional Shizuku for power-user privileged paths.
-
-macOS users must allow:
-
-- Notifications for native call/message alerts.
-- Local network access for device pairing.
-- Pasteboard/file access only for enabled handoff features.
+The independent macOS distribution and original Plink material remain MIT-licensed. Google Sans Flex font assets are under the SIL Open Font License 1.1; see `third_party/google_sans_flex/`.

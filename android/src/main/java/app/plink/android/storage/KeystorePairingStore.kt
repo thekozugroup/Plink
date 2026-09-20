@@ -35,11 +35,20 @@ class KeystorePairingStore(
         persist(all().filterNot { it.id == deviceId })
     }
 
+    override suspend fun activeDeviceId(): String? = prefs.getString(ACTIVE_DEVICE_ID, null)
+
+    override suspend fun setActiveDeviceId(deviceId: String?) {
+        val editor = prefs.edit()
+        if (deviceId == null) editor.remove(ACTIVE_DEVICE_ID) else editor.putString(ACTIVE_DEVICE_ID, deviceId)
+        check(editor.commit()) { "Could not persist active pairing selection." }
+    }
+
     private fun persist(devices: List<PairedDevice>) {
         val encoded = json.encodeToString(ListSerializer(PairedDevice.serializer()), devices)
         prefs.edit()
             .putString("devices", Base64.getEncoder().encodeToString(encrypt(encoded)))
-            .apply()
+            .commit()
+            .also { check(it) { "Could not persist paired devices." } }
     }
 
     private fun encrypt(value: String): ByteArray {
@@ -71,5 +80,8 @@ class KeystorePairingStore(
             .build()
         generator.init(spec)
         return generator.generateKey()
+    }
+    private companion object {
+        const val ACTIVE_DEVICE_ID = "active_device_id"
     }
 }

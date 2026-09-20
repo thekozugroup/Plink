@@ -71,6 +71,27 @@ class ReplyRouteTest {
         assertEquals(1, registry.size())
     }
 
+    @Test
+    fun inboundReplyRejectsDifferentConversation() {
+        val registry = ReplyRouteRegistry()
+        val route = registry.register("mac", "evt-1", "com.example.messages", "key", "thread", true)
+        val reply = inboundReply(route.replyToken).copy(
+            payload = buildJsonObject {
+                put("sourceEnvelopeId", "evt-1")
+                put("packageName", "com.example.messages")
+                put("notificationKey", "key")
+                put("conversationId", "other-thread")
+                put("replyToken", route.replyToken)
+                put("text", "On it")
+            }
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            InboundReplyValidator.consume(reply, registry, localDeviceId = "pixel")
+        }
+        assertEquals(1, registry.size())
+    }
+
     private fun route(canReply: Boolean): ReplyRoute = ReplyRoute(
         pairedDeviceId = "pixel",
         sourceEnvelopeId = "evt-1",
@@ -92,6 +113,7 @@ class ReplyRouteTest {
             put("sourceEnvelopeId", "evt-1")
             put("packageName", "com.example.messages")
             put("notificationKey", "key")
+            put("conversationId", "thread")
             put("replyToken", replyToken)
             put("text", " On it ")
         }

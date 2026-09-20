@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_DIR="${PLINK_MACOS_APP_DIR:-${TMPDIR:-/tmp}/plink-build/PlinkMac.app}"
+APP_DIR="${PLINK_MACOS_APP_DIR:-$ROOT_DIR/build/PlinkMac.app}"
 MACOS_DIR="$APP_DIR/Contents/MacOS"
 RESOURCES_DIR="$APP_DIR/Contents/Resources"
 DIST_DIR="$ROOT_DIR/build"
@@ -11,7 +11,11 @@ DIST_ZIP="$DIST_DIR/PlinkMac.app.zip"
 cd "$ROOT_DIR/macos"
 swift build -c release
 
-rm -rf "$APP_DIR" "$ROOT_DIR/build/PlinkMac.app"
+case "$APP_DIR" in
+  */PlinkMac.app) ;;
+  *) echo "PLINK_MACOS_APP_DIR must end with /PlinkMac.app" >&2; exit 1 ;;
+esac
+rm -rf "$APP_DIR"
 mkdir -p "$DIST_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 cp "$ROOT_DIR/macos/.build/release/PlinkMac" "$MACOS_DIR/PlinkMac"

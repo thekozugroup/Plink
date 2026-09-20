@@ -16,7 +16,8 @@ object PairingTranscript {
         nonce: String,
         sourcePublicKey: String,
         targetPublicKey: String,
-        protocolVersion: Int
+        protocolVersion: Int,
+        targetEndpoint: String = ""
     ): String = listOf(
         "plink-pairing-v$protocolVersion",
         sourceDeviceId,
@@ -24,16 +25,17 @@ object PairingTranscript {
         endpoint,
         nonce,
         sourcePublicKey,
-        targetPublicKey
-    ).joinToString("|")
+        targetPublicKey,
+        targetEndpoint
+    ).joinToString("") { "${it.toByteArray(Charsets.UTF_8).size}:$it" }
 
     fun verificationCode(transcript: String): PairingVerificationCode {
         val digest = MessageDigest.getInstance("SHA-256").digest(transcript.toByteArray(Charsets.UTF_8))
         val emoji = EmojiPairing.symbolsForDigest(digest, count = 4)
         val labels = EmojiPairing.labelsForDigest(digest, count = 4)
         val numeric = digest.take(4)
-            .fold(0) { acc, byte -> (acc shl 8) or (byte.toInt() and 0xff) }
-            .mod(1_000_000)
+            .fold(0L) { acc, byte -> (acc shl 8) or (byte.toLong() and 0xff) }
+            .mod(1_000_000L)
             .toString()
             .padStart(6, '0')
         return PairingVerificationCode(emoji = emoji, labels = labels, numeric = numeric)

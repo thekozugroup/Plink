@@ -12,7 +12,8 @@ func foundationSecureServerReceivesAndroidCompatibleFrame() throws {
         port: port,
         codec: EncryptedFrameCodec(sessionKey: sessionKey),
         expectedSourceDeviceId: "pixel",
-        expectedTargetDeviceId: "mac"
+        expectedTargetDeviceId: "mac",
+        stateStore: InMemoryFrameStateStore()
     )
     let results = ResultCollector(expectedCount: 1)
 
@@ -43,7 +44,8 @@ func foundationSecureServerRejectsWrongDeviceId() throws {
         port: port,
         codec: EncryptedFrameCodec(sessionKey: sessionKey),
         expectedSourceDeviceId: "other-pixel",
-        expectedTargetDeviceId: "mac"
+        expectedTargetDeviceId: "mac",
+        stateStore: InMemoryFrameStateStore()
     )
     let results = ResultCollector(expectedCount: 1)
 
@@ -74,7 +76,8 @@ func foundationSecureServerRejectsReplay() throws {
         port: port,
         codec: EncryptedFrameCodec(sessionKey: sessionKey),
         expectedSourceDeviceId: "pixel",
-        expectedTargetDeviceId: "mac"
+        expectedTargetDeviceId: "mac",
+        stateStore: InMemoryFrameStateStore()
     )
     let results = ResultCollector(expectedCount: 2)
     let payload = try encryptedPayload(

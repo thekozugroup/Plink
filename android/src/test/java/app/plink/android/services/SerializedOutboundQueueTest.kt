@@ -1,0 +1,219 @@
+package app.plink.android.services
+
+import app.plink.android.protocol.PlinkEnvelope
+import app.plink.android.protocol.PlinkEventType
+import app.plink.android.transport.OutboundPlinkSender
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.buildJsonObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.nio.file.Files
+import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class SerializedOutboundQueueTest {
+    @Test
+    fun sendsInOrderAndContinuesAfterOneSendFails() = runTest {
+        val sender = RecordingSender(failId = "two")
+        val queue = SerializedOutboundQueue(
+            sender = sender,
+            scope = this,
+            capacity = 4
+        )
+
+        assertTrue(queue.trySend(envelope("one")))
+        assertTrue(queue.trySend(envelope("two")))
+        assertTrue(queue.trySend(envelope("three")))
+        advanceUntilIdle()
+
+        assertEquals(listOf("one", "two", "three"), sender.attempts)
+        assertEquals(listOf("one", "three"), sender.sent)
+        queue.stop()
+    }
+
+    @Test
+    fun rejectsWorkBeyondConfiguredCapacity() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val queue = SerializedOutboundQueue(
+            sender = RecordingSender(),
+            scope = CoroutineScope(dispatcher),
+            capacity = 2
+        )
+
+        assertTrue(queue.trySend(envelope("one")))
+        assertTrue(queue.trySend(envelope("two")))
+        assertFalse(queue.trySend(envelope("three")))
+        queue.stop()
+    }
+
+    @Test
+    fun cancellationStopsWorkerInsteadOfBeingSwallowed() = runTest {
+        val sender = object : OutboundPlinkSender {
+            var attempts = 0
+
+            override suspend fun send(envelope: PlinkEnvelope) {
+                attempts += 1
+                throw CancellationException("stop")
+            }
+        }
+        val queue = SerializedOutboundQueue(sender, this, capacity = 2)
+
+        assertTrue(queue.trySend(envelope("one")))
+        advanceUntilIdle()
+        assertFalse(queue.isRunning)
+        assertEquals(1, sender.attempts)
+        queue.stop()
+    }
+
+    @Test
+    fun purgeSuppressesQueuedTypeAndPersistenceFailureDoesNotKillWorker() = runTest {
+        val sender = RecordingSender()
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val invalidDirectory = Files.createTempFile("plink-outbox-parent", ".tmp").toFile()
+        val outbox = DurableEventOutbox(invalidDirectory, byteArrayOf(1, 2, 3), "mac")
+        val queue = SerializedOutboundQueue(sender, CoroutineScope(dispatcher), capacity = 4, outbox = outbox)
+
+        assertTrue(queue.trySend(envelope("device", PlinkEventType.DeviceStatus, Instant.now().toString())))
+        queue.purge(setOf(PlinkEventType.DeviceStatus))
+        assertTrue(queue.trySend(envelope("ack", sentAt = Instant.now().toString())))
+        advanceUntilIdle()
+
+        assertEquals(listOf("ack"), sender.sent)
+        assertTrue(queue.isRunning)
+        queue.stop()
+    }
+
+    @Test
+    fun revokeDuringPendingReadCannotRelabelOrSendRevokedEvent() = runTest {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val removed = AtomicBoolean(false)
+        val revoked = envelope("revoked", PlinkEventType.MessageReceived, Instant.now().toString())
+        val outbox = object : EventOutbox {
+            override fun store(envelope: PlinkEnvelope) = true
+            override fun pending(): List<PlinkEnvelope> {
+                entered.countDown()
+                check(release.await(5, TimeUnit.SECONDS))
+                return listOf(revoked)
+            }
+            override fun remove(id: String) = Unit
+            override fun removeTypes(types: Set<String>) { removed.set(true) }
+        }
+        var allowed = true
+        val sender = RecordingSender()
+        val queue = SerializedOutboundQueue(sender, this, outbox = outbox, isAllowed = { allowed })
+        val retry = Thread(queue::retryPending).apply { start() }
+        assertTrue(entered.await(5, TimeUnit.SECONDS))
+        allowed = false
+        val purge = Thread { queue.purge(setOf(PlinkEventType.MessageReceived)) }.apply { start() }
+        release.countDown()
+        retry.join(5_000)
+        purge.join(5_000)
+        advanceUntilIdle()
+
+        assertTrue(removed.get())
+        assertTrue(sender.sent.isEmpty())
+        queue.stop()
+    }
+
+    @Test
+    fun laterSuccessfulTrafficRetriesPersistedFailure() = runTest {
+        val directory = Files.createTempDirectory("plink-retry").toFile()
+        val outbox = DurableEventOutbox(directory, byteArrayOf(3, 2, 1), "mac")
+        var online = false
+        val attempts = mutableListOf<String>()
+        val sender = object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) {
+                attempts += envelope.id
+                if (!online) error("offline")
+            }
+        }
+        val queue = SerializedOutboundQueue(sender, this, outbox = outbox)
+        assertTrue(queue.trySend(envelope("missed", PlinkEventType.MessageReceived, Instant.now().toString())))
+        runCurrent()
+        online = true
+        assertTrue(queue.trySend(envelope("fresh", PlinkEventType.MessageReceived, Instant.now().toString())))
+        runCurrent()
+        advanceTimeBy(5_000)
+        advanceUntilIdle()
+
+        assertTrue(attempts.containsAll(listOf("missed", "fresh")))
+        assertTrue(attempts.count { it == "missed" } >= 2)
+        assertTrue(outbox.pending().isEmpty())
+        queue.stop()
+    }
+
+    @Test
+    fun bridgePublishesNewQueueBeforeRetryReadsPending() {
+        SharedOutboundBridge.configure(null)
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val sent = CountDownLatch(1)
+        val outbox = object : EventOutbox {
+            override fun store(envelope: PlinkEnvelope) = false
+            override fun pending(): List<PlinkEnvelope> {
+                entered.countDown()
+                check(release.await(5, TimeUnit.SECONDS))
+                return emptyList()
+            }
+            override fun remove(id: String) = Unit
+            override fun removeTypes(types: Set<String>) = Unit
+        }
+        val configure = Thread {
+            SharedOutboundBridge.configure(
+                sender = object : OutboundPlinkSender {
+                    override suspend fun send(envelope: PlinkEnvelope) { sent.countDown() }
+                },
+                outbox = outbox
+            )
+        }.apply { start() }
+        assertTrue(entered.await(5, TimeUnit.SECONDS))
+        val forwarded = AtomicBoolean(false)
+        val forward = Thread {
+            forwarded.set(SharedOutboundBridge.tryForward(envelope("live", sentAt = Instant.now().toString())))
+        }.apply { start() }
+        release.countDown()
+        configure.join(5_000)
+        forward.join(5_000)
+
+        assertTrue(forwarded.get())
+        assertTrue(sent.await(5, TimeUnit.SECONDS))
+        SharedOutboundBridge.configure(null)
+    }
+
+    private fun envelope(
+        id: String,
+        type: String = PlinkEventType.Ack,
+        sentAt: String = "2026-09-19T00:00:00Z"
+    ) = PlinkEnvelope(
+        id = id,
+        type = type,
+        sentAt = sentAt,
+        sourceDeviceId = "pixel",
+        targetDeviceId = "mac",
+        payload = buildJsonObject {}
+    )
+
+    private class RecordingSender(private val failId: String? = null) : OutboundPlinkSender {
+        val attempts = mutableListOf<String>()
+        val sent = mutableListOf<String>()
+
+        override suspend fun send(envelope: PlinkEnvelope) {
+            attempts += envelope.id
+            if (envelope.id == failId) error("network failure")
+            sent += envelope.id
+        }
+    }
+}

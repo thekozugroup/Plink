@@ -62,6 +62,11 @@ class ReplyRouteRegistry(
         routes.entries.removeIf { it.value.route.notificationKey == notificationKey }
     }
 
+    fun replaceForNotification(notificationKey: String) = removeByNotificationKey(notificationKey)
+
+    @Synchronized
+    fun clear() = routes.clear()
+
     @Synchronized
     fun size(): Int {
         prune(Instant.now(clock))
