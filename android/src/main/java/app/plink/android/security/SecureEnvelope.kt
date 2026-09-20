@@ -85,7 +85,8 @@ object PayloadPolicy {
         PlinkEventType.PermissionState,
         PlinkEventType.Ack,
         PlinkEventType.Error
-    ) + FileTransferPayloadPolicy.eventTypes + ScreenPreviewPayloadPolicy.eventTypes
+    ) + FileTransferPayloadPolicy.eventTypes + ScreenPreviewPayloadPolicy.eventTypes +
+        app.plink.android.protocol.ReconnectPayloadPolicy.eventTypes
 
     fun requireAcceptable(envelope: PlinkEnvelope) {
         require(envelope.version == 1) { "Unsupported protocol version." }
@@ -98,6 +99,7 @@ object PayloadPolicy {
         }
         FileTransferPayloadPolicy.requireAcceptable(envelope)
         ScreenPreviewPayloadPolicy.requireAcceptable(envelope)
+        app.plink.android.protocol.ReconnectPayloadPolicy.requireAcceptable(envelope)
 
         if (envelope.type == PlinkEventType.WebOpen) {
             val rawUrl = envelope.payload["url"]?.jsonPrimitive?.content.orEmpty()
@@ -284,10 +286,19 @@ class EncryptedFrameCodec(sessionKey: ByteArray) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(aesKey, "AES"), GCMParameterSpec(128, iv))
         cipher.updateAAD(aad(frame))
-        val raw = String(cipher.doFinal(encrypted), Charsets.UTF_8)
+        val plaintext = cipher.doFinal(encrypted)
+        val raw = PlinkEnvelope.decodeUtf8(plaintext)
         val screen = ScreenPreviewPayloadPolicy.inspectAuthenticated(raw)
         if (screen == null) {
-            val envelope = PlinkEnvelope.decode(raw)
+            val envelope = PlinkEnvelope.decode(plaintext)
+            if (envelope.type in app.plink.android.protocol.ReconnectPayloadPolicy.eventTypes) {
+                app.plink.android.protocol.ReconnectPayloadPolicy.requireCanonicalTimestamp(frame.issuedAt)
+                if (wireBytes != null) {
+                    require(wireBytes <= app.plink.android.protocol.ReconnectPayloadPolicy.maxEncryptedJsonBytes) {
+                        "Reconnect encrypted JSON exceeds its limit."
+                    }
+                }
+            }
             requireRouting(envelope, frame, expectedSourceDeviceId, expectedTargetDeviceId)
             PayloadPolicy.requireAcceptable(envelope)
             acceptFreshFrame(frame, replayWindow, now, stateStore)

@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Devices
-import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -51,7 +48,7 @@ fun ManualPairingCard() {
     val state by coordinator.state.collectAsState()
     val localEndpoint = remember { "${localLanAddress()}:45731" }
     var discoveredOffers by remember { mutableStateOf(emptyList<DiscoveredPairingOffer>()) }
-    var discoveryStatus by remember { mutableStateOf("Nearby scan idle") }
+    var discoveryStatus by remember { mutableStateOf("Looking for nearby Macs") }
     var scanningNearby by remember { mutableStateOf(true) }
     val discovery = remember {
         NearbyPairingDiscovery(
@@ -83,7 +80,7 @@ fun ManualPairingCard() {
                 PairingPill(if (state.paired) "Paired" else "Secure")
             }
             Text(
-                state.message,
+                pairingMessage(state.message),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -108,7 +105,7 @@ fun ManualPairingCard() {
                     shape = RoundedCornerShape(22.dp),
                     modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                 ) {
-                    Icon(Icons.Rounded.Devices, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(LucideIcons.Devices, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(if (scanningNearby) "Stop" else "Scan")
                 }
@@ -178,16 +175,9 @@ private fun NearbyOfferRow(discovered: DiscoveredPairingOffer, onUse: () -> Unit
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Icon(LucideIcons.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(discovered.offer.deviceName, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-            Text(
-                discovered.offer.endpoint,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
         FilledTonalButton(
             onClick = onUse,
@@ -197,6 +187,14 @@ private fun NearbyOfferRow(discovered: DiscoveredPairingOffer, onUse: () -> Unit
             Text("Use")
         }
     }
+}
+
+private fun pairingMessage(message: String): String = when {
+    message.startsWith("Exchanging keys with ") ->
+        "Connecting to ${message.removePrefix("Exchanging keys with ")}"
+    message == "Pairing did not complete. The previous session was restored." ->
+        "Pairing did not complete. Your previous pairing is still saved."
+    else -> message
 }
 
 @Composable
@@ -209,7 +207,7 @@ private fun PairingPill(text: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Icon(Icons.Rounded.Security, contentDescription = null, modifier = Modifier.size(18.dp))
+        Icon(LucideIcons.Security, contentDescription = null, modifier = Modifier.size(18.dp))
         Text(text, style = MaterialTheme.typography.labelLarge)
     }
 }

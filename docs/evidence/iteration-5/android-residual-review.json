@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "Astra parent; did not author the two Android production fixes",
+  "reviewedAtUTC": "2026-09-20T10:45:46.629900+00:00",
+  "scope": "Resolve original01 and03 residuals from independent Android source rereview; no acceptance or hardware credits",
+  "findings": [
+    {
+      "id": "ANDROID-I5-01",
+      "status": "resolved in inspected source and focused production-helper tests",
+      "evidence": "Outbox construction/sanitization and inactive queue preparation happen before lifecycle commit. Prepared.publish rechecks exact token/pair/deadline after acquiring admission lock. Install only publishes prepared state; collector registration and persisted retries run afterward as generation-owned work. Failed preparation stops and joins inactive resources."
+    },
+    {
+      "id": "ANDROID-I5-03",
+      "status": "resolved in inspected source and real socket tests",
+      "evidence": "SocketPlinkServer.acceptExchange(admissionLock,captureAdmission) executes nonblocking channel.accept and captures/tracks immutable admission in one generation lock. Delay/poll/read happen outside it. Controller uses captured lease through dispatch; control hello explicitly releases ordinary socket ownership before handing to reconnect."
+    }
+  ],
+  "tests": {
+    "tests": 171,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "testLog": ".a5c/artifacts/iteration5-android-regression-3.log",
+  "focusedTests": [
+    {
+      "suite": "app.plink.android.protocol.ReconnectFixtureContractTest",
+      "tests": [
+        "outerTimestampsMatchAndroidWirePolicy",
+        "escapedClassificationMatchesAndroidWirePolicy",
+        "sharedCasesMatchAndroidWirePolicy",
+        "encryptedVectorsMatchAndroidWirePolicy"
+      ],
+      "failures": 0
+    },
+    {
+      "suite": "app.plink.android.reconnect.PreparedOrdinaryResourcesTest",
+      "tests": [
+        "preparedQueueStaysInactiveUntilValidPublicationThenReplaysPersistedEvent",
+        "cancellationDoesNotWaitForPreparationAndCannotPublishReadyOrSend",
+        "preparationCrossingDeadlineCannotPublishReadyOrSend"
+      ],
+      "failures": 0
+    },
+    {
+      "suite": "app.plink.android.services.OrdinaryAdmissionTest",
+      "tests": [
+        "revokedLeaseClosesAcceptedOrdinarySocketButNotReleasedControlSocket",
+        "revocationCancelsQueuedOrdinaryWorkAndDrainWaitsForRunningOwner"
+      ],
+      "failures": 0
+    }
+  ],
+  "sourceSha256": {
+    "android/src/main/java/app/plink/android/reconnect/PreparedOrdinaryResources.kt": "1b2d41e4bbfcd948e219a3fecb54df5fae3131528bbbb0d87af4b95752c6ceb2",
+    "android/src/main/java/app/plink/android/reconnect/ReconnectLifecycleOwner.kt": "f707445079d3a9a77ca771f0793e9f46bc5a055e3294197360c5df1af1a47baa",
+    "android/src/main/java/app/plink/android/services/PlinkSessionController.kt": "9124bf010ebe8b249a09f685b7ffeb4a5b39a47e54e4d86f0bc4ae0e841de62b",
+    "android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt": "2003c85b52d7d466fe690ec4130164d715e58e214a324e5362ba7762bd93893e",
+    "android/src/main/java/app/plink/android/services/PlinkEventForwarder.kt": "cf87ab166eb65a1973d7c5579481b5249274b6316100281533a2e612096ad2c2",
+    "android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt": "8115f36b7b347d33efacdbeea4c4de9c828e06c3c181bf6730380dffb1746122",
+    "android/src/test/java/app/plink/android/reconnect/PreparedOrdinaryResourcesTest.kt": "f139b25aa7e8ce6e0316f1145bd686a0a397283ba469d016f7f58cf73de7ac01",
+    "android/src/test/java/app/plink/android/services/OrdinaryAdmissionTest.kt": "eace30c39cfed0e7e925f2f09f2627ccaf3e14c18f20fda7b3dacd621166833c"
+  },
+  "remainingFindingsWithinThisScope": [],
+  "limitations": [
+    "Whole Android application lifecycle still needs frozen build and emulator/live-device verification.",
+    "The original six resolved source findings remain attributed to the independent rereview; this is a bounded follow-up for the two residuals."
+  ]
+}

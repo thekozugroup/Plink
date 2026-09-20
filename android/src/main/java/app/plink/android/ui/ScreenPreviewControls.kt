@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -44,11 +42,11 @@ fun ScreenPreviewControls(
     }
     val detail = when (state.phase) {
         ScreenPreviewPhase.AWAITING_CONSENT ->
-            "$peerName requested a view-only preview. Review Android consent before sharing."
+            "$peerName requested a view-only preview. Review Android’s sharing prompt before you start."
         ScreenPreviewPhase.STARTING ->
             "Starting a view-only preview for $peerName. No recording, controls, or audio."
         ScreenPreviewPhase.CAPTURING ->
-            "Sharing up to 2 frames per second with $peerName. View-only: no recording, controls, or audio."
+            "Sharing a view-only preview with $peerName. No recording, controls, or audio."
         ScreenPreviewPhase.STOPPING -> state.message ?: "Releasing the screen preview."
         ScreenPreviewPhase.UNAVAILABLE ->
             state.message ?: "Screen preview requires Android 14 or later."
@@ -76,7 +74,7 @@ fun ScreenPreviewControls(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(Icons.Rounded.Devices, contentDescription = null)
+                Icon(LucideIcons.Devices, contentDescription = null)
                 Text(
                     title,
                     style = MaterialTheme.typography.titleLarge,

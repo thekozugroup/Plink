@@ -1,0 +1,88 @@
+{
+  "startedAtUTC": "2026-09-20T11:29:25.413805+00:00",
+  "serial": "emulator-5580",
+  "installedAPKSHA256": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "localAPKSHA256": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "settingsBefore": {
+    "fontScale": "1.0",
+    "nightMode": "Night mode: yes",
+    "screenTimeout": "2147483647",
+    "stayAwake": "1"
+  },
+  "settingsAfter": {
+    "fontScale": "1.0",
+    "nightMode": "Night mode: yes",
+    "screenTimeout": "2147483647",
+    "stayAwake": "1"
+  },
+  "settingsRestored": true,
+  "temporaryDeviceXmlRemoved": true,
+  "shots": [
+    {
+      "file": "connection-light-1.0.png",
+      "sha256": "799945bb1254c90fe4c6c652fd82388e9645409c799dd8158826414e6554be1b",
+      "xmlSHA256": "209bc0189d0cb9c3ae2bffab91875142939b684c5d57b7fdaf421b718eb5ec1f",
+      "observedScreen": "Connection",
+      "fontScale": "1.0",
+      "theme": "light"
+    },
+    {
+      "file": "settings-light-1.0.png",
+      "sha256": "2c69abf4cde97d02fe3c3060d8cfa102cb0f26342e50b7c0d5cd56f7ac996fe7",
+      "xmlSHA256": "c1e2d78b6fa7a8dcf2ec123ec135abe990e7bb8e86940dfcd96398e63c654456",
+      "observedScreen": "Settings",
+      "fontScale": "1.0",
+      "theme": "light"
+    },
+    {
+      "file": "connection-light-1.5.png",
+      "sha256": "4785e9bd1ce4f3961d86b71021f5f004c1347c2bb5aeeda0a30d494d233c59f8",
+      "xmlSHA256": "442014027e1ad91caadd67ab131735688c7e994bdf15023ea628fc325d00f74b",
+      "observedScreen": "Connection",
+      "fontScale": "1.5",
+      "theme": "light"
+    },
+    {
+      "file": "settings-light-1.5.png",
+      "sha256": "1372f731dd4cc08b073a80d94406a5de80474949757a6ed5c0602b5248f9fd44",
+      "xmlSHA256": "84f6c5ecd2467b7747d6be382e483397a7747284a2e7bc526924342292f7dafd",
+      "observedScreen": "Settings",
+      "fontScale": "1.5",
+      "theme": "light"
+    },
+    {
+      "file": "connection-dark-1.0.png",
+      "sha256": "5a7572c13eb66831486009f48107b17bf54ff50ea312e6310a2fe5610fd71216",
+      "xmlSHA256": "209bc0189d0cb9c3ae2bffab91875142939b684c5d57b7fdaf421b718eb5ec1f",
+      "observedScreen": "Connection",
+      "fontScale": "1.0",
+      "theme": "dark"
+    },
+    {
+      "file": "settings-dark-1.0.png",
+      "sha256": "2ee8d6fcfdf34df7755fbabfed6f39c43dd2782d9cb01ea4ee7fd00db627ee91",
+      "xmlSHA256": "c1e2d78b6fa7a8dcf2ec123ec135abe990e7bb8e86940dfcd96398e63c654456",
+      "observedScreen": "Settings",
+      "fontScale": "1.0",
+      "theme": "dark"
+    },
+    {
+      "file": "connection-dark-1.5.png",
+      "sha256": "55c525b0af9487e5fdb0d417b389e5c5ffb3e6de74f83ef52642f1e7a99e51d0",
+      "xmlSHA256": "442014027e1ad91caadd67ab131735688c7e994bdf15023ea628fc325d00f74b",
+      "observedScreen": "Connection",
+      "fontScale": "1.5",
+      "theme": "dark"
+    },
+    {
+      "file": "settings-dark-1.5.png",
+      "sha256": "76219421a39a597c5dd6b0098980d48df325c71185fa24c24d0cf651fa81fc88",
+      "xmlSHA256": "84f6c5ecd2467b7747d6be382e483397a7747284a2e7bc526924342292f7dafd",
+      "observedScreen": "Settings",
+      "fontScale": "1.5",
+      "theme": "dark"
+    }
+  ],
+  "scope": "Actual unpaired emulator UI with visible screen assertions. No physical Pixel/native Mac/full motion/TalkBack acceptance.",
+  "physicalPixelTouched": false
+}

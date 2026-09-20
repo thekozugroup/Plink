@@ -10,12 +10,14 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -328,6 +330,44 @@ class FileTransferCoordinatorTest {
 
         assertEquals(0, fixture.environment.outputs["picked"]?.size() ?: 0)
         assertFalse(fixture.sent.any { it.type == PlinkEventType.FileResult && it.payload["status"]?.jsonPrimitive?.content == "saved" })
+    }
+
+    @Test
+    fun explicitCancelOwnerKeepsSessionBarrierClosedUntilBlockedExportFinishes() = runBlocking {
+        val opened = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val fixture = fixture(
+            environment = BlockingEnvironment(byteArrayOf(), opened, release)
+        )
+        val bytes = byteArrayOf(1, 2, 3)
+        val transferId = UUID.randomUUID().toString()
+        fixture.coordinator.handle(offer(transferId, "remote.bin", bytes), generation = 7)
+        val handle = fixture.environment.offers.single().first
+        fixture.coordinator.acceptIncoming(handle, IncomingFileDestination("picked", newlyCreated = true))
+        fixture.coordinator.handle(event(
+            PlinkEventType.FileChunk,
+            transferId,
+            "index" to JsonPrimitive(0),
+            "data" to JsonPrimitive(Base64.getEncoder().encodeToString(bytes))
+        ), generation = 7)
+
+        val complete = async(Dispatchers.Default) {
+            fixture.coordinator.handle(event(PlinkEventType.FileComplete, transferId), generation = 7)
+        }
+        opened.await()
+        val cancel = async(start = CoroutineStart.UNDISPATCHED) {
+            fixture.coordinator.cancelActive()
+        }
+        fixture.coordinator.deactivateSession()
+        val barrier = async { fixture.coordinator.awaitQuiescence() }
+        yield()
+
+        assertFalse(barrier.isCompleted)
+        release.complete(Unit)
+        complete.await()
+        cancel.await()
+        barrier.await()
+        assertTrue(fixture.environment.deletedDestinations.contains("picked"))
     }
 
     @Test

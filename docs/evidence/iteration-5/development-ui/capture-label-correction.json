@@ -1,0 +1,7 @@
+{
+  "file": "settings-light.png",
+  "sha256": "424774816ddbd3ef092e01e4dc3d1dd2ae058f91d9b92b63f2fdeaf44fabc34e",
+  "observedScreen": "Connection",
+  "correction": "The historical filename is misleading. Visual inspection shows the Connection tab after theme recreation. This image is not evidence of light Settings. Final captures will assert the visible screen before recording.",
+  "scope": "Development capture only, not final-build or original design acceptance."
+}

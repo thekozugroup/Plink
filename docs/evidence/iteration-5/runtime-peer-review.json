@@ -1,0 +1,837 @@
+{
+  "schemaVersion": 1,
+  "status": "source-audit-complete; runtime acceptance pending",
+  "generatedAt": "2026-09-20T11:01:45.452547+00:00",
+  "workspace": "/Users/michaelwong/Developer/Plink",
+  "scope": {
+    "primaryPeers": [
+      "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+      "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift"
+    ],
+    "method": "Read-only source trace of peers, dispatch branches, and relevant production protocol/transport/store/admission calls. Only this requested artifact was written.",
+    "excluded": [
+      "No device access, builds, tests, app or harness process launches, commits, or source edits.",
+      "No repeat audit of scripts/verify-reconnect.sh. The approved harness interface supplies cross-report expectations.",
+      "No review of active Swift cancellation residuals.",
+      "docs/reconnect.md was not used as evidence."
+    ],
+    "runtimeReportsInspected": false,
+    "runtimeProofClaim": "No A/B/B-restart execution is certified by this audit. Coverage below is conditional on genuine reports from these source bytes plus separately verified supervisor provenance and process restart evidence.",
+    "orchestration": "No new Babysitter run or subagent task was created under the explicit read-only scope; no subagent tool was available."
+  },
+  "verdict": {
+    "productionEightPhaseCore": "Yes, source trace reaches all eight encrypted production phases over C1/C2. The handshake is not replaced by a fake listener or hardcoded success.",
+    "fullProductionReconnect": "Not established: Android replaces production session admission/lifecycle/network binding with test callbacks; Swift uses the production core but bypasses the app restore/feature lifecycle.",
+    "freshProofIDs": "Actual successful m is hashed on both peers. Freshness across A/B/B-restart requires supervisor equality/uniqueness checks; local reports alone do not compare phases.",
+    "restartState": "Real persistent frame and HMAC endpoint stores are reopened. Prior endpoint assertions and cross-phase sequence growth support orderly restart persistence. Replay rejection, crash durability and current proofID persistence are not demonstrated.",
+    "observedSockets": "C1/C2 tuples derive from actual sockets, with local endpoint checks. They describe emulator tunnel endpoints, not physical network identity.",
+    "ordinaryTraffic": "Each peer sends a real encrypted device.status and requires a received, authenticated device.status. Android reception uses a harness admission boolean; Mac reception uses the production lifetime/listener admission.",
+    "findingsBySeverity": {
+      "P1": 1,
+      "P2": 2
+    },
+    "severityMeaning": "Evidence/report-contract severity, not a claim of a production security vulnerability."
+  },
+  "findings": [
+    {
+      "id": "RP-01",
+      "severity": "P1",
+      "kind": "evidence-scope mismatch",
+      "title": "Android reports production admission using a harness-owned boolean",
+      "locations": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 89,
+          "endLine": 94
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 146,
+          "endLine": 164
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 179,
+          "endLine": 183
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 236,
+          "endLine": 252
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+          "startLine": 258,
+          "endLine": 265
+        }
+      ],
+      "detail": "admission starts false in the test. suspendOrdinaryAndAwait only writes false; prepareReplacement returns true; publishReplacement checks false then writes true; isCurrentPair always returns true; revoked-resource cleanup is empty. Ordinary reception reads this boolean directly. The reported initially-closed value is therefore guaranteed by test setup, not observed from the production activeSession owner. Real production callbacks and feature resources are never exercised.",
+      "impact": "A regression that opens production restored sessions prematurely, fails to publish a replacement, or fails to quiesce feature resources can leave this test green. This violates the harness interface claim that the ordinary probe crosses production admission and that admission is observed from the real owner.",
+      "qualification": "The production ReconnectCoordinator still controls when these callbacks run, so the report does support core handshake ordering. It does not fabricate the encrypted exchange.",
+      "recommendedAction": "Route the probe through isolated production session admission/lifecycle APIs, or explicitly classify this as production-core responder coverage and leave production admission/restore acceptance pending. Add a pre-proof ordinary rejection observation if claiming closed admission enforcement."
+    },
+    {
+      "id": "RP-02",
+      "severity": "P2",
+      "kind": "persistence assertion gap",
+      "title": "B-restart can pass without checking that the new proof ID reached durable endpoint state",
+      "locations": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 81,
+          "endLine": 88
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 221,
+          "endLine": 249
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 165,
+          "endLine": 167
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 206,
+          "endLine": 225
+        }
+      ],
+      "detail": "Both peers discard the loaded endpoint record except its endpoint string. proofIdHash comes separately from in-memory successful diagnostics/result. B-restart uses the same B endpoint, so a commit regression that retains the old correctly authenticated B record while returning success is invisible to the endpoint assertions.",
+      "impact": "The reports establish a fresh handshake transcript plus an existing valid endpoint hint, but do not independently establish that the latest proofID was persisted or that it survives the next restart.",
+      "qualification": "The inspected production commit implementations do write proofID and synchronize storage. This is a missing evidence assertion, not an observed storage failure.",
+      "recommendedAction": "Compare loadedRecord.proofID with diagnostics.proofId/result.proofID after commit and report its hash; compare the prior stored proof hash at the next phase. Keep crash/fault durability as separate coverage."
+    },
+    {
+      "id": "RP-03",
+      "severity": "P2",
+      "kind": "report-schema mismatch",
+      "title": "Swift A-phase report omits hintBefore instead of encoding the required null",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 101,
+          "endLine": 124
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 221,
+          "endLine": 232
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 264,
+          "endLine": 267
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 247,
+          "endLine": 248
+        }
+      ],
+      "detail": "ReconnectMacReport uses synthesized Codable with hintBefore: String?. Phase A requires nil. Synthesized encoding omits nil optionals, so JSONEncoder does not emit hintBefore:null. Android emits explicit JsonNull. The frozen report interface requires hintBefore:null for A.",
+      "impact": "A strict schema consumer cannot distinguish this successful A report from a report missing the required field. A tolerant host consumer does not make the runtime report conformant.",
+      "recommendedAction": "Encode hintBefore explicitly, using encodeNil when absent. No wire protocol or fixture expectation change is needed."
+    }
+  ],
+  "coverage": [
+    {
+      "claim": "Eight-phase encrypted protocol",
+      "evidence": [
+        {
+          "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+          "startLine": 194,
+          "endLine": 278
+        },
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 911,
+          "endLine": 964
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt",
+          "startLine": 82,
+          "endLine": 97
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt",
+          "startLine": 201,
+          "endLine": 230
+        },
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 407,
+          "endLine": 456
+        }
+      ],
+      "assessment": "hello, challenge, proof use C1; reverse, reverse_proof, ready, commit, done use C2. Production readers authenticate identities and transcript, and production writers seal frames after durable reservations. Success/result is reached after done, not from a phase label.",
+      "limits": "No independent per-phase trace, wrong-phase injection, loss, replay or cryptographic-negative runtime test was performed here."
+    },
+    {
+      "claim": "Fresh proof IDs and cross-phase counters",
+      "evidence": [
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 912,
+          "endLine": 924
+        },
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 963,
+          "endLine": 964
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+          "startLine": 204,
+          "endLine": 205
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+          "startLine": 219,
+          "endLine": 220
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+          "startLine": 281,
+          "endLine": 285
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 280,
+          "endLine": 285
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 14,
+          "endLine": 33
+        }
+      ],
+      "assessment": "Swift defaults to ReconnectNonce.generate (SecRandomCopyBytes) for m; Android uses SecureRandom for p/r. Reports hash actual m, not runId or phase. Recording stores return the delegate-reserved sequence and track its maximum; no synthetic sequence is assigned.",
+      "limits": "Reports locally check only positive sequence values. Equality of peer proof hashes, distinct phase hashes and increasing per-role sequence maxima are supervisor assertions, not independently rerun in this audit. The single maximum is not a transcript or per-frame monotonicity log."
+    },
+    {
+      "claim": "Durable restart state",
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 67,
+          "endLine": 88
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 162,
+          "endLine": 170
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/security/FrameStateStore.kt",
+          "startLine": 35,
+          "endLine": 65
+        },
+        {
+          "path": "macos/Sources/PlinkCore/FrameStateStore.swift",
+          "startLine": 35,
+          "endLine": 73
+        }
+      ],
+      "assessment": "New store objects use retained run directories and the same key/directional-ID scope across phases. A requires no hint; B requires A endpoint; B-restart requires B endpoint. Endpoint loads validate IDs/session/HMAC. Stores read disk under locks and persist before returning.",
+      "limits": "B-restart is an argument and cannot prove its own process replacement. Only the supervisor can establish termination/relaunch and retained directory identity. Fresh higher-sequence traffic does not test durable receive replay rejection. No saved production pairing/key restore, power-loss, partial-write or crash-boundary evidence."
+    },
+    {
+      "claim": "Socket observations and migration",
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 224,
+          "endLine": 227
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt",
+          "startLine": 190,
+          "endLine": 198
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 212,
+          "endLine": 218
+        },
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 1042,
+          "endLine": 1062
+        }
+      ],
+      "assessment": "Tuples originate in SocketChannel local/remote addresses and getsockname/getpeername. Each peer validates expected loopback/listener ports plus positive ephemeral ports. Hints change A to B, while B-restart retains B.",
+      "limits": "Reports contain only C1/C2 observations, not ordinary socket tuples. Ordinary clients do validate real socket endpoints before writing. ADB tunnel halves need not have matching ephemeral ports. Old port closure and mapping ownership remain supervisor evidence."
+    },
+    {
+      "claim": "Admission closed to open",
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 146,
+          "endLine": 164
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 169,
+          "endLine": 187
+        },
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 231,
+          "endLine": 246
+        },
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 719,
+          "endLine": 728
+        },
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "startLine": 678,
+          "endLine": 704
+        }
+      ],
+      "assessment": "Mac reads real lifetime admission as nil, awaits done, then opens it and sends with a bound generation. Android executes the production coordinator but supplies test admission callbacks (RP-01). Neither report observes an ordinary rejection before proof or traces closed admission through every intermediate phase.",
+      "limits": "The Mac debug branch does not run PlinkMacApp restore, candidate discovery, feature drain, files/screen rebinding, or UI publication. This is not full app lifecycle acceptance."
+    },
+    {
+      "claim": "Actual ordinary event in each direction",
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 197,
+          "endLine": 219
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 47,
+          "endLine": 59
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 188,
+          "endLine": 196
+        },
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 1014,
+          "endLine": 1025
+        }
+      ],
+      "assessment": "Each side constructs a fresh UUID device.status with batteryLevel 53 and requiresAck=false, performs a real encrypted send, then requires authenticated inbound delivery. Mac additionally checks exact payload, requiresAck=false and generation. This is more than send completion or a hardcoded receive count.",
+      "limits": "Android checks event type, peer IDs and batteryLevel only, allowing additional payload fields/requiresAck differences. Neither report correlates sent and received envelope IDs across peers or binds the ordinary payload to run/phase; counts describe one accepted probe, not an exactly-once delivery test. No OS feature side effects are exercised."
+    }
+  ],
+  "assertionAudit": [
+    {
+      "field": "ordinaryAdmissionInitiallyClosed (phone)",
+      "assessment": "Self-fulfilling initial test boolean; see RP-01."
+    },
+    {
+      "field": "ordinarySent / ordinaryReceived",
+      "assessment": "Counters are incremented after actual send or authenticated receive checks; not fabricated traffic. Observer accepts/counts only its first completion."
+    },
+    {
+      "field": "proofIdHash / highestReservedSequence / socketObservations",
+      "assessment": "Derived from successful production transcript, delegate store reservation and observed socket APIs; no hardcoded evidence value found."
+    },
+    {
+      "field": "cleanupComplete (Mac)",
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 198,
+          "endLine": 211
+        },
+        {
+          "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+          "startLine": 606,
+          "endLine": 622
+        }
+      ],
+      "assessment": "Assigned true after awaited sender.shutdown, synchronous listener.stop and invalidations; its later guard is tautological. listener.stop includes a queue join. This supports completion of those calls, not an independent resource census. No cancellation-race finding is made."
+    },
+    {
+      "field": "cleanupComplete (phone)",
+      "locations": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 228,
+          "endLine": 235
+        }
+      ],
+      "assessment": "Derived from coordinator closed/no active attempt, server closed/zero exchanges, and completed receiver job after join. Covers harness resources, not stubbed production feature cleanup."
+    }
+  ],
+  "loopbackBoundary": {
+    "android": [
+      {
+        "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+        "startLine": 74,
+        "endLine": 74
+      },
+      {
+        "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+        "startLine": 105,
+        "endLine": 130
+      },
+      {
+        "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+        "startLine": 288,
+        "endLine": 303
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/protocol/ReconnectProtocol.kt",
+        "startLine": 230,
+        "endLine": 238
+      }
+    ],
+    "mac": [
+      {
+        "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+        "startLine": 149,
+        "endLine": 160
+      },
+      {
+        "path": "macos/Sources/PlinkCore/ReconnectProtocol.swift",
+        "startLine": 122,
+        "endLine": 139
+      }
+    ],
+    "assessment": "Android sets the internal endpoint port override to an empty set, meaning any syntactically valid port is allowed in wire parsing. The injected resolver supplies test-loopback with matchingAndroidNetwork=false and validates only an active flag; its binding uses local SocketChannel.bind, not Android Network.bindSocket. Swift explicitly allows loopback/high ports but still uses real IP_BOUND_IF and local bind on the loopback interface. The Android assignment search found only the androidTest set/reset sites.",
+    "cannotProve": [
+      "Physical same-subnet policy or address migration",
+      "Android public Network.bindSocket, LinkProperties/capabilities or VPN-route exclusion",
+      "Production physical-interface binding on macOS",
+      "mDNS discovery or multicast failure/manual fallback",
+      "Hotspot creation, OS join, DHCP, carrier behavior, RF, AP isolation or Local Network permission",
+      "DNS/TLS/Internet reachability or attribution to the intended physical route"
+    ],
+    "permittedClaim": "Encrypted production-core TCP port migration through owned emulator tunnels, under explicit test-only binding/endpoint policy."
+  },
+  "cleanupDataScope": {
+    "android": {
+      "locations": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 67,
+          "endLine": 73
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 272,
+          "endLine": 277
+        }
+      ],
+      "scope": "Only targetContext.filesDir/plink-reconnect-tests/<canonical UUIDv4>; direct canonical parent and .owner contents must match before recursive deletion. Frame and endpoint state live below that run directory and remain between phases. No PairingStore, production transport-state directory, active selection, key store or completed user files are targeted. The enclosing plink-reconnect-tests directory is retained.",
+      "limit": "The cleanup entry point checks path ownership, not producer liveness itself; supervisor ordering supplies prior phase termination. No cleanup was executed in this audit."
+    },
+    "mac": {
+      "locations": [
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 138,
+          "endLine": 170
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 228,
+          "endLine": 232
+        }
+      ],
+      "scope": "Writes frame-state and endpoints below the supplied absolute state directory and reconnect-mac.json below the evidence directory. The peer does not delete those durable files. Final state removal is supervisor-owned and not re-audited here.",
+      "limit": "The peer validates absolute paths, not run-root containment or an ownership marker; isolation therefore relies on the host-supplied directories. It does not use applicationDefault stores."
+    }
+  },
+  "fixtureFreezeVerification": {
+    "method": "SHA-256 comparison only; fixture tests were not run. Frozen structural expectations are not runtime evidence.",
+    "files": [
+      {
+        "path": "shared/protocol/v1/reconnect/cases.json",
+        "expectedSha256": "d8b47bc8281c699aa2726d3caf966e11c0acbf6be1eda73e634cea4726aefe7d",
+        "sha256": "d8b47bc8281c699aa2726d3caf966e11c0acbf6be1eda73e634cea4726aefe7d",
+        "matches": true
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/classification-cases.json",
+        "expectedSha256": "a271cc963d9fbc3bde517e7a59eba45c9e66768770a12685f0eb51af84ce3002",
+        "sha256": "a271cc963d9fbc3bde517e7a59eba45c9e66768770a12685f0eb51af84ce3002",
+        "matches": true
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/encrypted-vectors.json",
+        "expectedSha256": "3bfa3569baeda3122dc8fce2a6a4244102cff5cc165c8948e8b6c4f63682ad89",
+        "sha256": "3bfa3569baeda3122dc8fce2a6a4244102cff5cc165c8948e8b6c4f63682ad89",
+        "matches": true
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/endpoint-store-vectors.json",
+        "expectedSha256": "955bee9c9882266c07f9ccee682d5a0468f7a6ff3311f10a5bbf1b662ff20ea6",
+        "sha256": "955bee9c9882266c07f9ccee682d5a0468f7a6ff3311f10a5bbf1b662ff20ea6",
+        "matches": true
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/network-cases.json",
+        "expectedSha256": "ff290c635c10d36fa9bc0aebd7ac2824df6b7d41f3b826c2185f5165e7d2b8cf",
+        "sha256": "ff290c635c10d36fa9bc0aebd7ac2824df6b7d41f3b826c2185f5165e7d2b8cf",
+        "matches": true
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/outer-timestamp-vectors.json",
+        "expectedSha256": "3d52bb3664f81603fdc42b824e74517293946aa795bb89512177371cd6562b9c",
+        "sha256": "3d52bb3664f81603fdc42b824e74517293946aa795bb89512177371cd6562b9c",
+        "matches": true
+      }
+    ]
+  },
+  "fileHashes": {
+    "algorithm": "SHA-256",
+    "timing": "Bytes read when preparing this artifact; shared checkout is not a transactional snapshot. Cancellation work may change production hashes afterward. Decisive source line anchors were checked against these bytes.",
+    "files": [
+      {
+        "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+        "sha256": "762058e3e04e220399185c4e0110c92dca990ebf4bb3517519adc9e7d4389663",
+        "bytes": 14694
+      },
+      {
+        "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+        "sha256": "ac2590cf049dff54e06c941265c6857bb366e06379e9e6448383a4cce66f86cc",
+        "bytes": 13009
+      },
+      {
+        "path": "android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt",
+        "sha256": "a0229017c81b8dedd2c6dee4febd414f2ad6911af83ffc9d93cdbb6c40e4bd38",
+        "bytes": 24031
+      },
+      {
+        "path": "macos/Sources/PlinkMacDebugReceiver/main.swift",
+        "sha256": "9cdba62a16d183f01dee27068ef29397447115138fd3af671e321ab1d722d666",
+        "bytes": 6229
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+        "sha256": "92d0ac6c1854b4995b72b44392a9262b494a35597433cdeacfa2fe424b6f369a",
+        "bytes": 18310
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt",
+        "sha256": "8115f36b7b347d33efacdbeea4c4de9c828e06c3c181bf6730380dffb1746122",
+        "bytes": 15668
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/security/SecureEnvelope.kt",
+        "sha256": "3911d875462c1ac772c941820ef754c28b09b4eb200d23a465739b935ec27791",
+        "bytes": 17049
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/security/FrameStateStore.kt",
+        "sha256": "563b4c6e116a183f1b60bb2284b0b06b471a8bbe73e5ad1a4dad879c6cce27c9",
+        "bytes": 3432
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/protocol/ReconnectProtocol.kt",
+        "sha256": "d5962aedd285296b05e44f4e3132d88a7cec024b76fa074d62032ab8cba5fe6b",
+        "bytes": 13611
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/reconnect/ReconnectEndpointStore.kt",
+        "sha256": "a056a0544a60388286e3602fbb8b753f88cafcc71918174fb112f7e8edc9189e",
+        "bytes": 7429
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt",
+        "sha256": "0f42f38e81803424a87f60a72f12f13cce99ab5ab2e5eb2eb98a6563d9430e2a",
+        "bytes": 17491
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+        "sha256": "9124bf010ebe8b249a09f685b7ffeb4a5b39a47e54e4d86f0bc4ae0e841de62b",
+        "bytes": 41305
+      },
+      {
+        "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+        "sha256": "8968fa507f5095d536fb1a36c5260cbacfe0639ed7b431d72e6e4d19ad49a50f",
+        "bytes": 48924
+      },
+      {
+        "path": "macos/Sources/PlinkCore/SecureEnvelope.swift",
+        "sha256": "d3261bc9ff6b7e1337265a9de6059f8d5c188009d5d035123d094259e4349817",
+        "bytes": 19424
+      },
+      {
+        "path": "macos/Sources/PlinkCore/FrameStateStore.swift",
+        "sha256": "412090cf78c1986fa4454049845790590ec8da62b0e17a975f7dec585de439fe",
+        "bytes": 4370
+      },
+      {
+        "path": "macos/Sources/PlinkCore/ReconnectProtocol.swift",
+        "sha256": "5dd6a882a15569f9586ae3e9498451bf9b1b5249cf38a397414bfc5a30fee576",
+        "bytes": 26773
+      },
+      {
+        "path": "macos/Sources/PlinkCore/ReconnectEndpointStore.swift",
+        "sha256": "fde188d2e67cc7d8797ec2fdb230dbcfe16432cbde1d4b9bb109871d11e9c21b",
+        "bytes": 13015
+      },
+      {
+        "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+        "sha256": "8872273391092c4cff7b38560079b1f364c000f7dcff6b8083af32b7acde37f8",
+        "bytes": 72922
+      },
+      {
+        "path": ".a5c/artifacts/implementation-decisions-5.json",
+        "sha256": "7c4c95fb7b9257472dcadc6e397f5833b40fbe88f94288b142fb8c192ae0eba7",
+        "bytes": 30103
+      },
+      {
+        "path": ".a5c/artifacts/iteration5-harness-interface.json",
+        "sha256": "31827c8db41c101b938296153f3f0cc4eb7b86721304dcb45a3110e7f4907ac8",
+        "bytes": 7742
+      },
+      {
+        "path": ".a5c/artifacts/iteration5-classification-fixture-freeze.json",
+        "sha256": "d4d71e3bef097737c909b26d3d91c166b5da2d93a48c940f05ccb0fcc6551769",
+        "bytes": 553
+      },
+      {
+        "path": ".a5c/artifacts/iteration5-encrypted-fixture-freeze.json",
+        "sha256": "5959cd72ca0413d4882d32a1dda2241a207f0742d88af90b0978dd617ca7e190",
+        "bytes": 615
+      },
+      {
+        "path": ".a5c/artifacts/iteration5-endpoint-store-fixture-freeze.json",
+        "sha256": "303f4ebe2289667025cd823cb84915496c7f5ff29d5b369a9a7253807bb97697",
+        "bytes": 231
+      },
+      {
+        "path": ".a5c/artifacts/iteration5-fixture-freeze.json",
+        "sha256": "02ec5d35fbb7e5f7795a47d35a1f9f8af16c7b77e3e798230cfc0ff57c7a7d8b",
+        "bytes": 3532
+      },
+      {
+        "path": ".a5c/artifacts/iteration5-network-fixture-freeze.json",
+        "sha256": "f91e1dee73ee5371aa21485adb6c23c9b0a7f91d0f432db4882024823f98831b",
+        "bytes": 324
+      },
+      {
+        "path": ".a5c/artifacts/iteration5-outer-timestamp-fixture-freeze.json",
+        "sha256": "6cdf6d2c531859407857c84f9cd372e850a5c2880fdf5cace694db7cd2a0765c",
+        "bytes": 1214
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/cases.json",
+        "sha256": "d8b47bc8281c699aa2726d3caf966e11c0acbf6be1eda73e634cea4726aefe7d",
+        "bytes": 29213
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/classification-cases.json",
+        "sha256": "a271cc963d9fbc3bde517e7a59eba45c9e66768770a12685f0eb51af84ce3002",
+        "bytes": 5424
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/encrypted-vectors.json",
+        "sha256": "3bfa3569baeda3122dc8fce2a6a4244102cff5cc165c8948e8b6c4f63682ad89",
+        "bytes": 38596
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/endpoint-store-vectors.json",
+        "sha256": "955bee9c9882266c07f9ccee682d5a0468f7a6ff3311f10a5bbf1b662ff20ea6",
+        "bytes": 2681
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/network-cases.json",
+        "sha256": "ff290c635c10d36fa9bc0aebd7ac2824df6b7d41f3b826c2185f5165e7d2b8cf",
+        "bytes": 14354
+      },
+      {
+        "path": "shared/protocol/v1/reconnect/outer-timestamp-vectors.json",
+        "sha256": "3d52bb3664f81603fdc42b824e74517293946aa795bb89512177371cd6562b9c",
+        "bytes": 11456
+      }
+    ]
+  },
+  "requiredNextEvidence": [
+    "Resolve RP-01 or narrow the acceptance claim to production core transport/protocol.",
+    "Correct the explicit-null schema field and add durable proofID comparisons.",
+    "Parent-owned genuine A/B/B-restart run with source/binary provenance, actual restart and cross-report validation.",
+    "Keep replay-after-restart, app restoration/admission integration, and physical network/hotspot cases separately pending."
+  ],
+  "parentHandoff": {
+    "updatedAt": "2026-09-20T11:03:31.377862+00:00",
+    "ownership": "Parent owns all fixes and the canonical rerun. This reviewer modified only this report. No runtime acceptance was issued.",
+    "sourceFreeze": "Parent reports deliberate post-review public SDK guards for RouteInfo.type (API 33) and LinkProperties.mtu (API 29). Those fixes are outside the debug-peer audit and were not reviewed. Original audit hashes remain preserved; canonical rerun requires new provenance.",
+    "shortestAdequatePatch": [
+      {
+        "finding": "RP-01",
+        "editSites": [
+          {
+            "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+            "startLine": 89,
+            "endLine": 94
+          },
+          {
+            "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+            "startLine": 146,
+            "endLine": 164
+          },
+          {
+            "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+            "startLine": 171,
+            "endLine": 186
+          },
+          {
+            "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+            "startLine": 228,
+            "endLine": 238
+          }
+        ],
+        "productionAPIs": [
+          {
+            "site": {
+              "path": "android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt",
+              "startLine": 40,
+              "endLine": 51
+            },
+            "api": "OrdinaryAdmissionLease(generation, binding, attemptToken, scope, initiallyAdmitted = false)"
+          },
+          {
+            "site": {
+              "path": "android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt",
+              "startLine": 53,
+              "endLine": 69
+            },
+            "api": "isAdmitted(), admit(), runIfAdmitted(action), trackAcceptedSocket(socket)"
+          },
+          {
+            "site": {
+              "path": "android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt",
+              "startLine": 72,
+              "endLine": 85
+            },
+            "api": "releaseAcceptedSocket(socket), revoke()"
+          },
+          {
+            "site": {
+              "path": "android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt",
+              "startLine": 30,
+              "endLine": 37
+            },
+            "api": "lease.dispatch.submit { ... }; lease.dispatch.awaitStopped()"
+          },
+          {
+            "site": {
+              "path": "android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt",
+              "startLine": 315,
+              "endLine": 318
+            },
+            "api": "server.acceptExchange(admissionLock) { exchange -> capturedLease }"
+          },
+          {
+            "site": {
+              "path": "android/src/main/java/app/plink/android/reconnect/ReconnectLifecycleOwner.kt",
+              "startLine": 42,
+              "endLine": 50
+            },
+            "api": "lifecycleOwner.publish(attemptToken, pairIsCurrent) { publish lease; true }"
+          }
+        ],
+        "steps": [
+          "Replace the standalone admission AtomicBoolean with an isolated OrdinaryAdmissionLease reference, protected by one admissionLock. Construct a closed initial lease explicitly; the helper defaults to initiallyAdmitted=true, so do not omit false.",
+          "Before accepting the proof, pass a synthetic ordinary-event action through the closed lease.runIfAdmitted; require false and verify the action did not execute. This is an observed production-helper rejection. Label it a lease-level pre-proof check, not an encrypted pre-proof socket rejection. A wire-negative probe needs separately synchronized peer behavior and must not be implied by a local check.",
+          "suspendOrdinaryAndAwait revokes the current lease and awaits lease.dispatch.awaitStopped(). prepareReplacement creates a fresh closed lease using the actual attemptToken and binding. A revoked lease cannot be admitted again, so do not reuse the initial lease.",
+          "publishReplacement uses lifecycleOwner.publish with the actual token; under admissionLock validate/install the matching prepared lease and call admit(). Derive ordinaryAdmissionOpen and the initial-closed report field from isAdmitted(), and require a successful runIfAdmitted after publication.",
+          "Use acceptExchange(admissionLock) to capture only the lease admitted at socket accept. Track the accepted socket only when that lease is admitted. A closed/no lease must still allow the first frame to be classified as reconnect. Release the captured ordinary ownership before handing reconnectHello to the coordinator; release it in finally for ordinary sockets.",
+          "Gate ordinary completion through the captured lease.runIfAdmitted and verify its identity/generation remains current. Do not consult only the latest lease after reading: that would let a socket accepted while closed become admitted later. Match the production controller pattern at lines 712-739, including binding/tuple validation where applicable.",
+          "Revoke both current/prepared owned leases as appropriate and await their dispatch owners before scope cancellation/reporting. Include the helper rejection/open observations in the local pass condition; retain existing real encrypted traffic checks."
+        ],
+        "remainingLimit": "This closes the harness-boolean evidence defect using the production helper. It still does not execute the full PlinkSessionController restore, pairing, feature drain, outbox or OS-resource integration; retain that limitation."
+      },
+      {
+        "finding": "RP-02",
+        "editSites": [
+          {
+            "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+            "startLine": 221,
+            "endLine": 223
+          },
+          {
+            "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+            "startLine": 206,
+            "endLine": 218
+          }
+        ],
+        "android": "Keep the complete result of endpointStore.load(...): val storedAfter = requireNotNull(...); check(storedAfter.proofID == diagnostics.proofId); val hintAfter = storedAfter.endpoint. Preserve the existing endpoint equality check.",
+        "swift": "Keep storedAfter as ReconnectEndpointRecord instead of projecting ?.endpoint. In the existing guard require let storedAfter and storedAfter.proofID == result.proofID, then use storedAfter.endpoint as hintAfter and for the existing endpoint comparison.",
+        "apis": [
+          {
+            "path": "android/src/main/java/app/plink/android/reconnect/ReconnectEndpointStore.kt",
+            "lines": [
+              29,
+              39,
+              65
+            ],
+            "api": "ReconnectEndpointRecord.proofID; load(...) returns the authenticated full record"
+          },
+          {
+            "path": "macos/Sources/PlinkCore/ReconnectEndpointStore.swift",
+            "lines": [
+              11,
+              145,
+              175
+            ],
+            "api": "ReconnectEndpointRecord.proofID; load(...) returns the authenticated full record"
+          }
+        ],
+        "remainingLimit": "Post-commit equality is the minimal requested fix. Comparing the loaded prior proof hash on the following phase would additionally establish cross-process proofID persistence; neither change alone tests crash durability or replay rejection."
+      },
+      {
+        "finding": "RP-03",
+        "editSites": [
+          {
+            "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+            "startLine": 101,
+            "endLine": 124
+          },
+          {
+            "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+            "startLine": 229,
+            "endLine": 232
+          }
+        ],
+        "minimalLocalizedOption": "Keep the Codable report. Encode it, decode that data with JSONSerialization.jsonObject, guard-cast to [String: Any], and when hintBefore == nil set object[\"hintBefore\"] = NSNull(). Serialize that dictionary with JSONSerialization.data(withJSONObject:options: [.sortedKeys]) and preserve the existing atomic write. This adds explicit null without manually maintaining an encoder for every report field.",
+        "alternative": "A custom encode(to:) with CodingKeys is also valid: encode all existing fields, and use encodeNil(forKey: .hintBefore) when hintBefore is nil. encodeIfPresent alone repeats the omission.",
+        "validationExpectation": "A-phase parsed JSON must contain the hintBefore key with JSON null. B/B-restart must contain its endpoint string. Parent owns build/run verification."
+      }
+    ],
+    "observedHashChangesSinceInitialArtifact": [
+      {
+        "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+        "reviewedSha256": "ac2590cf049dff54e06c941265c6857bb366e06379e9e6448383a4cce66f86cc",
+        "currentSha256": "77184644e9b4a03259bfc687ff969e21d95b3eaba2d3ec160ef54df2aec956a7"
+      }
+    ]
+  },
+  "patchGuideSourceHashes": [
+    {
+      "path": "android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt",
+      "sha256": "2003c85b52d7d466fe690ec4130164d715e58e214a324e5362ba7762bd93893e",
+      "bytes": 2549
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/ReconnectLifecycleOwner.kt",
+      "sha256": "f707445079d3a9a77ca771f0793e9f46bc5a055e3294197360c5df1af1a47baa",
+      "bytes": 2932
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/PreparedOrdinaryResources.kt",
+      "sha256": "1b2d41e4bbfcd948e219a3fecb54df5fae3131528bbbb0d87af4b95752c6ceb2",
+      "bytes": 2434
+    },
+    {
+      "path": "android/src/test/java/app/plink/android/services/OrdinaryAdmissionTest.kt",
+      "sha256": "eace30c39cfed0e7e925f2f09f2627ccaf3e14c18f20fda7b3dacd621166833c",
+      "bytes": 2719
+    }
+  ]
+}

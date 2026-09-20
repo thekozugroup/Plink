@@ -36,6 +36,16 @@ import app.plink.android.ui.PlinkUiState
 import app.plink.android.ui.theme.PlinkTheme
 
 class MainActivity : ComponentActivity() {
+    /** Bind the clipboard setup button to this explicit user action. */
+    fun requestClipboardSyncSetup() {
+        (application as PlinkApplication).clipboardSync.requestShizukuPermission()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (application as PlinkApplication).clipboardSync.refresh()
+    }
+
     // Retain only the opaque attempt across rotation, never the OS consent Intent.
     private val screenConsentState by lazy {
         ViewModelProvider(this)[ScreenConsentState::class.java]
@@ -104,15 +114,20 @@ fun PlinkApp(
     val sessionStatus by application.sessionController.status.collectAsState()
     val fileTransferState by application.sessionController.fileTransferState.collectAsState()
     val featureSettings by application.featureSettings.enabled.collectAsState()
+    val clipboardSyncEnabled by application.featureSettings.clipboardSyncEnabled.collectAsState()
+    val clipboardSyncState by application.clipboardSync.state.collectAsState()
     val backgroundConnectionEnabled by application.featureSettings.backgroundConnectionEnabled.collectAsState()
     val backgroundConnectionState by application.backgroundConnectionState.collectAsState()
     val screenPreviewState by application.sessionController.screenPreviewState.collectAsState()
+    val reconnectState by application.sessionController.reconnectState.collectAsState()
+    val reconnectAvailable by application.sessionController.reconnectAvailable.collectAsState()
     var permissions by remember { mutableStateOf(AndroidPermissionReader.read(context)) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, context) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 permissions = AndroidPermissionReader.read(context)
+                application.sessionController.refreshReconnectAddresses()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -133,7 +148,9 @@ fun PlinkApp(
                     backgroundConnectionEnabled = backgroundConnectionEnabled,
                     backgroundConnectionState = backgroundConnectionState,
                     fileTransferState = fileTransferState,
-                    screenPreviewState = screenPreviewState
+                    screenPreviewState = screenPreviewState,
+                    clipboardSyncEnabled = clipboardSyncEnabled,
+                    clipboardSyncState = clipboardSyncState
                 ),
                 actions = PlinkUiActions(
                     onRequestPostNotifications = onRequestPostNotifications,
@@ -147,8 +164,13 @@ fun PlinkApp(
                     },
                     onCancelFileTransfer = application.sessionController::cancelFileTransfer,
                     onBeginScreenConsent = onBeginScreenConsent,
-                    onStopScreenPreview = { application.sessionController.stopScreenPreview() }
-                )
+                    onStopScreenPreview = { application.sessionController.stopScreenPreview() },
+                    onClipboardSyncEnabledChange = application.clipboardSync::setEnabled,
+                    onSetUpClipboardSync = application.clipboardSync::requestShizukuPermission
+                ),
+                reconnectState = reconnectState,
+                reconnectAvailable = reconnectAvailable,
+                onCancelReconnect = { application.sessionController.cancelReconnect() }
             )
         }
     }

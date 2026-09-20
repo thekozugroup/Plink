@@ -1,0 +1,968 @@
+{
+  "appApkSha256": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "appApkSha256After": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "commands": [
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "get-state"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "getprop",
+      "ro.kernel.qemu"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "getprop",
+      "ro.product.model"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "list",
+      "packages"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "install",
+      "--no-streaming",
+      "-t",
+      "/Users/michaelwong/Developer/Plink/android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~2aya1N6Oz0LU3zUYn-B56A==/app.plink.android.test-HoU_93tGGiw3I-jD0JlQ4A==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~2aya1N6Oz0LU3zUYn-B56A==/app.plink.android.test-HoU_93tGGiw3I-jD0JlQ4A==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--no-rebind",
+      "tcp:46731",
+      "tcp:46731"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--no-rebind",
+      "tcp:46732",
+      "tcp:46732"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~2aya1N6Oz0LU3zUYn-B56A==/app.plink.android.test-HoU_93tGGiw3I-jD0JlQ4A==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "am",
+      "instrument",
+      "-w",
+      "-e",
+      "mode",
+      "reconnect",
+      "-e",
+      "sessionKeyBase64",
+      "<redacted>",
+      "-e",
+      "macPort",
+      "46732",
+      "-e",
+      "replyPort",
+      "46731",
+      "-e",
+      "reconnectRunId",
+      "71dca890-7a88-4301-bbea-aab3e3205074",
+      "-e",
+      "reconnectPhase",
+      "A",
+      "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--remove",
+      "tcp:46732"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--remove",
+      "tcp:46731"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--no-rebind",
+      "tcp:46741",
+      "tcp:46741"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--no-rebind",
+      "tcp:46742",
+      "tcp:46742"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~2aya1N6Oz0LU3zUYn-B56A==/app.plink.android.test-HoU_93tGGiw3I-jD0JlQ4A==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "am",
+      "instrument",
+      "-w",
+      "-e",
+      "mode",
+      "reconnect",
+      "-e",
+      "sessionKeyBase64",
+      "<redacted>",
+      "-e",
+      "macPort",
+      "46742",
+      "-e",
+      "replyPort",
+      "46741",
+      "-e",
+      "reconnectRunId",
+      "71dca890-7a88-4301-bbea-aab3e3205074",
+      "-e",
+      "reconnectPhase",
+      "B",
+      "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--remove",
+      "tcp:46742"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--remove",
+      "tcp:46741"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--no-rebind",
+      "tcp:46741",
+      "tcp:46741"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--no-rebind",
+      "tcp:46742",
+      "tcp:46742"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~2aya1N6Oz0LU3zUYn-B56A==/app.plink.android.test-HoU_93tGGiw3I-jD0JlQ4A==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "am",
+      "instrument",
+      "-w",
+      "-e",
+      "mode",
+      "reconnect",
+      "-e",
+      "sessionKeyBase64",
+      "<redacted>",
+      "-e",
+      "macPort",
+      "46742",
+      "-e",
+      "replyPort",
+      "46741",
+      "-e",
+      "reconnectRunId",
+      "71dca890-7a88-4301-bbea-aab3e3205074",
+      "-e",
+      "reconnectPhase",
+      "B-restart",
+      "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--remove",
+      "tcp:46742"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--remove",
+      "tcp:46741"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~2aya1N6Oz0LU3zUYn-B56A==/app.plink.android.test-HoU_93tGGiw3I-jD0JlQ4A==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~2aya1N6Oz0LU3zUYn-B56A==/app.plink.android.test-HoU_93tGGiw3I-jD0JlQ4A==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "am",
+      "instrument",
+      "-w",
+      "-e",
+      "mode",
+      "reconnectCleanup",
+      "-e",
+      "reconnectRunId",
+      "71dca890-7a88-4301-bbea-aab3e3205074",
+      "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "list",
+      "packages"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~2aya1N6Oz0LU3zUYn-B56A==/app.plink.android.test-HoU_93tGGiw3I-jD0JlQ4A==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "uninstall",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "list",
+      "packages"
+    ]
+  ],
+  "emulatorModel": "sdk_gphone64_arm64",
+  "install": {
+    "attempted": true,
+    "phase": "absent"
+  },
+  "installedMainApkSha256After": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "installedMainApkSha256Before": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "installedTestApkSha256After": "23b3fa784d6aa56fe98e827d9542c255d1f9afcf934c56c1852e1d7fa9d5d33d",
+  "installedTestApkSha256Before": "23b3fa784d6aa56fe98e827d9542c255d1f9afcf934c56c1852e1d7fa9d5d33d",
+  "instrumentInstalled": true,
+  "lastHints": {
+    "mac": "127.0.0.1:46741",
+    "phone": "127.0.0.1:46742"
+  },
+  "lastSequences": {
+    "mac": 15,
+    "phone": 15
+  },
+  "macStateDir": "/Users/michaelwong/Developer/Plink/docs/evidence/iteration-5/reconnect-final-3/reconnect-state",
+  "phases": {
+    "A": {
+      "macPort": 46732,
+      "macReport": {
+        "cleanupComplete": true,
+        "highestReservedSequence": 5,
+        "hintAfter": "127.0.0.1:46731",
+        "hintBefore": null,
+        "ordinaryAdmissionInitiallyClosed": true,
+        "ordinaryReceived": 1,
+        "ordinarySent": 1,
+        "passed": true,
+        "phase": "A",
+        "proofIdHash": "a2d88eee36dfaba4b910d9f5c4fbf5c644d60648c0f6bee932474d926b072c9b",
+        "role": "mac",
+        "runId": "71dca890-7a88-4301-bbea-aab3e3205074",
+        "schemaVersion": 1,
+        "socketObservations": [
+          {
+            "channel": "C1",
+            "localHost": "127.0.0.1",
+            "localPort": 60190,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 46731
+          },
+          {
+            "channel": "C2",
+            "localHost": "127.0.0.1",
+            "localPort": 46732,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 60191
+          }
+        ]
+      },
+      "maps": [
+        {
+          "kind": "forward",
+          "local": "tcp:46731",
+          "phase": "absent",
+          "remote": "tcp:46731"
+        },
+        {
+          "kind": "reverse",
+          "local": "tcp:46732",
+          "phase": "absent",
+          "remote": "tcp:46732"
+        }
+      ],
+      "phonePort": 46731,
+      "phoneReport": {
+        "cleanupComplete": true,
+        "highestReservedSequence": 5,
+        "hintAfter": "127.0.0.1:46732",
+        "hintBefore": null,
+        "ordinaryAdmissionInitiallyClosed": true,
+        "ordinaryReceived": 1,
+        "ordinarySent": 1,
+        "passed": true,
+        "phase": "A",
+        "proofIdHash": "a2d88eee36dfaba4b910d9f5c4fbf5c644d60648c0f6bee932474d926b072c9b",
+        "role": "phone",
+        "runId": "71dca890-7a88-4301-bbea-aab3e3205074",
+        "schemaVersion": 1,
+        "socketObservations": [
+          {
+            "channel": "C1",
+            "localHost": "127.0.0.1",
+            "localPort": 46731,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 43611
+          },
+          {
+            "channel": "C2",
+            "localHost": "127.0.0.1",
+            "localPort": 35391,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 46732
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    "B": {
+      "macPort": 46742,
+      "macReport": {
+        "cleanupComplete": true,
+        "highestReservedSequence": 10,
+        "hintAfter": "127.0.0.1:46741",
+        "hintBefore": "127.0.0.1:46731",
+        "ordinaryAdmissionInitiallyClosed": true,
+        "ordinaryReceived": 1,
+        "ordinarySent": 1,
+        "passed": true,
+        "phase": "B",
+        "proofIdHash": "ca18b60a2478a6fda044c32eb285de3b6e6ac3f2a20d2ac27fb5f4f0d2e6f7da",
+        "role": "mac",
+        "runId": "71dca890-7a88-4301-bbea-aab3e3205074",
+        "schemaVersion": 1,
+        "socketObservations": [
+          {
+            "channel": "C1",
+            "localHost": "127.0.0.1",
+            "localPort": 60243,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 46741
+          },
+          {
+            "channel": "C2",
+            "localHost": "127.0.0.1",
+            "localPort": 46742,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 60244
+          }
+        ]
+      },
+      "maps": [
+        {
+          "kind": "forward",
+          "local": "tcp:46741",
+          "phase": "absent",
+          "remote": "tcp:46741"
+        },
+        {
+          "kind": "reverse",
+          "local": "tcp:46742",
+          "phase": "absent",
+          "remote": "tcp:46742"
+        }
+      ],
+      "phonePort": 46741,
+      "phoneReport": {
+        "cleanupComplete": true,
+        "highestReservedSequence": 10,
+        "hintAfter": "127.0.0.1:46742",
+        "hintBefore": "127.0.0.1:46732",
+        "ordinaryAdmissionInitiallyClosed": true,
+        "ordinaryReceived": 1,
+        "ordinarySent": 1,
+        "passed": true,
+        "phase": "B",
+        "proofIdHash": "ca18b60a2478a6fda044c32eb285de3b6e6ac3f2a20d2ac27fb5f4f0d2e6f7da",
+        "role": "phone",
+        "runId": "71dca890-7a88-4301-bbea-aab3e3205074",
+        "schemaVersion": 1,
+        "socketObservations": [
+          {
+            "channel": "C1",
+            "localHost": "127.0.0.1",
+            "localPort": 46741,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 56205
+          },
+          {
+            "channel": "C2",
+            "localHost": "127.0.0.1",
+            "localPort": 58891,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 46742
+          }
+        ]
+      },
+      "result": "passed"
+    },
+    "B-restart": {
+      "macPort": 46742,
+      "macReport": {
+        "cleanupComplete": true,
+        "highestReservedSequence": 15,
+        "hintAfter": "127.0.0.1:46741",
+        "hintBefore": "127.0.0.1:46741",
+        "ordinaryAdmissionInitiallyClosed": true,
+        "ordinaryReceived": 1,
+        "ordinarySent": 1,
+        "passed": true,
+        "phase": "B-restart",
+        "proofIdHash": "033eb0099bcf9e2dd5e559f61bf65a15232844aa4d6e11f69523bd3403d85387",
+        "role": "mac",
+        "runId": "71dca890-7a88-4301-bbea-aab3e3205074",
+        "schemaVersion": 1,
+        "socketObservations": [
+          {
+            "channel": "C1",
+            "localHost": "127.0.0.1",
+            "localPort": 60291,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 46741
+          },
+          {
+            "channel": "C2",
+            "localHost": "127.0.0.1",
+            "localPort": 46742,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 60292
+          }
+        ]
+      },
+      "maps": [
+        {
+          "kind": "forward",
+          "local": "tcp:46741",
+          "phase": "absent",
+          "remote": "tcp:46741"
+        },
+        {
+          "kind": "reverse",
+          "local": "tcp:46742",
+          "phase": "absent",
+          "remote": "tcp:46742"
+        }
+      ],
+      "phonePort": 46741,
+      "phoneReport": {
+        "cleanupComplete": true,
+        "highestReservedSequence": 15,
+        "hintAfter": "127.0.0.1:46742",
+        "hintBefore": "127.0.0.1:46742",
+        "ordinaryAdmissionInitiallyClosed": true,
+        "ordinaryReceived": 1,
+        "ordinarySent": 1,
+        "passed": true,
+        "phase": "B-restart",
+        "proofIdHash": "033eb0099bcf9e2dd5e559f61bf65a15232844aa4d6e11f69523bd3403d85387",
+        "role": "phone",
+        "runId": "71dca890-7a88-4301-bbea-aab3e3205074",
+        "schemaVersion": 1,
+        "socketObservations": [
+          {
+            "channel": "C1",
+            "localHost": "127.0.0.1",
+            "localPort": 46741,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 59535
+          },
+          {
+            "channel": "C2",
+            "localHost": "127.0.0.1",
+            "localPort": 33553,
+            "remoteHost": "127.0.0.1",
+            "remotePort": 46742
+          }
+        ]
+      },
+      "result": "passed"
+    }
+  },
+  "proofIdHashes": [
+    "a2d88eee36dfaba4b910d9f5c4fbf5c644d60648c0f6bee932474d926b072c9b",
+    "ca18b60a2478a6fda044c32eb285de3b6e6ac3f2a20d2ac27fb5f4f0d2e6f7da",
+    "033eb0099bcf9e2dd5e559f61bf65a15232844aa4d6e11f69523bd3403d85387"
+  ],
+  "receiverSha256After": "1d5a3f628f348b8ca32a18ab3de4a81d23bc59e9487fd57132b1c690b1dccbb3",
+  "receiverSha256Before": "1d5a3f628f348b8ca32a18ab3de4a81d23bc59e9487fd57132b1c690b1dccbb3",
+  "reconnectInstrumentAttempted": true,
+  "runId": "71dca890-7a88-4301-bbea-aab3e3205074",
+  "schemaVersion": 1,
+  "serial": "emulator-5580",
+  "sourceDigestsAfter": {
+    "shared/protocol/v1/reconnect/cases.json": "d8b47bc8281c699aa2726d3caf966e11c0acbf6be1eda73e634cea4726aefe7d",
+    "shared/protocol/v1/reconnect/encrypted-vectors.json": "3bfa3569baeda3122dc8fce2a6a4244102cff5cc165c8948e8b6c4f63682ad89",
+    "shared/protocol/v1/reconnect/network-cases.json": "ff290c635c10d36fa9bc0aebd7ac2824df6b7d41f3b826c2185f5165e7d2b8cf"
+  },
+  "sourceDigestsBefore": {
+    "shared/protocol/v1/reconnect/cases.json": "d8b47bc8281c699aa2726d3caf966e11c0acbf6be1eda73e634cea4726aefe7d",
+    "shared/protocol/v1/reconnect/encrypted-vectors.json": "3bfa3569baeda3122dc8fce2a6a4244102cff5cc165c8948e8b6c4f63682ad89",
+    "shared/protocol/v1/reconnect/network-cases.json": "ff290c635c10d36fa9bc0aebd7ac2824df6b7d41f3b826c2185f5165e7d2b8cf"
+  },
+  "sourceTreeSha256After": "99b864349e1d0a666329ff936509ecc94a327ecb653aa739beca70d2cfd76270",
+  "sourceTreeSha256Before": "99b864349e1d0a666329ff936509ecc94a327ecb653aa739beca70d2cfd76270",
+  "testApkSha256": "23b3fa784d6aa56fe98e827d9542c255d1f9afcf934c56c1852e1d7fa9d5d33d",
+  "testApkSha256After": "23b3fa784d6aa56fe98e827d9542c255d1f9afcf934c56c1852e1d7fa9d5d33d"
+}

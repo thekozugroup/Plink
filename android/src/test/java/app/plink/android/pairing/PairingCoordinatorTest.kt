@@ -72,6 +72,7 @@ class PairingCoordinatorTest {
         var configuredPort = 45731
         var elapsed = 0L
         var stops = 0
+        val restoredAdmissions = mutableListOf<Boolean>()
         var offer = PairingOffer("mac", "Mac", "macos", "mac:45732", "nonce", PairingCrypto.generateKeyPair().publicKeyBase64, "pixel")
         val coordinator = PairingCoordinator(PairingCoordinator.Environment(
             store, secrets, InMemoryFrameStateStore(),
@@ -85,7 +86,7 @@ class PairingCoordinatorTest {
             stop = { stops++; active = null },
             configure = { session, port ->
                 require(session.pairedDevice.trusted && session.pairedDevice.securityVersion == 2)
-                active = session
+                active = session.copy(sessionKey = session.copySessionKey())
                 configuredPort = port
                 afterConfigure?.invoke()
                 if (activationFails) {
@@ -98,7 +99,12 @@ class PairingCoordinatorTest {
                 if (bindFails) error("bind failed")
                 nextConnection.also { connections += it; nextConnection = Connection() }
             },
-            now = { elapsed }
+            now = { elapsed },
+            restore = { session, port, admitted ->
+                restoredAdmissions += admitted
+                active = session.copy(sessionKey = session.copySessionKey())
+                configuredPort = port
+            }
         ), StandardTestDispatcher(scope.testScheduler))
 
         suspend fun seed() {
@@ -136,6 +142,20 @@ class PairingCoordinatorTest {
         assertNull(f.backingSecrets.load(f.prepared.single().candidate.sessionId))
         assertTrue(f.connections.single().incoming.trySend(staleFinal).isFailure)
         f.coordinator.close(); runCurrent()
+    }
+
+    @Test fun stoppedReadyPairRestoresListenerOnlyAfterReplacementCancellation() = runTest {
+        val f = Fixture(this)
+        f.seed()
+        f.select()
+        runCurrent()
+        f.coordinator.cancelAttempt()
+        runCurrent()
+
+        f.assertRestored()
+        assertEquals(listOf(false), f.restoredAdmissions)
+        f.coordinator.close()
+        runCurrent()
     }
 
     @Test fun bindFailureRestoresPriorSessionAndWipesUnpublishedKey() = runTest {

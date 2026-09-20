@@ -31,26 +31,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Message
-import androidx.compose.material.icons.rounded.BatteryChargingFull
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.ContentCopy
-import androidx.compose.material.icons.rounded.Devices
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.Phone
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -75,8 +61,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.plink.android.clipboard.ClipboardSyncState
 import app.plink.android.continuity.FileTransferState
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeatureAvailability
@@ -85,6 +74,7 @@ import app.plink.android.permissions.PermissionOnboardingStep
 import app.plink.android.services.BackgroundConnectionState
 import app.plink.android.services.SessionStatus
 import app.plink.android.screen.ScreenPreviewPhase
+import app.plink.android.reconnect.ReconnectState
 import app.plink.android.ui.theme.PlinkShapeDefaults
 import app.plink.android.ui.theme.plinkTopBarTitleStyle
 
@@ -93,16 +83,32 @@ import app.plink.android.ui.theme.plinkTopBarTitleStyle
 fun PlinkAppScreen(
     state: PlinkUiState,
     actions: PlinkUiActions,
+    reconnectState: ReconnectState,
+    reconnectAvailable: Boolean,
+    onCancelReconnect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var destination by remember { mutableStateOf(PlinkDestination.Connection) }
     val motionScheme = MaterialTheme.motionScheme
+    val displayState = state.copy(
+        sessionStatus = when {
+            state.sessionStatus == SessionStatus.REPAIR_REQUIRED -> SessionStatus.REPAIR_REQUIRED
+            reconnectState is ReconnectState.ConnectedInternetUnverified -> SessionStatus.READY
+            state.sessionStatus == SessionStatus.READY -> SessionStatus.AWAITING_RECONNECT
+            state.sessionStatus == SessionStatus.DISCONNECTED && reconnectAvailable ->
+                SessionStatus.AWAITING_RECONNECT
+            else -> state.sessionStatus
+        }
+    )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 FloatingNavigation(destination, { destination = it })
@@ -119,8 +125,15 @@ fun PlinkAppScreen(
             modifier = Modifier.fillMaxSize()
         ) { screen ->
             when (screen) {
-                PlinkDestination.Connection -> ConnectionScreen(state, actions, padding)
-                PlinkDestination.Activity -> ActivityScreen(state, padding)
+                PlinkDestination.Connection -> ConnectionScreen(
+                    displayState,
+                    actions,
+                    reconnectState,
+                    reconnectAvailable,
+                    onCancelReconnect,
+                    padding
+                )
+                PlinkDestination.Activity -> ActivityScreen(displayState, reconnectAvailable, padding)
                 PlinkDestination.Settings -> SettingsScreen(state, actions, padding)
             }
         }
@@ -132,6 +145,9 @@ fun PlinkAppScreen(
 private fun ConnectionScreen(
     state: PlinkUiState,
     actions: PlinkUiActions,
+    reconnectState: ReconnectState,
+    reconnectAvailable: Boolean,
+    onCancelReconnect: () -> Unit,
     contentPadding: PaddingValues
 ) {
     val hasActiveScreenPreview = when (state.screenPreviewState.phase) {
@@ -154,12 +170,25 @@ private fun ConnectionScreen(
                 }
             }
             item { ConnectionRing(state.sessionStatus) }
+            if (reconnectAvailable) {
+                item {
+                    Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
+                        ReconnectControls(reconnectState, onCancelReconnect)
+                    }
+                }
+            }
             item {
                 Text(
                     when (state.sessionStatus) {
-                        SessionStatus.READY -> "Pairing is configured. Plink will open secure local sessions when needed."
-                        SessionStatus.REPAIR_REQUIRED -> "Pair again to enable updated security. Your previous pairing record is preserved."
-                        SessionStatus.DISCONNECTED -> "Select a nearby Mac and confirm the same code on both devices."
+                        SessionStatus.READY -> "Your Pixel and Mac are connected."
+                        SessionStatus.AWAITING_RECONNECT ->
+                            "Your Mac is paired. Waiting to connect."
+                        SessionStatus.REPAIR_REQUIRED -> "Pair your Mac again to continue."
+                        SessionStatus.DISCONNECTED -> if (reconnectAvailable) {
+                            "Your Mac is paired. Waiting to connect."
+                        } else {
+                            "Select a nearby Mac and confirm the same code on both devices."
+                        }
                     },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -189,10 +218,17 @@ private fun ConnectionScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ActivityScreen(state: PlinkUiState, contentPadding: PaddingValues) {
-    ScreenScaffold("Activity", "Live device state", contentPadding) { innerPadding ->
-        val enabled = state.features.count { it.enabled && it.available }
-        val blocked = state.features.count { !it.available }
+private fun ActivityScreen(state: PlinkUiState, reconnectAvailable: Boolean, contentPadding: PaddingValues) {
+    ScreenScaffold("Activity", "Current status", contentPadding) { innerPadding ->
+        val visibleFeatures = state.features.filterNot {
+            it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard
+        }
+        val enabled = visibleFeatures.count { it.enabled && it.available } +
+            if (state.clipboardSyncEnabled &&
+                (state.clipboardSyncState.canSend || state.clipboardSyncState.canReceive)
+            ) 1 else 0
+        val blocked = visibleFeatures.count { !it.available } +
+            if (state.clipboardSyncState.needsPermission) 1 else 0
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = innerPadding,
@@ -201,33 +237,32 @@ private fun ActivityScreen(state: PlinkUiState, contentPadding: PaddingValues) {
             item {
                 SummaryCard(
                     title = when (state.sessionStatus) {
-                        SessionStatus.READY -> "Paired configuration ready"
-                        SessionStatus.REPAIR_REQUIRED -> "Pair again for security update"
-                        SessionStatus.DISCONNECTED -> "No paired Mac"
+                        SessionStatus.READY -> "Connected"
+                        SessionStatus.AWAITING_RECONNECT -> "Paired"
+                        SessionStatus.REPAIR_REQUIRED -> "Pair again"
+                        SessionStatus.DISCONNECTED -> if (reconnectAvailable) "Paired" else "Not paired"
                     },
                     detail = when (state.sessionStatus) {
-                        SessionStatus.READY -> "Secure session material is available on this device."
-                        SessionStatus.REPAIR_REQUIRED -> "Pair again to enable updated security. Your previous pairing record is preserved."
-                        SessionStatus.DISCONNECTED -> "Pair a Mac from the Connection tab."
+                        SessionStatus.READY -> "Your Pixel and Mac are connected."
+                        SessionStatus.AWAITING_RECONNECT ->
+                            "Waiting to connect to your Mac."
+                        SessionStatus.REPAIR_REQUIRED -> "Pair your Mac again to continue."
+                        SessionStatus.DISCONNECTED -> if (reconnectAvailable) {
+                            "Waiting to connect to your Mac."
+                        } else {
+                            "Pair a Mac from the Connection tab."
+                        }
                     },
-                    icon = Icons.Rounded.Devices,
+                    icon = LucideIcons.Devices,
                     container = MaterialTheme.colorScheme.primaryContainer
                 )
             }
             item {
                 SummaryCard(
-                    title = "$enabled integrations enabled",
-                    detail = if (blocked == 0) "All listed integrations are available." else "$blocked need permission or platform support.",
-                    icon = Icons.Rounded.Tune,
+                    title = "$enabled features on",
+                    detail = if (blocked == 0) "All listed features are available." else "$blocked features need setup.",
+                    icon = LucideIcons.Tune,
                     container = MaterialTheme.colorScheme.secondaryContainer
-                )
-            }
-            item {
-                SummaryCard(
-                    title = "No local activity history",
-                    detail = "This release shows live connection and integration status above.",
-                    icon = Icons.Rounded.History,
-                    container = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
             }
         }
@@ -241,6 +276,9 @@ private fun SettingsScreen(
     actions: PlinkUiActions,
     contentPadding: PaddingValues
 ) {
+    val visibleFeatures = state.features.filterNot {
+        it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard
+    }
     ScreenScaffold(
         title = "Settings",
         subtitle = "Continuity controls",
@@ -262,11 +300,19 @@ private fun SettingsScreen(
             }
             item { Spacer(Modifier.height(14.dp)) }
             item { SectionTitle("Integrations") }
-            itemsIndexed(state.features, key = { _, feature -> feature.feature.name }) { index, feature ->
+            item {
+                ClipboardSyncSettingRow(
+                    enabled = state.clipboardSyncEnabled,
+                    state = state.clipboardSyncState,
+                    onChange = actions.onClipboardSyncEnabledChange,
+                    onSetUp = actions.onSetUpClipboardSync
+                )
+            }
+            itemsIndexed(visibleFeatures, key = { _, feature -> feature.feature.name }) { index, feature ->
                 FeatureSettingRow(
                     feature = feature,
                     index = index,
-                    count = state.features.size,
+                    count = visibleFeatures.size,
                     onChange = { actions.onFeatureEnabledChange(feature.feature, it) }
                 )
             }
@@ -294,8 +340,58 @@ private fun SettingsScreen(
                     onClick = actions.onRefreshPermissions,
                     modifier = Modifier.padding(top = 12.dp).heightIn(min = 48.dp)
                 ) {
-                    Icon(Icons.Rounded.Refresh, contentDescription = null)
+                    Icon(LucideIcons.Refresh, contentDescription = null)
                     Text("Refresh permissions", modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClipboardSyncSettingRow(
+    enabled: Boolean,
+    state: ClipboardSyncState,
+    onChange: (Boolean) -> Unit,
+    onSetUp: () -> Unit
+) {
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceBright,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Icon(
+                    LucideIcons.ContentCopy,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Column(Modifier.weight(1f)) {
+                    Text("Clipboard sync", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (!enabled && state == ClipboardSyncState())
+                            "Copy text on either device to paste on the other. Requires Shizuku on your phone."
+                        else state.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = enabled,
+                    onCheckedChange = onChange,
+                    modifier = Modifier.semantics { contentDescription = "Clipboard sync" }
+                )
+            }
+            if (state.needsPermission) {
+                FilledTonalButton(onClick = onSetUp, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("Set Up Clipboard Sync")
                 }
             }
         }
@@ -310,17 +406,17 @@ private fun FileTransferCard(state: FileTransferState, onCancel: () -> Unit) {
     when (state) {
         FileTransferState.Idle -> {
             title = "No active file transfer"
-            detail = "Shared files appear here while Plink sends or receives them."
+            detail = "Files appear here while Plink sends or receives them."
             canCancel = false
         }
         is FileTransferState.Preparing -> {
             title = "Preparing ${state.name}"
-            detail = "Plink is creating a private snapshot before offering the file."
+            detail = "Plink is getting the file ready."
             canCancel = true
         }
         is FileTransferState.Offered -> {
-            title = "Waiting for acceptance"
-            detail = "${state.name} (${formatBytes(state.sizeBytes)}) was offered to your Mac."
+            title = "Waiting for your Mac"
+            detail = "${state.name} (${formatBytes(state.sizeBytes)}) is ready to send."
             canCancel = true
         }
         is FileTransferState.AwaitingDestination -> {
@@ -337,7 +433,7 @@ private fun FileTransferCard(state: FileTransferState, onCancel: () -> Unit) {
         }
         is FileTransferState.Verifying -> {
             title = "Saving ${state.name}"
-            detail = "Plink is completing the transfer and verifying its result."
+            detail = "Plink is checking that the file was saved."
             canCancel = true
         }
         is FileTransferState.Saved -> {
@@ -391,12 +487,12 @@ private fun fileFailureDetail(reason: String): String = when (reason) {
     "busy" -> "Another file transfer is active."
     "cancelled" -> "The file transfer was cancelled."
     "disconnected" -> "The connection ended before the transfer finished."
-    "invalid" -> "The file data did not match the offer."
+    "invalid" -> "The file could not be verified."
     "receive_unavailable" -> "The other device could not receive the file."
     "storage" -> "The selected file or destination could not be read or written."
     "timeout" -> "The file transfer timed out."
     "too_large" -> "Files must be 16 MiB or smaller."
-    else -> "The file transfer failed ($reason)."
+    else -> "The file transfer failed."
 }
 
 @Composable
@@ -409,6 +505,7 @@ private fun BackgroundConnectionSettingRow(
         BackgroundConnectionState.Disabled -> "Keep continuity available while Plink is closed."
         BackgroundConnectionState.Starting -> "Starting background connection…"
         BackgroundConnectionState.Running -> "Active in the background."
+        BackgroundConnectionState.AwaitingReconnect -> "Paired. Waiting to connect to your Mac."
         is BackgroundConnectionState.RePairRequired ->
             "Pair again to enable updated security. Your previous pairing record is preserved."
         is BackgroundConnectionState.ActionRequired -> state.message
@@ -427,7 +524,7 @@ private fun BackgroundConnectionSettingRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(LucideIcons.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Column(Modifier.weight(1f)) {
                 Text("Background connection", style = MaterialTheme.typography.titleMedium)
                 Text(
@@ -533,7 +630,7 @@ private fun FeatureSettingRow(
             Column(Modifier.weight(1f)) {
                 Text(feature.feature.label(), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    feature.reason ?: if (feature.available) "Available for paired Macs" else "Unavailable",
+                    feature.reason ?: if (checked) "On" else "Off",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -563,7 +660,7 @@ private fun PermissionSettingRow(
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Icon(
-                if (step.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Notifications,
+                if (step.completed) LucideIcons.CheckCircle else LucideIcons.Notifications,
                 contentDescription = null,
                 tint = if (step.completed) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
             )
@@ -575,7 +672,7 @@ private fun PermissionSettingRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(if (step.completed) Icons.Rounded.CheckCircle else Icons.Rounded.Settings, contentDescription = null)
+            Icon(if (step.completed) LucideIcons.CheckCircle else LucideIcons.Settings, contentDescription = null)
         }
     }
 }
@@ -619,16 +716,16 @@ private fun ContinuityFeature.label(): String = when (this) {
     ContinuityFeature.Battery -> "Battery"
     ContinuityFeature.Media -> "Media"
     ContinuityFeature.Sms -> "SMS"
-    ContinuityFeature.ScreenMirror -> "Screen mirror"
+    ContinuityFeature.ScreenMirror -> "Screen preview"
 }
 
 private fun ContinuityFeature.icon(): ImageVector = when (this) {
-    ContinuityFeature.Calls -> Icons.Rounded.Phone
-    ContinuityFeature.Messages, ContinuityFeature.Sms -> Icons.AutoMirrored.Rounded.Message
-    ContinuityFeature.Clipboard -> Icons.Rounded.ContentCopy
-    ContinuityFeature.Files -> Icons.Rounded.Folder
-    ContinuityFeature.Web -> Icons.Rounded.Link
-    ContinuityFeature.Battery -> Icons.Rounded.BatteryChargingFull
-    ContinuityFeature.Media -> Icons.Rounded.MusicNote
-    ContinuityFeature.ScreenMirror -> Icons.Rounded.Devices
+    ContinuityFeature.Calls -> LucideIcons.Phone
+    ContinuityFeature.Messages, ContinuityFeature.Sms -> LucideIcons.Message
+    ContinuityFeature.Clipboard -> LucideIcons.ContentCopy
+    ContinuityFeature.Files -> LucideIcons.Folder
+    ContinuityFeature.Web -> LucideIcons.Link
+    ContinuityFeature.Battery -> LucideIcons.BatteryCharging
+    ContinuityFeature.Media -> LucideIcons.MusicNote
+    ContinuityFeature.ScreenMirror -> LucideIcons.Devices
 }

@@ -1,0 +1,17 @@
+{
+  "androidStopAcknowledged" : true,
+  "capturedPatternFrames" : 6,
+  "decodedFrames" : 7,
+  "distinctMarkerObservations" : 4,
+  "distinctPixelHashes" : 6,
+  "maximumJPEGBytes" : 38220,
+  "minimumPatternDecodeIntervalSeconds" : 0.98714516666950658,
+  "mode" : "synthetic-owned-emulator",
+  "nativeMacWindowVerified" : false,
+  "passed" : true,
+  "physicalPixelVerified" : false,
+  "productionDecoder" : "ScreenFrameDecoder ImageIO",
+  "productionSession" : "ScreenPreviewSession",
+  "scope" : "pixel and transport sub-result; host final-result.json decides cleanup and aggregate success",
+  "secondsToFirstPattern" : 12.032264291658066
+}

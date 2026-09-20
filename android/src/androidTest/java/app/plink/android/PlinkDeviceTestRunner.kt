@@ -60,6 +60,32 @@ class PlinkDeviceTestRunner : Instrumentation() {
 
     override fun onStart() {
         val result = Bundle()
+        if (arguments.getString("mode") == "reconnectCleanup") {
+            try {
+                cleanupReconnectRun(targetContext, arguments)
+                result.putString("stream", "\nRECONNECT PHONE CLEANUP PASSED\n")
+                finish(0, result)
+            } catch (error: Throwable) {
+                result.putString("stream", "\nRECONNECT PHONE CLEANUP FAILED: ${error.javaClass.simpleName}: ${error.message}\n")
+                finish(1, result)
+            }
+            return
+        }
+        if (arguments.getString("mode") == "reconnect") {
+            try {
+                val report = runBlocking {
+                    checkReconnectRoundtrip(targetContext, arguments) { message ->
+                        sendStatus(1, Bundle().apply { putString("stream", "\n$message\n") })
+                    }
+                }
+                result.putString("stream", "\nRECONNECT PHONE REPORT: $report\nRECONNECT PHONE PASSED\n")
+                finish(0, result)
+            } catch (error: Throwable) {
+                result.putString("stream", "\nRECONNECT PHONE FAILED: ${error.javaClass.simpleName}: ${error.message}\n")
+                finish(1, result)
+            }
+            return
+        }
         val receiver = SyntheticReplyReceiver()
         targetContext.registerReceiver(receiver, IntentFilter("app.plink.TEST_REPLY"), Context.RECEIVER_NOT_EXPORTED)
         try {

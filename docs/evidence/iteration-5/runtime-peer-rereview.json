@@ -1,0 +1,322 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-20T11:09:13.033246+00:00",
+  "status": "bounded source rereview complete; RP fixes and coordinated ordinary-probe ordering accepted in source; rebuilt runtime rerun pending",
+  "priorReview": ".a5c/artifacts/iteration5-runtime-peer-review.json",
+  "scope": {
+    "reviewed": [
+      "RP-01 production OrdinaryAdmissionLease wiring and the exact subsequent closeAdmissions fix",
+      "RP-02 persisted proofID equality and separate prior-phase oracle",
+      "RP-03 Swift explicit null encoding",
+      "Android exact ordinary payload and requiresAck checks"
+    ],
+    "method": "Read-only source reasoning. Supporting production APIs inspected only to establish callback and cleanup semantics. Final pass checked only the requested cleanup fix; no unrelated search.",
+    "excluded": [
+      "Builds, tests, device access, app/harness execution, source edits and commits",
+      "Host supervisor re-audit",
+      "Active Swift cancellation residuals",
+      "Full app lifecycle and Android SDK-guard review"
+    ],
+    "runtimeAcceptance": false,
+    "writes": [
+      ".a5c/artifacts/iteration5-runtime-peer-rereview.json"
+    ]
+  },
+  "summary": {
+    "openFindingsInReviewedDelta": 0,
+    "RP-01": "Resolved at production admission-helper scope. Full PlinkSessionController restore/feature acceptance remains partial.",
+    "RP-02": "Resolved in source, including cross-phase prior-proof oracle comparison.",
+    "RP-03": "Resolved in source through explicit encodeNil.",
+    "cleanupFollowup": "The previously identified success-path cleanup blocker is fixed: leases are revoked, cleared and joined before cleanupComplete, oracle update and report.",
+    "nextOwner": "Parent completes the targeted instrumentation rebuild and genuine coordinated-probe rerun with new source/binary provenance.",
+    "ordinaryProbeFollowup": "Source-verified Mac-first ordinary probe/phone-response ordering; failed prior run remains failed, rebuilt rerun pending."
+  },
+  "findings": [],
+  "dispositions": [
+    {
+      "id": "RP-01",
+      "priorSeverity": "P1",
+      "status": "source-resolved within partial production-helper scope",
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 98,
+          "endLine": 116
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 173,
+          "endLine": 216
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 227,
+          "endLine": 246
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 261,
+          "endLine": 266
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 306,
+          "endLine": 323
+        }
+      ],
+      "acceptedChanges": [
+        "The initial production OrdinaryAdmissionLease explicitly uses initiallyAdmitted=false. The test requires runIfAdmitted to return false and verifies its action did not execute. That initial lease is revoked and its dispatch worker joined.",
+        "prepareReplacement creates a fresh closed lease with the actual token and binding. publishReplacement checks those values, admits that lease and installs it. ordinaryAdmissionOpen now reads the production helper state.",
+        "acceptExchange captures admission under admissionLock at socket accept. The captured lease tracks the socket. Control ownership is released before reconnect handoff. Ordinary delivery uses that same lease.dispatch and runIfAdmitted; an initially unadmitted socket cannot acquire the later lease merely because its read finishes after publication.",
+        "Android now checks requiresAck=false and exact batteryLevel-only payload equality. A successful receive requires real authenticated delivery through the admitted helper. A failed dispatch submission leaves incoming incomplete, causing timeout rather than a false receive count."
+      ],
+      "remainingAcceptance": "The initial rejection is a local production-helper action check, not a rejected encrypted network event. Pair identity, binding and publication callbacks remain isolated test wiring. This does not execute full PlinkSessionController restore, feature drain, outbox, pairing selection or OS resources."
+    },
+    {
+      "id": "RP-01-R1",
+      "status": "source-resolved by the exact follow-up cleanup patch",
+      "observedIntermediateAndroidSha256": "9ca60bad34a46a56e3b4272e6303d792f813019baa308a7234edcd39aea27de1",
+      "issue": "The intermediate revision checked admission == null before its finally block cleared the successfully published lease. The completed reconnect attempt did not own that surviving ordinary generation, so coordinator.closeAndAwait alone could not satisfy the inventory check.",
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 102,
+          "endLine": 110
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 295,
+          "endLine": 310
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 332,
+          "endLine": 345
+        }
+      ],
+      "finalAssessment": [
+        "closeAdmissions captures distinct current/prepared/retiring leases under admissionLock, clears all references, revokes each lease, and awaits each dispatch worker outside the lock. It is safe to call again when the inventory is empty.",
+        "The successful path calls coordinator.closeAndAwait first, then closeAdmissions, closes the server, joins the receiver, and only then cancels scope and evaluates cleanupComplete. The former assertion-before-teardown ordering is gone.",
+        "The cleanup flag now follows completed lease joins as well as coordinator/server/receiver observations. The oracle write occurs only after check(passed). No lease count is hardcoded to make the assertion pass.",
+        "Finally uses withContext(NonCancellable), actually awaits coordinator.closeAndAwait, closes the server, joins the receiver and reuses closeAdmissions. The nested finally still cancels scope, clears the key byte array and resets the test hook.",
+        "This conclusion concerns the inspected success/error cleanup ordering. It is not a new audit or runtime certification of cancellation races or app feature resources."
+      ]
+    },
+    {
+      "id": "RP-02",
+      "priorSeverity": "P2",
+      "status": "source-resolved; runtime pending",
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 84,
+          "endLine": 97
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 286,
+          "endLine": 290
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 310,
+          "endLine": 317
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 181,
+          "endLine": 198
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 237,
+          "endLine": 259
+        }
+      ],
+      "assessment": "Both peers retain the full authenticated endpoint record and require storedAfter.proofID equal to the actual successful diagnostics/result proofID. A requires no existing oracle. B and B-restart compare the existing previous-proof.sha256 to SHA-256(storedBefore.proofID) before starting a new proof. After local assertions succeed, each writes a new oracle from the fresh completed transcript.",
+      "oracleLogic": "The expected hash is retained from the prior phase rather than recomputed from the record being checked. Read-before-write ordering makes this an independent continuity assertion. A missing/mismatched oracle or authenticated record fails; so does a commit that silently retains the previous B proof while the endpoint stays unchanged. Oracle write errors prevent PASS.",
+      "limits": [
+        "The oracle is test evidence, not production authorization or a secret key.",
+        "Android writeText has no atomic/fsync crash guarantee; Swift atomic write is not an explicit fsync durability test. The assertions support orderly process-restart continuity, not power-loss behavior.",
+        "The supervisor must establish actual process replacement and cross-phase proof uniqueness; a phase argument alone cannot prove restart.",
+        "No following phase reloads the final B-restart proof. Its immediate post-commit read is checked, but another process restart after B-restart is outside this sequence.",
+        "No prior encrypted frame is replayed, so durable receive replay rejection remains untested."
+      ]
+    },
+    {
+      "id": "RP-03",
+      "priorSeverity": "P2",
+      "status": "source-resolved; compilation/runtime pending",
+      "evidence": [
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 110,
+          "endLine": 142
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 252,
+          "endLine": 264
+        }
+      ],
+      "assessment": "The custom encode(to:) preserves every report field and calls encodeNil(forKey: .hintBefore) for nil. B/B-restart encode the non-null endpoint string. The existing JSONEncoder output path invokes this encoder. No missing report property was found in its body."
+    }
+  ],
+  "cleanupAndDataScope": {
+    "android": {
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 70,
+          "endLine": 88
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 102,
+          "endLine": 110
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 295,
+          "endLine": 310
+        },
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 332,
+          "endLine": 354
+        }
+      ],
+      "assessment": "The oracle remains below the canonical, owner-marked UUID run directory beside frame/endpoint state. The existing owned recursive cleanup removes it with the run. No production pairing/key directory or completed user files are added to cleanup scope. Successful and finally teardown now both await helper-owned work."
+    },
+    "swift": {
+      "evidence": [
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 157,
+          "endLine": 163
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 181,
+          "endLine": 198
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 229,
+          "endLine": 264
+        }
+      ],
+      "assessment": "The oracle stays under the supplied test state directory and persists between phases. Final state-directory removal is supervisor-owned and was not re-audited. Peer shutdown calls precede oracle/report emission. cleanupComplete still denotes completion of those calls, not an independent resource census."
+    }
+  },
+  "remainingGaps": [
+    "Full app restore, admission/publication integration, feature cleanup and OS-resource behavior remain partial.",
+    "No actual encrypted pre-proof rejection is observed by the local lease test.",
+    "No physical subnet or address migration, Android public Network.bindSocket/LinkProperties/VPN-route proof, physical Mac interface binding, mDNS, hotspot, RF/DHCP/privacy or Internet attribution.",
+    "No replay-after-restart, crash durability, sidecar fault injection, or per-phase loss/reordering runtime acceptance.",
+    "Ordinary report counts still do not correlate sent/received envelope IDs across peers or independently establish exactly-once delivery.",
+    "No builds or runtime tests executed by this review. Genuine A/B/B-restart evidence must use rebuilt artifacts and current provenance."
+  ],
+  "parentReportedValidation": {
+    "provenance": "User-reported; not independently executed or inspected in this rereview.",
+    "canonicalSecondGate": {
+      "Android": 171,
+      "XCTest": 54,
+      "Testing": 132,
+      "result": "passed"
+    },
+    "applicability": "The final instrumentation-only cleanup edit postdates that gate and requires rebuild/new freeze. Gate counts do not grant runtime acceptance here."
+  },
+  "fileHashes": {
+    "algorithm": "SHA-256",
+    "files": [
+      {
+        "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+        "sha256": "1c2071f7895fbd1e4b096fb1b5edf4a838a048c7078673665a7807468cc37be1",
+        "bytes": 18759,
+        "priorReviewSha256": "762058e3e04e220399185c4e0110c92dca990ebf4bb3517519adc9e7d4389663",
+        "changedSincePriorReview": true
+      },
+      {
+        "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+        "sha256": "c0bc1ccb4287b949aa3d3e5411f5b25351854ac71b16535138e3556c4051be6f",
+        "bytes": 14821,
+        "priorReviewSha256": "ac2590cf049dff54e06c941265c6857bb366e06379e9e6448383a4cce66f86cc",
+        "changedSincePriorReview": true
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt",
+        "sha256": "2003c85b52d7d466fe690ec4130164d715e58e214a324e5362ba7762bd93893e",
+        "bytes": 2549
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+        "sha256": "92d0ac6c1854b4995b72b44392a9262b494a35597433cdeacfa2fe424b6f369a",
+        "bytes": 18310,
+        "priorReviewSha256": "92d0ac6c1854b4995b72b44392a9262b494a35597433cdeacfa2fe424b6f369a",
+        "changedSincePriorReview": false
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/reconnect/ReconnectLifecycleOwner.kt",
+        "sha256": "f707445079d3a9a77ca771f0793e9f46bc5a055e3294197360c5df1af1a47baa",
+        "bytes": 2932
+      },
+      {
+        "path": "android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt",
+        "sha256": "8115f36b7b347d33efacdbeea4c4de9c828e06c3c181bf6730380dffb1746122",
+        "bytes": 15668,
+        "priorReviewSha256": "8115f36b7b347d33efacdbeea4c4de9c828e06c3c181bf6730380dffb1746122",
+        "changedSincePriorReview": false
+      },
+      {
+        "path": ".a5c/artifacts/iteration5-runtime-peer-review.json",
+        "sha256": "65271d96a478d19d7789b79a5ca4baff4cb30ef94e6d2e41408131336c6a23fa",
+        "bytes": 42090
+      }
+    ]
+  },
+  "inputStability": "Current peer hashes rechecked unchanged for this follow-up. Supporting API hashes retain the earlier bounded rereview snapshot; no broad production re-audit was performed.",
+  "previousReviewedPeerHashes": [
+    {
+      "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+      "sha256": "f2d1c64ec5882d2f54c439895036c3562ee8412415fc7534bd366bbfa18f0f40"
+    },
+    {
+      "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+      "sha256": "c0bc1ccb4287b949aa3d3e5411f5b25351854ac71b16535138e3556c4051be6f"
+    }
+  ],
+  "updatedAt": "2026-09-20T11:12:36.870798+00:00",
+  "probeOrderingFollowup": {
+    "runtimeObservation": {
+      "run": "reconnect-final-2",
+      "provenance": "Parent-reported; runtime logs were not independently inspected by this reviewer.",
+      "phone": "Handshake and local report PASS.",
+      "mac": "Ordinary probe timedOut.",
+      "acceptance": "This run does not establish a successful two-peer ordinary roundtrip."
+    },
+    "causality": "The contract permits phone-local completion after writing done, while Mac admission opens only after its initiator consumes and validates done. An immediate phone ordinary socket can therefore be accepted while the Mac generation remains closed. The listener captures admission at accept; later admission opening does not authorize that socket. A successful no-ack send is not proof that the peer consumed the event. This source-consistent explanation is the parent diagnosis, not an independently traced packet timeline.",
+    "verifiedTestChange": {
+      "evidence": [
+        {
+          "path": "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt",
+          "startLine": 251,
+          "endLine": 284
+        },
+        {
+          "path": "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift",
+          "startLine": 213,
+          "endLine": 227
+        }
+      ],
+      "assessment": "Android now awaits and validates the Mac device.status, including IDs, requiresAck=false and exact payload, before constructing/sending its one device.status response. Swift first completes the proof, opens real lifetime admission, sets the observer generation, and only then sends its probe. Thus this controlled exchange orders the phone response after Mac admission has opened.",
+      "testScope": "No sleep or extra reconnect handshake ACK is introduced in the inspected peer change. Both ordinary events retain requiresAck=false. Production protocol remains unchanged per parent; no broader production diff was re-audited."
+    },
+    "permittedEvidenceClaim": "A successful rerun can show one authenticated ordinary event per direction using a causally ordered Mac-probe/phone-response test after admission. It cannot show reliable delivery of an arbitrary event sent immediately after the phone writes done.",
+    "retainedLimits": [
+      "No exactly-once delivery, general no-ack reliability or arbitrary producer scheduling guarantee.",
+      "Full app restore/feature lifecycle, physical binding/topology/hotspot and replay-after-restart gaps remain unchanged.",
+      "Parent reports targeted instrumentation rebuild underway. Current peer source needs rebuilt artifact provenance and a new run/freeze; no rerun result is claimed here."
+    ]
+  }
+}

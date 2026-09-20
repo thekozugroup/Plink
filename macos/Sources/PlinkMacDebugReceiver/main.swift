@@ -45,9 +45,24 @@ let receiverMode = ProcessInfo.processInfo.environment["PLINK_DEBUG_RECEIVER_MOD
 let roundtrip = receiverMode == "roundtrip"
 let fileRoundtrip = receiverMode == "files"
 let screenRoundtrip = receiverMode == "screen"
+let reconnectRoundtrip = receiverMode == "reconnect"
 let replyPort = UInt16(ProcessInfo.processInfo.environment["PLINK_DEBUG_REPLY_PORT"] ?? "0") ?? 0
-if (roundtrip || fileRoundtrip || screenRoundtrip) && (pairedDeviceId != "test-pixel" || targetDeviceId != "test-mac" || replyPort == 0) {
+if (roundtrip || fileRoundtrip || screenRoundtrip || reconnectRoundtrip) &&
+    (pairedDeviceId != "test-pixel" || targetDeviceId != "test-mac" || replyPort == 0) {
     throw DebugReceiverError.missingEnvironment("Isolated test identities and reply port are required")
+}
+if reconnectRoundtrip {
+    Task.detached {
+        do {
+            try await ReconnectRoundtrip.run(sessionKey: sessionKey, pairedDeviceID: pairedDeviceId,
+                targetDeviceID: targetDeviceId, receiverPort: port, replyPort: replyPort)
+            exit(0)
+        } catch {
+            fputs("reconnect roundtrip failed: \(error)\n", stderr)
+            exit(1)
+        }
+    }
+    dispatchMain()
 }
 let semaphore = DispatchSemaphore(value: 0)
 let exitState = ExitState()

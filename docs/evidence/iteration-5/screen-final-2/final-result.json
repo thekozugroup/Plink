@@ -1,0 +1,13 @@
+{
+  "passed": false,
+  "testExitCode": 1,
+  "reason": "Operator waited on buffered Android output; normal consent expired. Parent driver exited early before outer wrapper final-result; exact ownership recovery was run explicitly.",
+  "normalConsentActions": 0,
+  "projectionIdle": true,
+  "screenServiceAbsent": true,
+  "recovery": "host-recovery.json",
+  "nativeMacWindowVerified": false,
+  "physicalPixelVerified": false,
+  "appStateRestoredBeforeNextRun": true,
+  "comparison": "../screen-final-3/app-state-before.json"
+}

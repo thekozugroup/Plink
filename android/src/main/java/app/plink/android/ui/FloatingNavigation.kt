@@ -25,10 +25,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Devices
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
@@ -46,9 +42,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 enum class PlinkDestination(val label: String, val icon: ImageVector) {
-    Connection("Connection", Icons.Rounded.Devices),
-    Activity("Activity", Icons.Rounded.History),
-    Settings("Settings", Icons.Rounded.Settings)
+    Connection("Connection", LucideIcons.Devices),
+    Activity("Activity", LucideIcons.History),
+    Settings("Settings", LucideIcons.Settings)
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

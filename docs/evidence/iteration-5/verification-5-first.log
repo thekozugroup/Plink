@@ -1,0 +1,335 @@
+Verification started (UTC): 2026-09-20T10:59:40Z
+Repository commit: d26b6f50df97f3166e78e53ac4683ef502dcaf00
+ M android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt
+ M android/src/main/java/app/plink/android/MainActivity.kt
+ M android/src/main/java/app/plink/android/PlinkApplication.kt
+ M android/src/main/java/app/plink/android/continuity/FileTransferCoordinator.kt
+ M android/src/main/java/app/plink/android/pairing/PairingCoordinator.kt
+ M android/src/main/java/app/plink/android/protocol/PlinkMessage.kt
+ M android/src/main/java/app/plink/android/security/SecureEnvelope.kt
+ M android/src/main/java/app/plink/android/services/BackgroundConnectionService.kt
+ M android/src/main/java/app/plink/android/services/InboundCommandHandler.kt
+ M android/src/main/java/app/plink/android/services/PlinkEventForwarder.kt
+ M android/src/main/java/app/plink/android/services/PlinkSessionController.kt
+ M android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt
+ M android/src/main/java/app/plink/android/ui/ConnectionRing.kt
+ M android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt
+ M android/src/test/java/app/plink/android/continuity/FileTransferCoordinatorTest.kt
+ M android/src/test/java/app/plink/android/pairing/PairingCoordinatorTest.kt
+ M android/src/test/java/app/plink/android/services/InboundCommandHandlerTest.kt
+ M android/src/test/java/app/plink/android/services/SerializedOutboundQueueTest.kt
+ M android/src/test/java/app/plink/android/transport/SocketSecurityTest.kt
+ M docs/architecture.md
+ M macos/Sources/PlinkCore/PlinkMessage.swift
+ M macos/Sources/PlinkCore/SecureEnvelope.swift
+ M macos/Sources/PlinkMac/BluetoothCallController.swift
+ M macos/Sources/PlinkMac/FileTransferController.swift
+ M macos/Sources/PlinkMac/PlinkMacApp.swift
+ M macos/Sources/PlinkMac/ScreenPreviewController.swift
+ M macos/Sources/PlinkMacDebugReceiver/main.swift
+ M scripts/check-fixtures.sh
+ M shared/protocol/v1/schema.json
+ M third_party/tomato/PROVENANCE.json
+?? android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt
+?? android/src/main/java/app/plink/android/protocol/ReconnectProtocol.kt
+?? android/src/main/java/app/plink/android/reconnect/
+?? android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt
+?? android/src/main/java/app/plink/android/ui/ReconnectControls.kt
+?? android/src/test/java/app/plink/android/protocol/ReconnectFixtureContractTest.kt
+?? android/src/test/java/app/plink/android/reconnect/
+?? android/src/test/java/app/plink/android/services/OrdinaryAdmissionTest.kt
+?? docs/evidence/iteration-5/
+?? docs/reconnect.md
+?? macos/Sources/PlinkCore/ReconnectEndpointStore.swift
+?? macos/Sources/PlinkCore/ReconnectProtocol.swift
+?? macos/Sources/PlinkCore/ReconnectSession.swift
+?? macos/Sources/PlinkMac/ReconnectController.swift
+?? macos/Sources/PlinkMac/ReconnectView.swift
+?? macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift
+?? macos/Tests/PlinkCoreTests/EncryptedFrameRandomnessTests.swift
+?? macos/Tests/PlinkCoreTests/ReconnectFixtureContractTests.swift
+?? macos/Tests/PlinkCoreTests/ReconnectTests.swift
+?? macos/Tests/PlinkMacTests/ReconnectLifecycleTests.swift
+?? scripts/verify-reconnect.sh
+?? shared/protocol/v1/reconnect/
+ProductName:		macOS
+ProductVersion:		27.0
+BuildVersion:		26A428
+openjdk version "17.0.20.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 17.0.20.1+0)
+OpenJDK 64-Bit Server VM Homebrew (build 17.0.20.1+0, mixed mode, sharing)
+
+------------------------------------------------------------
+Gradle 9.3.1
+------------------------------------------------------------
+
+Build time:    2026-01-29 14:15:01 UTC
+Revision:      44f4e8d3122ee6e7cbf5a248d7e20b4ca666bda3
+
+Kotlin:        2.2.21
+Groovy:        4.0.29
+Ant:           Apache Ant(TM) version 1.10.15 compiled on August 25 2024
+Launcher JVM:  17.0.20.1 (Homebrew 17.0.20.1+0)
+Daemon JVM:    /opt/homebrew/Cellar/openjdk@17/17.0.20.1/libexec/openjdk.jdk/Contents/Home (no Daemon JVM specified, using current Java home)
+OS:            Mac OS X 27.0 aarch64
+
+swift-driver version: 1.168.6 Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Xcode 27.0
+Build version 27A266a
+27.0
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+
+> Task :android:printBuildEnvironment
+Android compile SDK: 36
+Android build tools: 36.0.0
+Android minimum SDK: 26
+Android target SDK: 36
+
+> Task :android:clean
+> Task :android:preBuild UP-TO-DATE
+> Task :android:preDebugBuild UP-TO-DATE
+> Task :android:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :android:generateDebugResources
+> Task :android:packageDebugResources
+> Task :android:processDebugNavigationResources
+> Task :android:generateDebugAssets UP-TO-DATE
+> Task :android:javaPreCompileDebug
+> Task :android:mergeDebugAssets
+> Task :android:compressDebugAssets
+> Task :android:desugarDebugFileDependencies
+> Task :android:parseDebugLocalResources
+> Task :android:checkDebugAarMetadata
+> Task :android:compileDebugNavigationResources
+> Task :android:mapDebugSourceSetPaths
+> Task :android:generateDebugRFile
+> Task :android:mergeDebugResources
+> Task :android:createDebugCompatibleScreenManifests
+> Task :android:extractDeepLinksDebug
+> Task :android:processDebugMainManifest
+> Task :android:processDebugManifest
+> Task :android:processDebugManifestForPackage
+> Task :android:checkDebugDuplicateClasses
+> Task :android:mergeDebugJniLibFolders
+> Task :android:mergeLibDexDebug
+> Task :android:mergeDebugNativeLibs
+> Task :android:validateSigningDebug
+> Task :android:writeDebugAppMetadata
+> Task :android:writeDebugSigningConfigVersions
+
+> Task :android:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
+
+> Task :android:preReleaseBuild UP-TO-DATE
+> Task :android:mergeReleaseJniLibFolders
+> Task :android:mergeReleaseNativeLibs
+> Task :android:generateReleaseResources
+
+> Task :android:stripReleaseDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
+
+> Task :android:checkReleaseDuplicateClasses
+> Task :android:extractReleaseNativeSymbolTables
+> Task :android:packageReleaseResources
+> Task :android:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :android:processReleaseNavigationResources
+> Task :android:javaPreCompileRelease
+> Task :android:parseReleaseLocalResources
+> Task :android:mergeReleaseArtProfile
+> Task :android:generateReleaseRFile
+> Task :android:checkReleaseAarMetadata
+> Task :android:compileReleaseNavigationResources
+> Task :android:mapReleaseSourceSetPaths
+> Task :android:createReleaseCompatibleScreenManifests
+> Task :android:processDebugResources
+> Task :android:extractDeepLinksRelease
+> Task :android:processReleaseMainManifest
+> Task :android:processReleaseManifest
+> Task :android:processReleaseManifestForPackage
+> Task :android:mergeReleaseResources
+> Task :android:extractProguardFiles
+> Task :android:mergeReleaseStartupProfile UP-TO-DATE
+> Task :android:generateReleaseAssets UP-TO-DATE
+> Task :android:mergeReleaseAssets
+> Task :android:compressReleaseAssets
+> Task :android:extractReleaseVersionControlInfo
+> Task :android:collectReleaseDependencies
+> Task :android:sdkReleaseDependencyData
+> Task :android:writeReleaseAppMetadata
+> Task :android:writeReleaseSigningConfigVersions
+> Task :android:preDebugAndroidTestBuild SKIPPED
+> Task :android:generateDebugAndroidTestResources
+> Task :android:packageDebugAndroidTestResources
+> Task :android:processDebugAndroidTestNavigationResources
+> Task :android:javaPreCompileDebugAndroidTest
+> Task :android:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :android:parseDebugAndroidTestLocalResources
+> Task :android:mergeDebugAndroidTestAssets
+> Task :android:processReleaseResources
+> Task :android:compressDebugAndroidTestAssets
+> Task :android:generateDebugAndroidTestRFile
+> Task :android:desugarDebugAndroidTestFileDependencies
+> Task :android:checkDebugAndroidTestAarMetadata
+> Task :android:compileDebugAndroidTestNavigationResources
+> Task :android:mapDebugAndroidTestSourceSetPaths
+> Task :android:mergeDebugAndroidTestResources
+> Task :android:processDebugAndroidTestManifest
+> Task :android:checkDebugAndroidTestDuplicateClasses
+> Task :android:mergeDebugAndroidTestJniLibFolders
+> Task :android:mergeExtDexDebugAndroidTest
+> Task :android:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :android:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :android:mergeLibDexDebugAndroidTest
+> Task :android:validateSigningDebugAndroidTest
+> Task :android:writeDebugAndroidTestSigningConfigVersions
+> Task :android:preDebugUnitTestBuild UP-TO-DATE
+> Task :android:javaPreCompileDebugUnitTest
+> Task :android:processDebugAndroidTestResources
+> Task :android:optimizeReleaseResources
+> Task :android:mergeExtDexDebug
+
+> Task :android:compileDebugKotlin
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt:163:37 'val allNetworks: Array<(out) Network!>' is deprecated. Deprecated in Java.
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt:201:36 'val allNetworks: Array<(out) Network!>' is deprecated. Deprecated in Java.
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt:67:32 Non-public primary constructor is exposed via the generated 'copy()' method of the 'data' class.
+
+The generated 'copy()' will change its visibility in future releases.
+
+To suppress the warning do one of the following:
+- Annotate the data class with the '@ConsistentCopyVisibility' annotation.
+- Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
+- Annotate the data class with the '@ExposedCopyVisibility' annotation 
+  (Discouraged, but can be used to keep binary compatibility).
+
+To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
+
+This will become an error in language version 2.5. See https://youtrack.jetbrains.com/issue/KT-11914.
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt:94:34 Unnecessary safe call on a non-null receiver of type 'String'.
+
+> Task :android:compileReleaseKotlin
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt:163:37 'val allNetworks: Array<(out) Network!>' is deprecated. Deprecated in Java.
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt:201:36 'val allNetworks: Array<(out) Network!>' is deprecated. Deprecated in Java.
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt:67:32 Non-public primary constructor is exposed via the generated 'copy()' method of the 'data' class.
+
+The generated 'copy()' will change its visibility in future releases.
+
+To suppress the warning do one of the following:
+- Annotate the data class with the '@ConsistentCopyVisibility' annotation.
+- Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
+- Annotate the data class with the '@ExposedCopyVisibility' annotation 
+  (Discouraged, but can be used to keep binary compatibility).
+
+To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
+
+This will become an error in language version 2.5. See https://youtrack.jetbrains.com/issue/KT-11914.
+w: file:///Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt:94:34 Unnecessary safe call on a non-null receiver of type 'String'.
+
+> Task :android:compileDebugJavaWithJavac NO-SOURCE
+> Task :android:dexBuilderDebug
+> Task :android:processDebugJavaRes
+> Task :android:mergeDebugGlobalSynthetics
+> Task :android:compileReleaseJavaWithJavac NO-SOURCE
+> Task :android:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :android:processReleaseJavaRes
+> Task :android:mergeProjectDexDebug
+> Task :android:generateReleaseLintVitalReportModel
+> Task :android:generateDebugLintReportModel
+> Task :android:bundleDebugClassesToCompileJar
+> Task :android:expandReleaseArtProfileWildcards
+> Task :android:mergeReleaseJavaResource
+> Task :android:mergeDebugJavaResource
+> Task :android:generateDebugAndroidTestLintModel
+> Task :android:generateDebugUnitTestLintModel
+> Task :android:bundleDebugClassesToRuntimeJar
+> Task :android:packageDebug
+> Task :android:createDebugApkListingFileRedirect
+> Task :android:assembleDebug
+> Task :android:produceReleaseComposeMapping
+> Task :android:reportReleaseComposeMappingErrors
+
+> Task :android:compileDebugAndroidTestKotlin
+w: file:///Users/michaelwong/Developer/Plink/android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt:139:16 'constructor(p0: String!, p1: String!, p2: Int, p3: String!, p4: Int, p5: Int, p6: Int, p7: Notification!, p8: UserHandle!, p9: Long): StatusBarNotification' is deprecated. Deprecated in Java.
+
+> Task :android:compileDebugAndroidTestJavaWithJavac NO-SOURCE
+> Task :android:dexBuilderDebugAndroidTest
+> Task :android:processDebugAndroidTestJavaRes
+> Task :android:mergeDebugAndroidTestGlobalSynthetics
+> Task :android:mergeDebugAndroidTestJavaResource
+> Task :android:mergeProjectDexDebugAndroidTest
+> Task :android:packageDebugAndroidTest
+> Task :android:createDebugAndroidTestApkListingFileRedirect
+> Task :android:assembleDebugAndroidTest
+
+> Task :android:compileDebugUnitTestKotlin
+w: file:///Users/michaelwong/Developer/Plink/android/src/test/java/app/plink/android/protocol/FileTransferPayloadPolicyTest.kt:14:42 Java type mismatch: inferred type is 'String?', but 'String' was expected.
+
+> Task :android:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :android:processDebugUnitTestJavaRes
+> Task :android:testDebugUnitTest
+> Task :android:lintAnalyzeDebugAndroidTest
+> Task :android:lintAnalyzeDebugUnitTest
+> Task :android:lintVitalAnalyzeRelease
+> Task :android:lintVitalReportRelease
+> Task :android:lintVitalRelease
+> Task :android:minifyReleaseWithR8
+> Task :android:mergeReleaseComposeMapping
+> Task :android:compileReleaseArtProfile
+> Task :android:packageRelease
+> Task :android:createReleaseApkListingFileRedirect
+> Task :android:assembleRelease
+> Task :android:lintAnalyzeDebug
+
+> Task :android:lintReportDebug
+Wrote HTML report to file:///Users/michaelwong/Developer/Plink/android/build/reports/lint-results-debug.html
+Lint found 2 errors and 35 warnings. First failure:
+/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt:140: Error: Call requires API level 33 (current min is 26): android.net.RouteInfo#getType [NewApi]
+                it.type.toString()
+                   ~~~~
+
+
+> Task :android:lintDebug FAILED
+Lint found 2 errors, 35 warnings. First failure:
+
+/Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt:140: Error: Call requires API level 33 (current min is 26): android.net.RouteInfo#getType [NewApi]
+                it.type.toString()
+                   ~~~~
+
+The full lint text report is located at:
+  /Users/michaelwong/Developer/Plink/android/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':android:lintDebug'.
+> Lint found errors in the project; aborting build.
+  
+  Fix the issues identified by lint, or create a baseline to see only new errors.
+  To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
+  ```
+  android {
+      lint {
+          baseline = file("lint-baseline.xml")
+      }
+  }
+  ```
+  For more details, see https://developer.android.com/studio/write/lint#snapshot
+  
+  Lint found 2 errors, 35 warnings. First failure:
+  
+  /Users/michaelwong/Developer/Plink/android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt:140: Error: Call requires API level 33 (current min is 26): android.net.RouteInfo#getType [NewApi]
+                  it.type.toString()
+                     ~~~~
+  
+  The full lint text report is located at:
+    /Users/michaelwong/Developer/Plink/android/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 42s
+129 actionable tasks: 127 executed, 2 up-to-date

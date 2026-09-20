@@ -50,33 +50,6 @@ object PermissionOnboarding {
             summary = "Allows Plink to explain pairing and background sync state.",
             action = PermissionAction.RequestPostNotifications,
             completed = state.notificationRuntime
-        ),
-        PermissionOnboardingStep(
-            title = "Phone state",
-            summary = "Future fallback only. Current call mirroring uses notification access.",
-            action = PermissionAction.RequestPhoneState,
-            completed = state.phoneState,
-            enabled = state.phoneState
-        ),
-        PermissionOnboardingStep(
-            title = "Clipboard automation",
-            summary = "Optional. Manual share works without accessibility access.",
-            action = PermissionAction.OpenAccessibilitySettings,
-            completed = state.accessibilityClipboard
-        ),
-        PermissionOnboardingStep(
-            title = "Direct SMS mode",
-            summary = "Future default-SMS-app path. Not requested until that flow exists.",
-            action = PermissionAction.OpenDefaultSmsRole,
-            completed = state.smsRole,
-            enabled = state.smsRole
-        ),
-        PermissionOnboardingStep(
-            title = "Shizuku helper",
-            summary = "Optional advanced helper for future privileged continuity features.",
-            action = PermissionAction.CheckShizuku,
-            completed = state.shizukuAvailable,
-            enabled = state.shizukuAvailable
         )
     )
 }

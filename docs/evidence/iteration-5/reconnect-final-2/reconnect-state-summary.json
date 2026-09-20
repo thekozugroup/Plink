@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "bytes": 261,
+      "path": "endpoints/7026f325fffa8d4f6c00e93738305ebd4d3135dbbb40c253887e86c47d3cfb6e.json",
+      "sha256": "0b2a7c2d1a6e74f1c4707a852c20a975e6121b573663d1e0d2ec469ba6155f6f"
+    },
+    {
+      "bytes": 36,
+      "path": "frame-state/7026f325fffa8d4f6c00e93738305ebd4d3135dbbb40c253887e86c47d3cfb6e.json",
+      "sha256": "be1d81b2401401c103f718d4d1f20411c92b77e3c5d5d56bdb1d3af99f59bc4f"
+    },
+    {
+      "bytes": 0,
+      "path": "frame-state/7026f325fffa8d4f6c00e93738305ebd4d3135dbbb40c253887e86c47d3cfb6e.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 240,
+      "path": "frame-state/823df3b1907ab646c660726c919c17a254e296e785e52ca368a57a958f02b4fa.json",
+      "sha256": "9eae10fb2dd0ee06ffcb19cd46eee0f8d59dc5900226c70cc2dac35b081a6355"
+    },
+    {
+      "bytes": 0,
+      "path": "frame-state/823df3b1907ab646c660726c919c17a254e296e785e52ca368a57a958f02b4fa.lock",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "path": "/Users/michaelwong/Developer/Plink/docs/evidence/iteration-5/reconnect-final-2/reconnect-state"
+}

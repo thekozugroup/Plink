@@ -1,0 +1,6 @@
+
+RECONNECT PHONE LISTENING
+
+RECONNECT PHONE REPORT: {"schemaVersion":1,"runId":"71dca890-7a88-4301-bbea-aab3e3205074","phase":"B-restart","role":"phone","passed":true,"proofIdHash":"033eb0099bcf9e2dd5e559f61bf65a15232844aa4d6e11f69523bd3403d85387","hintBefore":"127.0.0.1:46742","hintAfter":"127.0.0.1:46742","ordinarySent":1,"ordinaryReceived":1,"ordinaryAdmissionInitiallyClosed":true,"highestReservedSequence":15,"socketObservations":[{"channel":"C1","localHost":"127.0.0.1","localPort":46741,"remoteHost":"127.0.0.1","remotePort":59535},{"channel":"C2","localHost":"127.0.0.1","localPort":33553,"remoteHost":"127.0.0.1","remotePort":46742}],"cleanupComplete":true}
+RECONNECT PHONE PASSED
+

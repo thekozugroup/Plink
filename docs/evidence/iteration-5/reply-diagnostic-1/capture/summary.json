@@ -1,0 +1,35 @@
+{
+  "method": "keyless TCP relay; exact length-prefixed encrypted bytes forwarded",
+  "directions": {
+    "android-to-mac": {
+      "frames": 2,
+      "wireBytes": 1620,
+      "maximumFrameBytes": 956,
+      "plaintextMarkerMatches": 0,
+      "unexpectedOuterFields": 0,
+      "visibleMetadata": [
+        "sourceDeviceId",
+        "targetDeviceId",
+        "sequence",
+        "issuedAt"
+      ],
+      "captureSha256": "ff4063d4f2b685003acdaf9fddf02e3d7cc7a57303e002b355bc3c13d54f7869"
+    },
+    "mac-to-android": {
+      "frames": 1,
+      "wireBytes": 980,
+      "maximumFrameBytes": 976,
+      "plaintextMarkerMatches": 0,
+      "unexpectedOuterFields": 0,
+      "visibleMetadata": [
+        "sourceDeviceId",
+        "targetDeviceId",
+        "sequence",
+        "issuedAt"
+      ],
+      "captureSha256": "14e4a592913de52fb1bf8e7bf742182ee2cff9e14fc406dc3fa60d0ba72d2ea8"
+    }
+  },
+  "errors": [],
+  "passed": true
+}

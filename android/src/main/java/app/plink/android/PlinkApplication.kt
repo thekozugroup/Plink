@@ -15,6 +15,7 @@ import app.plink.android.services.notificationsAllowed
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import app.plink.android.features.FeatureSettings
+import app.plink.android.clipboard.ClipboardSyncController
 import app.plink.android.storage.KeystorePairingSecretStore
 import app.plink.android.storage.KeystorePairingStore
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +40,8 @@ class PlinkApplication : Application() {
         private set
     lateinit var featureSettings: FeatureSettings
         private set
+    lateinit var clipboardSync: ClipboardSyncController
+        private set
     val backgroundConnectionState: StateFlow<BackgroundConnectionState>
         get() = BackgroundConnectionRuntime.state
 
@@ -46,6 +49,8 @@ class PlinkApplication : Application() {
         super.onCreate()
         featureSettings = FeatureSettings(this)
         sessionController = PlinkSessionController(this, featureSettings, scope)
+        clipboardSync = ClipboardSyncController(this, featureSettings, sessionController)
+        clipboardSync.start()
         restoreSavedSession()
     }
 
@@ -58,7 +63,10 @@ class PlinkApplication : Application() {
         }
         return when (BackgroundConnectionPolicy.evaluate(
             explicitRequest = true,
-            paired = sessionController.status.value == SessionStatus.READY,
+            paired = sessionController.status.value in setOf(
+                SessionStatus.READY,
+                SessionStatus.AWAITING_RECONNECT
+            ),
             notificationsAllowed = notificationsAllowed()
         )) {
             BackgroundConnectionDecision.PairingRequired -> actionRequired("Pair with a Mac first.")

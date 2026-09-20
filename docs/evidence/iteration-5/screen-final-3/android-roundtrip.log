@@ -1,0 +1,11 @@
+SCREEN ENCODER CHECKS PASSED: real Bitmap JPEG encode and bounded noisy-frame fallback.
+
+SCREEN TEST READY: use Plink Share and normal Android screen consent on the owned emulator.
+
+SCREEN TEST CAPTURING: switching to synthetic pattern.
+
+SCREEN TEST STOPPED: remote stop observed by Android.
+
+SCREEN TEST CLEANUP PASSED: session quiescent, preferences restored, owned state removed.
+
+PLINK DEVICE CHECKS PASSED: Native bounded JPEG encoder, Consented emulator capture, Remote screen stop observed

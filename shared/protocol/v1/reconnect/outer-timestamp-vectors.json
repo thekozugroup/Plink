@@ -1,0 +1,97 @@
+{
+  "generator" : "docs/evidence/iteration-5/reconnect-outer-timestamp-generator.swift",
+  "schemaVersion" : 1,
+  "scope" : "Supplemental reconnect-only outer timestamp rejection; isolated replay state per vector. Original frozen vectors unchanged.",
+  "vectors" : [
+    {
+      "frame" : {
+        "cipherText" : "AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUGp/HeULzEGV3XT5TiyMc7A==",
+        "issuedAt" : "2026-09-20T00:00:00Z",
+        "nonce" : "00000000-0000-4000-8000-000000000001",
+        "sequence" : 1,
+        "signature" : "9ov2X7M7mL5buVUk9d5Qi847kjl0QVOrxOBmxZhma+k=",
+        "sourceDeviceId" : "test-mac",
+        "targetDeviceId" : "test-pixel",
+        "version" : 1
+      },
+      "ivBase64" : "AQIDBAUGBwgJCgsM",
+      "name" : "canonical outer timestamp",
+      "plaintextBase64" : "eyJpZCI6ImFhYWFhYWFhLWFhYWEtNGFhYS04YWFhLWFhYWFhYWFhYWFhYSIsInBheWxvYWQiOnsibSI6IkFCRWlNMFJWWm5lSW1hcTd6TjN1X3dBUklqTkVWV1ozaUptcXU4emQ3djgiLCJtYWMiOiIxOTIuMTY4LjUwLjEwOjQ1NzMxIiwicGhvbmUiOiIxOTIuMTY4LjUwLjIwOjQ1NzMxIiwidiI6MX0sInJlcXVpcmVzQWNrIjpmYWxzZSwic2VudEF0IjoiMjAyNi0wOS0yMFQwMDowMDowMFoiLCJzb3VyY2VEZXZpY2VJZCI6InRlc3QtbWFjIiwidGFyZ2V0RGV2aWNlSWQiOiJ0ZXN0LXBpeGVsIiwidHlwZSI6InJlY29ubmVjdC5oZWxsbyIsInZlcnNpb24iOjF9",
+      "sessionKeyBase64" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "valid" : true,
+      "wire" : "{\"cipherText\":\"AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUGp/HeULzEGV3XT5TiyMc7A==\",\"issuedAt\":\"2026-09-20T00:00:00Z\",\"nonce\":\"00000000-0000-4000-8000-000000000001\",\"sequence\":1,\"signature\":\"9ov2X7M7mL5buVUk9d5Qi847kjl0QVOrxOBmxZhma+k=\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"version\":1}"
+    },
+    {
+      "frame" : {
+        "cipherText" : "AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUGp/HeULzEGV3XT5TiyMc7A==",
+        "issuedAt" : "2026-09-20T00:00:00.000Z",
+        "nonce" : "00000000-0000-4000-8000-000000000001",
+        "sequence" : 1,
+        "signature" : "9ov2X7M7mL5buVUk9d5Qi847kjl0QVOrxOBmxZhma+k=",
+        "sourceDeviceId" : "test-mac",
+        "targetDeviceId" : "test-pixel",
+        "version" : 1
+      },
+      "ivBase64" : "AQIDBAUGBwgJCgsM",
+      "name" : "fractional wire with canonical authentication",
+      "plaintextBase64" : "eyJpZCI6ImFhYWFhYWFhLWFhYWEtNGFhYS04YWFhLWFhYWFhYWFhYWFhYSIsInBheWxvYWQiOnsibSI6IkFCRWlNMFJWWm5lSW1hcTd6TjN1X3dBUklqTkVWV1ozaUptcXU4emQ3djgiLCJtYWMiOiIxOTIuMTY4LjUwLjEwOjQ1NzMxIiwicGhvbmUiOiIxOTIuMTY4LjUwLjIwOjQ1NzMxIiwidiI6MX0sInJlcXVpcmVzQWNrIjpmYWxzZSwic2VudEF0IjoiMjAyNi0wOS0yMFQwMDowMDowMFoiLCJzb3VyY2VEZXZpY2VJZCI6InRlc3QtbWFjIiwidGFyZ2V0RGV2aWNlSWQiOiJ0ZXN0LXBpeGVsIiwidHlwZSI6InJlY29ubmVjdC5oZWxsbyIsInZlcnNpb24iOjF9",
+      "sessionKeyBase64" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "valid" : false,
+      "wire" : "{\"cipherText\":\"AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUGp/HeULzEGV3XT5TiyMc7A==\",\"issuedAt\":\"2026-09-20T00:00:00.000Z\",\"nonce\":\"00000000-0000-4000-8000-000000000001\",\"sequence\":1,\"signature\":\"9ov2X7M7mL5buVUk9d5Qi847kjl0QVOrxOBmxZhma+k=\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"version\":1}"
+    },
+    {
+      "frame" : {
+        "cipherText" : "AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUGp/HeULzEGV3XT5TiyMc7A==",
+        "issuedAt" : "2026-09-20T00:00:00+00:00",
+        "nonce" : "00000000-0000-4000-8000-000000000001",
+        "sequence" : 1,
+        "signature" : "9ov2X7M7mL5buVUk9d5Qi847kjl0QVOrxOBmxZhma+k=",
+        "sourceDeviceId" : "test-mac",
+        "targetDeviceId" : "test-pixel",
+        "version" : 1
+      },
+      "ivBase64" : "AQIDBAUGBwgJCgsM",
+      "name" : "offset wire with canonical authentication",
+      "plaintextBase64" : "eyJpZCI6ImFhYWFhYWFhLWFhYWEtNGFhYS04YWFhLWFhYWFhYWFhYWFhYSIsInBheWxvYWQiOnsibSI6IkFCRWlNMFJWWm5lSW1hcTd6TjN1X3dBUklqTkVWV1ozaUptcXU4emQ3djgiLCJtYWMiOiIxOTIuMTY4LjUwLjEwOjQ1NzMxIiwicGhvbmUiOiIxOTIuMTY4LjUwLjIwOjQ1NzMxIiwidiI6MX0sInJlcXVpcmVzQWNrIjpmYWxzZSwic2VudEF0IjoiMjAyNi0wOS0yMFQwMDowMDowMFoiLCJzb3VyY2VEZXZpY2VJZCI6InRlc3QtbWFjIiwidGFyZ2V0RGV2aWNlSWQiOiJ0ZXN0LXBpeGVsIiwidHlwZSI6InJlY29ubmVjdC5oZWxsbyIsInZlcnNpb24iOjF9",
+      "sessionKeyBase64" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "valid" : false,
+      "wire" : "{\"cipherText\":\"AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUGp/HeULzEGV3XT5TiyMc7A==\",\"issuedAt\":\"2026-09-20T00:00:00+00:00\",\"nonce\":\"00000000-0000-4000-8000-000000000001\",\"sequence\":1,\"signature\":\"9ov2X7M7mL5buVUk9d5Qi847kjl0QVOrxOBmxZhma+k=\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"version\":1}"
+    },
+    {
+      "frame" : {
+        "cipherText" : "AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUfelbk7LrLp4s9GYxwF2ztg==",
+        "issuedAt" : "2026-09-20T00:00:00.000Z",
+        "nonce" : "00000000-0000-4000-8000-000000000001",
+        "sequence" : 1,
+        "signature" : "CcLudtb0uthBb5Shca2AgKrjMCm6EacX1JmRj65WpoU=",
+        "sourceDeviceId" : "test-mac",
+        "targetDeviceId" : "test-pixel",
+        "version" : 1
+      },
+      "ivBase64" : "AQIDBAUGBwgJCgsM",
+      "name" : "fractional wire with matching authentication",
+      "plaintextBase64" : "eyJpZCI6ImFhYWFhYWFhLWFhYWEtNGFhYS04YWFhLWFhYWFhYWFhYWFhYSIsInBheWxvYWQiOnsibSI6IkFCRWlNMFJWWm5lSW1hcTd6TjN1X3dBUklqTkVWV1ozaUptcXU4emQ3djgiLCJtYWMiOiIxOTIuMTY4LjUwLjEwOjQ1NzMxIiwicGhvbmUiOiIxOTIuMTY4LjUwLjIwOjQ1NzMxIiwidiI6MX0sInJlcXVpcmVzQWNrIjpmYWxzZSwic2VudEF0IjoiMjAyNi0wOS0yMFQwMDowMDowMFoiLCJzb3VyY2VEZXZpY2VJZCI6InRlc3QtbWFjIiwidGFyZ2V0RGV2aWNlSWQiOiJ0ZXN0LXBpeGVsIiwidHlwZSI6InJlY29ubmVjdC5oZWxsbyIsInZlcnNpb24iOjF9",
+      "sessionKeyBase64" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "valid" : false,
+      "wire" : "{\"cipherText\":\"AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUfelbk7LrLp4s9GYxwF2ztg==\",\"issuedAt\":\"2026-09-20T00:00:00.000Z\",\"nonce\":\"00000000-0000-4000-8000-000000000001\",\"sequence\":1,\"signature\":\"CcLudtb0uthBb5Shca2AgKrjMCm6EacX1JmRj65WpoU=\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"version\":1}"
+    },
+    {
+      "frame" : {
+        "cipherText" : "AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUE57nQucFl9FOxloRbf8PWg==",
+        "issuedAt" : "2026-09-20T00:00:00.500Z",
+        "nonce" : "00000000-0000-4000-8000-000000000001",
+        "sequence" : 1,
+        "signature" : "9YNFxpC0wyXpxpNd4lLd0Rm936o38M0VbZGQXzOfc0k=",
+        "sourceDeviceId" : "test-mac",
+        "targetDeviceId" : "test-pixel",
+        "version" : 1
+      },
+      "ivBase64" : "AQIDBAUGBwgJCgsM",
+      "name" : "fractional instant with matching authentication",
+      "plaintextBase64" : "eyJpZCI6ImFhYWFhYWFhLWFhYWEtNGFhYS04YWFhLWFhYWFhYWFhYWFhYSIsInBheWxvYWQiOnsibSI6IkFCRWlNMFJWWm5lSW1hcTd6TjN1X3dBUklqTkVWV1ozaUptcXU4emQ3djgiLCJtYWMiOiIxOTIuMTY4LjUwLjEwOjQ1NzMxIiwicGhvbmUiOiIxOTIuMTY4LjUwLjIwOjQ1NzMxIiwidiI6MX0sInJlcXVpcmVzQWNrIjpmYWxzZSwic2VudEF0IjoiMjAyNi0wOS0yMFQwMDowMDowMFoiLCJzb3VyY2VEZXZpY2VJZCI6InRlc3QtbWFjIiwidGFyZ2V0RGV2aWNlSWQiOiJ0ZXN0LXBpeGVsIiwidHlwZSI6InJlY29ubmVjdC5oZWxsbyIsInZlcnNpb24iOjF9",
+      "sessionKeyBase64" : "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "valid" : false,
+      "wire" : "{\"cipherText\":\"AQIDBAUGBwgJCgsMC8yNKj/VybOwG5U/liVyy7iK50KD0PU1AoT7lDFpr+TmcF2I6Ut9hO57EkuDuxESihEVcuaSMMUePKel6RZJfWVfx6BEHvOM/Nm5QA+c0gjJo/xu2hBc0zDnrycXS5nEJuDOc41GLP3fHmSx2b/EW8+nQedAOZNnqLvmCloG2JHV/vrCr/qMFOUiPhKek/YMuB43IC/wsssf0ZUk5Of0HLhxxlUzOknMZG8OuAIU5ABhMO3StwfgoZtZAfkOQx2d0V5jPsCHs8L+4Q+V/41snYTOnLqvGAGBtQn5GZ/TrGrMfw78AFJFjR2i/+aa5thYLu0UpT4uwveJxHJA9IXLwPrLrmbNuX6R4zuRb5NvJ+nTzQ3ZjtX9fR3cJk/LFEBNW+DP8ootoXKinqkTBWA8+5YwbDr9j0XiXiKDVFNUE57nQucFl9FOxloRbf8PWg==\",\"issuedAt\":\"2026-09-20T00:00:00.500Z\",\"nonce\":\"00000000-0000-4000-8000-000000000001\",\"sequence\":1,\"signature\":\"9YNFxpC0wyXpxpNd4lLd0Rm936o38M0VbZGQXzOfc0k=\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"version\":1}"
+    }
+  ]
+}

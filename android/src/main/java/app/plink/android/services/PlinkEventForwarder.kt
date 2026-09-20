@@ -12,15 +12,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonPrimitive
 
 class PlinkEventForwarder(
     private val events: Flow<PlinkEnvelope>,
@@ -70,6 +73,7 @@ class SerializedOutboundQueue(
         val completion: CompletableDeferred<Unit>? = null,
         val allowRevoked: Boolean = false,
         val stillValid: () -> Boolean = { true },
+        val callerOwnsDispatch: Boolean = false,
         val ephemeralKind: EphemeralKind? = null,
         val expiresAtNanos: Long = Long.MAX_VALUE,
         val timeoutMillis: Int = DEFAULT_SEND_TIMEOUT_MILLIS,
@@ -91,7 +95,7 @@ class SerializedOutboundQueue(
     private var screenData: QueuedEnvelope? = null
     private val ephemeralEntries = mutableSetOf<QueuedEnvelope>()
     private var activeEphemeral: QueuedEnvelope? = null
-    private val trackedEphemeralJobs = mutableSetOf<Job>()
+    private val trackedOwnedJobs = mutableSetOf<Job>()
     private var stopped = false
     private val signal = Channel<Unit>(Channel.CONFLATED)
     private val retrySignals = Channel<Long>(Channel.CONFLATED)
@@ -139,7 +143,9 @@ class SerializedOutboundQueue(
                 generation = generationForLocked(envelope.type),
                 completion = completion,
                 allowRevoked = allowRevoked,
-                stillValid = stillValid
+                stillValid = stillValid,
+                callerOwnsDispatch = envelope.type == PlinkEventType.ClipboardUpdated &&
+                    envelope.payload["automatic"] == JsonPrimitive(true)
             ).also {
                 awaitable += it
                 if (!enqueueLocked(it)) awaitable -= it
@@ -149,7 +155,12 @@ class SerializedOutboundQueue(
         try {
             completion.await()
         } catch (cancellation: CancellationException) {
-            synchronized(stateLock) {
+            if (request.callerOwnsDispatch) {
+                val dispatch = cancelOwned(request)
+                // Cancellation is not finished until this request's socket writer has unwound.
+                // It cannot recall bytes that the transport already wrote.
+                if (dispatch != null) withContext(NonCancellable) { dispatch.join() }
+            } else synchronized(stateLock) {
                 if (request.awaitableState == AwaitableState.QUEUED ||
                     request.awaitableState == AwaitableState.ADMITTING
                 ) {
@@ -210,7 +221,7 @@ class SerializedOutboundQueue(
                     expireEphemeral(entry)
                 }
                 entry.expiryJob = expiryJob
-                trackEphemeralJobLocked(expiryJob)
+                trackOwnedJobLocked(expiryJob)
                 signal.trySend(Unit)
                 entry
             } else null
@@ -218,7 +229,7 @@ class SerializedOutboundQueue(
         expiryJob.start()
         return object : EphemeralHandle {
             override suspend fun await() = completion.await()
-            override fun cancel() = cancelEphemeral(request)
+            override fun cancel() { cancelOwned(request) }
         }
     }
 
@@ -261,10 +272,10 @@ class SerializedOutboundQueue(
     fun purge(types: Set<String>) {
         purgeEphemeral(types)
         val completions = mutableListOf<CompletableDeferred<Unit>>()
-        synchronized(stateLock) {
+        val ownedClipboard = synchronized(stateLock) {
             types.forEach { type -> generations[type] = generationForLocked(type) + 1 }
             awaitable.filter {
-                it.envelopeType in types &&
+                !it.callerOwnsDispatch && it.envelopeType in types &&
                     (it.awaitableState == AwaitableState.QUEUED || it.awaitableState == AwaitableState.ADMITTING)
             }
                 .forEach {
@@ -272,7 +283,9 @@ class SerializedOutboundQueue(
                     queuedIds.remove(it.envelopeId)
                     it.completion?.let(completions::add)
                 }
+            awaitable.filter { it.callerOwnsDispatch && it.envelopeType in types }
         }
+        ownedClipboard.forEach { cancelOwned(it) }
         completions.forEach { it.completeExceptionally(rejected("Outbound request was revoked.")) }
         runCatching { outbox?.removeTypes(types) }
     }
@@ -296,7 +309,7 @@ class SerializedOutboundQueue(
         if (failure == null) completion.complete(Unit) else completion.completeExceptionally(failure)
     }
 
-    private fun cancelEphemeral(request: QueuedEnvelope) {
+    private fun cancelOwned(request: QueuedEnvelope): Job? {
         var completion: CompletableDeferred<Unit>? = null
         var dispatch: Deferred<Unit>? = null
         synchronized(stateLock) {
@@ -309,11 +322,13 @@ class SerializedOutboundQueue(
                     request.expiryJob = null
                     dispatch = request.dispatchJob
                 }
+                AwaitableState.CANCELLED -> dispatch = request.dispatchJob
                 else -> Unit
             }
         }
         dispatch?.cancel()
-        completion?.completeExceptionally(rejected("Screen send expired or was cancelled."))
+        completion?.completeExceptionally(rejected("Outbound send expired or was cancelled."))
+        return dispatch
     }
 
     private fun expireEphemeral(request: QueuedEnvelope) {
@@ -337,7 +352,7 @@ class SerializedOutboundQueue(
                 it.awaitableState = AwaitableState.CANCELLED
                 it.expiryJob?.cancel()
                 it.expiryJob = null
-                if (it.ephemeralKind != null) it.envelope = null
+                if (it.ephemeralKind != null || it.callerOwnsDispatch) it.envelope = null
                 it.dispatchJob?.let(dispatches::add)
                 it.completion?.let(completions::add)
             }
@@ -361,7 +376,7 @@ class SerializedOutboundQueue(
         worker.join()
         retryWorker.join()
         while (true) {
-            val jobs = synchronized(stateLock) { trackedEphemeralJobs.toList() }
+            val jobs = synchronized(stateLock) { trackedOwnedJobs.toList() }
             if (jobs.isEmpty()) return
             jobs.joinAll()
         }
@@ -405,14 +420,17 @@ class SerializedOutboundQueue(
                 null
             } else {
                 request.awaitableState = AwaitableState.DISPATCHING
-                if (request.ephemeralKind == null) null else scope.async(start = CoroutineStart.LAZY) {
+                if (request.ephemeralKind == null && !request.callerOwnsDispatch) null else scope.async(start = CoroutineStart.LAZY) {
                     withTimeout(request.timeoutMillis.toLong()) {
+                        if (request.callerOwnsDispatch && !runCatching { request.stillValid() }.getOrDefault(false)) {
+                            throw rejected("Clipboard request was revoked.")
+                        }
                         sender.send(envelope, request.timeoutMillis)
                     }
                 }.also { child ->
                     request.dispatchJob = child
-                    activeEphemeral = request
-                    trackEphemeralJobLocked(child)
+                    if (request.ephemeralKind != null) activeEphemeral = request
+                    trackOwnedJobLocked(child)
                 }
             }
         }
@@ -420,10 +438,10 @@ class SerializedOutboundQueue(
             completeAwaitable(request, rejected("Outbound request was revoked."))
             return
         }
-        if (request.ephemeralKind == null) {
+        if (request.ephemeralKind == null && !request.callerOwnsDispatch) {
             dispatchOrdinary(request, envelope)
         } else {
-            dispatchEphemeral(request, requireNotNull(dispatch))
+            dispatchOwned(request, requireNotNull(dispatch))
         }
     }
 
@@ -442,16 +460,20 @@ class SerializedOutboundQueue(
         }
     }
 
-    private suspend fun dispatchEphemeral(request: QueuedEnvelope, dispatch: Deferred<Unit>) {
+    private suspend fun dispatchOwned(request: QueuedEnvelope, dispatch: Deferred<Unit>) {
         try {
             dispatch.start()
             dispatch.await()
             completeAwaitable(request)
         } catch (cancellation: CancellationException) {
             val workerCancelled = currentCoroutineContext()[Job]?.isActive == false
+            if (request.callerOwnsDispatch) withContext(NonCancellable) {
+                dispatch.cancel()
+                dispatch.join()
+            }
             completeAwaitable(
                 request,
-                if (workerCancelled) cancellation else rejected("Screen send was cancelled.")
+                if (workerCancelled) cancellation else rejected("Outbound send was cancelled.")
             )
             if (workerCancelled) throw cancellation
         } catch (failure: Exception) {
@@ -470,15 +492,15 @@ class SerializedOutboundQueue(
         ephemeralEntries.remove(request)
         request.expiryJob?.cancel()
         request.expiryJob = null
-        if (request.ephemeralKind != null) request.envelope = null
+        if (request.ephemeralKind != null || request.callerOwnsDispatch) request.envelope = null
         request.dispatchJob = null
         if (activeEphemeral === request) activeEphemeral = null
         return request.completion
     }
 
-    private fun trackEphemeralJobLocked(job: Job) {
-        trackedEphemeralJobs += job
-        job.invokeOnCompletion { synchronized(stateLock) { trackedEphemeralJobs -= job } }
+    private fun trackOwnedJobLocked(job: Job) {
+        trackedOwnedJobs += job
+        job.invokeOnCompletion { synchronized(stateLock) { trackedOwnedJobs -= job } }
     }
 
     private fun rejected(message: String) = OutboundRequestRejectedException(message)
@@ -498,6 +520,26 @@ object SharedOutboundBridge {
     @Volatile
     private var queue: SerializedOutboundQueue? = null
     private val retired = mutableListOf<SerializedOutboundQueue>()
+
+    /** Creates an unpublished queue. The caller keeps its admission closed until installation. */
+    @Synchronized
+    internal fun prepare(
+        sender: OutboundPlinkSender,
+        outbox: EventOutbox,
+        isAllowed: (PlinkEnvelope) -> Boolean
+    ): SerializedOutboundQueue {
+        val predecessors = retired.toList()
+        return SerializedOutboundQueue(sender, scope, outbox = outbox, isAllowed = isAllowed,
+            awaitPredecessors = { predecessors.forEach { it.awaitStopped() } })
+    }
+
+    /** Pointer installation only: persisted retries run outside the lifecycle commit. */
+    @Synchronized
+    internal fun installPrepared(prepared: SerializedOutboundQueue): Boolean {
+        if (queue != null) return false
+        queue = prepared
+        return true
+    }
 
     @Synchronized
     fun configure(
@@ -557,9 +599,12 @@ object SharedOutboundBridge {
     suspend fun awaitQuiescence() {
         while (true) {
             val queues = synchronized(this) {
-                (retired + listOfNotNull(queue)).distinct().also { retired.clear() }
+                (retired + listOfNotNull(queue)).distinct()
             }
-            queues.forEach { it.awaitStopped() }
+            queues.forEach { owned ->
+                owned.awaitStopped()
+                synchronized(this) { retired.remove(owned) }
+            }
             if (synchronized(this) { retired.isEmpty() && queue == null }) return
         }
     }

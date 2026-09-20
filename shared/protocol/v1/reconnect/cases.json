@@ -1,0 +1,489 @@
+{
+  "schemaVersion": 1,
+  "status": "FROZEN by Astra before production implementation; parser contract expectations only; runtime acceptance not passed",
+  "contract": {
+    "envelope": {
+      "requiredFields": [
+        "version",
+        "id",
+        "sentAt",
+        "sourceDeviceId",
+        "targetDeviceId",
+        "requiresAck",
+        "type",
+        "payload"
+      ],
+      "version": 1,
+      "requiresAck": false,
+      "id": "canonical lowercase UUIDv4",
+      "sentAt": "canonical RFC3339 timestamp with whole-second UTC Z, e.g. 2026-09-20T00:00:00Z",
+      "type": "reconnect.<message>",
+      "plaintextMaxBytes": 2048,
+      "encryptedJsonMaxBytes": 4096,
+      "framingPrefixBytes": 4
+    },
+    "payload": {
+      "commonRequiredFields": [
+        "v",
+        "m",
+        "mac",
+        "phone"
+      ],
+      "v": "integer token 1; JSON float and exponent forms rejected",
+      "nonceFields": "m, p, r are independently generated 32-byte values encoded as 43-character unpadded base64url",
+      "endpointFields": "mac and phone are canonical numeric IPv4:port strings",
+      "unknownFields": "rejected",
+      "duplicateKeys": "rejected",
+      "nulls": "rejected; no coercion",
+      "generationsAndDeadlines": "local only; never supplied by peer"
+    },
+    "messages": [
+      {
+        "name": "reconnect.hello",
+        "direction": "Mac>Phone",
+        "connection": "C1",
+        "requiredPayloadFields": [
+          "v",
+          "m",
+          "mac",
+          "phone"
+        ]
+      },
+      {
+        "name": "reconnect.challenge",
+        "direction": "Phone>Mac",
+        "connection": "C1",
+        "requiredPayloadFields": [
+          "v",
+          "m",
+          "p",
+          "mac",
+          "phone"
+        ]
+      },
+      {
+        "name": "reconnect.proof",
+        "direction": "Mac>Phone",
+        "connection": "C1",
+        "requiredPayloadFields": [
+          "v",
+          "m",
+          "p",
+          "mac",
+          "phone"
+        ]
+      },
+      {
+        "name": "reconnect.reverse",
+        "direction": "Phone>Mac",
+        "connection": "C2",
+        "requiredPayloadFields": [
+          "v",
+          "m",
+          "p",
+          "r",
+          "mac",
+          "phone"
+        ]
+      },
+      {
+        "name": "reconnect.reverse_proof",
+        "direction": "Mac>Phone",
+        "connection": "C2",
+        "requiredPayloadFields": [
+          "v",
+          "m",
+          "p",
+          "r",
+          "mac",
+          "phone"
+        ]
+      },
+      {
+        "name": "reconnect.ready",
+        "direction": "Phone>Mac",
+        "connection": "C2",
+        "requiredPayloadFields": [
+          "v",
+          "m",
+          "p",
+          "r",
+          "mac",
+          "phone"
+        ]
+      },
+      {
+        "name": "reconnect.commit",
+        "direction": "Mac>Phone",
+        "connection": "C2",
+        "requiredPayloadFields": [
+          "v",
+          "m",
+          "p",
+          "r",
+          "mac",
+          "phone"
+        ]
+      },
+      {
+        "name": "reconnect.done",
+        "direction": "Phone>Mac",
+        "connection": "C2",
+        "requiredPayloadFields": [
+          "v",
+          "m",
+          "p",
+          "r",
+          "mac",
+          "phone"
+        ]
+      }
+    ],
+    "syntheticValues": {
+      "macEndpoint": "192.168.50.10:45731",
+      "phoneEndpoint": "192.168.50.20:45731",
+      "m": {
+        "hex": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff",
+        "base64url": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+        "bytes": 32,
+        "characters": 43
+      },
+      "p": {
+        "hex": "102132435465768798a9bacbdcedfe0f102132435465768798a9bacbdcedfe0f",
+        "base64url": "ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8",
+        "bytes": 32,
+        "characters": 43
+      },
+      "r": {
+        "hex": "ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100",
+        "base64url": "_-7dzLuqmYh3ZlVEMyIRAP_u3cy7qpmId2ZVRDMiEQA",
+        "bytes": 32,
+        "characters": 43
+      }
+    },
+    "limits": {
+      "idUtf8BytesMin": 1,
+      "idUtf8BytesMax": 128,
+      "discoveryRecordsMax": 8,
+      "discoveryTxtBytesMax": 512,
+      "candidatesPerAttemptMax": 4,
+      "attemptSecondsMax": 30,
+      "candidateSecondsMax": 8,
+      "connectReadWriteSecondsMax": 2,
+      "phoneAttemptSecondsMax": 10,
+      "endpointPort": 45731
+    },
+    "endpointPolicy": {
+      "allowed": "numeric IPv4 in RFC1918 or 169.254/16, same connected prefix, local broadcast-capable interface",
+      "rejected": [
+        "self",
+        "network",
+        "broadcast",
+        "public",
+        "CGNAT",
+        "multicast",
+        "unspecified",
+        "loopback",
+        "IPv6",
+        "URL",
+        "hostname",
+        "other port",
+        "routed/VPN/default-route fallback"
+      ],
+      "fixtureLimitation": "wire vectors do not prove observed socket endpoints, local interface binding, offlink rejection, multicast discovery, hotspot behavior, or Internet route attribution"
+    }
+  },
+  "cases": [
+    {
+      "name": "hello",
+      "valid": true,
+      "envelope": {
+        "version": 1,
+        "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "sentAt": "2026-09-20T00:00:00Z",
+        "sourceDeviceId": "test-mac",
+        "targetDeviceId": "test-pixel",
+        "requiresAck": false,
+        "type": "reconnect.hello",
+        "payload": {
+          "v": 1,
+          "m": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+          "mac": "192.168.50.10:45731",
+          "phone": "192.168.50.20:45731"
+        }
+      }
+    },
+    {
+      "name": "challenge",
+      "valid": true,
+      "envelope": {
+        "version": 1,
+        "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "sentAt": "2026-09-20T00:00:00Z",
+        "sourceDeviceId": "test-pixel",
+        "targetDeviceId": "test-mac",
+        "requiresAck": false,
+        "type": "reconnect.challenge",
+        "payload": {
+          "v": 1,
+          "m": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+          "mac": "192.168.50.10:45731",
+          "phone": "192.168.50.20:45731",
+          "p": "ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8"
+        }
+      }
+    },
+    {
+      "name": "proof",
+      "valid": true,
+      "envelope": {
+        "version": 1,
+        "id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "sentAt": "2026-09-20T00:00:00Z",
+        "sourceDeviceId": "test-mac",
+        "targetDeviceId": "test-pixel",
+        "requiresAck": false,
+        "type": "reconnect.proof",
+        "payload": {
+          "v": 1,
+          "m": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+          "mac": "192.168.50.10:45731",
+          "phone": "192.168.50.20:45731",
+          "p": "ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8"
+        }
+      }
+    },
+    {
+      "name": "reverse",
+      "valid": true,
+      "envelope": {
+        "version": 1,
+        "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        "sentAt": "2026-09-20T00:00:00Z",
+        "sourceDeviceId": "test-pixel",
+        "targetDeviceId": "test-mac",
+        "requiresAck": false,
+        "type": "reconnect.reverse",
+        "payload": {
+          "v": 1,
+          "m": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+          "mac": "192.168.50.10:45731",
+          "phone": "192.168.50.20:45731",
+          "p": "ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8",
+          "r": "_-7dzLuqmYh3ZlVEMyIRAP_u3cy7qpmId2ZVRDMiEQA"
+        }
+      }
+    },
+    {
+      "name": "reverse_proof",
+      "valid": true,
+      "envelope": {
+        "version": 1,
+        "id": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        "sentAt": "2026-09-20T00:00:00Z",
+        "sourceDeviceId": "test-mac",
+        "targetDeviceId": "test-pixel",
+        "requiresAck": false,
+        "type": "reconnect.reverse_proof",
+        "payload": {
+          "v": 1,
+          "m": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+          "mac": "192.168.50.10:45731",
+          "phone": "192.168.50.20:45731",
+          "p": "ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8",
+          "r": "_-7dzLuqmYh3ZlVEMyIRAP_u3cy7qpmId2ZVRDMiEQA"
+        }
+      }
+    },
+    {
+      "name": "ready",
+      "valid": true,
+      "envelope": {
+        "version": 1,
+        "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        "sentAt": "2026-09-20T00:00:00Z",
+        "sourceDeviceId": "test-pixel",
+        "targetDeviceId": "test-mac",
+        "requiresAck": false,
+        "type": "reconnect.ready",
+        "payload": {
+          "v": 1,
+          "m": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+          "mac": "192.168.50.10:45731",
+          "phone": "192.168.50.20:45731",
+          "p": "ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8",
+          "r": "_-7dzLuqmYh3ZlVEMyIRAP_u3cy7qpmId2ZVRDMiEQA"
+        }
+      }
+    },
+    {
+      "name": "commit",
+      "valid": true,
+      "envelope": {
+        "version": 1,
+        "id": "12345678-1234-4234-8234-123456789abc",
+        "sentAt": "2026-09-20T00:00:00Z",
+        "sourceDeviceId": "test-mac",
+        "targetDeviceId": "test-pixel",
+        "requiresAck": false,
+        "type": "reconnect.commit",
+        "payload": {
+          "v": 1,
+          "m": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+          "mac": "192.168.50.10:45731",
+          "phone": "192.168.50.20:45731",
+          "p": "ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8",
+          "r": "_-7dzLuqmYh3ZlVEMyIRAP_u3cy7qpmId2ZVRDMiEQA"
+        }
+      }
+    },
+    {
+      "name": "done",
+      "valid": true,
+      "envelope": {
+        "version": 1,
+        "id": "87654321-4321-4876-9876-543210abcdef",
+        "sentAt": "2026-09-20T00:00:00Z",
+        "sourceDeviceId": "test-pixel",
+        "targetDeviceId": "test-mac",
+        "requiresAck": false,
+        "type": "reconnect.done",
+        "payload": {
+          "v": 1,
+          "m": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+          "mac": "192.168.50.10:45731",
+          "phone": "192.168.50.20:45731",
+          "p": "ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8",
+          "r": "_-7dzLuqmYh3ZlVEMyIRAP_u3cy7qpmId2ZVRDMiEQA"
+        }
+      }
+    },
+    {
+      "name": "duplicate payload key",
+      "valid": false,
+      "expectedRejection": "duplicate key",
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"type\":\"reconnect.hello\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "unknown payload field",
+      "valid": false,
+      "expectedRejection": "unknown field",
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"type\":\"reconnect.hello\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\",\"extra\":true}}"
+    },
+    {
+      "name": "null nonce",
+      "valid": false,
+      "expectedRejection": "null is not admissible",
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"type\":\"reconnect.hello\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"payload\":{\"v\":1,\"m\":null,\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "float v",
+      "valid": false,
+      "expectedRejection": "float form is not admissible",
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"type\":\"reconnect.hello\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"payload\":{\"v\":1.0,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "exponent v",
+      "valid": false,
+      "expectedRejection": "exponent form is not admissible",
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"type\":\"reconnect.hello\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"payload\":{\"v\":1e0,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "plaintext oversize",
+      "valid": false,
+      "expectedRejection": [
+        "plaintext exceeds 2048 UTF-8 bytes",
+        "sourceDeviceId exceeds 128 UTF-8 bytes"
+      ],
+      "rawEnvelopeBytes": 2110,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"type\":\"reconnect.hello\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "hello whitespace padded to exact 2048 bytes",
+      "valid": true,
+      "rawEnvelopeBytes": 2048,
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    },
+    {
+      "name": "hello whitespace padded to exact 2049 bytes",
+      "valid": false,
+      "expectedRejection": "plaintext exceeds 2048 UTF-8 bytes",
+      "rawEnvelopeBytes": 2049,
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    },
+    {
+      "name": "duplicate envelope field",
+      "valid": false,
+      "expectedRejection": "duplicate envelope key",
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "requiresAck true",
+      "valid": false,
+      "expectedRejection": "requiresAck must be false",
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":true,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "padded nonce",
+      "valid": false,
+      "expectedRejection": "nonce padding is not canonical",
+      "nonceCharacters": 44,
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8=\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "noncanonical low-bit base64url nonce",
+      "valid": false,
+      "expectedRejection": "43-character nonce re-encodes differently",
+      "nonceCharacters": 43,
+      "canonicalReencode": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v9\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "noncanonical timestamp",
+      "valid": false,
+      "expectedRejection": "timestamp must use whole-second UTC Z",
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00.000Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "leading-zero IPv4",
+      "valid": false,
+      "expectedRejection": "IPv4 octets must be canonical",
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.050.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "unexpected p in hello",
+      "valid": false,
+      "expectedRejection": "p is not a hello field",
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"p\":\"ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "missing r in done",
+      "valid": false,
+      "expectedRejection": "done requires r",
+      "rawEnvelope": "{\"version\":1,\"id\":\"abababab-abab-4aba-8aba-abababababab\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-pixel\",\"targetDeviceId\":\"test-mac\",\"requiresAck\":false,\"type\":\"reconnect.done\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"p\":\"ECEyQ1RldoeYqbrL3O3-DxAhMkNUZXaHmKm6y9zt_g8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "boolean v",
+      "valid": false,
+      "expectedRejection": "v must be integer token 1",
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":true,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}"
+    },
+    {
+      "name": "unknown envelope field",
+      "valid": false,
+      "expectedRejection": "unknown envelope field",
+      "rawEnvelope": "{\"version\":1,\"id\":\"99999999-9999-4999-8999-999999999999\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"},\"extra\":true}"
+    },
+    {
+      "name": "malformed UTF-8",
+      "valid": false,
+      "expectedRejection": "malformed UTF-8",
+      "rawEnvelopeBase64": "eyJ2ZXJzaW9uIjoxLCJpZCI6Ijk5OTk5OTk5LTk5OTktNDk5OS04OTk5LTk5OTk5OTk5OTk5OSIsInNlbnRBdCI6IjIwMjYtMDktMjBUMDA6MDA6MDBaIiwic291cmNlRGV2aWNlSWQiOiL/ZXN0LW1hYyIsInRhcmdldERldmljZUlkIjoidGVzdC1waXhlbCIsInJlcXVpcmVzQWNrIjpmYWxzZSwidHlwZSI6InJlY29ubmVjdC5oZWxsbyIsInBheWxvYWQiOnsidiI6MSwibSI6IkFCRWlNMFJWWm5lSW1hcTd6TjN1X3dBUklqTkVWV1ozaUptcXU4emQ3djgiLCJtYWMiOiIxOTIuMTY4LjUwLjEwOjQ1NzMxIiwicGhvbmUiOiIxOTIuMTY4LjUwLjIwOjQ1NzMxIn19",
+      "replacedByte": {
+        "index": 107,
+        "originalHex": "74",
+        "replacementHex": "ff"
+      }
+    }
+  ]
+}

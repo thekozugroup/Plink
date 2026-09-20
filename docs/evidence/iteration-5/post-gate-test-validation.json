@@ -1,0 +1,10 @@
+{
+  "runtimeValidationInputsSHA256": "72cf2770d706d764c2ef5eb55f7005a648f4cc02ce6051e302c6411d4e1ad90e",
+  "targetedBuildPublicCopy": "instrumentation-probe-order-build.log",
+  "supervisorFaultReview": {
+    "path": ".a5c/artifacts/iteration5-harness-newline-review.json",
+    "sha256": "95059f82daf9956debe7e394c1cc4e7b16db8773441757f0256118826d51e1da",
+    "result": "38/38 targeted fake checks passed; no findings; earlier frozen23 criteria unchanged"
+  },
+  "scope": "Test-only deltas after the full gate. Original runtime input manifest remains byte-identical to both bound runs."
+}

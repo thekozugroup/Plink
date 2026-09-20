@@ -1,0 +1,11 @@
+{
+  "bundleID": "com.thekozugroup.plink.preferences-smoke.8b9a6806-1444-4766-aa10-2b85f4ebaf11",
+  "sourceSHA256": "04ce8e3cd9e174eb938e9b6309d614ea04144c582c75576898c51ab8e027d273",
+  "buildExit": 0,
+  "buildOutput": "",
+  "runExit": 0,
+  "runOutput": "PASS: own-bundle named suite is nil; standard defaults create and restore one stable identity.\n2026-09-20 07:42:19.469 PreferencesSmoke[62196:9191052] Using your own bundle identifier as an NSUserDefaults suite name does not make sense and will not work. Break on _NSUserDefaults_Log_Nonsensical_Suites to find this\n",
+  "scratchRemoved": true,
+  "preferenceFileRemoved": true,
+  "cleanupNote": "Empty defaults file appeared after process exit and was removed explicitly."
+}

@@ -1,0 +1,2 @@
+WINDOW: Pair Pixel
+WINDOW: Plink

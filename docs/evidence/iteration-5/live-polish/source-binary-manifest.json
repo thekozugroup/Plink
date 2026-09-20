@@ -1,0 +1,1149 @@
+{
+  "atUTC": "2026-09-20T13:13:37.526019+00:00",
+  "baselineCommit": "d26b6f50df97f3166e78e53ac4683ef502dcaf00",
+  "sources": {
+    "android/src/androidTest/java/app/plink/android/ReconnectDeviceCheck.kt": {
+      "sha256": "1c2071f7895fbd1e4b096fb1b5edf4a838a048c7078673665a7807468cc37be1",
+      "bytes": 18759
+    },
+    "android/src/main/aidl/app/plink/android/clipboard/IClipboardReader.aidl": {
+      "sha256": "3516989bb67dc905259d0b7c244a7a1e0c6b77b8eeaa0166f7baede9a6011856",
+      "bytes": 159
+    },
+    "android/src/main/java/app/plink/android/clipboard/ClipboardSyncController.kt": {
+      "sha256": "6aa0e4344e631460df9c7ed74ea2669edc839242be511997e16fa6bfd4a1693a",
+      "bytes": 14953
+    },
+    "android/src/main/java/app/plink/android/clipboard/ClipboardSyncPolicy.kt": {
+      "sha256": "011e37a886362aa9fc4b8cf50457592377ff3fd8a61bdab6d121ccfdaca13f73",
+      "bytes": 2538
+    },
+    "android/src/main/java/app/plink/android/clipboard/ShizukuClipboardService.kt": {
+      "sha256": "3bba5715f9e2b2462653282a9c7ed5df75e78a33914937b6d2fad5049e596ece",
+      "bytes": 4866
+    },
+    "android/src/main/java/app/plink/android/protocol/ReconnectProtocol.kt": {
+      "sha256": "d5962aedd285296b05e44f4e3132d88a7cec024b76fa074d62032ab8cba5fe6b",
+      "bytes": 13611
+    },
+    "android/src/main/java/app/plink/android/reconnect/PreparedOrdinaryResources.kt": {
+      "sha256": "1b2d41e4bbfcd948e219a3fecb54df5fae3131528bbbb0d87af4b95752c6ceb2",
+      "bytes": 2434
+    },
+    "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt": {
+      "sha256": "7ca795d72155fdd7d67a1efb59bf68b13af49ea426bc6adc000a859b6970c3ce",
+      "bytes": 20461
+    },
+    "android/src/main/java/app/plink/android/reconnect/ReconnectDiscovery.kt": {
+      "sha256": "0f42f38e81803424a87f60a72f12f13cce99ab5ab2e5eb2eb98a6563d9430e2a",
+      "bytes": 17491
+    },
+    "android/src/main/java/app/plink/android/reconnect/ReconnectEndpointStore.kt": {
+      "sha256": "a056a0544a60388286e3602fbb8b753f88cafcc71918174fb112f7e8edc9189e",
+      "bytes": 7429
+    },
+    "android/src/main/java/app/plink/android/reconnect/ReconnectLifecycleOwner.kt": {
+      "sha256": "f707445079d3a9a77ca771f0793e9f46bc5a055e3294197360c5df1af1a47baa",
+      "bytes": 2932
+    },
+    "android/src/main/java/app/plink/android/services/OrdinaryAdmission.kt": {
+      "sha256": "2003c85b52d7d466fe690ec4130164d715e58e214a324e5362ba7762bd93893e",
+      "bytes": 2549
+    },
+    "android/src/main/java/app/plink/android/ui/LucideIcons.kt": {
+      "sha256": "6b45b943e1322c6f49cf0822ace70cd8090666b2e3c280b2b28b774b6fca2b91",
+      "bytes": 23048
+    },
+    "android/src/main/java/app/plink/android/ui/ReconnectControls.kt": {
+      "sha256": "96d43dc93dd994a52b693157df6e3bfc8cef213d6ce991e6b8156184ec2c3c1c",
+      "bytes": 3205
+    },
+    "android/src/main/res/drawable/ic_plink_launcher.xml": {
+      "sha256": "fdfa4a9880c779ea87cbef75eafe5c0b373f44feb5f6e1a38db77d721da9ba08",
+      "bytes": 751
+    },
+    "android/src/test/java/app/plink/android/clipboard/ClipboardSyncPolicyTest.kt": {
+      "sha256": "a4493fab76fd4f4d66580755f22c215ad054df07667525e65c6e1855d4b8d56a",
+      "bytes": 3411
+    },
+    "android/src/test/java/app/plink/android/clipboard/ClipboardVolatileSendTest.kt": {
+      "sha256": "99e05b8407e2d1f7c4545d6578309c53868a55c674ba9608bfd143b53b46130d",
+      "bytes": 6096
+    },
+    "android/src/test/java/app/plink/android/protocol/ReconnectFixtureContractTest.kt": {
+      "sha256": "3780bcdebd6637cd5a6c24bf44660bb35da92518b8a49d17b00a714afce627e8",
+      "bytes": 4859
+    },
+    "android/src/test/java/app/plink/android/reconnect/PreparedOrdinaryResourcesTest.kt": {
+      "sha256": "f139b25aa7e8ce6e0316f1145bd686a0a397283ba469d016f7f58cf73de7ac01",
+      "bytes": 7283
+    },
+    "android/src/test/java/app/plink/android/reconnect/ReconnectTest.kt": {
+      "sha256": "9d30cedf3136c5ddcb9727fec6cec3d4c2df969943724a34242cca7f6b1f545b",
+      "bytes": 6406
+    },
+    "android/src/test/java/app/plink/android/services/OrdinaryAdmissionTest.kt": {
+      "sha256": "eace30c39cfed0e7e925f2f09f2627ccaf3e14c18f20fda7b3dacd621166833c",
+      "bytes": 2719
+    },
+    "macos/Resources/Plink.icns": {
+      "sha256": "8552e65af0cf03b7403ca056077ebe9326b4c4bf82c6e117919924945751ecc7",
+      "bytes": 145262
+    },
+    "macos/Resources/README.md": {
+      "sha256": "1bd716195db19cbedf1539c8937a95b8e5f8959f0a96d4c3a6ecdaecb3e44150",
+      "bytes": 329
+    },
+    "macos/Sources/PlinkCore/ReconnectEndpointStore.swift": {
+      "sha256": "fde188d2e67cc7d8797ec2fdb230dbcfe16432cbde1d4b9bb109871d11e9c21b",
+      "bytes": 13015
+    },
+    "macos/Sources/PlinkCore/ReconnectProtocol.swift": {
+      "sha256": "5dd6a882a15569f9586ae3e9498451bf9b1b5249cf38a397414bfc5a30fee576",
+      "bytes": 26773
+    },
+    "macos/Sources/PlinkCore/ReconnectSession.swift": {
+      "sha256": "8968fa507f5095d536fb1a36c5260cbacfe0639ed7b431d72e6e4d19ad49a50f",
+      "bytes": 48924
+    },
+    "macos/Sources/PlinkMac/ClipboardSyncController.swift": {
+      "sha256": "79ad2ab4216e67ef7e50859a3029de2d37d84c37c5f81f7eb6463d0b8c9f8ccf",
+      "bytes": 6613
+    },
+    "macos/Sources/PlinkMac/DashboardWindow.swift": {
+      "sha256": "a2ba4a7dadfd4cb8e94842468808c60a155581af1bfb694f6eb67118e9345e35",
+      "bytes": 12597
+    },
+    "macos/Sources/PlinkMac/LucideIcon.swift": {
+      "sha256": "0525543f04a8a8daeed793a59014012314d910ca32ee0a1df88182e13b1329ac",
+      "bytes": 13364
+    },
+    "macos/Sources/PlinkMac/PairingView.swift": {
+      "sha256": "99d2454dbac62298e831c00d5fc536d2c5f6e78da45f4b92a03037d49ad39314",
+      "bytes": 5006
+    },
+    "macos/Sources/PlinkMac/ReconnectController.swift": {
+      "sha256": "1a05ccee61850899aa5a3b83160551902fe773b5ece474e79f4853e346c89cd0",
+      "bytes": 7281
+    },
+    "macos/Sources/PlinkMac/ReconnectView.swift": {
+      "sha256": "8dd9754609018bca471bf76f78df3f6ab858fa05773a146ce40402057242b466",
+      "bytes": 2512
+    },
+    "macos/Sources/PlinkMacDebugReceiver/ReconnectRoundtrip.swift": {
+      "sha256": "c0bc1ccb4287b949aa3d3e5411f5b25351854ac71b16535138e3556c4051be6f",
+      "bytes": 14821
+    },
+    "macos/Tests/PlinkCoreTests/EncryptedFrameRandomnessTests.swift": {
+      "sha256": "eab958e60049103fd3e2d52923342770f7344df4e1ee7800988bcf35a8caf4da",
+      "bytes": 2129
+    },
+    "macos/Tests/PlinkCoreTests/ReconnectFixtureContractTests.swift": {
+      "sha256": "cbb93f03df2a7bc9f7ef0b258eabca1c97249436b0974747a0817f44705e0a8b",
+      "bytes": 4196
+    },
+    "macos/Tests/PlinkCoreTests/ReconnectTests.swift": {
+      "sha256": "20138f18d4a0de1052d17220de771cc729b0db1cb5bcd6ae38707251a85c7585",
+      "bytes": 37927
+    },
+    "macos/Tests/PlinkMacTests/ClipboardSyncControllerTests.swift": {
+      "sha256": "9c9cb5a0b619bec883c2950730ff325978b567c0ccd4cf6c31b0657db6be7da2",
+      "bytes": 11097
+    },
+    "macos/Tests/PlinkMacTests/ReconnectLifecycleTests.swift": {
+      "sha256": "ec1be69d680a4462676c0e04d0391ccfd5be9d808ce9fb47c65ad6b9f435908b",
+      "bytes": 2373
+    },
+    "scripts/generate-macos-icon.sh": {
+      "sha256": "12919020e4e7f715116a4df7a5d750af787cd7fbcd77bd3d396d9495a1490157",
+      "bytes": 93
+    },
+    "scripts/generate-macos-icon.swift": {
+      "sha256": "9a6ee65ca90454731e7bc670cf7d0dda0c772eafa350cd40633986b0e01f1498",
+      "bytes": 4027
+    },
+    "scripts/verify-reconnect.sh": {
+      "sha256": "3dc7c58ac98f92fd137cd0eb7df03ea0afdaf453e0987c72cea36581281d1a86",
+      "bytes": 26734
+    },
+    "shared/protocol/v1/reconnect/cases.json": {
+      "sha256": "d8b47bc8281c699aa2726d3caf966e11c0acbf6be1eda73e634cea4726aefe7d",
+      "bytes": 29213
+    },
+    "shared/protocol/v1/reconnect/classification-cases.json": {
+      "sha256": "a271cc963d9fbc3bde517e7a59eba45c9e66768770a12685f0eb51af84ce3002",
+      "bytes": 5424
+    },
+    "shared/protocol/v1/reconnect/encrypted-vectors.json": {
+      "sha256": "3bfa3569baeda3122dc8fce2a6a4244102cff5cc165c8948e8b6c4f63682ad89",
+      "bytes": 38596
+    },
+    "shared/protocol/v1/reconnect/endpoint-store-vectors.json": {
+      "sha256": "955bee9c9882266c07f9ccee682d5a0468f7a6ff3311f10a5bbf1b662ff20ea6",
+      "bytes": 2681
+    },
+    "shared/protocol/v1/reconnect/network-cases.json": {
+      "sha256": "ff290c635c10d36fa9bc0aebd7ac2824df6b7d41f3b826c2185f5165e7d2b8cf",
+      "bytes": 14354
+    },
+    "shared/protocol/v1/reconnect/outer-timestamp-vectors.json": {
+      "sha256": "3d52bb3664f81603fdc42b824e74517293946aa795bb89512177371cd6562b9c",
+      "bytes": 11456
+    },
+    "third_party/lucide/LICENSE": {
+      "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
+      "bytes": 3208
+    },
+    "third_party/lucide/README.md": {
+      "sha256": "a089b0645df42ef46c06ce28610f93ed7be9eed7d40cbeebd94e5cae57c85f4a",
+      "bytes": 988
+    },
+    "third_party/lucide/icons/battery-charging.svg": {
+      "sha256": "6a95bf102235d7070121bb8eb21a4836fa7ea9f0dbe8327eadbdf94253acdcbd",
+      "bytes": 392
+    },
+    "third_party/lucide/icons/battery.svg": {
+      "sha256": "bd0e96da226beca6d150ee25f04bc5ca8466c1ed91e806c2179723e173af2282",
+      "bytes": 292
+    },
+    "third_party/lucide/icons/bell-off.svg": {
+      "sha256": "14ad2775c3a594f09a79c195531778ae51302f847a9c558f720340d1e450bd6a",
+      "bytes": 438
+    },
+    "third_party/lucide/icons/bell.svg": {
+      "sha256": "394889e9631fe3a9a63be9a479a95b451b708e432d895978d21d9130b5ee5dbe",
+      "bytes": 393
+    },
+    "third_party/lucide/icons/bluetooth.svg": {
+      "sha256": "f2bf3d88cf608834dc389f01b1ee41fdb7bf3656dabef69632c60d5498f3bf29",
+      "bytes": 249
+    },
+    "third_party/lucide/icons/circle-check.svg": {
+      "sha256": "9711e045a5999f8a3b0782eb88e09b04e0559bc7b379dcc0a4ae645223e10345",
+      "bytes": 278
+    },
+    "third_party/lucide/icons/clipboard-copy.svg": {
+      "sha256": "dcf4cb2f3d3e418e51b0f94cd20b01ed69151a584010cd8e28b924e51787fadc",
+      "bytes": 433
+    },
+    "third_party/lucide/icons/clock-arrow-left.svg": {
+      "sha256": "3ebfd99b89133920de4081ddc846ed8b1496556abdc74b448734937a22072eb8",
+      "bytes": 345
+    },
+    "third_party/lucide/icons/folder.svg": {
+      "sha256": "f0d92b94b797a8ab7d4c4ae33c3236c47f64068351b4e14bdb5014ee42898a39",
+      "bytes": 342
+    },
+    "third_party/lucide/icons/laptop.svg": {
+      "sha256": "b8389056d3b7125670b60a4bd03e6d4ecc440e228f4140e7b66c4e97dcb0dc70",
+      "bytes": 405
+    },
+    "third_party/lucide/icons/link.svg": {
+      "sha256": "4f3237183dcaabfac92f4e94c776a9a9e45c3c5e77a921061a6b34b61eb5413f",
+      "bytes": 359
+    },
+    "third_party/lucide/icons/message-circle.svg": {
+      "sha256": "146f39740fe50844394d56ae1f8821937655bcfff3842bf6fe8ffc0bcd324076",
+      "bytes": 347
+    },
+    "third_party/lucide/icons/monitor-off.svg": {
+      "sha256": "bcd645a1bbdf4a4d25296237236d7bacf9a18360595254622a6c7b5b693e2207",
+      "bytes": 408
+    },
+    "third_party/lucide/icons/monitor-smartphone.svg": {
+      "sha256": "e623faa6b589762fb67ca6dc04dd0129796762c12eddf1160bf11d1482670931",
+      "bytes": 389
+    },
+    "third_party/lucide/icons/music.svg": {
+      "sha256": "8721b8a3594219c1313c4083049e5a5c049f49c47b1cd93fdb61d52a0803e42b",
+      "bytes": 308
+    },
+    "third_party/lucide/icons/phone.svg": {
+      "sha256": "bd59dd10667cbe410a69e2fbbf4d9645d08abe862c8d89082bd4f533957859a8",
+      "bytes": 437
+    },
+    "third_party/lucide/icons/refresh-cw.svg": {
+      "sha256": "2e10dd403c85a24f163d59fc6151aa21147fe9402e1305dfc8979208caee8944",
+      "bytes": 392
+    },
+    "third_party/lucide/icons/settings.svg": {
+      "sha256": "0ae27fd0f81999229e3127ac96c5b32edfea448e291d509e76212b917551d66b",
+      "bytes": 586
+    },
+    "third_party/lucide/icons/shield-check.svg": {
+      "sha256": "8d4fcdbde5bba4abb1a2f6fe53e37ceb6343a1d5449a9d88f6f97c1971d26c4e",
+      "bytes": 415
+    },
+    "third_party/lucide/icons/sliders-horizontal.svg": {
+      "sha256": "e43a00e5eb684e6cbb61083bed2528d7a3fa5f265693eb2b5f314cd432aa65f4",
+      "bytes": 422
+    },
+    "third_party/lucide/icons/smartphone.svg": {
+      "sha256": "f9fdb700b50feb5fc6436f53eb9813e9eb56a9071ac4cdcba69c7f7c1c13877d",
+      "bytes": 294
+    },
+    "third_party/lucide/icons/video.svg": {
+      "sha256": "d4fb6587f282c1152b953fe9494cd8ccafdf1e9f44957fbb7fe8dc7af0457597",
+      "bytes": 350
+    },
+    "third_party/lucide/icons/wifi-off.svg": {
+      "sha256": "318b290106e55c3505933f434d3663524206c7a44165a89508774fba4fdbaadd",
+      "bytes": 494
+    },
+    "third_party/lucide/icons/wifi.svg": {
+      "sha256": "5c4c795d014fa95d1e1038362df44a0f0f32ded9cb08c833ae72419ebadc9a91",
+      "bytes": 357
+    },
+    "android/LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "bytes": 35149
+    },
+    "android/NOTICE.md": {
+      "sha256": "3c842d2d9d5c2b21fd28c792da3e4c8b56f06d0bba543ae4cb9ba1a23f8f9f4a",
+      "bytes": 2849
+    },
+    "android/build.gradle.kts": {
+      "sha256": "8bb76bfd666bb9ada83d0fb23b41778bb6f0310ef8996c728f92f022a43fe020",
+      "bytes": 3094
+    },
+    "android/proguard-rules.pro": {
+      "sha256": "30fa7f2d49dc9d2d4a3c7b12fbba084db8a19c8a426689e57bd922e88e129b92",
+      "bytes": 78
+    },
+    "android/src/androidTest/AndroidManifest.xml": {
+      "sha256": "343d5be1ac17cdd45d1a2f2ddc616c509290e655869125a9422a96d88aa66066",
+      "bytes": 72
+    },
+    "android/src/androidTest/java/app/plink/android/FileTransferDeviceCheck.kt": {
+      "sha256": "e5373a81c9e4d7ae4fff870539e82772a0c924f1d8cfbb8b34bc143f49ab7379",
+      "bytes": 5530
+    },
+    "android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt": {
+      "sha256": "a0229017c81b8dedd2c6dee4febd414f2ad6911af83ffc9d93cdbb6c40e4bd38",
+      "bytes": 24031
+    },
+    "android/src/androidTest/java/app/plink/android/ScreenPreviewDeviceCheck.kt": {
+      "sha256": "7acc93b295fa395e9145fbad643ce6ace56de1be26e661d1d25af43797fbf6d5",
+      "bytes": 5896
+    },
+    "android/src/androidTest/java/app/plink/android/ScreenPreviewTestSession.kt": {
+      "sha256": "d225f291e0f8cb61ddda460c525ebb991810c3ec71c247e2ce7a30cf69874093",
+      "bytes": 6298
+    },
+    "android/src/debug/AndroidManifest.xml": {
+      "sha256": "754739cb7c81923a5109537cddd3ebfcbd52ef418007a53bb2af3cc8f91bba18",
+      "bytes": 429
+    },
+    "android/src/debug/java/app/plink/android/debug/DebugPairingReceiver.kt": {
+      "sha256": "a287b812a4c9443ff443f5f1d709bbd2d18aedf1edd63ef1a1fee28e3dac6594",
+      "bytes": 6376
+    },
+    "android/src/debug/java/app/plink/android/debug/ScreenPreviewPatternActivity.kt": {
+      "sha256": "f1b49c666add5b901aa66b159f1af22f1c944840bf8f2ab6bf4c6e921de13012",
+      "bytes": 2939
+    },
+    "android/src/main/AndroidManifest.xml": {
+      "sha256": "2330176ed6c03c4745e87ac04cafe3b9b14c6fc7a4fd43b8dd4a0bb86a192b17",
+      "bytes": 3710
+    },
+    "android/src/main/java/app/plink/android/MainActivity.kt": {
+      "sha256": "8db093c7f8f522905616a19cfd79085fe7732d2680aa700228e18016722a67a4",
+      "bytes": 8016
+    },
+    "android/src/main/java/app/plink/android/PlinkApplication.kt": {
+      "sha256": "5186c4065fce8c97ab8d1522975ffce3d041ee0188bbd969561e2a2b7a4a96c7",
+      "bytes": 9444
+    },
+    "android/src/main/java/app/plink/android/continuity/AndroidFileTransferEnvironment.kt": {
+      "sha256": "de7dcfc8212410e7bb5ecf406e2bc4c734e89a5bdcf5efe38b88060ac2e3bd1e",
+      "bytes": 4395
+    },
+    "android/src/main/java/app/plink/android/continuity/ContinuityEvent.kt": {
+      "sha256": "6f2b81be65350817d1c32ced788dd6dda015cf4d7ba463538e7834e9c32b59a5",
+      "bytes": 4166
+    },
+    "android/src/main/java/app/plink/android/continuity/FileTransferCoordinator.kt": {
+      "sha256": "a57015b56edcff597fe958a8676276b577cac4d3d7995e38aec67c19bac1fb04",
+      "bytes": 37171
+    },
+    "android/src/main/java/app/plink/android/continuity/ShareHandoffActivity.kt": {
+      "sha256": "fd52ecbb978dcccded3204cf4fbb3b57218c314ba6671d423c41e1ff64830e42",
+      "bytes": 11500
+    },
+    "android/src/main/java/app/plink/android/features/FeatureState.kt": {
+      "sha256": "fd45e4cd4cc04b7e0f71e8e82da20bd3e0596604033b052b97e6a1656ad9a05e",
+      "bytes": 6384
+    },
+    "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt": {
+      "sha256": "1e87da7767f8b18b7f851b3ca4b94331e4e4309ac334cac6769548152f60dd22",
+      "bytes": 5596
+    },
+    "android/src/main/java/app/plink/android/notifications/RemoteInputReplyExecutor.kt": {
+      "sha256": "9c62ad07cbee31324d6764d42e7fc05c22d44447eb9d6e47cd4f8dce33e5d309",
+      "bytes": 5994
+    },
+    "android/src/main/java/app/plink/android/notifications/ReplyRoute.kt": {
+      "sha256": "e5d6b300f6581f826a4ad5c77556324a60a0c37213f89201e7fd6ba00478d989",
+      "bytes": 4892
+    },
+    "android/src/main/java/app/plink/android/notifications/ReplyRouteRegistry.kt": {
+      "sha256": "4c2e8fdbdb4e08b3f3be972990759eb992d68cc3e98d8ad49a60104ff298243e",
+      "bytes": 2196
+    },
+    "android/src/main/java/app/plink/android/pairing/EmojiPairing.kt": {
+      "sha256": "bb8fdea381767637620735af9fc19a80ff271f46b5584a0c2fa7764dfd9b261f",
+      "bytes": 1498
+    },
+    "android/src/main/java/app/plink/android/pairing/NearbyPairingDiscovery.kt": {
+      "sha256": "c6bfb0e624380f97ca67b8b4685a7f20ace57ff5eb245e27a15f5814beaacb2d",
+      "bytes": 5237
+    },
+    "android/src/main/java/app/plink/android/pairing/PairingConfirmationSender.kt": {
+      "sha256": "7a657dcb481e9faaf80e485e12e8c3453332725540f85f124bc362dc56d6e51e",
+      "bytes": 1022
+    },
+    "android/src/main/java/app/plink/android/pairing/PairingConsent.kt": {
+      "sha256": "51b9078598172f145d44125c5687f1df0c4c5b348b9dfc72d2bf7ec144c22974",
+      "bytes": 2409
+    },
+    "android/src/main/java/app/plink/android/pairing/PairingConsentGate.kt": {
+      "sha256": "9728920d6f72b4f2c0d59f99d531643d1ad2160ac9f23f3d805689a4267c0f7d",
+      "bytes": 1058
+    },
+    "android/src/main/java/app/plink/android/pairing/PairingCoordinator.kt": {
+      "sha256": "0f3df341a7777bc403f4ada875965d6fd4a357eea7a0aabc227761e1a21306cb",
+      "bytes": 20669
+    },
+    "android/src/main/java/app/plink/android/pairing/PairingCrypto.kt": {
+      "sha256": "debed52f450a16a0923256cf0ab874e9f2b2014ae98a5f4cf0939df7b1d51653",
+      "bytes": 3146
+    },
+    "android/src/main/java/app/plink/android/pairing/PairingModels.kt": {
+      "sha256": "53971f9152955cca6fa81a6650e048e04490814706c870c6f0b4166266bba715",
+      "bytes": 2671
+    },
+    "android/src/main/java/app/plink/android/pairing/PairingStateMachine.kt": {
+      "sha256": "bc42468a518705b1af4e4c942a7fecacf6394c3520e3edba36c30f236374e8c0",
+      "bytes": 4891
+    },
+    "android/src/main/java/app/plink/android/pairing/PairingTranscript.kt": {
+      "sha256": "c2d9a6b47690d428d5cbd67f5355d468990adceb963819a0e477d079dad47a8d",
+      "bytes": 1390
+    },
+    "android/src/main/java/app/plink/android/permissions/AndroidPermissionReader.kt": {
+      "sha256": "0f21943a1985217245db1cdb3df776735eaaef4af131ac7a8a37f8a8307eb310",
+      "bytes": 2643
+    },
+    "android/src/main/java/app/plink/android/permissions/PermissionModel.kt": {
+      "sha256": "e0bbcd1f6bbb34236bde8e24f30a4d5453c2fdb1e6b030275be1338eafb71f3a",
+      "bytes": 1803
+    },
+    "android/src/main/java/app/plink/android/protocol/BaselineJpegValidator.kt": {
+      "sha256": "8f0710964227548708767eff2e9b3bb2454e5971ad22716807a84b7cd50bd9ed",
+      "bytes": 9667
+    },
+    "android/src/main/java/app/plink/android/protocol/FileTransferPayloadPolicy.kt": {
+      "sha256": "4ae71e3fbc442155f45ff845db78eec30e0424da4225c15dce8151cd7d428bd9",
+      "bytes": 7072
+    },
+    "android/src/main/java/app/plink/android/protocol/PlinkMessage.kt": {
+      "sha256": "1874b6f975aaf1f97d54983432965a2afe8b681e8bea543afb0eeff0f70632a7",
+      "bytes": 3078
+    },
+    "android/src/main/java/app/plink/android/protocol/ScreenPreviewPayloadPolicy.kt": {
+      "sha256": "a4cd52bec0fa0c2cd6e9f27f4ae35e9d122ec97822736df53f140dafde52dd5a",
+      "bytes": 15547
+    },
+    "android/src/main/java/app/plink/android/screen/ScreenFrameEncoder.kt": {
+      "sha256": "8938c4014f8dbf44105b48d32d98cd9f0b04a9351616ac1a8fcb97c97df2093c",
+      "bytes": 5119
+    },
+    "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt": {
+      "sha256": "7ca3d81a72290c8bce404b5f5fdf915b25616dc2e3362eb643ebe25b3bcf5460",
+      "bytes": 34942
+    },
+    "android/src/main/java/app/plink/android/screen/ScreenProjectionLifecycles.kt": {
+      "sha256": "1c6d2a248be5fe079d63160491b2a185ed171d1ce050ced1bd475fb92ae007f6",
+      "bytes": 4622
+    },
+    "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt": {
+      "sha256": "d9bcb24485dc24456c86a46ddf006a95d0adbed7d80b1c996eaaea7d518f7c07",
+      "bytes": 25269
+    },
+    "android/src/main/java/app/plink/android/security/FrameStateStore.kt": {
+      "sha256": "563b4c6e116a183f1b60bb2284b0b06b471a8bbe73e5ad1a4dad879c6cce27c9",
+      "bytes": 3432
+    },
+    "android/src/main/java/app/plink/android/security/PlinkTime.kt": {
+      "sha256": "c5a5bfea19ed7880bbfbae781a10174d315b1f3b88172526a631eafe56c4f21e",
+      "bytes": 226
+    },
+    "android/src/main/java/app/plink/android/security/SecureEnvelope.kt": {
+      "sha256": "3911d875462c1ac772c941820ef754c28b09b4eb200d23a465739b935ec27791",
+      "bytes": 17049
+    },
+    "android/src/main/java/app/plink/android/services/BackgroundConnectionService.kt": {
+      "sha256": "19edf2184a8b085af81116492dceeab2b9bf23fa46a74da55ca5e7520e76a1da",
+      "bytes": 11473
+    },
+    "android/src/main/java/app/plink/android/services/BatteryStatusCollector.kt": {
+      "sha256": "ac71bed84a54097a08124853e6cf88d102f448a12d53559a6aa4dc15cefd00ec",
+      "bytes": 2084
+    },
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt": {
+      "sha256": "ba311e8cece8375e4b795b1c0203fd2645a681601a4df352e5a6a4630639a640",
+      "bytes": 5808
+    },
+    "android/src/main/java/app/plink/android/services/HandoffDiagnostics.kt": {
+      "sha256": "e1da2f2e2a7c82cd8f197efdfb14ed09a63014cec57906afe92d9284e1a5d314",
+      "bytes": 1969
+    },
+    "android/src/main/java/app/plink/android/services/HandoffNotificationPublisher.kt": {
+      "sha256": "77a31d74e434620bb40f6c6ee89c1592049f4b64e01b98268adc88295b44ea68",
+      "bytes": 2679
+    },
+    "android/src/main/java/app/plink/android/services/InboundCommandHandler.kt": {
+      "sha256": "34d13c447e8629d1bc72f4b8a0f665c9ff345631f5dd449c6bc3e91ab0ab175b",
+      "bytes": 3065
+    },
+    "android/src/main/java/app/plink/android/services/MediaSessionCollector.kt": {
+      "sha256": "4f84ccd1b06f37447335ae22982f02e51c91d5dd2657ebabbf57d728be3fff74",
+      "bytes": 5457
+    },
+    "android/src/main/java/app/plink/android/services/PlinkClipboardAccessibilityService.kt": {
+      "sha256": "7d76366b3a13d02383b7634ebd5509814fa510242a66c0a5c524c8779ec34ee3",
+      "bytes": 329
+    },
+    "android/src/main/java/app/plink/android/services/PlinkEventForwarder.kt": {
+      "sha256": "7ffc9abfec063267bfec2b526600f984d1850aeefc8b6193b6b661b499a3cdec",
+      "bytes": 24876
+    },
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": {
+      "sha256": "db6c6ed7a2acb3897bf8810b9fd54e25742da42b432cba37e6611d091c9a4b28",
+      "bytes": 4452
+    },
+    "android/src/main/java/app/plink/android/services/PlinkSessionController.kt": {
+      "sha256": "a74ebca24b2f504afda3fe64a4b3c80d9d543fed18fffbd6f04eaf26f7cb95a3",
+      "bytes": 44862
+    },
+    "android/src/main/java/app/plink/android/services/SharedNotificationEvents.kt": {
+      "sha256": "589806f12c4d849fb5a207774fc86392a7f3894cf12bc9be41b784b2ee331157",
+      "bytes": 472
+    },
+    "android/src/main/java/app/plink/android/services/SharedSessionState.kt": {
+      "sha256": "df4ef5792546672bfde09208ed6d591e67f0f357fa1058a798510baf297e779d",
+      "bytes": 777
+    },
+    "android/src/main/java/app/plink/android/storage/KeystorePairingStore.kt": {
+      "sha256": "e4ff856342e37d8b141be444a51df6bdfa11a8a8124ed0151553829c16e14465",
+      "bytes": 3642
+    },
+    "android/src/main/java/app/plink/android/storage/PairingSecretStore.kt": {
+      "sha256": "ad996ed2485ddffdb94318bf4d589abdb16f351e3d4830c9b19431228110f12f",
+      "bytes": 3260
+    },
+    "android/src/main/java/app/plink/android/storage/PairingStore.kt": {
+      "sha256": "267a0eef53d61e81babb4eed922710ce68b451dc685212810c12aa423607a43b",
+      "bytes": 927
+    },
+    "android/src/main/java/app/plink/android/transport/PlinkTransport.kt": {
+      "sha256": "a1e975a43fe2efd43fb40071047637d2236f6916b8c5b920d23a08fea602950e",
+      "bytes": 616
+    },
+    "android/src/main/java/app/plink/android/transport/SocketPlinkTransport.kt": {
+      "sha256": "8115f36b7b347d33efacdbeea4c4de9c828e06c3c181bf6730380dffb1746122",
+      "bytes": 15668
+    },
+    "android/src/main/java/app/plink/android/ui/ConnectionRing.kt": {
+      "sha256": "6b3fbc2148dcdcca54d645e87fb46f8e6587398fb933a6bebbccc7bb6190a642",
+      "bytes": 5661
+    },
+    "android/src/main/java/app/plink/android/ui/FloatingNavigation.kt": {
+      "sha256": "d2a44ddbb0f62da83f2645cff7d6ac1a58005c24782a6505219c6107b7c240a2",
+      "bytes": 4921
+    },
+    "android/src/main/java/app/plink/android/ui/ManualPairingCard.kt": {
+      "sha256": "bab93bd8b182d5edc44c229b995bb0dfbef7531445e452bf76dc1698354054a1",
+      "bytes": 9379
+    },
+    "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt": {
+      "sha256": "2715fc44d209853543f22196551a8785e88a6f8c7119d1e4c1f81047148de482",
+      "bytes": 30479
+    },
+    "android/src/main/java/app/plink/android/ui/PlinkUiState.kt": {
+      "sha256": "f6ca8c9dc5abc8448516c92e995e28b8bf69650ca080d4728c8356d469fadb4b",
+      "bytes": 1560
+    },
+    "android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt": {
+      "sha256": "9989469b0740d8cc88fc819d1c72630b409b58129bd574efdbb93a5eac150d75",
+      "bytes": 5001
+    },
+    "android/src/main/java/app/plink/android/ui/theme/Shape.kt": {
+      "sha256": "afdee1c7da2f0e54022b30fef074d0fcc3bbad555993190b682685544baa7d85",
+      "bytes": 1800
+    },
+    "android/src/main/java/app/plink/android/ui/theme/Theme.kt": {
+      "sha256": "337135ae9f060f6f23126b2f635c7da23b13c5501fc72cf7ba023e6c39681b54",
+      "bytes": 3955
+    },
+    "android/src/main/java/app/plink/android/ui/theme/Type.kt": {
+      "sha256": "05e90828d47a6c7b171efaca6fa8ed55fd0d2d221b5fb71b555d47b7c291e595",
+      "bytes": 4410
+    },
+    "android/src/main/res/drawable/ic_plink.xml": {
+      "sha256": "6a8a4a5df6143ad73f362efa0a57a1634e163c8de92242e903ae6a92e5eca026",
+      "bytes": 640
+    },
+    "android/src/main/res/font/google_sans_flex.ttf": {
+      "sha256": "7551c307350329c6cf05de9cda1add37277b31e130d46c3532fd4914955df3bf",
+      "bytes": 4179956
+    },
+    "android/src/main/res/font/google_sans_flex_400.ttf": {
+      "sha256": "1a5608fc557dca87bbe97ccba8974a5ac99fc87346a8745fc83d5ea06486f99b",
+      "bytes": 127944
+    },
+    "android/src/main/res/font/google_sans_flex_500.ttf": {
+      "sha256": "57d61bba609846324d21608a356efe817b02cfaf724dd6b1c42d35f6169f9e6a",
+      "bytes": 128248
+    },
+    "android/src/main/res/font/google_sans_flex_600.ttf": {
+      "sha256": "0416f38926b1d36df65c54f8794bb4cb2d1ff104de13268cc8af17040461e54e",
+      "bytes": 128420
+    },
+    "android/src/main/res/font/google_sans_flex_700.ttf": {
+      "sha256": "0274f533639613e4f76352ec9a537049c2042dc9d646dd82d0a8ed4c45bd4e8a",
+      "bytes": 128464
+    },
+    "android/src/main/res/values/strings.xml": {
+      "sha256": "26628a505517a724a11c0af5f3a14855b0a6902e86384e0a6a2f6eef6b8316ee",
+      "bytes": 351
+    },
+    "android/src/main/res/values/styles.xml": {
+      "sha256": "7262bfa1b5a33038386eb1606442cffec071f99abdf026d3484386c19f7cfacb",
+      "bytes": 362
+    },
+    "android/src/main/res/xml/backup_rules.xml": {
+      "sha256": "bd956676deb88bd6a11eacfe5fd1b4124b40426d1e06537c67aa431166b7b829",
+      "bytes": 123
+    },
+    "android/src/main/res/xml/clipboard_accessibility_service.xml": {
+      "sha256": "10143c5e1db6c0c164ffc1a5cebf23abb923d0a83761af23ba2b78575a617597",
+      "bytes": 384
+    },
+    "android/src/main/res/xml/data_extraction_rules.xml": {
+      "sha256": "fcef7d8b70d88b660e2bee6ea43ceb70057ca089534cc242ddf697e3a3093afb",
+      "bytes": 313
+    },
+    "android/src/test/java/app/plink/android/continuity/ContinuityContractTest.kt": {
+      "sha256": "dc8782d1a024734638edad414aec4123950c03d8921fafe94dcb7a00e9eb249b",
+      "bytes": 1062
+    },
+    "android/src/test/java/app/plink/android/continuity/ContinuityEnvelopeFactoryTest.kt": {
+      "sha256": "0af414dabcb0d0421b863a268ae91f659d50679f29cefa27e9b8ea2a6f641d1d",
+      "bytes": 754
+    },
+    "android/src/test/java/app/plink/android/continuity/FileTransferCoordinatorTest.kt": {
+      "sha256": "c49ab08a3d201da6aee0884ba069c5f4d975259cf4efe335e4b46d2c411d4e3f",
+      "bytes": 24447
+    },
+    "android/src/test/java/app/plink/android/features/FeaturePolicyTest.kt": {
+      "sha256": "b653368ffd6e0be2579ae73a19b6ea6b9c1b2a8a05a6f8c10640d783506b0eb0",
+      "bytes": 2242
+    },
+    "android/src/test/java/app/plink/android/notifications/ReplyRouteRegistryTest.kt": {
+      "sha256": "42250d3a4e46e8a60311e6d17386c16587c89af7034cf81da8c1fcf00e7e944e",
+      "bytes": 1925
+    },
+    "android/src/test/java/app/plink/android/notifications/ReplyRouteTest.kt": {
+      "sha256": "6096b87406b9b565496d29db26818b58e210bb13210ad2dcffd1a9fb2dd33955",
+      "bytes": 5299
+    },
+    "android/src/test/java/app/plink/android/pairing/EmojiPairingTest.kt": {
+      "sha256": "f20a1cba386eedfbd606edc62d600f81c3d843b6e87e3206d0b826b46c9bcdff",
+      "bytes": 1261
+    },
+    "android/src/test/java/app/plink/android/pairing/NearbyPairingOfferParserTest.kt": {
+      "sha256": "00896dcc47bf6bc567de68a492fc79a49fb91e6e0d4f6ed63276a3b9928557d0",
+      "bytes": 2543
+    },
+    "android/src/test/java/app/plink/android/pairing/PairingConsentGateTest.kt": {
+      "sha256": "c4a723082ac10c6608f8efddb821a4c71c9eef9466e8616b58e8c6add1e7359d",
+      "bytes": 1398
+    },
+    "android/src/test/java/app/plink/android/pairing/PairingConsentTest.kt": {
+      "sha256": "004eaa70fca8514b2e4fb17e950dde6ea2559d393f07a9d44d69937b8f32a9b0",
+      "bytes": 1210
+    },
+    "android/src/test/java/app/plink/android/pairing/PairingCoordinatorTest.kt": {
+      "sha256": "1e1cbef3eb5193d159aaece5615e436c542a56e8a28ee6ac80d51cb3e0429b46",
+      "bytes": 19257
+    },
+    "android/src/test/java/app/plink/android/pairing/PairingMigrationTest.kt": {
+      "sha256": "f953d5bf1f6a3e7481db28fcbf34c970bd4bea55111dda23bd449e892214571c",
+      "bytes": 685
+    },
+    "android/src/test/java/app/plink/android/pairing/PairingSecurityTest.kt": {
+      "sha256": "d008ab37d76dd8a98b2d8cf2bc5739d7ec86cb15967bc14459421995ca5e33f5",
+      "bytes": 1291
+    },
+    "android/src/test/java/app/plink/android/pairing/PairingStateMachineTest.kt": {
+      "sha256": "7ee289a4bfd90f420ffc1aee94cf2274c7076b1a53b1432fb34290d4d1f4ef4e",
+      "bytes": 4241
+    },
+    "android/src/test/java/app/plink/android/permissions/PermissionModelTest.kt": {
+      "sha256": "95bf48264030a57078f5dfda2cfd5d2eaf937bed757f74671dd08544cb1b2b53",
+      "bytes": 1196
+    },
+    "android/src/test/java/app/plink/android/protocol/FileTransferPayloadPolicyTest.kt": {
+      "sha256": "103bebf2161f1f3e96fb9e9f426bb2b9d2ad690f1090f530914d7dfb4a7fa316",
+      "bytes": 2218
+    },
+    "android/src/test/java/app/plink/android/protocol/PlinkMessageTest.kt": {
+      "sha256": "36b28e4113cdabe974ca64f3865b190dca1fcc5c60bd5cdd7ce40411b74d6db4",
+      "bytes": 768
+    },
+    "android/src/test/java/app/plink/android/protocol/ScreenPreviewPayloadPolicyTest.kt": {
+      "sha256": "a180ee87542b4753961f893067af9e536f9813dac150a03ef39e6bf59ff7c919",
+      "bytes": 8836
+    },
+    "android/src/test/java/app/plink/android/screen/ScreenProjectionLifecyclesTest.kt": {
+      "sha256": "a0ce3177f1d212d417abcc26d92f7c12eefb97207e0404f3f6f5470ad8c98021",
+      "bytes": 5242
+    },
+    "android/src/test/java/app/plink/android/security/DurableFrameStateTest.kt": {
+      "sha256": "f29fe7a484222c40c7424a41642ab0e3cb911561d42548140f9fe221bf77aa33",
+      "bytes": 4698
+    },
+    "android/src/test/java/app/plink/android/security/SecureEnvelopeTest.kt": {
+      "sha256": "d5298192b6644d66794bb1ef6ce04cc9329a7734f07f49d75fb310a7d4339977",
+      "bytes": 4352
+    },
+    "android/src/test/java/app/plink/android/services/BackgroundConnectionPolicyTest.kt": {
+      "sha256": "71928c2d068e63f172ae5385c76695cece7ef75e3a0a58b1f7e4e664f8815982",
+      "bytes": 1057
+    },
+    "android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt": {
+      "sha256": "846145951cdc45ff0e66a444517fa6b8be89b16bc249c5ff1fbad9be987d4ac3",
+      "bytes": 6380
+    },
+    "android/src/test/java/app/plink/android/services/HandoffDiagnosticsTest.kt": {
+      "sha256": "aa328d6b6d1ee32a3dbaf7a8e13c0ad0d5ffd763c5ef907b097afdca7dd3820c",
+      "bytes": 2440
+    },
+    "android/src/test/java/app/plink/android/services/InboundCommandHandlerTest.kt": {
+      "sha256": "4ce3e9160ab0eeef2850234b5fe2d519d791589e2063e393f3391963c96127ce",
+      "bytes": 7542
+    },
+    "android/src/test/java/app/plink/android/services/PlinkEventForwarderTest.kt": {
+      "sha256": "409826ae1b0e43a0a21b2908ea9f6a34e817c087770dc441a8a22a8007052820",
+      "bytes": 1730
+    },
+    "android/src/test/java/app/plink/android/services/SerializedOutboundQueueTest.kt": {
+      "sha256": "d87bdfb16da37efb8819c6bb829ef7215569289de5bd6cba749634ab5171178e",
+      "bytes": 21596
+    },
+    "android/src/test/java/app/plink/android/services/SharedSessionStateTest.kt": {
+      "sha256": "4f71425251aaa9d041cc6f165ba3ab9d8403ccd86d22481cbde6f0688685b6c4",
+      "bytes": 1087
+    },
+    "android/src/test/java/app/plink/android/storage/PairingSecretStoreTest.kt": {
+      "sha256": "17d57e99f56cbac77121e81621773825799d7da8ab84476c48c3e1850e6b171a",
+      "bytes": 581
+    },
+    "android/src/test/java/app/plink/android/transport/InMemoryPlinkTransportTest.kt": {
+      "sha256": "fcaf97b4cdeb91f034f20362a6f766ffa669a2aa980105d7adb860d3afda40d9",
+      "bytes": 1010
+    },
+    "android/src/test/java/app/plink/android/transport/LengthPrefixedFrameCodecTest.kt": {
+      "sha256": "f88f77f2d74404935b6acb0ae8c37b12e3d29cdfc6cd7d7c0cddc489429f5d4f",
+      "bytes": 938
+    },
+    "android/src/test/java/app/plink/android/transport/SocketSecurityTest.kt": {
+      "sha256": "0fbd64ed1f53008af6dab836ab9bfff53bd05df7b9eb7a33df77d96268f1b050",
+      "bytes": 11904
+    },
+    "gradle/libs.versions.toml": {
+      "sha256": "72e8e6a29fa6198a6886eae4933fb26d98d4490252a11f9492cfd4457b5e1e8f",
+      "bytes": 1892
+    },
+    "gradle/wrapper/gradle-wrapper.jar": {
+      "sha256": "b3a875ddc1f044746e1b1a55f645584505f4a10438c1afea9f15e92a7c42ec13",
+      "bytes": 46175
+    },
+    "gradle/wrapper/gradle-wrapper.properties": {
+      "sha256": "a180163249c7252412ddaee1c7adcf59f6494b1183136f690fbd9a3b8aaed00e",
+      "bytes": 252
+    },
+    "macos/Package.swift": {
+      "sha256": "6920d277a8f7073ed64876038a86609fadda7c8c2dc88729e995f33a29bf8076",
+      "bytes": 743
+    },
+    "macos/Resources/Info.plist": {
+      "sha256": "6d757a2e72af42aa974ea86f9b9418ff986ef76a5335a000c55cd58250379a50",
+      "bytes": 1529
+    },
+    "macos/Resources/PlinkMac.entitlements": {
+      "sha256": "e6532e1c9a75a2193504c6efac23fd3fb0a57612a81749627133fa17bcb1bcf6",
+      "bytes": 634
+    },
+    "macos/Sources/PlinkCore/BaselineJPEGValidator.swift": {
+      "sha256": "8d334e1cf8b6ba4d9c90def67524ff517dce0789b75210fc3dab43844ca9193f",
+      "bytes": 10944
+    },
+    "macos/Sources/PlinkCore/EmojiPairing.swift": {
+      "sha256": "0eaa59430fd07f0e940cb4f0fc61a2eb97b657124177aee697a820228b5d6285",
+      "bytes": 3041
+    },
+    "macos/Sources/PlinkCore/FileTransferPayloadPolicy.swift": {
+      "sha256": "0107590c263296708fca075346d298b7dc93f5012f2182c1ef27b02780374d8d",
+      "bytes": 8070
+    },
+    "macos/Sources/PlinkCore/FrameStateStore.swift": {
+      "sha256": "412090cf78c1986fa4454049845790590ec8da62b0e17a975f7dec585de439fe",
+      "bytes": 4370
+    },
+    "macos/Sources/PlinkCore/HandoffAdapters.swift": {
+      "sha256": "6a19cc12951b65b4a3aad3d2a36a9d91b8a0846654bde33771166a26d711f499",
+      "bytes": 1221
+    },
+    "macos/Sources/PlinkCore/LocalTransport.swift": {
+      "sha256": "364ef154eae35dfb28bb5b833710f985154f7e6dd8bba8cc1d8a21712dfbd6f8",
+      "bytes": 14924
+    },
+    "macos/Sources/PlinkCore/MacContinuity.swift": {
+      "sha256": "fe28aea24a0c811c9e8076cd6f2ff796ccb8f8566a872804c320db10eb38b7d3",
+      "bytes": 17304
+    },
+    "macos/Sources/PlinkCore/MacDeviceIdentity.swift": {
+      "sha256": "d3f05ebda36ba2f8b19e1eb34c795d8fcb36b3c923bcad687d9da4c3996781cd",
+      "bytes": 1279
+    },
+    "macos/Sources/PlinkCore/MacFileTransfer.swift": {
+      "sha256": "0844256b7a99039ce0d6668703b2c0c6669d5b27f3f11d76e1d7eb187d9c2a27",
+      "bytes": 18686
+    },
+    "macos/Sources/PlinkCore/MacNotificationBookkeeping.swift": {
+      "sha256": "2c65321565ef34d80be5dc646edd9d406b94fe0078683b87fa7e4863c63ac312",
+      "bytes": 3944
+    },
+    "macos/Sources/PlinkCore/MacPairingFinalization.swift": {
+      "sha256": "f92b105651bacaa49a3fd54f980479fadbe85c688cdee9e5d77653cd9c91d88b",
+      "bytes": 7139
+    },
+    "macos/Sources/PlinkCore/NotificationPlan.swift": {
+      "sha256": "dbc1c4bbe0c86af4a89a92fa4476b321ebca6706e74ee8df159dca557f024e2b",
+      "bytes": 2026
+    },
+    "macos/Sources/PlinkCore/Pairing.swift": {
+      "sha256": "a7b5743f63734fe12bbd9c601e4ef344acf38b1814dd842d8b667b0d42ab893e",
+      "bytes": 14395
+    },
+    "macos/Sources/PlinkCore/PairingConsent.swift": {
+      "sha256": "cde6d1ea898b8872d3f6aa72c679c58ec230fd7e08564b1c0bef5a46d0019b3a",
+      "bytes": 2360
+    },
+    "macos/Sources/PlinkCore/PairingDiscovery.swift": {
+      "sha256": "f97baee9ea17e16b87f560ee2135a21da95f12f46799cdf78d1b6e18595005ec",
+      "bytes": 2572
+    },
+    "macos/Sources/PlinkCore/PairingStore.swift": {
+      "sha256": "d57ff13b669c3d41f2f411afa4ce78da42ab30b1ec3e43c7ccf1e4b10de0613b",
+      "bytes": 5259
+    },
+    "macos/Sources/PlinkCore/PlinkJSON.swift": {
+      "sha256": "5188e82b972bd7973f089400528a1ad5c3cb4b59819bece01099271f0237212e",
+      "bytes": 1975
+    },
+    "macos/Sources/PlinkCore/PlinkMessage.swift": {
+      "sha256": "6ee62f50b52b8fb08907e77d02e72dab27a2175c81d9928534a12bfdd42bbdcc",
+      "bytes": 4513
+    },
+    "macos/Sources/PlinkCore/ReplyRouter.swift": {
+      "sha256": "d2793138fd3da24a08cfeaa7978e352fdad22e79102bcc6084cd764bf6f3572a",
+      "bytes": 5613
+    },
+    "macos/Sources/PlinkCore/ScreenFrameDecoder.swift": {
+      "sha256": "c8efa5a3d21418b1645b9ef48aff79614d086084daf671fa71c8ff224459e1e9",
+      "bytes": 3778
+    },
+    "macos/Sources/PlinkCore/ScreenPreviewProtocol.swift": {
+      "sha256": "50d063f66962fa6a47872d5a2530b0f8cde65d61af0b2951f29e47a58c30212a",
+      "bytes": 27726
+    },
+    "macos/Sources/PlinkCore/ScreenPreviewSession.swift": {
+      "sha256": "e7b82248315c1431338888ec4c219bbd177226df59f28f2a387cce620de262a5",
+      "bytes": 16952
+    },
+    "macos/Sources/PlinkCore/SecureEnvelope.swift": {
+      "sha256": "d3261bc9ff6b7e1337265a9de6059f8d5c188009d5d035123d094259e4349817",
+      "bytes": 19424
+    },
+    "macos/Sources/PlinkCore/SerializedPlinkSender.swift": {
+      "sha256": "2427e2dae6610e9d1413504b106a4d7321bb45945c2242c42d36fdef66d0733c",
+      "bytes": 15305
+    },
+    "macos/Sources/PlinkCore/WebcamPreviewPolicy.swift": {
+      "sha256": "7b908605c7836116b8b1fd8eacc913a2e8117e1a2c26c225913df4b73dc20eba",
+      "bytes": 12184
+    },
+    "macos/Sources/PlinkMac/BluetoothCallController.swift": {
+      "sha256": "3c1eff6dbeb46f95901e2d15138b8c81ccbda30fd94ec678a458ccbd540de406",
+      "bytes": 30341
+    },
+    "macos/Sources/PlinkMac/FileTransferController.swift": {
+      "sha256": "5d5c3ab6847bec5efb30fc46e68146630e008d6a39134ce7b7b9f586fdd2ace6",
+      "bytes": 14032
+    },
+    "macos/Sources/PlinkMac/NotificationBridge.swift": {
+      "sha256": "683442b3af94dd1126889cc8567f3b255e1fa9f870cf7fbd12c186ee949ff663",
+      "bytes": 8989
+    },
+    "macos/Sources/PlinkMac/PixelWebcamController.swift": {
+      "sha256": "38b69d10fae145c017c7836f14ab2dcb5efced66423ba291fd7665f3b62abaeb",
+      "bytes": 30086
+    },
+    "macos/Sources/PlinkMac/PixelWebcamView.swift": {
+      "sha256": "21dd22640ab6ec7f543a232bcdd84cb1fc2292b416523677afdaf051108508cc",
+      "bytes": 4382
+    },
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": {
+      "sha256": "cea12feaf461c31b6ecfd561458035dac0644763bc4c92d062f580603d9694ca",
+      "bytes": 72737
+    },
+    "macos/Sources/PlinkMac/ScreenPreviewController.swift": {
+      "sha256": "1e112fd88ebb420e976946083e19940199a76133350aa7842a6ff37d6f82d358",
+      "bytes": 10427
+    },
+    "macos/Sources/PlinkMac/ScreenPreviewView.swift": {
+      "sha256": "2a08dc4b28a7df2ca29609b2a7bebfd3b290c854370442344ac9723b703928ff",
+      "bytes": 2090
+    },
+    "macos/Sources/PlinkMacDebugReceiver/FileRoundtrip.swift": {
+      "sha256": "261a81923e268af07813ce03b0e3af9df7b55c78ca0be97c179bbc3ec19a5c08",
+      "bytes": 5529
+    },
+    "macos/Sources/PlinkMacDebugReceiver/ScreenPatternVerifier.swift": {
+      "sha256": "924b2d00dd52d9aa46aa03f1fb1845d83e1e693e8a73479a732709aa7bbb5695",
+      "bytes": 3751
+    },
+    "macos/Sources/PlinkMacDebugReceiver/ScreenRoundtrip.swift": {
+      "sha256": "27e2108c38f2f7a7214470ecdc92e11c1a9495af34e44431c82025d8a084ad5e",
+      "bytes": 9527
+    },
+    "macos/Sources/PlinkMacDebugReceiver/main.swift": {
+      "sha256": "9cdba62a16d183f01dee27068ef29397447115138fd3af671e321ab1d722d666",
+      "bytes": 6229
+    },
+    "macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift": {
+      "sha256": "324fdcabf9ef77944fd2ee97c15bdf929947cc04ce3b4bd713b0891d4f66337f",
+      "bytes": 5281
+    },
+    "macos/Tests/PlinkCoreTests/EmojiPairingTests.swift": {
+      "sha256": "b2f629653b62dcec7fe6a2ef5458e9ecad052a4070de73e21cc6960daf781b82",
+      "bytes": 1749
+    },
+    "macos/Tests/PlinkCoreTests/FileTransferPayloadPolicyTests.swift": {
+      "sha256": "56e6de1ceb05df2688e00c7afecb6bcb5bbb73fdc1e93298fab51175c83b1b85",
+      "bytes": 1924
+    },
+    "macos/Tests/PlinkCoreTests/FoundationSecurePlinkServerTests.swift": {
+      "sha256": "250407e26e9e854bbaf4602171129b7dcc7454744fb853f9617683390f7c06d2",
+      "bytes": 6268
+    },
+    "macos/Tests/PlinkCoreTests/LengthPrefixedFrameCodecTests.swift": {
+      "sha256": "6ac323ab64a3729ae8276b1063ea20905fd1e6aa32673ac3ed0910256396a95c",
+      "bytes": 979
+    },
+    "macos/Tests/PlinkCoreTests/MacContinuityTests.swift": {
+      "sha256": "307f4fe635a13d747ff6ccff1e7406bd3131c8e156df614f8c767883de8b7d59",
+      "bytes": 16394
+    },
+    "macos/Tests/PlinkCoreTests/MacDeviceIdentityTests.swift": {
+      "sha256": "377900745908c580d32ae2cdeca4f7f1ba618607b83eed5b66afbb2d447c9aa0",
+      "bytes": 3122
+    },
+    "macos/Tests/PlinkCoreTests/MacFileTransferTests.swift": {
+      "sha256": "273dc1327784aa016e6281ab50448e0f194ff607420e354d546ab2559e6dac01",
+      "bytes": 21105
+    },
+    "macos/Tests/PlinkCoreTests/MacNotificationBookkeepingTests.swift": {
+      "sha256": "a342fdbbb0747477adfd05e98eaae44675c39097c055af681a5907414bb21c06",
+      "bytes": 4682
+    },
+    "macos/Tests/PlinkCoreTests/MacPairingFinalizationTests.swift": {
+      "sha256": "b21d5b5134525bf852be9f47d10d548fda013c2d6b4ed03444cf19ee8d427509",
+      "bytes": 11340
+    },
+    "macos/Tests/PlinkCoreTests/NotificationPlanTests.swift": {
+      "sha256": "e35cc11f9298deee33fd3a0b6b95ea08a47ff0744c61a3f668950f69525b777f",
+      "bytes": 1096
+    },
+    "macos/Tests/PlinkCoreTests/PairingConsentTests.swift": {
+      "sha256": "3a3c6d500cda9b46c284bf9c019af65837223c582f80adae4a3344c6e23869a1",
+      "bytes": 1906
+    },
+    "macos/Tests/PlinkCoreTests/PairingDiscoveryTests.swift": {
+      "sha256": "33886ea4c823f47ee5ca497d65d004c79ee628a816c56c4b74a45a12b90c3b70",
+      "bytes": 1592
+    },
+    "macos/Tests/PlinkCoreTests/PairingMigrationTests.swift": {
+      "sha256": "98196ed2c85580e628bcae6cbb714694c681831cfaad9282c645f9314ce7c53a",
+      "bytes": 582
+    },
+    "macos/Tests/PlinkCoreTests/PairingSecretStoreTests.swift": {
+      "sha256": "690609591a6dea0b8607406c76024cc2a039dd825ee861d4f5579ec80ad9aa14",
+      "bytes": 395
+    },
+    "macos/Tests/PlinkCoreTests/PairingSecurityTests.swift": {
+      "sha256": "172f4ef876bbb92ce213d6f3405fda763d2ef8ecdd13a94abbc6ca89c50d2aa4",
+      "bytes": 1727
+    },
+    "macos/Tests/PlinkCoreTests/PairingStateMachineTests.swift": {
+      "sha256": "050f306e8c43bebd288797b055ac8b178bd7989f834d2ba2435a8887471a4a1a",
+      "bytes": 4186
+    },
+    "macos/Tests/PlinkCoreTests/PlinkMessageTests.swift": {
+      "sha256": "935217c198f1ed430441cf86836709fe528d1eb5cf49b1a4c752470db3e566fe",
+      "bytes": 709
+    },
+    "macos/Tests/PlinkCoreTests/ReplyContextStoreTests.swift": {
+      "sha256": "91b384584ab373d5384e734c5bfe31546060e2930cd88bcaf70ef627ae25601d",
+      "bytes": 586
+    },
+    "macos/Tests/PlinkCoreTests/ReplyRouterTests.swift": {
+      "sha256": "dd8ead714951bde36d0b8bc84ecd2565efe7c4aff3db37f6cd952ac1c76783a5",
+      "bytes": 5608
+    },
+    "macos/Tests/PlinkCoreTests/ScreenPreviewTests.swift": {
+      "sha256": "93283984fcbf4a2ab7173cce344a9339b1b38a68fa4ba98be2073491a9c591d7",
+      "bytes": 21639
+    },
+    "macos/Tests/PlinkCoreTests/SecureEnvelopeTests.swift": {
+      "sha256": "365bcfae6d950619bec56e1de681986d519fd86ec38b3ac59e70d947078d842b",
+      "bytes": 4224
+    },
+    "macos/Tests/PlinkCoreTests/SerializedPlinkSenderTests.swift": {
+      "sha256": "eca80c9303ef685e5bb6a3690c815152821df288ce612354a171ae9c5993e7d7",
+      "bytes": 17174
+    },
+    "macos/Tests/PlinkCoreTests/SocketLifecycleTests.swift": {
+      "sha256": "d96d5614f176ab85736d9afcbe5247bea009c1407f2713800831fe26b0e53a15",
+      "bytes": 3530
+    },
+    "macos/Tests/PlinkCoreTests/WebcamPreviewPolicyTests.swift": {
+      "sha256": "aaefb8eb33f16c944bbdeb10525847473396f57f2574bddead9e0739bfb8d52e",
+      "bytes": 8250
+    },
+    "macos/Tests/PlinkMacTests/PixelWebcamControllerTests.swift": {
+      "sha256": "7747e90d0116daebe47cd7502eb17c87ec27532a2239177e873a1c54593a815d",
+      "bytes": 16473
+    },
+    "macos/Tests/PlinkMacTests/ScreenPreviewControllerTests.swift": {
+      "sha256": "c2bfd7ae9e8931ba0cb22624f68b0fd8715ed1a852b2d2ae76c3c5fdd47cca4e",
+      "bytes": 9917
+    },
+    "scripts/capture-synthetic-transport.py": {
+      "sha256": "079189d87039bf719b64a4b25cee8b7bd286f4149eb50ac34a8d4c3302e07cc4",
+      "bytes": 4515
+    },
+    "scripts/check-fixtures.sh": {
+      "sha256": "c5483eb788d35fbe9fdfc2f574362176dc0f86e4f813e9c0c975ec7622004558",
+      "bytes": 22112
+    },
+    "scripts/notarize-macos.sh": {
+      "sha256": "ba23ba18b3e5b3dca0161d75fdbe758b6185b4625a0926ab3f3fd28b55bf99dc",
+      "bytes": 952
+    },
+    "scripts/package-macos.sh": {
+      "sha256": "da07842dc286cc38c6a71ee8a03066ffe7c84ce71ac5aefce0e7798b18679145",
+      "bytes": 1661
+    },
+    "scripts/verify-device.sh": {
+      "sha256": "951c9811ee607ce494629e5c146228a32209dc78ac9a502667172ab33023da75",
+      "bytes": 13745
+    },
+    "scripts/verify-screen-preview.sh": {
+      "sha256": "420c64f88ef9cecb4c3f5a5d33b9389e17c232b01d2ca9a5f259502c814274bc",
+      "bytes": 9341
+    },
+    "scripts/verify.sh": {
+      "sha256": "07bea244b1f32c67885a7d57f07e503302a07a6ddc52cfe5238f5dea4fa60063",
+      "bytes": 1504
+    },
+    "shared/protocol/v1/call-ringing.json": {
+      "sha256": "6e4b78c460cb46d5c2e7953bf5f5fedab3ec362e293bd8c78d03f1925df01ebd",
+      "bytes": 330
+    },
+    "shared/protocol/v1/clipboard-updated.json": {
+      "sha256": "b14b21410f60fbad7d09ab10f3e061c1509ffec696791ebbae5640ca8cfa9673",
+      "bytes": 283
+    },
+    "shared/protocol/v1/file-transfer.md": {
+      "sha256": "b55008b0cd36bfa250522d1ece0e6ebcaec47cc228aa5eb5517f45f4453da96e",
+      "bytes": 5617
+    },
+    "shared/protocol/v1/file-transfer/cases.json": {
+      "sha256": "3170a5ebc8664717234046c6be4ed1a39b50bdc69af132e4c1a7f39b99101ae6",
+      "bytes": 160242
+    },
+    "shared/protocol/v1/message-received.json": {
+      "sha256": "944ac4268416b56da991497c224d9c9bd2bf5809ee872d0f230711fca72a1384",
+      "bytes": 478
+    },
+    "shared/protocol/v1/pairing-offer.json": {
+      "sha256": "e05e26500f10c3bcf19553817748b727cdd5db73290d0fe313e195fe1092dc96",
+      "bytes": 592
+    },
+    "shared/protocol/v1/schema.json": {
+      "sha256": "6ef4cefb33cb55352cf83e622498bc94b537710999977476e16fa64748f806f2",
+      "bytes": 11822
+    },
+    "shared/protocol/v1/screen-preview/cases.json": {
+      "sha256": "6b6fa52eebec0b14ed58e4538bcc788a6d502674f2d25c25b1701ca801ff119f",
+      "bytes": 29339
+    },
+    "shared/protocol/v1/security-upgrade.md": {
+      "sha256": "cef7e10e6765e62a53250b2765b2de932039678a6a2b2ffcabafba9ff222ce77",
+      "bytes": 3265
+    },
+    "shared/protocol/v1/web-open.json": {
+      "sha256": "9453591cc57ee0d45311b5b48a65949bae00b8e0a4314630cfe1d0d016cfa64d",
+      "bytes": 248
+    },
+    "third_party/google_sans_flex/NOTICE.md": {
+      "sha256": "77d3fb06a04999451606df2145b54e91b9cd2ab8568be3609cbb77fb63190fa1",
+      "bytes": 1631
+    },
+    "third_party/google_sans_flex/OFL.txt": {
+      "sha256": "831b6e041705873c3e6efb18c4c96202bc41c8be42a456d3d26c47abf14816d0",
+      "bytes": 4397
+    },
+    "third_party/tomato/PROVENANCE.json": {
+      "sha256": "43610a53a133bbda914d1fadd169e04b7d7c275db81668917c13281fd95eab5f",
+      "bytes": 5955
+    }
+  },
+  "binaries": {
+    "android/build/outputs/apk/debug/android-debug.apk": {
+      "sha256": "05376fc19909d0f2e630363c5e59291efbc6d09d3515d0bdd7e00e12d5b50f9d",
+      "bytes": 21981154
+    },
+    "android/build/outputs/apk/release/android-release-unsigned.apk": {
+      "sha256": "9860e0b3b59af2239b29671cb97f9a3b9e88e20bca0d2c0396de71b181355bf9",
+      "bytes": 4281671
+    },
+    "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk": {
+      "sha256": "022fad5e87617244d07865b05ed31b86c2dfb2ec0c1c17c5e6d8fbae056fb46c",
+      "bytes": 100464
+    },
+    "build/PlinkMac.app/Contents/MacOS/PlinkMac": {
+      "sha256": "643aa73478d03133b1b296e97f85d7e4d5a1e8cf0e99c79f0d29306473c86723",
+      "bytes": 4185664
+    },
+    "build/PlinkMac.app/Contents/Resources/Plink.icns": {
+      "sha256": "8552e65af0cf03b7403ca056077ebe9326b4c4bf82c6e117919924945751ecc7",
+      "bytes": 145262
+    }
+  },
+  "scope": "Final source and build binding after status-width correction. Physical and native acceptance is recorded separately; successful compilation does not establish those outcomes."
+}

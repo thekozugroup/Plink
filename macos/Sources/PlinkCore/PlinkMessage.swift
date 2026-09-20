@@ -10,11 +10,19 @@ public struct PlinkEnvelope: Codable, Equatable, Sendable {
     public var requiresAck: Bool
     public var payload: [String: PayloadValue]
 
-    /// Use for wire input so file numeric tokens are checked before typed decoding.
-    public static func decode(_ data: Data) throws -> PlinkEnvelope {
+    /// Use for wire input so event-specific raw JSON policies run alongside typed decoding.
+    public static func decode(
+        _ data: Data,
+        reconnectValidation: ReconnectValidationPolicy = .production
+    ) throws -> PlinkEnvelope {
+        let envelope = try PlinkJSON.decoder().decode(PlinkEnvelope.self, from: data)
+        if ReconnectPayloadPolicy.eventTypes.contains(envelope.type) {
+            try ReconnectPayloadPolicy.validateRawJSON(data, validation: reconnectValidation)
+        }
         try FileTransferPayloadPolicy.validateRawJSON(data)
         try ScreenPreviewPayloadPolicy.validateRawJSON(data)
-        return try PlinkJSON.decoder().decode(PlinkEnvelope.self, from: data)
+        try ReconnectPayloadPolicy.validate(envelope, validation: reconnectValidation, plaintextBytes: data.count)
+        return envelope
     }
 
     public init(
@@ -87,7 +95,7 @@ public enum PayloadValue: Codable, Equatable, Sendable {
     }
 }
 
-public enum EventType: String, Codable, Sendable {
+public enum EventType: String, Codable, Hashable, Sendable {
     case pairingOffer = "pairing.offer"
     case pairingConfirm = "pairing.confirm"
     case deviceStatus = "device.status"
@@ -113,6 +121,14 @@ public enum EventType: String, Codable, Sendable {
     case mediaState = "media.state"
     case mediaCommand = "media.command"
     case permissionState = "permission.state"
+    case reconnectHello = "reconnect.hello"
+    case reconnectChallenge = "reconnect.challenge"
+    case reconnectProof = "reconnect.proof"
+    case reconnectReverse = "reconnect.reverse"
+    case reconnectReverseProof = "reconnect.reverse_proof"
+    case reconnectReady = "reconnect.ready"
+    case reconnectCommit = "reconnect.commit"
+    case reconnectDone = "reconnect.done"
     case ack
     case error
 }

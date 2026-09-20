@@ -1,0 +1,11 @@
+{
+  "startedAtUTC": "2026-09-20T11:13:31.364702+00:00",
+  "serial": "emulator-5580",
+  "validationInputs": "../runtime-validation-inputs.json",
+  "validationInputsSHA256": "72cf2770d706d764c2ef5eb55f7005a648f4cc02ce6051e302c6411d4e1ad90e",
+  "installedAPKSHA256Before": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "mode": "roundtrip",
+  "physicalPixelTouched": false,
+  "nativeMacUIVerified": false,
+  "realRecipientContacted": false
+}

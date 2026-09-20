@@ -50,6 +50,15 @@ final class ScreenPreviewController: ObservableObject {
         publish()
     }
 
+    func suspendAndAwait() async {
+        unbind()
+        let decode = decodeTask
+        let cleanup = cleanupTask
+        decode?.cancel()
+        await decode?.value
+        await cleanup?.value
+    }
+
     func setVisible(_ value: Bool) {
         visible = value && !isShutdown
         if !value { stop(reason: .hidden) }

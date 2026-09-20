@@ -43,6 +43,17 @@ class FeatureSettings(
         preferences.getBoolean(BACKGROUND_CONNECTION_KEY, false)
     )
     val backgroundConnectionEnabled: StateFlow<Boolean> = _backgroundConnectionEnabled.asStateFlow()
+    private val _clipboardSyncEnabled = MutableStateFlow(preferences.getBoolean("clipboard_sync_enabled", false))
+    val clipboardSyncEnabled: StateFlow<Boolean> = _clipboardSyncEnabled.asStateFlow()
+    private val clipboardRevision = java.util.concurrent.atomic.AtomicLong()
+    val clipboardSyncRevision: Long get() = clipboardRevision.get()
+
+    fun setClipboardSyncEnabled(enabled: Boolean) {
+        if (_clipboardSyncEnabled.value == enabled) return
+        clipboardRevision.incrementAndGet()
+        preferences.edit().putBoolean("clipboard_sync_enabled", enabled).apply()
+        _clipboardSyncEnabled.value = enabled
+    }
     private val _enabled = MutableStateFlow(readAll())
     private val listeners = CopyOnWriteArrayList<(ContinuityFeature, Boolean) -> Unit>()
     val enabled: StateFlow<Map<ContinuityFeature, Boolean>> = _enabled.asStateFlow()
@@ -95,35 +106,35 @@ object FeaturePolicy {
             ContinuityFeature.Calls,
             enabled = settings.isEnabled(ContinuityFeature.Calls),
             available = permissionState.notificationListener,
-            reason = if (permissionState.notificationListener) null else "Enable notification listener."
+            reason = if (permissionState.notificationListener) null else "Turn on notification access."
         ),
         FeatureAvailability(
             ContinuityFeature.Messages,
             enabled = settings.isEnabled(ContinuityFeature.Messages),
             available = permissionState.canMirrorMessages,
-            reason = if (permissionState.canMirrorMessages) null else "Enable notification listener."
+            reason = if (permissionState.canMirrorMessages) null else "Turn on notification access."
         ),
         FeatureAvailability(
             ContinuityFeature.Clipboard,
             enabled = settings.isEnabled(ContinuityFeature.Clipboard),
             available = true,
-            reason = "Use Android share to send, or tap an incoming Plink notification."
+            reason = "Use Share to send text. Tap a Plink notification to receive it."
         ),
         FeatureAvailability(
             ContinuityFeature.Files,
             enabled = settings.isEnabled(ContinuityFeature.Files),
             available = true,
             reason = if (permissionState.notificationRuntime) {
-                "Use Android share to send. Incoming files require explicit notification and destination approval."
+                "Use Share to send files. You choose where incoming files are saved."
             } else {
-                "Sending works; incoming files require Pixel notifications."
+                "Sending works. Turn on Pixel notifications to receive files."
             }
         ),
         FeatureAvailability(
             ContinuityFeature.Web,
             enabled = settings.isEnabled(ContinuityFeature.Web),
             available = true,
-            reason = if (permissionState.notificationRuntime) null else "Sending works; incoming links need Pixel notifications."
+            reason = if (permissionState.notificationRuntime) null else "Sending works. Turn on Pixel notifications to receive links."
         ),
         FeatureAvailability(
             ContinuityFeature.Battery,
@@ -134,19 +145,13 @@ object FeaturePolicy {
             ContinuityFeature.Media,
             enabled = settings.isEnabled(ContinuityFeature.Media),
             available = permissionState.notificationListener,
-            reason = if (permissionState.notificationListener) null else "Enable notification listener."
-        ),
-        FeatureAvailability(
-            ContinuityFeature.Sms,
-            enabled = settings.isEnabled(ContinuityFeature.Sms),
-            available = false,
-            reason = "Direct SMS mode is not implemented."
+            reason = if (permissionState.notificationListener) null else "Turn on notification access."
         ),
         FeatureAvailability(
             ContinuityFeature.ScreenMirror,
             enabled = settings.isEnabled(ContinuityFeature.ScreenMirror),
             available = screenPreviewSupported,
-            reason = if (screenPreviewSupported) "View-only preview up to 2 fps. Approve each request in Plink and Android's screen-sharing dialog."
+            reason = if (screenPreviewSupported) "View-only preview. Approve each request in Plink and Android."
                 else "Screen preview requires Android 14 or later."
         )
     )

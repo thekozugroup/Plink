@@ -33,6 +33,7 @@ public struct EncryptedPlinkFrame: Codable, Equatable, Sendable {
     public var targetDeviceId: String
     public var cipherText: String
     public var signature: String
+    var decodedIssuedAtLexeme: String?
 
     public init(
         version: Int = 1,
@@ -52,6 +53,43 @@ public struct EncryptedPlinkFrame: Codable, Equatable, Sendable {
         self.targetDeviceId = targetDeviceId
         self.cipherText = cipherText
         self.signature = signature
+        self.decodedIssuedAtLexeme = nil
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case version, sequence, nonce, issuedAt, sourceDeviceId, targetDeviceId, cipherText, signature
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        version = try values.decode(Int.self, forKey: .version)
+        sequence = try values.decode(Int64.self, forKey: .sequence)
+        nonce = try values.decode(String.self, forKey: .nonce)
+        issuedAt = try values.decode(Date.self, forKey: .issuedAt)
+        decodedIssuedAtLexeme = try values.decode(String.self, forKey: .issuedAt)
+        sourceDeviceId = try values.decode(String.self, forKey: .sourceDeviceId)
+        targetDeviceId = try values.decode(String.self, forKey: .targetDeviceId)
+        cipherText = try values.decode(String.self, forKey: .cipherText)
+        signature = try values.decode(String.self, forKey: .signature)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(version, forKey: .version)
+        try values.encode(sequence, forKey: .sequence)
+        try values.encode(nonce, forKey: .nonce)
+        try values.encode(issuedAt, forKey: .issuedAt)
+        try values.encode(sourceDeviceId, forKey: .sourceDeviceId)
+        try values.encode(targetDeviceId, forKey: .targetDeviceId)
+        try values.encode(cipherText, forKey: .cipherText)
+        try values.encode(signature, forKey: .signature)
+    }
+
+    public static func == (lhs: EncryptedPlinkFrame, rhs: EncryptedPlinkFrame) -> Bool {
+        lhs.version == rhs.version && lhs.sequence == rhs.sequence && lhs.nonce == rhs.nonce &&
+            lhs.issuedAt == rhs.issuedAt && lhs.sourceDeviceId == rhs.sourceDeviceId &&
+            lhs.targetDeviceId == rhs.targetDeviceId && lhs.cipherText == rhs.cipherText &&
+            lhs.signature == rhs.signature
     }
 }
 
@@ -223,11 +261,17 @@ public struct EncryptedFrameCodec: Sendable {
     private let aesKey: SymmetricKey
     private let hmacKey: SymmetricKey
     private let keyScope: String
+    private let makeIV: @Sendable () throws -> Data
 
     public init(sessionKey: Data) {
+        self.init(sessionKey: sessionKey, randomIV: { try Self.randomIV() })
+    }
+
+    internal init(sessionKey: Data, randomIV: @escaping @Sendable () throws -> Data) {
         self.keyScope = Data(SHA256.hash(data: sessionKey)).base64EncodedString()
         self.aesKey = SymmetricKey(data: SHA256.hash(data: sessionKey))
         self.hmacKey = SymmetricKey(data: SHA256.hash(data: Data("plink-frame-hmac".utf8) + sessionKey))
+        self.makeIV = randomIV
     }
 
     public func stateScope(sourceDeviceId: String, targetDeviceId: String) -> String {
@@ -239,7 +283,7 @@ public struct EncryptedFrameCodec: Sendable {
         sequence: Int64,
         nonce: String = UUID().uuidString,
         issuedAt: Date = .now,
-        iv: Data = EncryptedFrameCodec.randomIV()
+        iv: Data? = nil
     ) throws -> EncryptedPlinkFrame {
         try PayloadPolicy.validate(envelope)
         let authenticatedData = aad(
@@ -253,7 +297,7 @@ public struct EncryptedFrameCodec: Sendable {
         let sealed = try AES.GCM.seal(
             try CanonicalJSON.encode(envelope),
             using: aesKey,
-            nonce: AES.GCM.Nonce(data: iv),
+            nonce: AES.GCM.Nonce(data: try iv ?? makeIV()),
             authenticating: authenticatedData
         )
         guard let combined = sealed.combined else { throw PayloadPolicyError.malformedFrame }
@@ -277,7 +321,9 @@ public struct EncryptedFrameCodec: Sendable {
         expectedSourceDeviceId: String? = nil,
         expectedTargetDeviceId: String? = nil,
         stateStore: (any FrameStateStoring)? = nil,
-        wireBytes: Int? = nil
+        wireBytes: Int? = nil,
+        rawFrameData: Data? = nil,
+        reconnectValidation: ReconnectValidationPolicy = .production
     ) throws -> PlinkEnvelope {
         guard frame.version == 1 else { throw PayloadPolicyError.unsupportedVersion }
         if let expectedSourceDeviceId, frame.sourceDeviceId != expectedSourceDeviceId {
@@ -296,7 +342,7 @@ public struct EncryptedFrameCodec: Sendable {
         }
         let sealed = try AES.GCM.SealedBox(combined: combined)
         let data = try AES.GCM.open(sealed, using: aesKey, authenticating: aad(frame))
-        let decoded = Result { try PlinkEnvelope.decode(data) }
+        let decoded = Result { try PlinkEnvelope.decode(data, reconnectValidation: reconnectValidation) }
         guard let envelope = try? decoded.get() else {
             if let rejection = ScreenPreviewPayloadPolicy.rejection(
                 fromAuthenticatedPlaintext: data,
@@ -340,6 +386,19 @@ public struct EncryptedFrameCodec: Sendable {
                 throw error
             }
         } else {
+            if ReconnectPayloadPolicy.eventTypes.contains(envelope.type) {
+                try ReconnectPayloadPolicy.validateEncryptedFrame(
+                    issuedAt: frame.issuedAt,
+                    decodedIssuedAtLexeme: frame.decodedIssuedAtLexeme,
+                    rawJSON: rawFrameData
+                )
+            }
+            try ReconnectPayloadPolicy.validate(
+                envelope,
+                validation: reconnectValidation,
+                plaintextBytes: data.count,
+                encryptedBytes: wireBytes
+            )
             try PayloadPolicy.validate(envelope)
             try acceptAuthenticatedFrame(frame, replayProtector: replayProtector, stateStore: stateStore, now: now)
         }
@@ -407,11 +466,20 @@ public struct EncryptedFrameCodec: Sendable {
         ].joined(separator: "\n").data(using: .utf8) ?? Data()
     }
 
-    public static func randomIV() -> Data {
+    public static func randomIV() throws -> Data {
+        try randomIV { count, buffer in SecRandomCopyBytes(kSecRandomDefault, count, buffer) }
+    }
+
+    internal static func randomIV(using fill: (Int, UnsafeMutableRawPointer) -> OSStatus) throws -> Data {
         var bytes = [UInt8](repeating: 0, count: 12)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        let status = bytes.withUnsafeMutableBytes { buffer in fill(buffer.count, buffer.baseAddress!) }
+        guard status == errSecSuccess else { throw SecureRandomError.unavailable(status) }
         return Data(bytes)
     }
+}
+
+public enum SecureRandomError: Error, Equatable, Sendable {
+    case unavailable(OSStatus)
 }
 
 enum CanonicalJSON {

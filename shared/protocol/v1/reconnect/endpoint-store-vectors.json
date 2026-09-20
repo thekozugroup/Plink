@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "status": "FROZEN supplemental Astra endpoint sidecar canonicalization fixtures",
+  "contract": ".a5c/artifacts/implementation-decisions-5.json:persistence",
+  "scope": "Independent Python standard-library HMAC/SHA256 vectors; no filesystem durability or route proof. Synthetic key only. Record field order and UTF8 byte lengths are normative.",
+  "vectors": [
+    {
+      "name": "Mac hint",
+      "sessionKeyBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "record": {
+        "version": 1,
+        "localID": "test-mac",
+        "peerID": "test-pixel",
+        "sessionID": "00000000-0000-4000-8000-000000000001",
+        "endpoint": "192.168.50.20:45731",
+        "proofID": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+        "tag": "HBP2ImAeupwb4L1CbuTs5Z7ucZ+fWf+AfyE0lNii7Ek="
+      },
+      "signingInputBase64": "MToxODp0ZXN0LW1hYzEwOnRlc3QtcGl4ZWwzNjowMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDExOToxOTIuMTY4LjUwLjIwOjQ1NzMxNDM6QUJFaU0wUlZabmVJbWFxN3pOM3Vfd0FSSWpORVZXWjNpSm1xdTh6ZDd2OA==",
+      "fileName": "10b984f2b3f09e2a54d33a0176c429d9d1a791a70f8b3862f0462f8d32c08cb9.json"
+    },
+    {
+      "name": "Android hint",
+      "sessionKeyBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "record": {
+        "version": 1,
+        "localID": "test-pixel",
+        "peerID": "test-mac",
+        "sessionID": "00000000-0000-4000-8000-000000000001",
+        "endpoint": "192.168.50.10:45731",
+        "proofID": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+        "tag": "1LkxniFqI4dBTpf031FxnGIBoskC9qWwjhiKCxmzg6o="
+      },
+      "signingInputBase64": "MToxMTA6dGVzdC1waXhlbDg6dGVzdC1tYWMzNjowMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDExOToxOTIuMTY4LjUwLjEwOjQ1NzMxNDM6QUJFaU0wUlZabmVJbWFxN3pOM3Vfd0FSSWpORVZXWjNpSm1xdTh6ZDd2OA==",
+      "fileName": "f56761fe60aaacfade7a7295964a6d36faabcee3e860780e3a0bebb996830279.json"
+    },
+    {
+      "name": "UTF8 byte counts",
+      "sessionKeyBase64": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+      "record": {
+        "version": 1,
+        "localID": "mac-É",
+        "peerID": "pixel-東京",
+        "sessionID": "00000000-0000-4000-8000-000000000001",
+        "endpoint": "192.168.50.20:45731",
+        "proofID": "ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8",
+        "tag": "1O5VwmKWjN0pU7koprCEWCY3ZqGMet86RKgToPcd2qM="
+      },
+      "signingInputBase64": "MToxNjptYWMtw4kxMjpwaXhlbC3mnbHkuqwzNjowMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDExOToxOTIuMTY4LjUwLjIwOjQ1NzMxNDM6QUJFaU0wUlZabmVJbWFxN3pOM3Vfd0FSSWpORVZXWjNpSm1xdTh6ZDd2OA==",
+      "fileName": "a86ef6d8b92ba36dc58c95c4ce7fd0d3322702034bd93f02208b4230217fd22c.json"
+    }
+  ]
+}

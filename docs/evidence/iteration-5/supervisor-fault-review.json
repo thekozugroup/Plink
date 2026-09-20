@@ -1,0 +1,1308 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "startedAt": "2026-09-20T11:11:10.782380+00:00",
+  "scope": "Bounded host-only AST/function fake checks. No real ADB/device/build/network/native binary execution.",
+  "functionLocations": {
+    "remaining": {
+      "startLine": 53,
+      "endLine": 60
+    },
+    "run": {
+      "startLine": 75,
+      "endLine": 84
+    },
+    "device": {
+      "startLine": 86,
+      "endLine": 87
+    },
+    "mappings": {
+      "startLine": 112,
+      "endLine": 121
+    },
+    "verify_local_binaries": {
+      "startLine": 137,
+      "endLine": 140
+    },
+    "verify_instrumentation_identity": {
+      "startLine": 142,
+      "endLine": 147
+    },
+    "release_map": {
+      "startLine": 174,
+      "endLine": 186
+    },
+    "start_android": {
+      "startLine": 198,
+      "endLine": 213
+    },
+    "cleanup_android": {
+      "startLine": 372,
+      "endLine": 379
+    },
+    "cleanup_mac_state": {
+      "startLine": 381,
+      "endLine": 402
+    },
+    "cleanup": {
+      "startLine": 404,
+      "endLine": 439
+    }
+  },
+  "results": [
+    {
+      "id": "exact-diff-from-final-0ebe",
+      "status": "pass",
+      "details": {
+        "exactlyFourIntendedChanges": true,
+        "allOtherSourceBytesUnchanged": true
+      },
+      "events": []
+    },
+    {
+      "id": "mappings-forward-empty",
+      "status": "pass",
+      "details": {
+        "input": "",
+        "expectedRows": [],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-forward-LF",
+      "status": "pass",
+      "details": {
+        "input": "\n",
+        "expectedRows": [],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-forward-CRLF",
+      "status": "pass",
+      "details": {
+        "input": "\r\n",
+        "expectedRows": [],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-forward-whitespace",
+      "status": "pass",
+      "details": {
+        "input": " \t\r\n \t\n",
+        "expectedRows": [],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-forward-valid",
+      "status": "pass",
+      "details": {
+        "input": "fake-emulator tcp:46731 tcp:46731\n",
+        "expectedRows": [
+          [
+            "fake-emulator",
+            "tcp:46731",
+            "tcp:46731"
+          ]
+        ],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-forward-mixed-blank-valid",
+      "status": "pass",
+      "details": {
+        "input": "\n \t\r\nfake-emulator tcp:46731 tcp:46731\r\n\t\n",
+        "expectedRows": [
+          [
+            "fake-emulator",
+            "tcp:46731",
+            "tcp:46731"
+          ]
+        ],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-forward-malformed-one-field",
+      "status": "pass",
+      "details": {
+        "input": "garbage\n",
+        "expectedRows": null,
+        "error": "Invalid forward mapping inventory.",
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-forward-malformed-two-fields",
+      "status": "pass",
+      "details": {
+        "input": "fake-emulator tcp:46731\n",
+        "expectedRows": null,
+        "error": "Invalid forward mapping inventory.",
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-forward-malformed-four-fields",
+      "status": "pass",
+      "details": {
+        "input": "fake-emulator tcp:46731 tcp:46731 extra\n",
+        "expectedRows": null,
+        "error": "Invalid forward mapping inventory.",
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "forward",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-empty",
+      "status": "pass",
+      "details": {
+        "input": "",
+        "expectedRows": [],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-LF",
+      "status": "pass",
+      "details": {
+        "input": "\n",
+        "expectedRows": [],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-CRLF",
+      "status": "pass",
+      "details": {
+        "input": "\r\n",
+        "expectedRows": [],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-whitespace",
+      "status": "pass",
+      "details": {
+        "input": " \t\r\n \t\n",
+        "expectedRows": [],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-valid",
+      "status": "pass",
+      "details": {
+        "input": "fake-emulator tcp:46731 tcp:46731\n",
+        "expectedRows": [
+          [
+            "fake-emulator",
+            "tcp:46731",
+            "tcp:46731"
+          ]
+        ],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-mixed-blank-valid",
+      "status": "pass",
+      "details": {
+        "input": "\n \t\r\nfake-emulator tcp:46731 tcp:46731\r\n\t\n",
+        "expectedRows": [
+          [
+            "fake-emulator",
+            "tcp:46731",
+            "tcp:46731"
+          ]
+        ],
+        "error": null,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-malformed-one-field",
+      "status": "pass",
+      "details": {
+        "input": "garbage\n",
+        "expectedRows": null,
+        "error": "Invalid reverse mapping inventory.",
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-malformed-two-fields",
+      "status": "pass",
+      "details": {
+        "input": "fake-emulator tcp:46731\n",
+        "expectedRows": null,
+        "error": "Invalid reverse mapping inventory.",
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "mappings-reverse-malformed-four-fields",
+      "status": "pass",
+      "details": {
+        "input": "fake-emulator tcp:46731 tcp:46731 extra\n",
+        "expectedRows": null,
+        "error": "Invalid reverse mapping inventory.",
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "device",
+          [
+            "reverse",
+            "--list"
+          ],
+          {
+            "name": "inventory.log"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "cleanup-no-attempt",
+      "status": "pass",
+      "details": {
+        "identityCalls": 0,
+        "cleanupCommands": 0,
+        "statePreserved": true
+      },
+      "events": []
+    },
+    {
+      "id": "cleanup-missing-attempt-key",
+      "status": "pass",
+      "details": {
+        "identityCalls": 0,
+        "cleanupCommands": 0,
+        "statePreserved": true
+      },
+      "events": []
+    },
+    {
+      "id": "cleanup-not-installed",
+      "status": "pass",
+      "details": {
+        "identityCalls": 0,
+        "cleanupCommands": 0,
+        "statePreserved": true
+      },
+      "events": []
+    },
+    {
+      "id": "cleanup-attempted-marker-present",
+      "status": "pass",
+      "details": {
+        "identityBeforeCleanup": true,
+        "markerRequired": true,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "cleanup-before-launch-main-apk"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "cleanup-before-launch-test-apk"
+        ],
+        [
+          "device",
+          [
+            "shell",
+            "am",
+            "instrument",
+            "-w",
+            "-e",
+            "mode",
+            "reconnectCleanup",
+            "-e",
+            "reconnectRunId",
+            "00000000-0000-4000-8000-000000000005",
+            "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+          ],
+          {
+            "name": "android-reconnect-cleanup.log",
+            "timeout": 30
+          }
+        ]
+      ]
+    },
+    {
+      "id": "cleanup-attempted-marker-missing",
+      "status": "pass",
+      "details": {
+        "identityBeforeCleanup": true,
+        "markerRequired": true,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "cleanup-before-launch-main-apk"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "cleanup-before-launch-test-apk"
+        ],
+        [
+          "device",
+          [
+            "shell",
+            "am",
+            "instrument",
+            "-w",
+            "-e",
+            "mode",
+            "reconnectCleanup",
+            "-e",
+            "reconnectRunId",
+            "00000000-0000-4000-8000-000000000005",
+            "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+          ],
+          {
+            "name": "android-reconnect-cleanup.log",
+            "timeout": 30
+          }
+        ]
+      ]
+    },
+    {
+      "id": "cleanup-refuses-changed-receiver",
+      "status": "pass",
+      "details": {
+        "error": "Local binary provenance changed: receiver.",
+        "cleanupCommands": 0,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ]
+      ]
+    },
+    {
+      "id": "cleanup-refuses-changed-main",
+      "status": "pass",
+      "details": {
+        "error": "Local binary provenance changed: main.",
+        "cleanupCommands": 0,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ]
+      ]
+    },
+    {
+      "id": "cleanup-refuses-changed-test",
+      "status": "pass",
+      "details": {
+        "error": "Local binary provenance changed: test.",
+        "cleanupCommands": 0,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ]
+      ]
+    },
+    {
+      "id": "cleanup-refuses-changed-installed-main",
+      "status": "pass",
+      "details": {
+        "error": "Main package identity changed; refusing instrumentation.",
+        "cleanupCommands": 0,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "cleanup-before-launch-main-apk"
+        ]
+      ]
+    },
+    {
+      "id": "cleanup-refuses-changed-installed-test",
+      "status": "pass",
+      "details": {
+        "error": "Test package identity changed; refusing instrumentation.",
+        "cleanupCommands": 0,
+        "statePreserved": true
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "cleanup-before-launch-main-apk"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "cleanup-before-launch-test-apk"
+        ]
+      ]
+    },
+    {
+      "id": "start-android-success",
+      "status": "pass",
+      "details": {
+        "attemptFlag": true,
+        "children": 1
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "baseline-before-launch-main-apk"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "baseline-before-launch-test-apk"
+        ],
+        [
+          "save",
+          true,
+          {
+            "attempted": true,
+            "phase": "installed"
+          }
+        ],
+        [
+          "open",
+          "memory-phase/android-reconnect.log",
+          "w"
+        ],
+        [
+          "Popen",
+          [
+            "/explicit/fake/adb",
+            "-s",
+            "fake-emulator",
+            "shell",
+            "am",
+            "instrument",
+            "-w",
+            "-e",
+            "mode",
+            "reconnect",
+            "-e",
+            "sessionKeyBase64",
+            "fake-key",
+            "-e",
+            "macPort",
+            "2",
+            "-e",
+            "replyPort",
+            "1",
+            "-e",
+            "reconnectRunId",
+            "00000000-0000-4000-8000-000000000005",
+            "-e",
+            "reconnectPhase",
+            "baseline",
+            "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+          ],
+          "attempt-flag-true"
+        ],
+        [
+          "wait_for_marker",
+          "RECONNECT PHONE LISTENING",
+          "baseline"
+        ]
+      ]
+    },
+    {
+      "id": "start-android-Popen-failure",
+      "status": "pass",
+      "details": {
+        "attemptFlag": true,
+        "children": 0
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "baseline-before-launch-main-apk"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "baseline-before-launch-test-apk"
+        ],
+        [
+          "save",
+          true,
+          {
+            "attempted": true,
+            "phase": "installed"
+          }
+        ],
+        [
+          "open",
+          "memory-phase/android-reconnect.log",
+          "w"
+        ],
+        [
+          "Popen",
+          "injected launch failure",
+          "attempt-flag-true"
+        ]
+      ]
+    },
+    {
+      "id": "start-android-identity-failure",
+      "status": "pass",
+      "details": {
+        "attemptFlag": false,
+        "children": 0
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ]
+      ]
+    },
+    {
+      "id": "full-cleanup-no-attempt-uninstalls",
+      "status": "pass",
+      "details": {
+        "cleanupReturn": true,
+        "cleanupReport": {
+          "primaryExitCode": 0,
+          "cleanupExitCode": 0,
+          "passed": true,
+          "checks": {
+            "hostProcesses": "passed",
+            "androidReconnectState": "passed",
+            "macReconnectState": "passed",
+            "testPackage": "passed"
+          },
+          "errors": [],
+          "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+        },
+        "residualInstallState": "absent"
+      },
+      "events": [
+        [
+          "stop_children"
+        ],
+        [
+          "packages"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "test-apk-before-uninstall"
+        ],
+        [
+          "device",
+          [
+            "uninstall",
+            "app.plink.android.test"
+          ],
+          {
+            "name": "test-apk-uninstall.log"
+          }
+        ],
+        [
+          "packages"
+        ],
+        [
+          "save",
+          false,
+          {
+            "attempted": true,
+            "phase": "absent"
+          }
+        ],
+        [
+          "report",
+          "host-cleanup.json",
+          {
+            "primaryExitCode": 0,
+            "cleanupExitCode": 0,
+            "passed": true,
+            "checks": {
+              "hostProcesses": "passed",
+              "androidReconnectState": "passed",
+              "macReconnectState": "passed",
+              "testPackage": "passed"
+            },
+            "errors": [],
+            "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+          }
+        ]
+      ]
+    },
+    {
+      "id": "full-cleanup-no-attempt-changed-test-preserved",
+      "status": "pass",
+      "details": {
+        "cleanupReturn": false,
+        "cleanupReport": {
+          "primaryExitCode": 0,
+          "cleanupExitCode": 1,
+          "passed": false,
+          "checks": {
+            "hostProcesses": "passed",
+            "androidReconnectState": "passed",
+            "macReconnectState": "passed",
+            "testPackage": "failed"
+          },
+          "errors": [
+            "testPackage: Test package identity changed; refusing uninstall."
+          ],
+          "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+        },
+        "residualInstallState": "installed"
+      },
+      "events": [
+        [
+          "stop_children"
+        ],
+        [
+          "packages"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "test-apk-before-uninstall"
+        ],
+        [
+          "report",
+          "host-cleanup.json",
+          {
+            "primaryExitCode": 0,
+            "cleanupExitCode": 1,
+            "passed": false,
+            "checks": {
+              "hostProcesses": "passed",
+              "androidReconnectState": "passed",
+              "macReconnectState": "passed",
+              "testPackage": "failed"
+            },
+            "errors": [
+              "testPackage: Test package identity changed; refusing uninstall."
+            ],
+            "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+          }
+        ]
+      ]
+    },
+    {
+      "id": "full-cleanup-attempted-missing-marker-reports-failure",
+      "status": "pass",
+      "details": {
+        "cleanupReturn": false,
+        "cleanupReport": {
+          "primaryExitCode": 0,
+          "cleanupExitCode": 1,
+          "passed": false,
+          "checks": {
+            "hostProcesses": "passed",
+            "androidReconnectState": "failed",
+            "macReconnectState": "passed",
+            "testPackage": "passed"
+          },
+          "errors": [
+            "androidReconnectState: Android reconnectCleanup lacks explicit ownership confirmation."
+          ],
+          "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+        },
+        "residualInstallState": "absent"
+      },
+      "events": [
+        [
+          "stop_children"
+        ],
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "cleanup-before-launch-main-apk"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "cleanup-before-launch-test-apk"
+        ],
+        [
+          "device",
+          [
+            "shell",
+            "am",
+            "instrument",
+            "-w",
+            "-e",
+            "mode",
+            "reconnectCleanup",
+            "-e",
+            "reconnectRunId",
+            "00000000-0000-4000-8000-000000000005",
+            "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+          ],
+          {
+            "name": "android-reconnect-cleanup.log",
+            "timeout": 30
+          }
+        ],
+        [
+          "packages"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "test-apk-before-uninstall"
+        ],
+        [
+          "device",
+          [
+            "uninstall",
+            "app.plink.android.test"
+          ],
+          {
+            "name": "test-apk-uninstall.log"
+          }
+        ],
+        [
+          "packages"
+        ],
+        [
+          "save",
+          true,
+          {
+            "attempted": true,
+            "phase": "absent"
+          }
+        ],
+        [
+          "report",
+          "host-cleanup.json",
+          {
+            "primaryExitCode": 0,
+            "cleanupExitCode": 1,
+            "passed": false,
+            "checks": {
+              "hostProcesses": "passed",
+              "androidReconnectState": "failed",
+              "macReconnectState": "passed",
+              "testPackage": "passed"
+            },
+            "errors": [
+              "androidReconnectState: Android reconnectCleanup lacks explicit ownership confirmation."
+            ],
+            "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+          }
+        ]
+      ]
+    },
+    {
+      "id": "hard-deadline-direct-command",
+      "status": "pass",
+      "details": {
+        "actualSubprocessCalls": 0,
+        "hardDeadlineUnchanged": true,
+        "residualInstallState": "installed"
+      },
+      "events": [
+        [
+          "save",
+          false,
+          {
+            "attempted": true,
+            "phase": "installed"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "hard-deadline-start-android",
+      "status": "pass",
+      "details": {
+        "actualSubprocessCalls": 0,
+        "hardDeadlineUnchanged": true,
+        "residualInstallState": "installed"
+      },
+      "events": [
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "deadline-before-launch-main-apk"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "deadline-before-launch-test-apk"
+        ],
+        [
+          "save",
+          true,
+          {
+            "attempted": true,
+            "phase": "installed"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "hard-deadline-cleanup-residual",
+      "status": "pass",
+      "details": {
+        "actualSubprocessCalls": 0,
+        "hardDeadlineUnchanged": true,
+        "residualInstallState": "installed"
+      },
+      "events": [
+        [
+          "stop_children"
+        ],
+        [
+          "digest",
+          "receiver"
+        ],
+        [
+          "digest",
+          "main"
+        ],
+        [
+          "digest",
+          "test"
+        ],
+        [
+          "identity",
+          "app.plink.android",
+          "cleanup-before-launch-main-apk"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "cleanup-before-launch-test-apk"
+        ],
+        [
+          "save",
+          true,
+          {
+            "attempted": true,
+            "phase": "installed"
+          }
+        ],
+        [
+          "packages"
+        ],
+        [
+          "identity",
+          "app.plink.android.test",
+          "test-apk-before-uninstall"
+        ],
+        [
+          "save",
+          true,
+          {
+            "attempted": true,
+            "phase": "installed"
+          }
+        ],
+        [
+          "report",
+          "host-cleanup.json",
+          {
+            "primaryExitCode": 0,
+            "cleanupExitCode": 1,
+            "passed": false,
+            "checks": {
+              "hostProcesses": "passed",
+              "androidReconnectState": "failed",
+              "macReconnectState": "passed",
+              "testPackage": "failed"
+            },
+            "errors": [
+              "androidReconnectState: ('reconnect supervisor', 120)",
+              "testPackage: ('reconnect supervisor', 120)"
+            ],
+            "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+          }
+        ]
+      ]
+    }
+  ],
+  "summary": {
+    "total": 38,
+    "passed": 38,
+    "failed": 0,
+    "skipped": 0
+  },
+  "frozen23Criteria": {
+    "sha256Before": "b72ba9e2047f4a8db49e228ada3ea8a0288b9afc39579acb4d88161be9e4eb34",
+    "sha256After": "b72ba9e2047f4a8db49e228ada3ea8a0288b9afc39579acb4d88161be9e4eb34",
+    "modified": false,
+    "rerun": false,
+    "reason": "Bounded function follow-up; historical 23-case results remain historical, no new full-suite credit."
+  },
+  "completedAt": "2026-09-20T11:15:47.964441+00:00",
+  "limitations": [
+    "Only extracted AST functions executed with in-memory dependencies. No script entrypoint, subprocess, ADB, socket, device, build, or native app executed.",
+    "No device/protocol/routing/acceptance credit; parent real emulator rerun independent."
+  ],
+  "source": {
+    "path": "/Users/michaelwong/Developer/Plink/scripts/verify-reconnect.sh",
+    "sha256": "3dc7c58ac98f92fd137cd0eb7df03ea0afdaf453e0987c72cea36581281d1a86",
+    "baselineSha256": "0ebe64b6d19d94a7daf72f6e4c7ec6148d409ab8240e9c8499f763e7e12e4169",
+    "mtimeNsBefore": 1789902594046573799,
+    "mtimeNsAfter": 1789902594046573799,
+    "changedDuringRead": false,
+    "diff": "--- final-0ebe\n+++ current\n@@ -112,6 +112,8 @@\n def mappings(kind, name):\n     rows = []\n     for line in device(kind, \"--list\", name=name).splitlines():\n+        if not line.strip():\n+            continue\n         row = line.split()\n         if len(row) != 3:\n             raise RuntimeError(f\"Invalid {kind} mapping inventory.\")\n@@ -201,6 +203,7 @@\n         \"-e\", \"reconnectRunId\", run_id, \"-e\", \"reconnectPhase\", phase,\n         \"app.plink.android.test/app.plink.android.PlinkDeviceTestRunner\"]\n     state[\"commands\"].append(redact(args))\n+    state[\"reconnectInstrumentAttempted\"] = True\n     save()\n     remaining(PHASE_TIMEOUT)\n     with log_path.open(\"w\") as output:\n@@ -367,7 +370,7 @@\n         phase_deadline = None\n \n def cleanup_android():\n-    if not state.get(\"instrumentInstalled\"):\n+    if not state.get(\"instrumentInstalled\") or not state.get(\"reconnectInstrumentAttempted\"):\n         return\n     verify_instrumentation_identity(\"cleanup-before-launch\")\n     text = device(\"shell\", \"am\", \"instrument\", \"-w\", \"-e\", \"mode\", \"reconnectCleanup\", \"-e\", \"reconnectRunId\", run_id,\n@@ -442,6 +445,7 @@\n     if not receiver.is_file() or not os.access(receiver, os.X_OK) or not app_apk.is_file() or not test_apk.is_file():\n         raise RuntimeError(\"Build matching reconnect receiver, main APK, and instrumentation APK first.\")\n     state = {\"schemaVersion\": 1, \"serial\": serial, \"runId\": run_id, \"commands\": [], \"phases\": {}, \"instrumentInstalled\": False,\n+        \"reconnectInstrumentAttempted\": False,\n         \"proofIdHashes\": [], \"lastHints\": {\"mac\": None, \"phone\": None}, \"lastSequences\": {\"mac\": 0, \"phone\": 0},\n         \"sourceDigestsBefore\": source_digests(), \"sourceTreeSha256Before\": source_tree_digest(),\n         \"receiverSha256Before\": digest(receiver), \"appApkSha256\": digest(app_apk), \"testApkSha256\": digest(test_apk),\n",
+    "sha256AfterChecks": "3dc7c58ac98f92fd137cd0eb7df03ea0afdaf453e0987c72cea36581281d1a86",
+    "changedDuringChecks": false,
+    "snapshot": "supervisor-reviewed.sh",
+    "fixture": "supervisor-fault-fixture.py"
+  },
+  "originalReportSHA256": "95059f82daf9956debe7e394c1cc4e7b16db8773441757f0256118826d51e1da"
+}

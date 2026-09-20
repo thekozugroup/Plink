@@ -27,11 +27,9 @@ class FeaturePolicyTest {
     }
 
     @Test
-    fun directSmsUnavailableWithoutSmsRole() {
+    fun unimplementedDirectSmsIsAbsentFromFeatureChoices() {
         val features = FeaturePolicy.evaluate(PermissionState(notificationListener = true))
-        val sms = features.first { it.feature == ContinuityFeature.Sms }
-
-        assertFalse(sms.available)
+        assertFalse(features.any { it.feature == ContinuityFeature.Sms })
     }
 
     @Test

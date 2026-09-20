@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "exitCode": 0,
+  "completedAtUTC": "2026-09-20T11:22:22.778792+00:00",
+  "manifest": "manifest.json",
+  "manifestSHA256": "f3ba4f60c8e43703c41b9efe269648f2175f3f82f72c8dbd55df35538620bc91",
+  "sourceAndBinaryHashesUnchanged": true,
+  "installedAPKSHA256After": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "cleanupPassed": true,
+  "nativeMacUIVerified": false,
+  "realRecipientContacted": false,
+  "physicalPixelTouched": false
+}

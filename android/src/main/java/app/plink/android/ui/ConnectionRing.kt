@@ -27,8 +27,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -43,6 +42,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import app.plink.android.services.SessionStatus
 
@@ -66,7 +66,8 @@ fun ConnectionRing(status: SessionStatus, modifier: Modifier = Modifier) {
             .aspectRatio(1f)
             .semantics {
                 contentDescription = when (status) {
-                    SessionStatus.READY -> "Paired and ready"
+                    SessionStatus.READY -> "Wi-Fi linked to Mac"
+                    SessionStatus.AWAITING_RECONNECT -> "Paired, Wi-Fi waiting"
                     SessionStatus.REPAIR_REQUIRED -> "Pairing needs repair"
                     SessionStatus.DISCONNECTED -> "No paired Mac"
                 }
@@ -90,25 +91,38 @@ fun ConnectionRing(status: SessionStatus, modifier: Modifier = Modifier) {
         ) { currentStatus ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    Icons.Rounded.Devices,
+                    LucideIcons.Devices,
                     contentDescription = null,
                     tint = primary,
                     modifier = Modifier.fillMaxWidth(0.18f).aspectRatio(1f)
                 )
                 Text(
                     text = when (currentStatus) {
-                        SessionStatus.READY -> "Ready"
+                        SessionStatus.READY -> "Connected"
+                        SessionStatus.AWAITING_RECONNECT -> "Paired"
                         SessionStatus.REPAIR_REQUIRED -> "Pair again"
                         SessionStatus.DISCONNECTED -> "Pair"
                     },
-                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 58.sp),
-                    textAlign = TextAlign.Center
+                    style = MaterialTheme.typography.displayMedium.copy(
+                        fontSize = 58.sp,
+                        lineHeight = 1.1.em
+                    ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false,
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 20.sp,
+                        maxFontSize = 58.sp,
+                        stepSize = 1.sp
+                    ),
+                    modifier = Modifier.fillMaxWidth(0.7f)
                 )
                 Text(
                     text = when (currentStatus) {
-                        SessionStatus.READY -> "Pixel + Mac"
+                        SessionStatus.READY -> "Wi-Fi linked"
+                        SessionStatus.AWAITING_RECONNECT -> "Wi-Fi waiting"
                         SessionStatus.REPAIR_REQUIRED -> "Security update"
-                        SessionStatus.DISCONNECTED -> "Select a nearby Mac"
+                        SessionStatus.DISCONNECTED -> "Choose a nearby Mac"
                     },
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

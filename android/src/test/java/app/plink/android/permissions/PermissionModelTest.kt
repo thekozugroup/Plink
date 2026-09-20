@@ -24,11 +24,8 @@ class PermissionModelTest {
 
     @Test
     fun onboardingDoesNotPromptForFutureSmsModeByDefault() {
-        val smsStep = PermissionOnboarding.steps(PermissionState())
-            .first { it.action == PermissionAction.OpenDefaultSmsRole }
-
-        assertFalse(smsStep.enabled)
-        assertEquals("Direct SMS mode", smsStep.title)
+        assertFalse(PermissionOnboarding.steps(PermissionState())
+            .any { it.action == PermissionAction.OpenDefaultSmsRole })
     }
 
     @Test

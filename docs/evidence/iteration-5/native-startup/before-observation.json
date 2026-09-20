@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-09-20T11:41:35.088970+00:00",
+  "images": [
+    {
+      "file": "menu-before.png",
+      "sha256": "1c80cf31bd9022975955da6bf746b2f24bf6e7c6f166734c057521b5fbe3538b",
+      "origin": "User-supplied live Mac screenshot, 2026-09-20 07:34 EDT"
+    },
+    {
+      "file": "dashboard-before.png",
+      "sha256": "5ffb219c4c2b5bc40510e65ec4309b731019fccdde2ee6bc07ee935a7e10215b",
+      "origin": "User-supplied live Mac screenshot, 2026-09-20 07:34 EDT"
+    }
+  ],
+  "observed": [
+    "Native menu panel and dashboard render",
+    "Notifications disabled",
+    "Pair Phone control disabled",
+    "No phone connected"
+  ],
+  "notVerified": [
+    "Cellular call routing or audio",
+    "Notification Center reply",
+    "USB webcam frames"
+  ],
+  "diagnosis": "Startup passes own app bundle identifier to UserDefaults(suiteName:), which Apple documents must not use that identifier. Diagnostic fix pending live confirmation.",
+  "reference": "https://developer.apple.com/documentation/foundation/userdefaults/init(suitename:)",
+  "macControlFailure": "Sky Computer Use native pipe closed before response"
+}

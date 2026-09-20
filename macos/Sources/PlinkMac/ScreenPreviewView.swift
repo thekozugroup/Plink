@@ -22,7 +22,7 @@ struct ScreenPreviewView: View {
                         .resizable().scaledToFit()
                         .opacity(controller.snapshot?.isStale == true ? 0.45 : 1)
                 } else {
-                    Label("No shared screen", systemImage: "rectangle.slash")
+                    Label { Text("No shared screen") } icon: { LucideIcon(name: .monitorOff) }
                         .foregroundStyle(.white.opacity(0.8))
                 }
             }

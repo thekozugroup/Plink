@@ -1,8 +1,16 @@
 import AppKit
 import CryptoKit
+import Network
 import PlinkCore
 import SwiftUI
 import UserNotifications
+
+private struct ReconnectPathSignature: Equatable, Sendable {
+    let status: String
+    let interfaces: [String]
+    let supportsIPv4: Bool
+    let localInterfaces: Set<ReconnectInterfaceSnapshot>
+}
 
 @main
 struct PlinkMacApp: App {
@@ -10,14 +18,16 @@ struct PlinkMacApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarPanel(appDelegate: appDelegate)
+            MenuBarPanel(appDelegate: appDelegate, reconnect: appDelegate.reconnect, calling: appDelegate.calling)
         } label: {
-            Label("Plink", systemImage: "link.circle.fill")
+            LucideIcon.menuBarLink.accessibilityLabel("Plink")
         }
-        .menuBarExtraStyle(.window)
+        .menuBarExtraStyle(.menu)
 
         Settings {
-            PairingView(appDelegate: appDelegate)
+            PlinkSettingsContent(appDelegate: appDelegate)
+                .padding(24)
+                .frame(width: 460)
         }
     }
 }
@@ -34,9 +44,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var localMacDeviceId = ""
     private let receiverPort: UInt16 = 45731
     private let frameStateStore: any FrameStateStoring = FileFrameStateStore.applicationDefault
+    private let reconnectEndpointStore = ReconnectEndpointStore.applicationDefault
     private var activeTransport: SerializedPlinkSender?
     private var retiringTransport: SerializedPlinkSender?
-    private var receiver: (any PlinkEventReceiver)?
+    private var pairLifetime: PairSessionLifetime?
+    private var reconnectListener: ReconnectListener?
+    private var reconnectTask: Task<Void, Never>?
+    private var reconnectAuthority: ReconnectCommitAuthority?
+    private var reconnectAttempt = UUID()
+    private var reconnectDeadline: ContinuousClock.Instant?
+    private var reconnectDeadlineTask: Task<Void, Never>?
     private var pendingManualOffer: PairingOffer?
     private var pendingManualConfirmation: PairingConfirmation?
     private var pendingConsent: PairingConsent?
@@ -45,14 +62,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var activePairing: (device: PairedDevice, key: Data)?
     private var priorPairing: (device: PairedDevice, key: Data)?
     @Published private(set) var pairingRecoveryComplete = false
+    @Published private(set) var pairingRecoveryError: String?
+    @Published private(set) var pairedPhoneName: String?
+    @Published private(set) var isPairing = false
+    @Published private(set) var pairingCompleted = false
     private lazy var pairingFinalization = MacPairingFinalization(devices: pairingStore, secrets: pairingSecretStore)
-    private var pairingInFlight = false
+    @Published private(set) var pairingInFlight = false
     private var pairingAttempt = UUID()
     private var pairingExpiryTask: Task<Void, Never>?
     let calling = BluetoothCallController()
+    let clipboard = ClipboardSyncController()
     let files = FileTransferController()
     let screen = ScreenPreviewController()
     let webcam = PixelWebcamController()
+    let reconnect = ReconnectController()
     private let screenIngress = ScreenPreviewIngress()
     @Published var screenPreviewEnabled = true {
         didSet { screen.setEnabled(screenPreviewEnabled) }
@@ -61,12 +84,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     @Published var mediaState: MacMediaState?
     @Published var mediaSessions: [String: MacMediaState] = [:]
     @Published var commandStatus = "No command pending"
-    @Published var pairedPeerID: String?
+    @Published var pairedPeerID: String? {
+        didSet { clipboard.setConnected(pairedPeerID != nil) }
+    }
     @Published var lastPeerActivity: Date?
     @Published var sharingURL = ""
-    @Published var receiveClipboard = UserDefaults.standard.bool(forKey: "plink.receiveClipboard") {
-        didSet { UserDefaults.standard.set(receiveClipboard, forKey: "plink.receiveClipboard") }
-    }
     @Published var receiveURLs = UserDefaults.standard.bool(forKey: "plink.receiveURLs") {
         didSet { UserDefaults.standard.set(receiveURLs, forKey: "plink.receiveURLs") }
     }
@@ -78,7 +100,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var pairingAdvertiser: NetService?
     private var pairingConfirmationReceiver: (any LengthPrefixedMessageReceiver)?
     @Published var lastReply: String = "None"
-    @Published var lastDeliveryState: String = "Notifications pending"
+    @Published var lastDeliveryState: String = "No phone connected"
+    @Published private(set) var notificationsEnabled = false
+    @Published private(set) var notificationStatus = "Checking notification access…"
     @Published var pairingStatusText: String = "Looking for your Pixel."
     @Published var pairingVerificationCode: PairingVerificationCode?
     @Published var pairingPeerName: String = "Pixel"
@@ -91,16 +115,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var terminationPending = false
     private var terminationReplied = false
     private var terminationWatchdog: Task<Void, Never>?
+    private let reconnectPathMonitor = NWPathMonitor()
+    private let reconnectPathQueue = DispatchQueue(label: "com.thekozugroup.plink.reconnect-path")
+    private var reconnectPathSignature: ReconnectPathSignature?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installPreviewLifecycleObservers()
+        startReconnectPathMonitor()
+        reconnect.onDiscoveryStart = { [weak self] in self?.startReconnectAttempt() ?? false }
+        reconnect.onDiscoveredCandidates = { [weak self] candidates in
+            self?.continueReconnect(candidates: candidates)
+        }
+        reconnect.onCandidate = { [weak self] candidate in
+            guard let self, self.startReconnectAttempt() else { return }
+            self.continueReconnect(candidates: [candidate])
+        }
+        reconnect.onCancel = { [weak self] in self?.cancelReconnect() }
         ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
         ProcessInfo.processInfo.disableSuddenTermination()
         NSApplication.shared.setActivationPolicy(.regular)
-        notificationBridge.configure()
         notificationBridge.onAuthorizationChanged = { [weak self] granted, error in
             Task { @MainActor in
-                self?.lastDeliveryState = granted
+                self?.notificationsEnabled = granted
+                self?.notificationStatus = granted
                     ? "Notifications enabled"
                     : (error?.localizedDescription ?? "Notifications are not enabled. If access was denied, open System Settings → Notifications → Plink and enable Allow Notifications. Asking again does not reset a denial.")
             }
@@ -124,6 +161,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         notificationBridge.onInvalidReply = { [weak self] in
             self?.lastReply = "Reply failed: the message is empty or too long."
         }
+        notificationBridge.configure()
+        clipboard.onTextChanged = { [weak self] text in
+            guard let self, let peer = self.pairedPeerID,
+                  let transport = self.activeTransport, self.clipboard.enabled else { return }
+            let envelope = PlinkEnvelope(id: "clipboard_\(UUID().uuidString)", type: .clipboardUpdated,
+                sentAt: .now, sourceDeviceId: self.localMacDeviceId, targetDeviceId: peer,
+                payload: ["text": .string(text), "localOnly": .bool(false), "automatic": .bool(true)])
+            try Task.checkCancellation()
+            try await transport.send(envelope)
+        }
+        clipboard.start()
         calling.onCallChanged = { [weak self] call in self?.notificationBridge.updateCall(call) }
         housekeeping = Task { [weak self] in
             while !Task.isCancelled {
@@ -145,14 +193,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         guard !terminationReplied else { return .terminateNow }
         guard !terminationPending else { return .terminateLater }
         terminationPending = true
+        clipboard.stop()
         screen.beginShutdown()
         webcam.beginShutdown()
+        cancelReconnect()
+        let reconnectCleanup = reconnectTask
         terminationWatchdog = Task { [weak self] in
             do { try await Task.sleep(for: .seconds(10)) } catch { return }
             self?.replyToTermination()
         }
         Task { [weak self] in
             guard let self else { return }
+            await reconnectCleanup?.value
+            reconnectListener?.stop()
+            reconnectListener = nil
+            pairLifetime?.invalidate()
+            pairLifetime = nil
             await screen.shutdown()
             await webcam.shutdown()
             replyToTermination()
@@ -172,16 +228,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        reconnectPathMonitor.cancel()
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         workspaceObservers.removeAll()
         files.reset()
         housekeeping?.cancel()
+        reconnectTask?.cancel()
+        reconnectListener?.stop()
+        reconnectListener = nil
+        pairLifetime?.invalidate()
+        pairLifetime = nil
         clearPairingAttempt() // Prevent a suspended final send from establishing trust.
         connectionGeneration = UUID()
         stopPairingAdvertiser()
         stopPairingConfirmationReceiver()
-        receiver?.stop()
-        receiver = nil
         clearTransport()
         pairedPeerID = nil
         calling.shutdown()
@@ -204,13 +264,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     func showDashboardWindow() {
         if dashboardWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 500, height: 760),
+                contentRect: NSRect(x: 0, y: 0, width: 540, height: 560),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],
                 backing: .buffered,
                 defer: false
             )
             window.center()
             window.title = "Plink"
+            window.titlebarAppearsTransparent = false
+            window.backgroundColor = .windowBackgroundColor
+            window.isOpaque = false
+            window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: DashboardWindow(appDelegate: self))
             dashboardWindow = window
         }
@@ -219,27 +283,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func showPairingWindow() {
+        if pendingManualOffer == nil && !isPairing { startNearbyPairing() }
         if pairingWindow == nil {
-            if pendingManualOffer == nil {
-                startNearbyPairing()
-            }
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 500, height: 430),
+                contentRect: NSRect(x: 0, y: 0, width: 500, height: 490),
                 styleMask: [.titled, .closable, .miniaturizable],
                 backing: .buffered,
                 defer: false
             )
             window.center()
-            window.title = "Pair Pixel"
+            window.title = "Connect Your Phone"
+            window.titlebarAppearsTransparent = false
+            window.isReleasedWhenClosed = false
+            window.delegate = self
             window.contentView = NSHostingView(rootView: PairingView(appDelegate: self))
             pairingWindow = window
-        } else {
-            if pendingManualOffer == nil {
-                startNearbyPairing()
-            }
         }
         pairingWindow?.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate()
+    }
+
+    func finishSetup() {
+        pairingWindow?.orderOut(nil)
+        showDashboardWindow()
+    }
+
+    func setUpCalls() {
+        guard let pairedPhoneName else { return }
+        calling.beginSetup(phoneName: pairedPhoneName)
     }
 
     func showScreenWindow() {
@@ -283,6 +354,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     func applicationDidBecomeActive(_ notification: Notification) {
         guard !terminationPending else { return }
+        notificationBridge.refreshAuthorization()
         if screenWindow?.isKeyWindow == true { screen.setVisible(true) }
         if webcamWindow?.isKeyWindow == true { webcam.activate() }
     }
@@ -294,7 +366,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func windowDidResignKey(_ notification: Notification) { stopHiddenPreview(notification) }
-    func windowWillClose(_ notification: Notification) { stopHiddenPreview(notification) }
+    func windowWillClose(_ notification: Notification) {
+        stopHiddenPreview(notification)
+        if let window = notification.object as? NSWindow, window === pairingWindow, isPairing { cancelPairing() }
+    }
     func windowDidMiniaturize(_ notification: Notification) { stopHiddenPreview(notification) }
     func windowDidChangeOcclusionState(_ notification: Notification) {
         guard let window = notification.object as? NSWindow else { return }
@@ -316,31 +391,462 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     self?.screen.stop(reason: .locked)
                     self?.screen.setVisible(false)
                     self?.webcam.deactivate()
+                    self?.invalidateReconnectForEnvironmentChange(
+                        "Reconnect is required after the Mac sleeps or locks."
+                    )
                 }
             })
         }
     }
 
+    private func startReconnectPathMonitor() {
+        reconnectPathMonitor.pathUpdateHandler = { [weak self] path in
+            let signature = ReconnectPathSignature(status: String(describing: path.status),
+                interfaces: path.availableInterfaces.map(\.name).sorted(), supportsIPv4: path.supportsIPv4,
+                localInterfaces: Set(ReconnectCandidatePolicy.currentInterfaces()))
+            Task { @MainActor in
+                guard let self else { return }
+                defer { self.reconnectPathSignature = signature }
+                guard let previous = self.reconnectPathSignature, previous != signature else { return }
+                self.invalidateReconnectForEnvironmentChange(
+                    "The local network changed. Reconnect to verify the new path."
+                )
+            }
+        }
+        reconnectPathMonitor.start(queue: reconnectPathQueue)
+    }
+
+    private func invalidateReconnectForEnvironmentChange(_ message: String) {
+        guard reconnectAuthority != nil || pairLifetime?.ordinaryAdmission() != nil else { return }
+        reconnect.setFailed(message)
+        lastDeliveryState = message
+        cancelReconnect()
+    }
+
     private func clearTransport() {
+        clipboard.setConnected(false)
         screen.unbind()
-        let previous = activeTransport
+        let previous = activeTransport ?? retiringTransport
         previous?.invalidate()
         activeTransport = nil
         if let previous {
             retiringTransport = previous
-            Task { await previous.shutdown() }
+            Task { [weak self] in
+                await previous.shutdown()
+                guard let self, self.retiringTransport === previous else { return }
+                self.retiringTransport = nil
+            }
         }
+    }
+
+    private func stopPairLifetime() {
+        reconnectAuthority?.invalidate()
+        reconnectAuthority = nil
+        reconnectDeadlineTask?.cancel()
+        reconnectDeadlineTask = nil
+        reconnectDeadline = nil
+        reconnectListener?.stop()
+        reconnectListener = nil
+        pairLifetime?.invalidate()
+        pairLifetime = nil
+    }
+
+    private func preparePairLifetimeReplacement() async -> UUID? {
+        clipboard.setConnected(false)
+        let previous = reconnectTask
+        reconnectAuthority?.invalidate()
+        reconnectDeadlineTask?.cancel()
+        reconnectDeadlineTask = nil
+        reconnectDeadline = nil
+        previous?.cancel()
+        reconnectAttempt = UUID()
+        let token = reconnectAttempt
+        pairLifetime?.closeOrdinaryAdmission()
+        screen.unbind()
+        let ownedTransport = activeTransport ?? retiringTransport
+        ownedTransport?.invalidate()
+        activeTransport = nil
+        if let ownedTransport { retiringTransport = ownedTransport }
+        await previous?.value
+        guard !Task.isCancelled, reconnectAttempt == token else { return nil }
+        await files.suspendAndAwait()
+        guard !Task.isCancelled, reconnectAttempt == token else { return nil }
+        await screen.suspendAndAwait()
+        guard !Task.isCancelled, reconnectAttempt == token else { return nil }
+        if let ownedTransport {
+            await ownedTransport.shutdown()
+            guard !Task.isCancelled, reconnectAttempt == token else { return nil }
+            if retiringTransport === ownedTransport { retiringTransport = nil }
+        }
+        reconnectTask = nil
+        return token
+    }
+
+    @discardableResult
+    private func startPairLifetime(device: PairedDevice, sessionKey: Data, lifecycleToken: UUID) -> Bool {
+        guard reconnectAttempt == lifecycleToken, reconnectTask == nil else { return false }
+        stopPairLifetime()
+        clearTransport()
+        pairedPeerID = nil
+        connectionGeneration = UUID()
+        let lifetime = PairSessionLifetime(localID: localMacDeviceId, peerID: device.id,
+            sessionID: device.sessionId, sessionKey: sessionKey, stateStore: frameStateStore)
+        let localID = localMacDeviceId
+        let peerID = device.id
+        let ingress = screenIngress
+        let previewAdmission = screen.admissionGeneration
+        let listener = ReconnectListener(port: receiverPort, lifetime: lifetime) { [weak self, weak lifetime] result, generation in
+            guard let lifetime, lifetime.isCurrent else { return }
+            switch result {
+            case .success(let envelope) where ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type):
+                guard let previewGeneration = previewAdmission.current(),
+                      let admission = ingress.admit(envelope, expectedSourceDeviceID: peerID,
+                        expectedTargetDeviceID: localID, connectionGeneration: generation) else { return }
+                Task { @MainActor in
+                    guard let self, self.pairLifetime === lifetime,
+                          self.connectionGeneration == generation else { admission.release(); return }
+                    self.screen.receive(envelope, admission: admission, previewGeneration: previewGeneration)
+                }
+            case .failure(let error) where error is AuthenticatedScreenProtocolRejection:
+                guard let previewGeneration = previewAdmission.current(),
+                      let rejection = error as? AuthenticatedScreenProtocolRejection,
+                      let admission = ingress.admit(rejection, expectedPeerDeviceID: peerID,
+                                                    connectionGeneration: generation) else { return }
+                Task { @MainActor in
+                    guard let self, self.pairLifetime === lifetime,
+                          self.connectionGeneration == generation else { admission.release(); return }
+                    self.screen.receive(rejection, admission: admission, previewGeneration: previewGeneration)
+                }
+            case .failure:
+                return
+            default:
+                Task { @MainActor in
+                    guard let self, self.pairLifetime === lifetime,
+                          self.connectionGeneration == generation else { return }
+                    self.handleInbound(result)
+                }
+            }
+        }
+        do {
+            try listener.start()
+            pairLifetime = lifetime
+            reconnectListener = listener
+            reconnect.configure(peerID: device.id, pairedName: device.name)
+            lastDeliveryState = "Paired with \(device.name). Connecting…"
+            return true
+        } catch {
+            lifetime.invalidate()
+            listener.stop()
+            lastDeliveryState = "Reconnect listener failed: \(error.localizedDescription)"
+            reconnect.setFailed("The local reconnect listener could not start.")
+            return false
+        }
+    }
+
+    private func scheduleAutomaticReconnect(device: PairedDevice, sessionKey: Data) {
+        guard let lifetime = pairLifetime, lifetime.peerID == device.id, lifetime.sessionID == device.sessionId else { return }
+        guard startReconnectAttempt() else { return }
+        let stored = try? reconnectEndpointStore.load(
+            localID: localMacDeviceId,
+            peerID: device.id,
+            sessionID: device.sessionId,
+            sessionKey: sessionKey
+        )
+        var endpointTexts: [String] = []
+        if let stored { endpointTexts.append(stored.endpoint) }
+        endpointTexts.append(device.endpoint)
+        let interfaces = ReconnectCandidatePolicy.currentInterfaces()
+        let candidate = endpointTexts.lazy.compactMap { endpoint in
+            interfaces.compactMap { ReconnectCandidatePolicy.candidate(endpoint: endpoint, interface: $0) }.first
+        }.first
+        guard let candidate else {
+            NSLog("Plink reconnect automatic: no eligible candidate")
+            continueReconnect(candidates: [])
+            return
+        }
+        NSLog("Plink reconnect automatic: candidate selected")
+        continueReconnect(candidates: [candidate])
+    }
+
+    private func startReconnectAttempt() -> Bool {
+        guard let lifetime = pairLifetime, reconnectListener != nil, activePairing != nil else {
+            reconnect.setFailed("No active paired phone.")
+            return false
+        }
+        let previous = reconnectTask
+        reconnectAuthority?.invalidate()
+        reconnectDeadlineTask?.cancel()
+        previous?.cancel()
+        reconnectAttempt = UUID()
+        let token = reconnectAttempt
+        let deadline = ContinuousClock.now.advanced(by: .seconds(30))
+        let authority = ReconnectCommitAuthority(deadline: deadline)
+        reconnectAuthority = authority
+        reconnectDeadline = deadline
+        NSLog("Plink reconnect attempt started; deadline 30 seconds")
+        lifetime.closeOrdinaryAdmission()
+        pairedPeerID = nil
+        connectionGeneration = UUID()
+        commands.removeAll()
+        notificationBridge.clearContexts()
+        deviceStatus = nil
+        mediaState = nil
+        mediaSessions.removeAll()
+        lastPeerActivity = nil
+        screen.unbind()
+        let ownedTransport = activeTransport ?? retiringTransport
+        ownedTransport?.invalidate()
+        activeTransport = nil
+        if let ownedTransport { retiringTransport = ownedTransport }
+        reconnect.setDisconnecting()
+        reconnectTask = Task { [weak self] in
+            await previous?.value
+            guard let self, self.reconnectAttempt == token,
+                  self.reconnectAuthority === authority else { return }
+            await self.files.suspendAndAwait()
+            guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
+            await self.screen.suspendAndAwait()
+            guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
+            if let ownedTransport {
+                await ownedTransport.shutdown()
+                guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
+                if self.retiringTransport === ownedTransport { self.retiringTransport = nil }
+            }
+        }
+        reconnectDeadlineTask = Task { [weak self, weak authority] in
+            do { try await ContinuousClock().sleep(until: deadline) } catch { return }
+            guard let self, let authority, self.reconnectAttempt == token,
+                  self.reconnectAuthority === authority else { return }
+            NSLog("Plink reconnect deadline expired")
+            authority.invalidate()
+            self.pairLifetime?.closeOrdinaryAdmission()
+            self.reconnectTask?.cancel()
+            self.reconnect.setDisconnecting()
+        }
+        return true
+    }
+
+    private func continueReconnect(candidates: [ReconnectCandidate]) {
+        guard let deadline = reconnectDeadline, let authority = reconnectAuthority else { return }
+        let token = reconnectAttempt
+        let cleanup = reconnectTask
+        let boundedCandidates = Array(candidates.prefix(4))
+        func transientCategory(_ error: Error) -> String? {
+            guard let error = error as? ReconnectSessionError else { return nil }
+            switch error {
+            case .timedOut: return "timeout"
+            case .socketFailure(let code):
+                switch code {
+                case ECONNREFUSED: return "connection_refused"
+                case ECONNRESET, ECONNABORTED, EPIPE: return "connection_reset"
+                case ETIMEDOUT: return "socket_timeout"
+                default: return nil
+                }
+            default: return nil
+            }
+        }
+        reconnectTask = Task { [weak self] in
+            await cleanup?.value
+            guard let self, self.reconnectAttempt == token,
+                  self.reconnectAuthority === authority else { return }
+            do {
+                guard !boundedCandidates.isEmpty else { throw ReconnectSessionError.invalidCandidate }
+                let retryDelays: [Duration] = [.milliseconds(500), .seconds(1), .seconds(2)]
+                var lastError: Error = ReconnectSessionError.invalidCandidate
+                for pass in 0...retryDelays.count {
+                    for candidate in boundedCandidates {
+                        try Task.checkCancellation()
+                        guard self.reconnectAttempt == token,
+                              self.reconnectAuthority === authority else { throw CancellationError() }
+                        guard ContinuousClock.now < deadline else { throw ReconnectSessionError.timedOut }
+                        NSLog("Plink reconnect handshake pass %d", pass + 1)
+                        do {
+                            // Observe each candidate's error before another can hide a terminal failure.
+                            try await self.performReconnect(candidates: [candidate], token: token,
+                                                            deadline: deadline, authority: authority)
+                            NSLog("Plink reconnect handshake completed")
+                            return
+                        } catch {
+                            try Task.checkCancellation()
+                            guard self.reconnectAttempt == token,
+                                  self.reconnectAuthority === authority else { throw CancellationError() }
+                            guard let category = transientCategory(error) else { throw error }
+                            NSLog("Plink reconnect transient failure: %@", category)
+                            lastError = error
+                        }
+                    }
+                    guard pass < retryDelays.count else { throw lastError }
+                    let retryAt = ContinuousClock.now.advanced(by: retryDelays[pass])
+                    guard retryAt < deadline else { throw lastError }
+                    NSLog("Plink reconnect waiting before retry")
+                    try await ContinuousClock().sleep(until: retryAt)
+                }
+            } catch {
+                authority.invalidate()
+                guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
+                let category = transientCategory(error) ?? (error is CancellationError ? "cancelled" :
+                    error is ReconnectEndpointStoreError ? "endpoint_store" : "non_transient")
+                NSLog("Plink reconnect stopped: %@", category)
+                self.pairLifetime?.closeOrdinaryAdmission()
+                self.pairedPeerID = nil
+                self.reconnectDeadlineTask?.cancel()
+                self.reconnectDeadlineTask = nil
+                self.reconnectDeadline = nil
+                self.reconnectAuthority = nil
+                self.reconnectTask = nil
+                let failure: Error = ContinuousClock.now >= deadline ? ReconnectSessionError.timedOut : error
+                self.reconnect.setFailed(self.reconnectFailureMessage(failure))
+                self.lastDeliveryState = "Reconnect failed. The saved pairing was preserved."
+            }
+        }
+    }
+
+    private func cancelReconnect() {
+        let previous = reconnectTask
+        reconnectAuthority?.invalidate()
+        reconnectAuthority = nil
+        reconnectDeadlineTask?.cancel()
+        reconnectDeadlineTask = nil
+        reconnectDeadline = nil
+        reconnectAttempt = UUID()
+        let token = reconnectAttempt
+        previous?.cancel()
+        pairLifetime?.closeOrdinaryAdmission()
+        pairedPeerID = nil
+        connectionGeneration = UUID()
+        commands.removeAll()
+        notificationBridge.clearContexts()
+        deviceStatus = nil
+        mediaState = nil
+        mediaSessions.removeAll()
+        lastPeerActivity = nil
+        screen.unbind()
+        let ownedTransport = activeTransport ?? retiringTransport
+        ownedTransport?.invalidate()
+        activeTransport = nil
+        if let ownedTransport { retiringTransport = ownedTransport }
+        reconnectTask = Task { [weak self] in
+            await previous?.value
+            guard let self, self.reconnectAttempt == token else { return }
+            await self.files.suspendAndAwait()
+            guard self.reconnectAttempt == token else { return }
+            await self.screen.suspendAndAwait()
+            guard self.reconnectAttempt == token else { return }
+            if let ownedTransport {
+                await ownedTransport.shutdown()
+                guard self.reconnectAttempt == token else { return }
+                if self.retiringTransport === ownedTransport { self.retiringTransport = nil }
+            }
+            if self.reconnectAttempt == token { self.reconnectTask = nil }
+        }
+    }
+
+    private func performReconnect(
+        candidates: [ReconnectCandidate],
+        token: UUID,
+        deadline: ContinuousClock.Instant,
+        authority: ReconnectCommitAuthority
+    ) async throws {
+        guard let lifetime = pairLifetime, let listener = reconnectListener,
+              let pairing = activePairing, pairing.device.id == lifetime.peerID,
+              reconnectAuthority === authority else { throw CancellationError() }
+        var lastError: Error = ReconnectSessionError.invalidCandidate
+        for candidate in candidates {
+            try Task.checkCancellation()
+            guard ContinuousClock.now < deadline, reconnectAttempt == token, pairLifetime === lifetime,
+                  reconnectAuthority === authority, activePairing?.device.id == pairing.device.id else {
+                if ContinuousClock.now >= deadline { throw ReconnectSessionError.timedOut }
+                throw CancellationError()
+            }
+            reconnect.setVerifying()
+            let candidateDeadline = min(deadline, ContinuousClock.now.advanced(by: .seconds(8)))
+            do {
+                let result = try await ReconnectInitiator(lifetime: lifetime, listener: listener,
+                    commitAuthority: authority,
+                    endpointStore: reconnectEndpointStore, listenerPort: receiverPort,
+                    onCandidateExpired: { [weak self] in
+                        Task { @MainActor [weak self] in
+                            guard let self, self.reconnectAttempt == token,
+                                  self.reconnectAuthority === authority else { return }
+                            self.reconnect.setDisconnecting()
+                        }
+                    })
+                    .attempt(candidate: candidate, deadline: candidateDeadline)
+                try Task.checkCancellation()
+                guard ContinuousClock.now < deadline, reconnectAttempt == token, pairLifetime === lifetime,
+                      reconnectAuthority === authority, activePairing?.device.id == pairing.device.id else {
+                    if ContinuousClock.now >= deadline { throw ReconnectSessionError.timedOut }
+                    throw CancellationError()
+                }
+                let generation = try lifetime.openOrdinaryAdmission(binding: result.binding)
+                let sender = SerializedPlinkSender(transport: BoundSecureNetworkPlinkClient(
+                    lifetime: lifetime, binding: result.binding, generation: generation))
+                activeTransport = sender
+                connectionGeneration = generation
+                pairedPeerID = pairing.device.id
+                files.bind(localID: localMacDeviceId, peerID: pairing.device.id, transport: sender)
+                screen.bind(localID: localMacDeviceId, peerID: pairing.device.id,
+                    generation: generation, sender: sender)
+                reconnect.setConnected()
+                lastDeliveryState = "Connected to \(pairing.device.name) on the local network."
+                authority.invalidate()
+                reconnectDeadlineTask?.cancel()
+                reconnectDeadlineTask = nil
+                reconnectDeadline = nil
+                reconnectAuthority = nil
+                reconnectTask = nil
+                return
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                lastError = error
+                if ContinuousClock.now >= deadline { throw ReconnectSessionError.timedOut }
+            }
+        }
+        throw lastError
+    }
+
+    private func reconnectFailureMessage(_ error: Error) -> String {
+        if let reconnectError = error as? ReconnectSessionError {
+            switch reconnectError {
+            case .invalidCandidate:
+                return "No eligible phone address is available on this local network."
+            case .unavailableNetworkOrPermission:
+                return "The selected interface cannot be bound safely."
+            case .authenticationFailed, .wrongPhase:
+                return "The paired phone could not be authenticated on this path."
+            case .timedOut:
+                return "The phone did not complete reconnect in time or uses an incompatible version."
+            default:
+                break
+            }
+        }
+        if let payloadError = error as? PayloadPolicyError {
+            switch payloadError {
+            case .invalidSignature, .deviceMismatch:
+                return "The paired phone could not be authenticated on this path."
+            default:
+                break
+            }
+        }
+        if error is ReconnectEndpointStoreError {
+            return "The verified endpoint could not be saved safely."
+        }
+        return "Reconnect did not complete. Check both devices and retry."
     }
 
     func startNearbyPairing() {
         guard pairingRecoveryComplete else { pairingStatusText = "Waiting for saved pairing recovery."; return }
+        guard calling.call.context == nil, !calling.busy else {
+            pairingStatusText = "Finish the current call before pairing another phone."
+            return
+        }
         guard !pairingInFlight else { return }
         files.reset()
         if pendingManualOffer == nil { priorPairing = activePairing }
         stopPairingConfirmationReceiver()
         stopPairingAdvertiser()
-        receiver?.stop()
-        receiver = nil
+        stopPairLifetime()
         clearTransport()
         pairedPeerID = nil
         connectionGeneration = UUID()
@@ -355,6 +861,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     @discardableResult
     func prepareManualPairing() -> PairingOffer {
+        isPairing = true
+        pairingCompleted = false
         pairingAttempt = UUID()
         pendingManualConfirmation = nil
         pendingConsent = nil
@@ -430,6 +938,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
               let transport = makeTransport(for: device, sessionKey: sessionKey) else { throw PairingPayloadError.invalidPayload }
         let attempt = pairingAttempt
         pairingInFlight = true
+        pairingStatusText = "Finishing pairing…"
         canConfirmPairing = false
         pairingExpiryTask?.cancel()
         stopPairingConfirmationReceiver()
@@ -441,12 +950,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             try await transport.send(final)
             try Task.checkCancellation()
             guard pairingAttempt == attempt, pairingInFlight, consentIsFresh else { throw CancellationError() }
+            guard let lifecycleToken = await preparePairLifetimeReplacement() else { throw CancellationError() }
+            guard pairingAttempt == attempt, pairingInFlight, consentIsFresh else { throw CancellationError() }
             // Journal prior metadata before touching the independent durable stores.
-            // Keep the journal until receiver activation succeeds.
+            // Keep the journal until the reconnect listener is active.
             try pairingFinalization.save(device, key: sessionKey, localDeviceID: localMacDeviceId)
             try MacPairingFinalization.activateAndCommit(activate: {
-                activeTransport = transport
-                guard startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id) else {
+                transport.invalidate()
+                retiringTransport = transport
+                guard startPairLifetime(device: device, sessionKey: sessionKey,
+                                        lifecycleToken: lifecycleToken) else {
                     throw AppDeliveryError.transportUnavailable
                 }
             }, commit: {
@@ -455,9 +968,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 invalidateActiveSession()
             })
             activePairing = (device, sessionKey)
+            pairedPhoneName = device.name
+            pairingCompleted = true
+            pairingRecoveryError = nil
+            calling.configurePairedPhone(peerID: device.id)
             priorPairing = nil
             clearPairingAttempt()
+            scheduleAutomaticReconnect(device: device, sessionKey: sessionKey)
             pairingStatusText = "Paired with \(device.name)."
+            Task { @MainActor [weak self] in self?.setUpCalls() }
         } catch {
             // Cancel/restart may have already restored the old session. Never roll
             // back a subsequent attempt from this suspended send's completion.
@@ -466,6 +985,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             do { try pairingFinalization.rollback() }
             catch {
                 pairingRecoveryComplete = false
+                pairingRecoveryError = "Pairing recovery failed. Restart Plink before pairing again."
                 lastDeliveryState = "Pairing recovery failed. Restart Plink before pairing again."
             }
             clearPairingAttempt()
@@ -489,17 +1009,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         let previous = priorPairing
         priorPairing = nil
         guard let previous else { return }
-        activePairing = previous
-        applyRestoredPairing(device: previous.device, sessionKey: previous.key)
+        let attempt = pairingAttempt
+        Task { [weak self] in
+            await self?.applyRestoredPairing(device: previous.device, sessionKey: previous.key,
+                                             expectedPairingAttempt: attempt)
+        }
     }
 
     private func invalidateActiveSession() {
+        reconnectAttempt = UUID()
+        reconnectAuthority?.invalidate()
+        reconnectTask?.cancel()
+        stopPairLifetime()
         files.reset()
         connectionGeneration = UUID()
-        receiver?.stop()
-        receiver = nil
         clearTransport()
         activePairing = nil
+        pairedPhoneName = nil
         pairedPeerID = nil
         commands.removeAll()
         notificationBridge.clearContexts()
@@ -510,6 +1036,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func clearPairingAttempt() {
+        isPairing = false
         pairingExpiryTask?.cancel()
         pairingAttempt = UUID()
         pendingManualOffer = nil
@@ -524,13 +1051,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private func restoreSavedPairingAsync() {
         let attempt = pairingAttempt
         Task.detached { [domainName = "com.thekozugroup.plink.mac"] in
+            NSLog("Plink startup pairing recovery started")
             let store = UserDefaultsPairingStore(domainName: domainName)
             let secretStore = KeychainPairingSecretStore()
             let finalization = MacPairingFinalization(devices: store, secrets: secretStore)
             do {
                 try finalization.rollback()
             } catch {
+                NSLog("Plink startup pairing rollback failed: \(error.localizedDescription)")
                 await MainActor.run {
+                    self.pairingRecoveryError = "Saved pairing recovery failed. Pairing is disabled until recovery succeeds."
                     self.lastDeliveryState = "Saved pairing recovery failed. Pairing is disabled until recovery succeeds."
                 }
                 return
@@ -539,29 +1069,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             do {
                 devices = try store.all()
             } catch {
-                NSLog("Plink async restore failed to load devices: \(error.localizedDescription)")
-                await MainActor.run { self.lastDeliveryState = "Saved pairing data could not be read. Device identity was not changed." }
+                NSLog("Plink startup pairing store read failed: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.pairingRecoveryError = "Saved pairing data could not be read. Device identity was not changed."
+                    self.lastDeliveryState = "Saved pairing data could not be read. Device identity was not changed."
+                }
                 return
             }
             let identity: String
             do {
-                guard let defaults = UserDefaults(suiteName: domainName) else { throw MacDeviceIdentity.Failure.persistenceFailed }
-                identity = try MacDeviceIdentity.resolve(defaults: defaults, hasSavedPairings: !devices.isEmpty)
+                // App identity uses the app's standard defaults domain.
+                identity = try MacDeviceIdentity.resolve(defaults: UserDefaults.standard, hasSavedPairings: !devices.isEmpty)
             } catch {
-                await MainActor.run { self.lastDeliveryState = "Device identity could not be restored. Existing pairing data was preserved." }
+                NSLog("Plink startup device identity recovery failed: \(error)")
+                await MainActor.run {
+                    self.pairingRecoveryError = "Device identity could not be restored. Existing pairing data was preserved."
+                    self.lastDeliveryState = "Device identity could not be restored. Existing pairing data was preserved."
+                }
                 return
             }
             await MainActor.run {
                 self.localMacDeviceId = identity
-                self.pairingRecoveryComplete = true
+                self.pairingRecoveryError = nil
             }
             let selected: PairedDevice?
             do { selected = try finalization.selectedDevice(localDeviceID: identity) }
             catch {
-                await MainActor.run { self.lastDeliveryState = "Saved phone selection could not be read. Existing pairing records were preserved." }
+                NSLog("Plink startup selected device read failed: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.pairingRecoveryError = "Saved phone selection could not be read. Existing pairing records were preserved."
+                    self.lastDeliveryState = "Saved phone selection could not be read. Existing pairing records were preserved."
+                }
                 return
             }
+            NSLog("Plink startup pairing recovery ready")
             guard let device = selected else {
+                await MainActor.run { self.pairingRecoveryComplete = true }
                 if !devices.isEmpty {
                     await MainActor.run {
                         self.lastDeliveryState = devices.contains(where: { $0.trusted && $0.securityVersion == 2 })
@@ -577,17 +1120,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 storedSessionKey = try secretStore.load(sessionId: device.sessionId)
             } catch {
                 NSLog("Plink async restore failed to load session key: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.pairingRecoveryError = "Saved pairing key could not be read. Existing pairing records were preserved."
+                }
                 return
             }
-            guard let sessionKey = storedSessionKey else { return }
-            await MainActor.run {
-                guard self.pairingAttempt == attempt, self.pendingManualOffer == nil else { return }
-                self.applyRestoredPairing(device: device, sessionKey: sessionKey)
+            guard let sessionKey = storedSessionKey else {
+                await MainActor.run {
+                    self.pairingRecoveryError = "Saved pairing key is unavailable. Unlock your keychain and restart Plink."
+                }
+                return
             }
+            await self.applyRestoredPairing(device: device, sessionKey: sessionKey,
+                                            expectedPairingAttempt: attempt)
+            await MainActor.run { self.pairingRecoveryComplete = true }
         }
     }
 
-    private func applyRestoredPairing(device: PairedDevice, sessionKey: Data) {
+    private func applyRestoredPairing(
+        device: PairedDevice,
+        sessionKey: Data,
+        expectedPairingAttempt: UUID
+    ) async {
+        guard pairingAttempt == expectedPairingAttempt, pendingManualOffer == nil else { return }
         guard device.trusted, device.securityVersion == 2 else {
             lastDeliveryState = "Pair again to enable updated transport security."
             return
@@ -598,14 +1153,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             return
         }
         guard canConfirmPairing == false, sessionKey.count == 32 else { return }
+        guard let lifecycleToken = await preparePairLifetimeReplacement() else { return }
+        guard pairingAttempt == expectedPairingAttempt, pendingManualOffer == nil else { return }
         activePairing = (device, sessionKey)
-        activeTransport = makeTransport(for: device, sessionKey: sessionKey)
-        guard activeTransport != nil else { lastDeliveryState = "Saved phone endpoint is invalid."; return }
+        pairedPhoneName = device.name
+        calling.configurePairedPhone(peerID: device.id)
         stopPairingAdvertiser()
         stopPairingConfirmationReceiver()
-        if startReceiver(sessionKey: sessionKey, pairedDeviceId: device.id) {
-            lastDeliveryState = "Paired with \(device.name); waiting for phone traffic."
-        }
+        guard startPairLifetime(device: device, sessionKey: sessionKey,
+                                lifecycleToken: lifecycleToken) else { return }
+        scheduleAutomaticReconnect(device: device, sessionKey: sessionKey)
     }
 
     private func publishPairingOffer(_ offer: PairingOffer) {
@@ -685,78 +1242,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         ), previousSender: activeTransport ?? retiringTransport)
     }
 
-    @discardableResult
-    private func startReceiver(sessionKey: Data, pairedDeviceId: String) -> Bool {
-        files.reset()
-        screen.unbind()
-        stopPairingConfirmationReceiver()
-        receiver?.stop()
-        pairedPeerID = pairedDeviceId
-        connectionGeneration = UUID()
-        let generation = connectionGeneration
-        let localID = localMacDeviceId
-        let ingress = screenIngress
-        let previewAdmission = screen.admissionGeneration
-        commands.removeAll()
-        notificationBridge.clearContexts()
-        do {
-            let server = FoundationSecurePlinkServer(
-                port: receiverPort,
-                codec: EncryptedFrameCodec(sessionKey: sessionKey),
-                expectedSourceDeviceId: pairedDeviceId,
-                expectedTargetDeviceId: localMacDeviceId,
-                stateStore: frameStateStore
-            )
-            try server.start { [weak self] result in
-                switch result {
-                case .success(let envelope) where ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type):
-                    guard let previewGeneration = previewAdmission.current(),
-                          let admission = ingress.admit(envelope, expectedSourceDeviceID: pairedDeviceId,
-                        expectedTargetDeviceID: localID, connectionGeneration: generation) else { return }
-                    Task { @MainActor in
-                        guard let self, self.connectionGeneration == generation else { admission.release(); return }
-                        self.screen.receive(envelope, admission: admission, previewGeneration: previewGeneration)
-                    }
-                    return
-                case .failure(let error) where error is AuthenticatedScreenProtocolRejection:
-                    guard let previewGeneration = previewAdmission.current(),
-                          let rejection = error as? AuthenticatedScreenProtocolRejection,
-                          let admission = ingress.admit(rejection, expectedPeerDeviceID: pairedDeviceId,
-                                                        connectionGeneration: generation) else { return }
-                    Task { @MainActor in
-                        guard let self, self.connectionGeneration == generation else { admission.release(); return }
-                        self.screen.receive(rejection, admission: admission, previewGeneration: previewGeneration)
-                    }
-                    return
-                case .failure:
-                    // Unauthenticated/malformed traffic is not a user event. Drop
-                    // it here so a network flood cannot enqueue MainActor work.
-                    return
-                default: break
-                }
-                Task { @MainActor in
-                    guard self?.connectionGeneration == generation else { return }
-                    self?.handleInbound(result)
-                }
-            }
-            receiver = server
-            if let activeTransport { files.bind(localID: localMacDeviceId, peerID: pairedDeviceId, transport: activeTransport) }
-            if let sender = activeTransport {
-                screen.bind(localID: localID, peerID: pairedDeviceId, generation: generation, sender: sender)
-            }
-            lastDeliveryState = "Receiver listening"
-            NSLog("Plink receiver listening on \(receiverPort)")
-            return true
-        } catch {
-            receiver = nil
-            clearTransport()
-            pairedPeerID = nil
-            lastDeliveryState = error.localizedDescription
-            NSLog("Plink receiver failed: \(error.localizedDescription)")
-            return false
-        }
-    }
-
     private func localMacEndpoint() -> String {
         let address = Host.current().addresses.first {
             $0.contains(".") && !$0.hasPrefix("127.") && !$0.hasPrefix("169.254.")
@@ -802,9 +1287,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private func perform(_ action: HandoffAction) -> Bool {
         switch action.kind {
         case .clipboard(let text):
-            guard receiveClipboard, text.utf8.count <= 32_768 else { lastDeliveryState = "Clipboard receiving is off or text is too large."; return false }
-            NSPasteboard.general.clearContents()
-            let result = NSPasteboard.general.setString(text, forType: .string)
+            let result = clipboard.receive(text)
             lastDeliveryState = result ? "Copied text from phone." : "Could not write clipboard."
             return result
         case .openURL(let url):
@@ -880,13 +1363,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             sourceDeviceId: localMacDeviceId, targetDeviceId: peer, requiresAck: true, payload: payload))
     }
 
-    func sendClipboard() {
-        guard let text = NSPasteboard.general.string(forType: .string), !text.isEmpty, text.utf8.count <= 32_768 else {
-            commandStatus = "Copy text first (up to 32 KB)."; return
-        }
-        send(.clipboardUpdated, payload: ["text": .string(text), "localOnly": .bool(false)])
-    }
-
     func sendURL() {
         let value = sharingURL.trimmingCharacters(in: .whitespacesAndNewlines)
         guard value.utf8.count <= 8192, PayloadPolicy.isAllowedURL(value),
@@ -910,82 +1386,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
 }
 
-struct DashboardWindow: View {
-    @ObservedObject var appDelegate: AppDelegate
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("Plink").font(.largeTitle.bold())
-                Text("Pixel + Mac continuity").foregroundStyle(.secondary)
-                Text(appDelegate.lastDeliveryState).font(.callout)
-                HStack {
-                    Button("Pair Phone") { appDelegate.showPairingWindow() }.disabled(!appDelegate.pairingRecoveryComplete)
-                    Button("Enable Notifications") { appDelegate.notificationBridge.requestAuthorization() }
-                    Spacer()
-                    Button("Quit") { appDelegate.quit() }
-                }
-                Button("Open System Settings for Notifications…") {
-                    NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/System Settings.app"))
-                }.help("Open Notifications → Plink and enable Allow Notifications. Requesting access again cannot reset a denial.")
-                BluetoothCallingView(controller: appDelegate.calling)
-                ContinuityPanel(appDelegate: appDelegate)
-                GroupBox("Phone previews") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Toggle("Allow phone screen preview on this Mac", isOn: $appDelegate.screenPreviewEnabled)
-                        Button("Phone Screen…") { appDelegate.showScreenWindow() }
-                            .disabled(appDelegate.pairedPeerID == nil || !appDelegate.screenPreviewEnabled)
-                        Button("Pixel USB Webcam…") { appDelegate.showWebcamWindow() }
-                        Text("Screen sharing needs approval on your phone. USB webcam needs a data cable and camera access.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
-                }
-                FileTransferPanel(controller: appDelegate.files)
-            }
-            .padding(24)
-        }
-        .frame(minWidth: 440, minHeight: 620)
-    }
-}
-
-struct MenuBarPanel: View {
-    @ObservedObject var appDelegate: AppDelegate
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Plink", systemImage: "link.circle.fill").font(.title2)
-            Text(appDelegate.lastDeliveryState).font(.callout)
-            if let battery = appDelegate.deviceStatus {
-                Text("Last phone battery: \(battery.batteryLevel)%\(battery.charging ? " · Charging" : "")")
-                Text(battery.receivedAt, style: .relative).font(.caption).foregroundStyle(.secondary)
-            }
-            Text(appDelegate.lastReply).font(.caption).foregroundStyle(.secondary)
-            Button("Open Plink") { appDelegate.showDashboardWindow() }
-            Button("Phone Screen…") { appDelegate.showScreenWindow() }
-                .disabled(appDelegate.pairedPeerID == nil || !appDelegate.screenPreviewEnabled)
-            Button("Pixel USB Webcam…") { appDelegate.showWebcamWindow() }
-            Button("Send Clipboard") { appDelegate.sendClipboard() }.disabled(appDelegate.pairedPeerID == nil)
-            FileTransferMenu(controller: appDelegate.files, openDashboard: { appDelegate.showDashboardWindow() })
-            Button("Quit") { appDelegate.quit() }
-        }.padding(18).frame(width: 320)
-    }
-}
-
 struct BluetoothCallingView: View {
     @ObservedObject var controller: BluetoothCallController
-    @State private var selectedPhone = ""
+    var phoneName: String?
     var body: some View {
         GroupBox("Cellular calls") {
             VStack(alignment: .leading, spacing: 10) {
                 Text(controller.status).textSelection(.enabled)
-                Picker("Bluetooth phone", selection: $selectedPhone) {
-                    Text("Select phone").tag("")
-                    ForEach(controller.phones) { phone in Text("\(phone.name) · \(phone.id)").tag(phone.id) }
+                if controller.busy { ProgressView("Connecting calls…") }
+                if controller.serviceConnected {
+                    Label {
+                        Text("Calls connected")
+                    } icon: {
+                        LucideIcon(name: .circleCheck)
+                    }
+                    .foregroundStyle(.green)
+                    Button("Disconnect Calls") { controller.disconnect() }
+                        .disabled(controller.busy || controller.blocked)
+                } else if let phoneName {
+                    Button("Connect Calls") { controller.beginSetup(phoneName: phoneName) }
+                        .buttonStyle(.borderedProminent).disabled(controller.busy || controller.blocked)
+                } else {
+                    Text("Pair your phone to set up calls.").foregroundStyle(.secondary)
                 }
-                HStack {
-                    Button("Find Paired Phones") { controller.discover() }
-                    Button("Connect") { controller.connect(selectedPhone) }.disabled(selectedPhone.isEmpty || controller.call.context != nil)
-                    Button("Disconnect") { controller.disconnect() }
-                        .disabled(controller.call.phoneID == nil)
-                }.disabled(controller.busy || controller.blocked)
                 if let context = controller.call.context {
                     Text(controller.call.number ?? "Unknown caller").font(.headline)
                     Text(controller.call.phase.rawValue.capitalized)
@@ -1000,11 +1423,11 @@ struct BluetoothCallingView: View {
                         callButton(controller.call.muted ? "Unmute" : "Mute", .toggleMute, context)
                     }
                     Text(controller.call.audio == .scoConnectedUnverified
-                         ? "Bluetooth audio is connected. Two-way laptop audio still needs verification."
-                         : "Audio: \(controller.call.audio.rawValue)")
+                         ? "Bluetooth audio is connected."
+                         : "Choose where you want call audio to play.")
                     .font(.caption).foregroundStyle(.secondary)
                 }
-                Text("Select the same phone you paired with Plink. Bluetooth calling uses a separate Bluetooth connection.")
+                Text("Calls use Bluetooth. Allow microphone access when you choose Mac audio.")
                     .font(.caption).foregroundStyle(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
         }
@@ -1022,13 +1445,17 @@ struct ContinuityPanel: View {
             VStack(alignment: .leading, spacing: 12) {
                 TimelineView(.periodic(from: .now, by: 10)) { timeline in
                     if let battery = appDelegate.deviceStatus {
-                        Label("\(battery.batteryLevel)%\(battery.charging ? " · Charging" : "") · \(battery.network)", systemImage: battery.charging ? "battery.100percent.bolt" : "battery.100percent")
+                        Label {
+                            Text("\(battery.batteryLevel)%\(battery.charging ? " · Charging" : "") · \(battery.network)")
+                        } icon: {
+                            LucideIcon(name: battery.charging ? .batteryCharging : .battery)
+                        }
                         Text("Last received \(battery.receivedAt.formatted(date: .omitted, time: .shortened))\(timeline.date.timeIntervalSince(battery.receivedAt) > 120 ? " · May be stale" : "")")
                             .font(.caption).foregroundStyle(.secondary)
                     } else { Text("Battery status has not arrived.").foregroundStyle(.secondary) }
                     if let media = appDelegate.mediaState {
                         if appDelegate.mediaSessions.count > 1 {
-                            Picker("Phone media session", selection: Binding(get: { media.sessionID }, set: { appDelegate.selectMediaSession($0) })) {
+                            Picker("Media source", selection: Binding(get: { media.sessionID }, set: { appDelegate.selectMediaSession($0) })) {
                                 ForEach(appDelegate.mediaSessions.values.sorted { $0.sessionID < $1.sessionID }, id: \.sessionID) { session in
                                     Text(session.title.isEmpty ? "Phone media" : session.title).tag(session.sessionID)
                                 }
@@ -1042,93 +1469,21 @@ struct ContinuityPanel: View {
                                     .disabled(!media.allows(command) || timeline.date.timeIntervalSince(media.receivedAt) > 120)
                             }
                         }
-                    } else { Text("No active phone media session.").foregroundStyle(.secondary) }
+                    } else { Text("No phone media is playing.").foregroundStyle(.secondary) }
                 }
                 Divider()
-                Button("Send Clipboard to Phone") { appDelegate.sendClipboard() }.disabled(appDelegate.pairedPeerID == nil)
                 HStack {
                     TextField("https://example.com", text: $appDelegate.sharingURL).textFieldStyle(.roundedBorder)
                     Button("Open on Phone") { appDelegate.sendURL() }.disabled(appDelegate.pairedPeerID == nil)
                 }
-                Toggle("Receive clipboard text from phone", isOn: $appDelegate.receiveClipboard)
-                Toggle("Open web links received from phone", isOn: $appDelegate.receiveURLs)
-                Text(appDelegate.commandStatus).font(.caption).textSelection(.enabled)
-                Text("Last reply: \(appDelegate.lastReply)").font(.caption)
+                if appDelegate.commandStatus != "No command pending" {
+                    Text(appDelegate.commandStatus).font(.caption).textSelection(.enabled)
+                }
+                if appDelegate.lastReply != "None" {
+                    Text(appDelegate.lastReply).font(.caption)
+                }
             }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
         }
-    }
-}
-
-struct PairingView: View {
-    @ObservedObject var appDelegate: AppDelegate
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(spacing: 12) {
-                Image(systemName: "link.circle.fill")
-                    .font(.system(size: 42, weight: .semibold))
-                    .foregroundStyle(.blue)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Pair Pixel")
-                        .font(.largeTitle.weight(.semibold))
-                    Text("Nearby pairing")
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-
-            Text(appDelegate.pairingStatusText)
-                .font(.title3)
-
-            if let code = appDelegate.pairingVerificationCode {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(code.emoji.joined(separator: "  "))
-                        .font(.system(size: 44, weight: .bold, design: .rounded))
-                    Text("Code \(code.numeric)")
-                        .font(.title3.monospacedDigit())
-                    Text(code.labels.joined(separator: " + "))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(18)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 18))
-            } else {
-                VStack(alignment: .leading, spacing: 10) {
-                    ProgressView()
-                    Text("Waiting for your Pixel to discover this Mac.")
-                        .foregroundStyle(.secondary)
-                }
-                .padding(18)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 18))
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Open Plink on your Pixel", systemImage: "iphone.gen3.radiowaves.left.and.right")
-                Label("Tap this Mac when it appears", systemImage: "macbook")
-                Label("Confirm here only if the code matches", systemImage: "checkmark.shield")
-            }
-            .foregroundStyle(.secondary)
-
-            HStack(spacing: 12) {
-                Button("Cancel") { appDelegate.cancelPairing() }
-                Button("Restart Discovery") {
-                    appDelegate.startNearbyPairing()
-                }
-                Button("Confirm Pairing") {
-                    Task {
-                        do { try await appDelegate.confirmManualPairing() }
-                        catch { appDelegate.lastDeliveryState = "Pairing failed: \(error.localizedDescription)" }
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
-                .disabled(appDelegate.canConfirmPairing == false)
-            }
-            Spacer()
-        }
-        .padding(28)
-        .frame(width: 500, height: 430)
     }
 }
 

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "Astra parent",
+  "completedAtUTC": "2026-09-20T11:00:21.460637+00:00",
+  "scope": "Two residuals from iteration5-swift-source-rereview.json only; no new physical or original acceptance credit",
+  "sourceSHA256": {
+    "macos/Sources/PlinkCore/ReconnectSession.swift": "8968fa507f5095d536fb1a36c5260cbacfe0639ed7b431d72e6e4d19ad49a50f",
+    "macos/Sources/PlinkCore/ReconnectEndpointStore.swift": "fde188d2e67cc7d8797ec2fdb230dbcfe16432cbde1d4b9bb109871d11e9c21b",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "8872273391092c4cff7b38560079b1f364c000f7dcff6b8083af32b7acde37f8",
+    "macos/Tests/PlinkCoreTests/ReconnectTests.swift": "7f8155d94e5a2a31db303fead9b3080f7c4576b6746df7f0b62718877d651265"
+  },
+  "findings": [
+    {
+      "id": "SWIFT-SOURCE-02 residual",
+      "status": "resolved for owned C1 and transferred C2",
+      "evidence": "Candidate absolute watchdog owns registered channels and candidate authority; expiry closes channels, cancels processing, waits for joined processing before fallback. Final rename shares candidate/overall authority lock; file and directory fsync occur outside that authority lock. Production app displays disconnecting on expiry. candidateDeadlineClosesReverseChannelWhileBlockedCommitJoins passes against real loopback encrypted exchange with blocked commit dependency."
+    },
+    {
+      "id": "SW5-01 registration residual",
+      "status": "resolved",
+      "evidence": "Listener processing task construction and publication occur under the stop lock. Registration observing an already stopped listener cancels task and closes socket before joining. A deterministic registration latch and blocked authenticated replay persistence test confirms peer EOF, delayed stop completion and cancellation observed by retained work."
+    }
+  ],
+  "tests": {
+    "log": ".a5c/artifacts/iteration5-swift-fixtures-7.log",
+    "exitCode": 0,
+    "swiftTestingCore": 37,
+    "swiftTestingMac": 9
+  },
+  "limitations": [
+    "Pre-transfer C2 is listener-owned. Listener stop cancellation/join is tested separately; candidate watchdog is not claimed to cancel arbitrary pre-transfer replay persistence.",
+    "Source and focused tests do not establish native UI, physical routing, cross-device runtime success or all RC-01 through RC-13 supplemental cases.",
+    "Canonical full gate is running."
+  ]
+}

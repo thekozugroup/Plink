@@ -57,7 +57,7 @@
       "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/timerScreen/TimerMainPane.kt",
       "upstreamSha256": "3720c080b282e8afe06c7bb696e63a60028d61412e1a3eb71562f45605c7c3cd",
       "adaptedPath": "android/src/main/java/app/plink/android/ui/ConnectionRing.kt",
-      "adaptedSha256": "115374692b515960b4d66dbff616f68d5301c336c57ff7855e637990dd6346e7",
+      "adaptedSha256": "f05529afc480157ae1b66c8bebd04891309a39397f98e539cfd3fbecaadb72a8",
       "changeNote": "Adapted animated Compose pane layout patterns for Plink's status and continuity content, including functional spatial and effects motion mappings."
     },
     {
@@ -65,7 +65,7 @@
       "upstreamUrl": "https://github.com/nsh07/Tomato/blob/1bba8459cb20029f8544efa96c5d62181a769bed/shared/src/commonMain/kotlin/org/nsh07/pomodoro/ui/settingsScreen/screens/SettingsMainScreen.kt",
       "upstreamSha256": "2f37254b218df1f975ae91262cda0deb8b7170e9cff2467fa72230a1d6327ec0",
       "adaptedPath": "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt",
-      "adaptedSha256": "f7beb7fb2986b45de53822867bd431fcc7dfcbf113357b49db3140f7958a57b3",
+      "adaptedSha256": "392c4a753c5608a9c9316554d5fe84e1ef2e629552969f730b0b27fc9d5d6e38",
       "changeNote": "Adapted expressive settings-list and card presentation patterns for Plink setup controls, including top-bar and destination effects motion use. Uses the pinned surfaceContainer Settings background and surfaceBright inactive rows; adds original Plink screen-preview placement."
     }
   ],

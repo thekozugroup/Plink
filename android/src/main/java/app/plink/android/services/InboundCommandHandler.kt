@@ -10,36 +10,38 @@ import kotlinx.serialization.json.put
 import java.time.Instant
 import java.util.UUID
 
+enum class HandoffResult(val wireStatus: String) {
+    AwaitingUser("awaiting_user"),
+    Executed("executed")
+}
+
 class InboundCommandHandler(
     private val localDeviceId: String,
     private val pairedDeviceId: String,
     private val executeReply: suspend (PlinkEnvelope) -> Unit,
     private val executeMedia: (sessionId: String, command: String) -> Unit,
-    private val executeHandoff: (PlinkEnvelope) -> Unit = {},
+    private val executeHandoff: suspend (PlinkEnvelope) -> HandoffResult = { HandoffResult.AwaitingUser },
+    private val isAdmitted: () -> Boolean = { true },
     private val send: suspend (PlinkEnvelope) -> Unit
 ) {
     suspend fun handle(command: PlinkEnvelope) {
-        if (command.sourceDeviceId != pairedDeviceId || command.targetDeviceId != localDeviceId) return
+        if (!isAdmitted() || command.sourceDeviceId != pairedDeviceId || command.targetDeviceId != localDeviceId) return
         val outcome = try {
+            if (!isAdmitted()) return
+            var handoffResult = HandoffResult.Executed
             when (command.type) {
                 PlinkEventType.MessageReply -> executeReply(command)
                 PlinkEventType.MediaCommand -> executeMedia(
                     command.requiredString("sessionId"),
                     command.requiredString("command")
                 )
-                PlinkEventType.WebOpen, PlinkEventType.ClipboardUpdated -> executeHandoff(command)
+                PlinkEventType.WebOpen, PlinkEventType.ClipboardUpdated -> handoffResult = executeHandoff(command)
                 else -> return
             }
+            if (!isAdmitted()) return
             outcome(command, PlinkEventType.Ack, buildJsonObject {
                 put("eventId", command.id)
-                put(
-                    "status",
-                    if (command.type == PlinkEventType.WebOpen || command.type == PlinkEventType.ClipboardUpdated) {
-                        "awaiting_user"
-                    } else {
-                        "executed"
-                    }
-                )
+                put("status", handoffResult.wireStatus)
                 put("action", command.type)
             })
         } catch (cancellation: CancellationException) {
@@ -51,6 +53,7 @@ class InboundCommandHandler(
                 put("message", "The requested action could not be completed.")
             })
         }
+        if (!isAdmitted()) return
         send(outcome)
     }
 

@@ -1,0 +1,12 @@
+{
+  "checks": {
+    "forward": "passed",
+    "hostProcesses": "passed",
+    "testPackage": "passed"
+  },
+  "cleanupExitCode": 0,
+  "errors": [],
+  "passed": false,
+  "primaryExitCode": 1,
+  "scope": "Owned test package and exact transport mappings; screen finalizer verifies capture and app state"
+}

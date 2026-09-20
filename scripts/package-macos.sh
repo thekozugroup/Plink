@@ -20,12 +20,14 @@ mkdir -p "$DIST_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 cp "$ROOT_DIR/macos/.build/release/PlinkMac" "$MACOS_DIR/PlinkMac"
 cp "$ROOT_DIR/macos/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
+cp "$ROOT_DIR/macos/Resources/Plink.icns" "$RESOURCES_DIR/Plink.icns"
 cp "$ROOT_DIR/macos/Resources/PlinkMac.entitlements" "$RESOURCES_DIR/PlinkMac.entitlements"
 chmod +x "$MACOS_DIR/PlinkMac"
 
 plutil -lint "$APP_DIR/Contents/Info.plist" >/dev/null
 test -x "$MACOS_DIR/PlinkMac"
 test -f "$RESOURCES_DIR/PlinkMac.entitlements"
+test -f "$RESOURCES_DIR/Plink.icns"
 
 # Finder/provenance xattrs can be attached by local filesystem tools and make
 # strict codesign verification fail even when the signature itself is valid.

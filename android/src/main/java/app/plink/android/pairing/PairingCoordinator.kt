@@ -64,10 +64,13 @@ class PairingCoordinator internal constructor(
         val frameState: FrameStateStore,
         val prepare: (PairingOffer, String) -> Prepared,
         val snapshot: () -> ActivePlinkSession?,
-        val stop: () -> Unit,
-        val configure: (ActivePlinkSession, Int) -> Unit,
+        val stop: suspend () -> Unit,
+        val configure: suspend (ActivePlinkSession, Int) -> Unit,
         val connect: (Int) -> Connection,
-        val now: () -> Long
+        val now: () -> Long,
+        val restore: suspend (ActivePlinkSession, Int, Boolean) -> Unit = { session, port, _ ->
+            configure(session, port)
+        }
     )
 
     /** Workers exchange bytes only; keys and trust decisions remain with the lifecycle owner. */
@@ -277,31 +280,42 @@ class PairingCoordinator internal constructor(
 
     private var recoveryFailed = false
 
-    /** Transfer an independent key to the controller, wiping it if activation throws. */
-    private fun configure(session: ActivePlinkSession, port: Int) {
+    /** Give the environment a temporary key copy; the activated lifetime must take its own copy. */
+    private suspend fun configure(session: ActivePlinkSession, port: Int) {
         val owned = session.copy(sessionKey = session.copySessionKey())
         try { environment.configure(owned, port) }
         catch (error: Exception) {
             try { environment.stop() } catch (cleanup: Exception) { error.addSuppressed(cleanup) }
-            owned.sessionKey.fill(0)
             throw error
+        } finally {
+            owned.sessionKey.fill(0)
         }
     }
 
-    private fun restore(current: Attempt) {
+    private suspend fun restore(current: Attempt) {
         if (!current.stoppedSession) return
         environment.stop()
-        current.previous?.let { configure(it, current.previousPort) }
+        // A stopped lifetime cannot lend its prior admission proof to a new lifetime.
+        val snapshot = current.previous ?: return
+        val owned = snapshot.copy(sessionKey = snapshot.copySessionKey())
+        try {
+            environment.restore(owned, current.previousPort, false)
+        } finally {
+            owned.sessionKey.fill(0)
+        }
     }
 
-    private fun stopNetwork(current: Attempt) {
-        current.jobs.forEach { it.cancel() }
+    private suspend fun stopNetwork(current: Attempt) {
+        val jobs = current.jobs.toList()
         current.jobs.clear()
+        jobs.forEach { it.cancel() }
         current.connection?.close()
         current.connection = null
+        // Closing Connection synchronously releases the listener and sockets. Any
+        // late worker completion remains attempt-scoped and cannot affect a replacement.
     }
 
-    private fun release(current: Attempt) {
+    private suspend fun release(current: Attempt) {
         try { stopNetwork(current) }
         finally {
             current.gate.cancel()
@@ -312,7 +326,7 @@ class PairingCoordinator internal constructor(
         }
     }
 
-    private fun reset(state: State): Boolean {
+    private suspend fun reset(state: State): Boolean {
         val current = attempt
         try {
             if (current != null) {
@@ -330,7 +344,7 @@ class PairingCoordinator internal constructor(
         return !recoveryFailed
     }
 
-    private fun fail(current: Attempt, message: String) {
+    private suspend fun fail(current: Attempt, message: String) {
         if (attempt === current) reset(State(message = message))
     }
 
@@ -354,13 +368,29 @@ class PairingCoordinator internal constructor(
             },
             snapshot = { app.invalidateSavedSessionRestoreAndSnapshot() }, stop = {
                 app.invalidateSavedSessionRestore()
-                app.sessionController.stop()
+                app.sessionController.stopAndAwait()
             },
             configure = { session, port ->
-                app.sessionController.configure(session.localDeviceId, session.pairedDevice, session.sessionKey, port)
+                app.sessionController.configureAndAwait(
+                    session.localDeviceId,
+                    session.pairedDevice,
+                    session.sessionKey,
+                    port,
+                    admitOrdinary = true
+                )
                 check(app.sessionController.status.value == SessionStatus.READY) { "Pairing session was not activated." }
             },
-            connect = { SocketConnection(it) }, now = SystemClock::elapsedRealtime
+            connect = { SocketConnection(it) },
+            now = SystemClock::elapsedRealtime,
+            restore = { session, port, _ ->
+                app.sessionController.configureAndAwait(
+                    session.localDeviceId,
+                    session.pairedDevice,
+                    session.sessionKey,
+                    port,
+                    admitOrdinary = false
+                )
+            }
         )
     }
 }

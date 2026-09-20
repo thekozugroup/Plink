@@ -23,6 +23,7 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 - `ContinuityEventRepository` for calls, messages, clipboard, files, web links, battery, and media commands.
 - Android Keystore-backed paired-device storage for production metadata and secrets; local tests use injectable memory storage.
 - Secure socket client/server with encrypted length-prefixed frames.
+- A listener for authenticated reconnect that admits ordinary traffic only after fresh proof, with public Android `Network` binding for production sockets.
 - Android 14+ screen projection service and request-bound, single-use in-memory consent. Screen frames use a bounded volatile send path rather than the durable notification outbox.
 
 ### macOS
@@ -37,6 +38,7 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 - Native message notifications with text reply action.
 - Pasteboard/URL handoff adapters and consented file transfer with native file pickers.
 - Secure `Network.framework` sender and receiver using length-prefixed encrypted frames.
+- A local IPv4 reconnect coordinator with paired-device discovery, explicit address entry, interface-bound sockets and fresh proof in both directions.
 - A shared serialized sender per paired peer, with bounded and cancellable screen work behind ordinary commands and file traffic.
 - Native view-only screen and external USB webcam windows, both foreground-only. Their implementation and physical verification status are recorded separately in the feature inventory.
 
@@ -58,6 +60,8 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 8. Future events must include the paired device id and protocol version.
 
 Pairing uses deterministic key-bound confirmation plus ECDH-derived session keys. Session traffic is sent as encrypted, signed, length-prefixed frames with replay checks and expected peer/local device-id checks. A future hardening path can replace the direct ECDH/HKDF exchange with Noise/HPKE or TLS with pinned per-device certificates.
+
+Remembered security-version-2 pairings start with ordinary traffic closed until a fresh reconnect proof succeeds. Endpoint hints are authenticated sidecars, separate from pairing keys and records. See [reconnect behavior, limits and verification scope](reconnect.md).
 
 ## Protocol Envelope
 
@@ -107,6 +111,7 @@ Runtime events are validated before send and after receive:
 - `media.command`
 - `permission.state`
 - `screen.request`, `screen.state`, `screen.pull`, `screen.frame`, `screen.idle`, `screen.stop`
+- `reconnect.hello`, `reconnect.challenge`, `reconnect.proof`, `reconnect.reverse`, `reconnect.reverse_proof`, `reconnect.ready`, `reconnect.commit`, `reconnect.done`
 - `ack`
 - `error`
 
@@ -119,8 +124,9 @@ Android:
 - SMS default app/SMS permissions: required for direct SMS texting.
 - SMS permissions are not declared in the Android manifest until the default-SMS-role flow exists.
 - Phone state: not requested in the current build; call mirroring uses notification access.
-- Clipboard handoff uses Android sharing and an explicit incoming notification action. The placeholder accessibility class is not registered and does not automate clipboard access.
-- Shizuku availability can be reported, but baseline behavior does not depend on it and there is no implemented privileged continuity path.
+- Manual clipboard handoff uses Android sharing and an explicit incoming notification action.
+- Automatic clipboard sync is separately opt-in. It uses an explicitly authorized, non-daemon Shizuku shell helper for personal-profile clipboard reads while the phone is unlocked. The helper has no transport or pairing secrets. It refuses sensitive-marked, non-text and oversized content; clipboard text is not persisted. Baseline continuity does not require Shizuku, and Plink does not install or start it.
+- Automatic clipboard updates carry `automatic: true`, bypass manual handoff notifications only while the sync toggle is on, and are volatile. A new session or enable period establishes a fresh baseline. Off, replacement, disconnection and timeout cancel owned sends; already-written network bytes cannot be recalled.
 - Screen preview requires fresh MediaProjection consent per session. Consent tokens, JPEG data and decoded frames remain in memory; no screen audio, recording or remote control is provided.
 
 macOS:
@@ -137,7 +143,7 @@ macOS:
 | Pairing | Yes | Emoji confirmation, paired state, protocol events |
 | Calls | Experimental | Native Bluetooth HFP control and audio-route requests; carrier control and two-way laptop speech still need hardware verification |
 | Message replies | Yes | macOS text reply event; Android executes notification reply when available |
-| Clipboard | Yes | Explicit Android share/incoming action; no automatic Android clipboard monitor |
+| Clipboard | Yes | Optional automatic text sync on Mac and authorized Shizuku-assisted Android; manual sharing remains separate. Real two-way use is not yet verified. |
 | Files | Yes | Authenticated offer/accept/chunk/result flow, 16 MiB limit, size/SHA-256 checks and explicit native destination selection |
 | Web handoff | Yes | URL open event |
 | Battery/device | Yes | State event and UI |

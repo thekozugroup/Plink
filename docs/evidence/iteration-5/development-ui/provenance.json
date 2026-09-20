@@ -1,0 +1,17 @@
+{
+  "capturedAtUTC": "2026-09-20T10:25:28.838929+00:00",
+  "serial": "emulator-5580",
+  "physicalPixelTouched": false,
+  "apkSha256": "b71d39bcff73a8494a4a8062b36985dde2acc4cbd2e7742b4cbde8e97bd3befb",
+  "installedApkSha256": "b71d39bcff73a8494a4a8062b36985dde2acc4cbd2e7742b4cbde8e97bd3befb",
+  "scope": "Development APK design capture, after165unit tests. Not final source freeze or end-to-end reconnect evidence.",
+  "buildLog": ".a5c/artifacts/iteration5-android-debug-build-1.log",
+  "phoneTemporaryFilesRemaining": false,
+  "images": {
+    "connection-dark.png": "dcba23657c44a301799a9058c81cb5fd3471444772691174462eabe685a8b3ad",
+    "settings-dark.png": "d1602f80e43e372bb6f42796540648407b5d2cad078917cd6f2cc5d9a9181318",
+    "settings-light.png": "424774816ddbd3ef092e01e4dc3d1dd2ae058f91d9b92b63f2fdeaf44fabc34e"
+  },
+  "nightModeRestored": "Night mode: yes",
+  "fontScaleUnchanged": "1.0"
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "inspector": "Astra parent second length-prefixed reader",
+  "inspectorSHA256": "ecd424415a3efa111c358541d51aad7c44015a1761b6ae4e30b61b97a7e56315",
+  "scope": "Keyless wire structure, counters, nonce uniqueness and exact capture hashes. Does not independently decrypt or authenticate contents.",
+  "directions": {
+    "android-to-mac": {
+      "frames": 2,
+      "wireBytes": 1620,
+      "maximumFrameBytes": 956,
+      "sha256": "fc35ed020970f86e57c36a228bd6f2f8b2461092834ca701fb098d3db77b593d",
+      "strictlyIncreasingSequences": true,
+      "uniqueNonces": 2,
+      "sequenceRange": [
+        1,
+        2
+      ]
+    },
+    "mac-to-android": {
+      "frames": 1,
+      "wireBytes": 980,
+      "maximumFrameBytes": 976,
+      "sha256": "b0ef3d9dbef687880ce4c4848ac0937493da2350903b137e1ea5c13ff4548410",
+      "strictlyIncreasingSequences": true,
+      "uniqueNonces": 1,
+      "sequenceRange": [
+        1,
+        1
+      ]
+    }
+  },
+  "rawCapturesRemovedAfterInspection": true,
+  "physicalPixelTouched": false,
+  "passed": true
+}

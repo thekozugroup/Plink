@@ -9,6 +9,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     private var callContext: MacCallContext?
     private var callNotificationID: String?
     private var callNumber: String?
+    private var authorizationRefresh = UUID()
     var onTextReply: ((ReplyContext, String) -> Void)?
     var onCallAction: ((MacCallAction, MacCallContext) -> Void)?
     var onAuthorizationChanged: ((Bool, Error?) -> Void)?
@@ -34,8 +35,15 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         // Only startup clears all OS notifications. Message eviction must preserve live calls.
         center.removeAllDeliveredNotifications()
         center.removeAllPendingNotificationRequests()
+        refreshAuthorization()
+    }
+
+    func refreshAuthorization() {
+        let refresh = UUID()
+        authorizationRefresh = refresh
         Task {
             let settings = await center.notificationSettings()
+            guard authorizationRefresh == refresh else { return }
             onAuthorizationChanged?(settings.authorizationStatus == .authorized, nil)
         }
     }
@@ -43,7 +51,10 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     /// Called only from an explicit user control, never automatically on launch.
     func requestAuthorization() {
         Task {
-            do { onAuthorizationChanged?(try await center.requestAuthorization(options: [.alert, .sound]), nil) }
+            do {
+                _ = try await center.requestAuthorization(options: [.alert, .sound])
+                refreshAuthorization()
+            }
             catch { onAuthorizationChanged?(false, error) }
         }
     }

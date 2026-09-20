@@ -1,0 +1,10 @@
+{
+  "scope": "Synthetic Android RemoteInput and actual encrypted Android\u2013Swift receiver process; no native macOS Notification Center or external recipient proof",
+  "passed": true,
+  "androidReport": "PLINK DEVICE CHECKS PASSED: RemoteInput text delivered once, Notification replacement revokes reply, Keyed notification removal revokes reply, Data-only RemoteInput rejected, Authentication-required action rejected, Synthetic final-dispatch lifecycle, permission, feature, session, peer and queued revocations reject without sends or executed acks, Reconnect issues a fresh one-time route, exact UTF-8 survives, and send failures never restore consumed routes, Android filesystem retains counters and replay rejection across store recreation, Encrypted Android\u2013Swift reply roundtrip, real RemoteInput delivery and execution ack",
+  "receiverSha256After": "ef4a984aa71378f60fe1fd61e3095639bf14d0a678535e5d7ced5e401ba622fa",
+  "mainApkSha256After": "b71d39bcff73a8494a4a8062b36985dde2acc4cbd2e7742b4cbde8e97bd3befb",
+  "testApkSha256After": "c8d25fb23a77deb3f0a157c93b93dc82138d655bf30c67157529871a8ec93a22",
+  "provenanceLimit": "Diagnostic run during development. Hashes recorded after run only; final frozen build will be rerun with before/after provenance.",
+  "physicalPixelTouched": false
+}

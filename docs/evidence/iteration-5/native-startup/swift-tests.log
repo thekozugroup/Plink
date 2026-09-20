@@ -1,0 +1,274 @@
+[0/1] Planning build
+Building for debugging...
+[0/14] Write sources
+[5/14] Write swift-version--1AB21518FC5DEDBE.txt
+[7/22] Compiling PlinkCore ReconnectProtocol.swift
+[8/22] Compiling PlinkCore BaselineJPEGValidator.swift
+[9/22] Compiling PlinkCore PlinkMessage.swift
+[10/22] Compiling PlinkCore ReconnectEndpointStore.swift
+/Users/michaelwong/Developer/Plink/macos/Sources/PlinkCore/ReconnectEndpointStore.swift:80:14: warning: result of call to 'withLock' is unused [#no-usage]
+ 78 | 
+ 79 |     fileprivate func invalidate(candidateID: UUID) {
+ 80 |         lock.withLock { candidates.removeValue(forKey: candidateID) }
+    |              `- warning: result of call to 'withLock' is unused [#no-usage]
+ 81 |     }
+ 82 | 
+[11/22] Emitting module PlinkCore
+[12/22] Compiling PlinkCore ReconnectSession.swift
+[13/22] Compiling PlinkCore SecureEnvelope.swift
+[14/22] Compiling PlinkCore ScreenFrameDecoder.swift
+[15/40] Compiling PlinkCore ScreenPreviewProtocol.swift
+[16/40] Compiling PlinkCore PairingStore.swift
+[17/40] Compiling PlinkCore ScreenPreviewSession.swift
+[18/43] Compiling PlinkCore NotificationPlan.swift
+[19/43] Compiling PlinkCore SerializedPlinkSender.swift
+[20/43] Compiling PlinkCore ReplyRouter.swift
+[21/43] Compiling PlinkCore PairingDiscovery.swift
+[22/43] Compiling PlinkCore LocalTransport.swift
+[23/43] Compiling PlinkCore MacDeviceIdentity.swift
+[24/43] Compiling PlinkCore MacNotificationBookkeeping.swift
+[25/43] Compiling PlinkCore Pairing.swift
+[26/43] Compiling PlinkCore HandoffAdapters.swift
+[27/43] Compiling PlinkCore MacFileTransfer.swift
+[28/43] Compiling PlinkCore WebcamPreviewPolicy.swift
+[29/43] Compiling PlinkCore MacPairingFinalization.swift
+[30/43] Compiling PlinkCore FrameStateStore.swift
+[31/43] Compiling PlinkCore FileTransferPayloadPolicy.swift
+[32/43] Compiling PlinkCore MacContinuity.swift
+[33/43] Compiling PlinkCore PlinkJSON.swift
+[34/43] Compiling PlinkCore PairingConsent.swift
+[35/43] Compiling PlinkCore EmojiPairing.swift
+[36/88] Compiling PlinkCoreTests ReplyContextStoreTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[37/89] Compiling PlinkCoreTests PairingConsentTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[38/89] Compiling PlinkCoreTests PairingDiscoveryTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[39/89] Compiling PlinkCoreTests PairingSecurityTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[40/89] Compiling PlinkCoreTests PairingStateMachineTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[41/89] Compiling PlinkCoreTests PairingMigrationTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[42/89] Compiling PlinkCoreTests PairingSecretStoreTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[43/89] Compiling PlinkCoreTests ReplyRouterTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[44/89] Compiling PlinkCoreTests MacContinuityTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[45/89] Compiling PlinkCoreTests MacDeviceIdentityTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[46/89] Compiling PlinkCoreTests MacPairingFinalizationTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[47/89] Compiling PlinkCoreTests NotificationPlanTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[48/89] Compiling PlinkCoreTests EncryptedFrameRandomnessTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[49/89] Compiling PlinkCoreTests FileTransferPayloadPolicyTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[50/89] Compiling PlinkCoreTests SocketLifecycleTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[51/89] Compiling PlinkCoreTests PlinkMessageTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[52/89] Compiling PlinkCoreTests ReconnectFixtureContractTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[53/89] Compiling PlinkCoreTests FoundationSecurePlinkServerTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[54/89] Compiling PlinkCoreTests LengthPrefixedFrameCodecTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+error: emit-module command failed with exit code 1 (use -v to see invocation)
+[55/89] Emitting module PlinkCoreTests
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[56/89] Compiling PlinkCoreTests DurableFrameStateTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[57/89] Compiling PlinkCoreTests EmojiPairingTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[58/89] Compiling PlinkCoreTests MacFileTransferTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[59/89] Compiling PlinkCoreTests MacNotificationBookkeepingTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[60/89] Compiling PlinkCoreTests SecureEnvelopeTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[61/89] Compiling PlinkCoreTests SerializedPlinkSenderTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[62/89] Compiling PlinkCoreTests WebcamPreviewPolicyTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[63/89] Compiling PlinkCoreTests ScreenPreviewTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+[64/89] Compiling PlinkCoreTests ReconnectTests.swift
+/Users/michaelwong/Developer/Plink/macos/Tests/PlinkCoreTests/DurableFrameStateTests.swift:3:8: error: no such module 'Testing'
+ 1 | import Foundation
+ 2 | import PlinkCore
+ 3 | import Testing
+   |        `- error: no such module 'Testing'
+ 4 | 
+ 5 | @Test func durableFrameStateSurvivesRecreationAndAcceptsReordering() throws {
+error: fatalError

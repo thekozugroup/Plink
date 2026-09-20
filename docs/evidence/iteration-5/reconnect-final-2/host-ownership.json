@@ -1,0 +1,391 @@
+{
+  "appApkSha256": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "commands": [
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "get-state"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "getprop",
+      "ro.kernel.qemu"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "getprop",
+      "ro.product.model"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "list",
+      "packages"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "install",
+      "--no-streaming",
+      "-t",
+      "/Users/michaelwong/Developer/Plink/android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~VfaPqPPtRzSprN1M4xWYJg==/app.plink.android.test-eAUx8AS8i4Nty-tTYXggpw==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~VfaPqPPtRzSprN1M4xWYJg==/app.plink.android.test-eAUx8AS8i4Nty-tTYXggpw==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--no-rebind",
+      "tcp:46731",
+      "tcp:46731"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--no-rebind",
+      "tcp:46732",
+      "tcp:46732"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~VfaPqPPtRzSprN1M4xWYJg==/app.plink.android.test-eAUx8AS8i4Nty-tTYXggpw==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "am",
+      "instrument",
+      "-w",
+      "-e",
+      "mode",
+      "reconnect",
+      "-e",
+      "sessionKeyBase64",
+      "<redacted>",
+      "-e",
+      "macPort",
+      "46732",
+      "-e",
+      "replyPort",
+      "46731",
+      "-e",
+      "reconnectRunId",
+      "ccc2024c-e43f-43c2-bcdc-4080c190bd2c",
+      "-e",
+      "reconnectPhase",
+      "A",
+      "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--remove",
+      "tcp:46732"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "reverse",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--remove",
+      "tcp:46731"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "forward",
+      "--list"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~9r1MKWTJfXg5JHJuEjXa6g==/app.plink.android-a-5Y0C6Kyxm9HZKrdvuNpQ==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~VfaPqPPtRzSprN1M4xWYJg==/app.plink.android.test-eAUx8AS8i4Nty-tTYXggpw==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "am",
+      "instrument",
+      "-w",
+      "-e",
+      "mode",
+      "reconnectCleanup",
+      "-e",
+      "reconnectRunId",
+      "ccc2024c-e43f-43c2-bcdc-4080c190bd2c",
+      "app.plink.android.test/app.plink.android.PlinkDeviceTestRunner"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "list",
+      "packages"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "path",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "sha256sum",
+      "/data/app/~~VfaPqPPtRzSprN1M4xWYJg==/app.plink.android.test-eAUx8AS8i4Nty-tTYXggpw==/base.apk"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "uninstall",
+      "app.plink.android.test"
+    ],
+    [
+      "/opt/homebrew/bin/adb",
+      "-s",
+      "emulator-5580",
+      "shell",
+      "pm",
+      "list",
+      "packages"
+    ]
+  ],
+  "emulatorModel": "sdk_gphone64_arm64",
+  "install": {
+    "attempted": true,
+    "phase": "absent"
+  },
+  "installedMainApkSha256Before": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+  "installedTestApkSha256Before": "112b112e8a9c151eb2b57cd7acd2aee88d6a0e3c2f24415018663dfd12322b0c",
+  "instrumentInstalled": true,
+  "lastHints": {
+    "mac": null,
+    "phone": null
+  },
+  "lastSequences": {
+    "mac": 0,
+    "phone": 0
+  },
+  "macStateDir": "/Users/michaelwong/Developer/Plink/docs/evidence/iteration-5/reconnect-final-2/reconnect-state",
+  "phases": {
+    "A": {
+      "macPort": 46732,
+      "maps": [
+        {
+          "kind": "forward",
+          "local": "tcp:46731",
+          "phase": "absent",
+          "remote": "tcp:46731"
+        },
+        {
+          "kind": "reverse",
+          "local": "tcp:46732",
+          "phase": "absent",
+          "remote": "tcp:46732"
+        }
+      ],
+      "phonePort": 46731,
+      "result": "pending"
+    }
+  },
+  "proofIdHashes": [],
+  "receiverSha256Before": "1d5a3f628f348b8ca32a18ab3de4a81d23bc59e9487fd57132b1c690b1dccbb3",
+  "reconnectInstrumentAttempted": true,
+  "runId": "ccc2024c-e43f-43c2-bcdc-4080c190bd2c",
+  "schemaVersion": 1,
+  "serial": "emulator-5580",
+  "sourceDigestsBefore": {
+    "shared/protocol/v1/reconnect/cases.json": "d8b47bc8281c699aa2726d3caf966e11c0acbf6be1eda73e634cea4726aefe7d",
+    "shared/protocol/v1/reconnect/encrypted-vectors.json": "3bfa3569baeda3122dc8fce2a6a4244102cff5cc165c8948e8b6c4f63682ad89",
+    "shared/protocol/v1/reconnect/network-cases.json": "ff290c635c10d36fa9bc0aebd7ac2824df6b7d41f3b826c2185f5165e7d2b8cf"
+  },
+  "sourceTreeSha256Before": "c79d877ca0140dde2e105ab57ae253d6cbf0b9f5b5425afa527259a3894fbeb5",
+  "testApkSha256": "112b112e8a9c151eb2b57cd7acd2aee88d6a0e3c2f24415018663dfd12322b0c"
+}

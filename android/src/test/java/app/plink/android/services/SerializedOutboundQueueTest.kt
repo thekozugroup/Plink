@@ -5,10 +5,14 @@ import app.plink.android.protocol.PlinkEventType
 import app.plink.android.transport.OutboundPlinkSender
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.advanceTimeBy
@@ -458,6 +462,54 @@ class SerializedOutboundQueueTest {
         assertTrue(forwarded.get())
         assertTrue(sent.await(5, TimeUnit.SECONDS))
         SharedOutboundBridge.configure(null)
+    }
+
+    @Test
+    fun cancelledDrainWaiterDoesNotForgetRunningRetiredQueue() = runBlocking {
+        SharedOutboundBridge.configure(null)
+        val removalEntered = CountDownLatch(1)
+        val releaseRemoval = CountDownLatch(1)
+        val replacementSent = CountDownLatch(1)
+        val outbox = object : EventOutbox {
+            override fun store(envelope: PlinkEnvelope) = true
+            override fun pending(): List<PlinkEnvelope> = emptyList()
+            override fun remove(id: String) {
+                removalEntered.countDown()
+                check(releaseRemoval.await(5, TimeUnit.SECONDS))
+            }
+            override fun removeTypes(types: Set<String>) = Unit
+        }
+        try {
+            SharedOutboundBridge.configure(
+                sender = object : OutboundPlinkSender {
+                    override suspend fun send(envelope: PlinkEnvelope) = Unit
+                },
+                outbox = outbox
+            )
+            assertTrue(SharedOutboundBridge.tryForward(envelope("retired")))
+            assertTrue(removalEntered.await(5, TimeUnit.SECONDS))
+            SharedOutboundBridge.configure(null)
+
+            val cancelledWaiter = launch(Dispatchers.IO) { SharedOutboundBridge.awaitQuiescence() }
+            delay(50)
+            cancelledWaiter.cancelAndJoin()
+
+            SharedOutboundBridge.configure(sender = object : OutboundPlinkSender {
+                override suspend fun send(envelope: PlinkEnvelope) {
+                    replacementSent.countDown()
+                }
+            })
+            assertTrue(SharedOutboundBridge.tryForward(envelope("replacement")))
+            assertFalse(replacementSent.await(200, TimeUnit.MILLISECONDS))
+
+            releaseRemoval.countDown()
+            assertTrue(replacementSent.await(5, TimeUnit.SECONDS))
+            SharedOutboundBridge.configure(null)
+            withTimeout(5_000) { SharedOutboundBridge.awaitQuiescence() }
+        } finally {
+            releaseRemoval.countDown()
+            SharedOutboundBridge.configure(null)
+        }
     }
 
     private fun envelope(

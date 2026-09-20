@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "A-forward": "passed",
+    "A-reverse": "passed",
+    "androidReconnectState": "passed",
+    "hostProcesses": "passed",
+    "macReconnectState": "passed",
+    "testPackage": "passed"
+  },
+  "cleanupExitCode": 0,
+  "errors": [],
+  "passed": false,
+  "primaryExitCode": 1,
+  "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+}

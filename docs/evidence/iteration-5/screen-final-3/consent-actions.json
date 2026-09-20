@@ -1,0 +1,47 @@
+{
+  "actions": [
+    {
+      "text": "Share screen",
+      "bounds": [
+        200,
+        657,
+        428,
+        710
+      ],
+      "atUTC": "2026-09-20T11:27:22.049692+00:00"
+    },
+    {
+      "text": "Share one app",
+      "bounds": [
+        105,
+        996,
+        975,
+        1185
+      ],
+      "atUTC": "2026-09-20T11:27:24.153852+00:00"
+    },
+    {
+      "text": "Share entire screen",
+      "bounds": [
+        158,
+        1248,
+        922,
+        1311
+      ],
+      "atUTC": "2026-09-20T11:27:26.250259+00:00"
+    },
+    {
+      "text": "Share screen",
+      "bounds": [
+        676,
+        1511,
+        975,
+        1637
+      ],
+      "atUTC": "2026-09-20T11:27:28.359702+00:00"
+    }
+  ],
+  "operatorError": null,
+  "method": "Observed visible labels and bounds, normal consent only",
+  "physicalPixelTouched": false
+}

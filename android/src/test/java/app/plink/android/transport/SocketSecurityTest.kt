@@ -3,6 +3,7 @@ package app.plink.android.transport
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
 import app.plink.android.security.*
+import app.plink.android.services.OrdinaryAdmissionLease
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
@@ -11,6 +12,8 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 import org.junit.Assert.*
@@ -41,10 +44,13 @@ class SocketSecurityTest {
         repeat(100) { try { return Socket("127.0.0.1", port) } catch (_: java.io.IOException) { delay(10) } }
         error("listener did not start")
     }
-    private fun send(socket: Socket, now: Instant) {
-        val frame = EncryptedFrameCodec(key).seal(envelope(now), 1, issuedAt=now)
+    private fun send(socket: Socket, now: Instant, sequence: Long = 1) {
+        LengthPrefixedFrameCodec.write(DataOutputStream(socket.getOutputStream()), frameBytes(now, sequence))
+    }
+    private fun frameBytes(now: Instant, sequence: Long = 1): ByteArray {
+        val frame = EncryptedFrameCodec(key).seal(envelope(now), sequence, issuedAt=now)
         val json = Json { encodeDefaults = true }
-        LengthPrefixedFrameCodec.write(DataOutputStream(socket.getOutputStream()), json.encodeToString(EncryptedPlinkFrame.serializer(), frame).toByteArray())
+        return json.encodeToString(EncryptedPlinkFrame.serializer(), frame).toByteArray()
     }
     @Test fun cancellationClosesAcceptAndReleasesPort() = runBlocking {
         val port = port()
@@ -94,6 +100,149 @@ class SocketSecurityTest {
             }
             assertEquals("synthetic", withTimeout(1_000) { result.await() }.id)
         } finally { server.close() }
+    }
+    @Test fun frameReadUsesOneDeadlineAcrossPrefixAndBody() = runBlocking {
+        val port = port()
+        val server = SecureSocketPlinkServer(port, EncryptedFrameCodec(key), InMemoryFrameStateStore())
+        try {
+            server.start()
+            val accepted = async(Dispatchers.IO) { server.acceptExchange() }
+            connect(port).use { socket ->
+                val exchange = accepted.await()
+                exchange.use {
+                    val result = async(Dispatchers.IO) { runCatching { exchange.read(180) } }
+                    val payload = frameBytes(Instant.now())
+                    delay(120)
+                    DataOutputStream(socket.getOutputStream()).apply {
+                        writeInt(payload.size)
+                        flush()
+                    }
+                    delay(120)
+                    runCatching { socket.getOutputStream().write(payload) }
+                    assertTrue(withTimeout(1_000) { result.await() }.exceptionOrNull() is SocketTimeoutException)
+                }
+            }
+        } finally { server.close() }
+    }
+    @Test fun knownReconnectReadRejectsOversizedPrefixBeforeBody() = runBlocking {
+        val port = port()
+        val server = SecureSocketPlinkServer(port, EncryptedFrameCodec(key), InMemoryFrameStateStore())
+        try {
+            server.start()
+            val accepted = async(Dispatchers.IO) { server.acceptExchange() }
+            connect(port).use { socket ->
+                val exchange = accepted.await()
+                exchange.use {
+                    val result = async(Dispatchers.IO) {
+                        runCatching { exchange.read(1_000, maxWireBytes = 4_096) }
+                    }
+                    DataOutputStream(socket.getOutputStream()).apply {
+                        writeInt(4_097)
+                        flush()
+                    }
+                    assertTrue(withTimeout(1_000) { result.await() }.isFailure)
+                }
+            }
+        } finally { server.close() }
+    }
+
+    @Test fun nonblockingAcceptAndLeaseCaptureSerializeWithGenerationReplacement() = runBlocking {
+        val port = port()
+        val server = SecureSocketPlinkServer(port, EncryptedFrameCodec(key), InMemoryFrameStateStore())
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val generationLock = Any()
+        val oldLease = OrdinaryAdmissionLease(1, null, null, scope)
+        val newLease = OrdinaryAdmissionLease(2, null, null, scope)
+        var current = oldLease
+        val acceptedBeforeCapture = CountDownLatch(1)
+        val releaseCapture = CountDownLatch(1)
+        val replacing = CountDownLatch(1)
+        try {
+            server.start()
+            val accepting = async(Dispatchers.IO) {
+                server.acceptExchange(generationLock) { exchange ->
+                    acceptedBeforeCapture.countDown()
+                    check(releaseCapture.await(5, TimeUnit.SECONDS))
+                    current.also { check(it.trackAcceptedSocket(exchange)) }
+                }
+            }
+            connect(port).use { socket ->
+                send(socket, Instant.now())
+                assertTrue(acceptedBeforeCapture.await(5, TimeUnit.SECONDS))
+                val replacement = async(Dispatchers.Default) {
+                    replacing.countDown()
+                    synchronized(generationLock) {
+                        oldLease.revoke()
+                        current = newLease
+                    }
+                }
+                assertTrue(replacing.await(5, TimeUnit.SECONDS))
+                delay(50)
+                assertFalse(replacement.isCompleted)
+                releaseCapture.countDown()
+                val captured = withTimeout(5_000) { accepting.await() }
+                withTimeout(5_000) { replacement.await() }
+                assertSame(oldLease, captured.admission)
+                assertFalse(captured.admission.isAdmitted())
+                assertFalse(captured.admission.dispatch.submit { fail("Old socket ran in the replacement generation") })
+                assertTrue(runCatching { captured.exchange.read(500) }.isFailure)
+                assertEquals(0, server.activeExchangeCount)
+            }
+        } finally {
+            releaseCapture.countDown()
+            server.close()
+            oldLease.revoke()
+            newLease.revoke()
+            oldLease.dispatch.awaitStopped()
+            newLease.dispatch.awaitStopped()
+            scope.cancel()
+        }
+    }
+
+    @Test fun pollingAcrossPublicationCapturesFirstNewSocketAndClosedAdmissionStillAcceptsControl() = runBlocking {
+        val port = port()
+        val server = SecureSocketPlinkServer(port, EncryptedFrameCodec(key), InMemoryFrameStateStore())
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val generationLock = Any()
+        val nextLease = OrdinaryAdmissionLease(2, null, null, scope)
+        var current: OrdinaryAdmissionLease? = null
+        try {
+            server.start()
+            val controlAccept = async(Dispatchers.IO) {
+                server.acceptExchange(generationLock) { current }
+            }
+            connect(port).use { socket ->
+                val captured = withTimeout(1_000) { controlAccept.await() }
+                assertNull(captured.admission)
+                captured.exchange.use {
+                    send(socket, Instant.now())
+                    assertTrue(it.read(1_000).result is AuthenticatedFrameResult.Message)
+                }
+            }
+            val nextAccept = async(Dispatchers.IO) {
+                server.acceptExchange(generationLock) { exchange ->
+                    current?.also { check(it.trackAcceptedSocket(exchange)) }
+                }
+            }
+            delay(50) // No socket yet: generation publication must not be blocked by polling.
+            withTimeout(1_000) {
+                withContext(Dispatchers.Default) { synchronized(generationLock) { current = nextLease } }
+            }
+            connect(port).use { socket ->
+                val captured = withTimeout(1_000) { nextAccept.await() }
+                assertSame(nextLease, captured.admission)
+                assertTrue(requireNotNull(captured.admission).isAdmitted())
+                captured.exchange.use {
+                    send(socket, Instant.now(), sequence = 2)
+                    assertTrue(it.read(1_000).result is AuthenticatedFrameResult.Message)
+                }
+            }
+        } finally {
+            server.close()
+            nextLease.revoke()
+            nextLease.dispatch.awaitStopped()
+            scope.cancel()
+        }
     }
     private class MutableClock(@Volatile var value: Instant) : Clock() {
         override fun getZone(): ZoneId = ZoneOffset.UTC

@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "androidReconnectState": "failed",
+    "hostProcesses": "passed",
+    "macReconnectState": "passed",
+    "testPackage": "passed"
+  },
+  "cleanupExitCode": 1,
+  "errors": [
+    "androidReconnectState: Android reconnectCleanup lacks explicit ownership confirmation."
+  ],
+  "passed": false,
+  "primaryExitCode": 1,
+  "scope": "Exact adb mappings, Popen children, reconnect UUID state, and this run's test APK only."
+}

@@ -1,5 +1,6 @@
 import Foundation
 import IOBluetooth
+import IOBluetoothUI
 import PlinkCore
 import Combine
 
@@ -12,7 +13,8 @@ struct BluetoothPhone: Identifiable, Equatable, Sendable {
 final class BluetoothCallController: ObservableObject {
     @Published private(set) var phones: [BluetoothPhone] = []
     @Published private(set) var call = MacCallSession()
-    @Published private(set) var status = "Choose your paired Bluetooth phone to enable calling."
+    @Published private(set) var status = "Connect your phone to enable calls."
+    @Published private(set) var serviceConnected = false
     @Published private(set) var busy = false
     @Published private(set) var blocked = false
     var onCallChanged: ((MacCallSession) -> Void)?
@@ -21,15 +23,28 @@ final class BluetoothCallController: ObservableObject {
     private var operation: MacBluetoothOperationGate.Operation? { gate.current }
     private var generation = UUID()
     private var deadline: Task<Void, Never>?
+    private let peerMapKey = "plink.bluetoothPeers"
+    private var configuredPeerID: String?
+    private var pendingPeerID: String?
+    private var pendingPhoneAddress: String?
+    private var pendingPeerConfiguration = false
+    private var pendingDiscoveryComplete = false
+    private var setupInProgress = false
+    private var servicePeerMismatch = false
+    private var chooserRequiredPeerID: String?
+    private var nativeServiceConnected = false
+    private var connectingPhoneAddress: String?
 
     init() {
-        worker.onEvent = { [weak self] generation, snapshot, message, completion, endedContext, phoneDisconnected in
+        worker.onEvent = { [weak self] generation, snapshot, message, serviceConnected, completion, endedContext, phoneDisconnected in
             Task { @MainActor in
                 guard let self, generation == self.generation, !self.blocked else { return }
                 var snapshot = snapshot
                 if self.gate.requiresReconnect { snapshot.markUnconfirmed(context: snapshot.context) }
+                let wasMismatched = self.servicePeerMismatch
                 self.call = snapshot
-                self.status = message
+                self.connectingPhoneAddress = nil
+                self.nativeServiceConnected = serviceConnected
                 if let completion {
                     if completion.action != nil && (endedContext != nil || phoneDisconnected) {
                         self.cancelCall(completion)
@@ -42,6 +57,18 @@ final class BluetoothCallController: ObservableObject {
                           phoneDisconnected || current.context == endedContext {
                     self.cancelCall(current)
                 }
+                if wasMismatched {
+                    if snapshot.context == nil { self.onCallChanged?(MacCallSession()) }
+                    if phoneDisconnected || snapshot.phoneID == nil {
+                        self.activatePendingPeer()
+                    } else if snapshot.context == nil {
+                        self.disconnectForPeerSwitch()
+                    }
+                    return
+                }
+                self.call = snapshot
+                self.status = message
+                self.serviceConnected = serviceConnected
                 self.onCallChanged?(snapshot)
             }
         }
@@ -50,8 +77,92 @@ final class BluetoothCallController: ObservableObject {
         }
     }
 
+    func configurePairedPhone(peerID: String) {
+        let savedAddress = pairedPhoneAddresses()[peerID]
+        if !busy, connectingPhoneAddress == nil,
+           configuredPeerID == peerID, let savedAddress, let currentAddress = call.phoneID,
+           currentAddress.caseInsensitiveCompare(savedAddress) == .orderedSame {
+            pendingPeerID = nil
+            pendingPhoneAddress = nil
+            pendingPeerConfiguration = false
+            pendingDiscoveryComplete = false
+            servicePeerMismatch = false
+            serviceConnected = nativeServiceConnected && !blocked
+            return
+        }
+        if call.context != nil || (servicePeerMismatch && busy) ||
+            ((call.phoneID != nil || connectingPhoneAddress != nil) && configuredPeerID != peerID) {
+            pendingPeerID = peerID
+            pendingPhoneAddress = savedAddress
+            pendingPeerConfiguration = true
+            pendingDiscoveryComplete = false
+            servicePeerMismatch = configuredPeerID != peerID || (servicePeerMismatch && busy)
+            if servicePeerMismatch {
+                serviceConnected = false
+                onCallChanged?(MacCallSession())
+            }
+            if call.context != nil { status = "Finish the current call before switching phones." }
+            else { continuePendingPeerConfiguration() }
+            return
+        }
+        servicePeerMismatch = false
+        configuredPeerID = peerID
+        pendingPeerID = nil
+        pendingPhoneAddress = savedAddress
+        pendingPeerConfiguration = true
+        pendingDiscoveryComplete = false
+        continuePendingPeerConfiguration()
+    }
+
+    func beginSetup(phoneName: String) {
+        guard !setupInProgress, !busy && !blocked, !servicePeerMismatch,
+              call.context == nil else { return }
+        guard let peerID = configuredPeerID else {
+            status = "Finish phone pairing before setting up calls."
+            return
+        }
+        if let savedAddress = pairedPhoneAddresses()[peerID], chooserRequiredPeerID != peerID {
+            pendingPhoneAddress = savedAddress
+            pendingPeerConfiguration = true
+            pendingDiscoveryComplete = false
+            continuePendingPeerConfiguration()
+            return
+        }
+        let setupGeneration = generation
+        setupInProgress = true
+        defer { setupInProgress = false }
+        let controller = IOBluetoothPairingController()
+        controller.setTitle("Connect phone calls")
+        controller.setDescriptionText("Select the same phone: \(phoneName).")
+        controller.addAllowedUUID(IOBluetoothSDPUUID.uuid16(0x111F))
+        let result = controller.runModal()
+        guard result == kIOBluetoothUISuccess else {
+            if result != kIOBluetoothUIUserCanceledErr {
+                status = "Bluetooth phone setup did not complete."
+            }
+            return
+        }
+        guard let selected = (controller.getResults() as? [IOBluetoothDevice])?.first,
+              selected.isPaired(), selected.isHandsFreeAudioGateway,
+              let address = selected.addressString else {
+            status = "The selected phone is not available for calls."
+            return
+        }
+        guard configuredPeerID == peerID, generation == setupGeneration,
+              !blocked, !busy, call.context == nil else { return }
+        let phone = BluetoothPhone(id: address, name: selected.name ?? "Bluetooth phone")
+        var pairedPhones = pairedPhoneAddresses()
+        pairedPhones[peerID] = address
+        UserDefaults.standard.set(pairedPhones, forKey: peerMapKey)
+        chooserRequiredPeerID = nil
+        pendingPeerConfiguration = false
+        pendingPhoneAddress = nil
+        phones = [phone]
+        connect(phone.id)
+    }
+
     func discover() {
-        guard !busy && !blocked, call.phoneID == nil else { status = "Disconnect calling before scanning again."; return }
+        guard !servicePeerMismatch, !busy && !blocked, call.phoneID == nil else { status = "Disconnect calling before scanning again."; return }
         guard let operation = start("Reading paired Bluetooth phones…") else { return }
         guard worker.submit(operation: operation, { [weak self] worker in
             let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] ?? []
@@ -63,24 +174,31 @@ final class BluetoothCallController: ObservableObject {
             Task { @MainActor in
                 guard let self, self.operation == operation, !self.blocked else { return }
                 self.phones = phones
-                self.status = phones.isEmpty ? "No paired HFP phone found. Pair your Pixel in Bluetooth settings, then retry." : "Select the intended phone, then connect."
+                self.status = phones.isEmpty ? "No compatible paired phone found. Pair your phone, then retry." : "Select the intended phone, then connect."
                 self.finish(operation)
             }
         }) else { cancelStart(operation); return }
     }
 
     func connect(_ phoneID: String) {
-        guard phones.contains(where: { $0.id == phoneID }), !busy && !blocked,
+        guard !servicePeerMismatch, phones.contains(where: { $0.id == phoneID }), !busy && !blocked,
               call.context == nil else { return }
         let generation = UUID()
         guard let operation = start("Connecting to the selected phone…", generation: generation) else { return }
+        nativeServiceConnected = false
+        serviceConnected = false
         gate.reconnecting()
         self.generation = generation
-        guard worker.submit(operation: operation, { $0.connect(phoneID: phoneID, generation: generation, operation: operation) }) else { cancelStart(operation); return }
+        connectingPhoneAddress = phoneID
+        guard worker.submit(operation: operation, { $0.connect(phoneID: phoneID, generation: generation, operation: operation) }) else {
+            connectingPhoneAddress = nil
+            cancelStart(operation)
+            return
+        }
     }
 
     func disconnect() {
-        guard call.phoneID != nil, !busy && !blocked else { return }
+        guard !servicePeerMismatch, call.phoneID != nil, !busy && !blocked else { return }
         guard let operation = start("Disconnecting Bluetooth calling…") else { return }
         guard worker.submit(operation: operation, { $0.disconnect() }) else { cancelStart(operation); return }
     }
@@ -91,11 +209,17 @@ final class BluetoothCallController: ObservableObject {
         generation = UUID()
         blocked = true
         busy = false
+        nativeServiceConnected = false
+        serviceConnected = false
         onCallChanged = nil
         worker.shutdown()
     }
 
     func perform(_ action: MacCallAction, context: MacCallContext) {
+        guard !servicePeerMismatch || action == .hangUp else {
+            status = "Finish the current call before switching phones."
+            return
+        }
         guard !gate.requiresReconnect else {
             status = "Disconnect and reconnect Bluetooth calling before retrying."
             return
@@ -126,6 +250,8 @@ final class BluetoothCallController: ObservableObject {
             case .quarantined:
                 self.blocked = true
                 self.busy = false
+                self.nativeServiceConnected = false
+                self.serviceConnected = false
                 self.call.markUnconfirmed(context: current.context)
                 self.onCallChanged?(self.call)
                 self.status = "Bluetooth stopped responding. Calling is disabled until Plink restarts."
@@ -164,12 +290,72 @@ final class BluetoothCallController: ObservableObject {
 
     private func finishUI() {
         busy = false; deadline?.cancel(); deadline = nil
+        continuePendingPeerConfiguration()
     }
 
     private func cancelStart(_ operation: MacBluetoothOperationGate.Operation) {
-        gate.abort(operation)
+        _ = gate.abort(operation)
         worker.cancel(operation)
         finishUI()
+    }
+
+    private func pairedPhoneAddresses() -> [String: String] {
+        UserDefaults.standard.dictionary(forKey: peerMapKey) as? [String: String] ?? [:]
+    }
+
+    private func activatePendingPeer() {
+        guard connectingPhoneAddress == nil, call.context == nil, let pendingPeerID else { return }
+        configuredPeerID = pendingPeerID
+        self.pendingPeerID = nil
+        servicePeerMismatch = false
+        serviceConnected = false
+        continuePendingPeerConfiguration()
+    }
+
+    private func disconnectForPeerSwitch() {
+        guard call.phoneID != nil, !busy && !blocked else { return }
+        guard let operation = start("Disconnecting Bluetooth calling…") else { return }
+        guard worker.submit(operation: operation, { $0.disconnect() }) else { cancelStart(operation); return }
+    }
+
+    private func continuePendingPeerConfiguration() {
+        guard pendingPeerConfiguration, !busy, !blocked, !worker.isBusy,
+              gate.current == nil, connectingPhoneAddress == nil, call.context == nil else { return }
+        if servicePeerMismatch {
+            if call.phoneID == nil { activatePendingPeer() }
+            else { disconnectForPeerSwitch() }
+            return
+        }
+        if let currentAddress = call.phoneID {
+            if let pendingPhoneAddress,
+               currentAddress.caseInsensitiveCompare(pendingPhoneAddress) == .orderedSame {
+                pendingPeerConfiguration = false
+                self.pendingPhoneAddress = nil
+                return
+            }
+            disconnect()
+            return
+        }
+        guard let address = pendingPhoneAddress else {
+            pendingPeerConfiguration = false
+            status = "Set up Bluetooth calls for this phone."
+            return
+        }
+        guard pendingDiscoveryComplete else {
+            pendingDiscoveryComplete = true
+            discover()
+            return
+        }
+        guard let phone = phones.first(where: { $0.id.caseInsensitiveCompare(address) == .orderedSame }) else {
+            pendingPeerConfiguration = false
+            pendingPhoneAddress = nil
+            chooserRequiredPeerID = configuredPeerID
+            status = "Bluetooth call setup is required for this phone."
+            return
+        }
+        pendingPeerConfiguration = false
+        pendingPhoneAddress = nil
+        connect(phone.id)
     }
 }
 
@@ -179,7 +365,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     typealias Operation = MacBluetoothOperationGate.Operation
     typealias InvocationState = MacBluetoothOperationGate.InvocationState
 
-    var onEvent: (@Sendable (UUID, MacCallSession, String, Operation?, MacCallContext?, Bool) -> Void)?
+    var onEvent: (@Sendable (UUID, MacCallSession, String, Bool, Operation?, MacCallContext?, Bool) -> Void)?
     var onReturned: (@Sendable (Operation) -> Void)?
     private let lock = NSLock()
     private var work = MacBluetoothOperationGate.WorkTracker()
@@ -187,6 +373,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     private var thread: Thread!
     private var phone: IOBluetoothHandsFreeDevice?
     private var session = MacCallSession()
+    private var serviceConnected = false
     private var generation = UUID()
     private var pendingOperation: Operation?
     private var invalidatedOperations: Set<UUID> = []
@@ -280,6 +467,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         phone?.delegate = nil
         phone?.disconnect()
         phone = nil
+        serviceConnected = false
     }
 
     func connect(phoneID: String, generation: UUID, operation: Operation) {
@@ -287,6 +475,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         guard permitsNextStep(operation) else { return }
         phone?.disconnect()
         phone = nil
+        serviceConnected = false
         guard permitsNextStep(operation) else { return }
         self.generation = generation
         lock.lock()
@@ -295,7 +484,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         lock.unlock()
         session.disconnected()
         guard let device = IOBluetoothDevice(addressString: phoneID), device.isPaired(), device.isHandsFreeAudioGateway else {
-            emit("Selected phone is unavailable or does not advertise HFP.", completed: true); return
+            emit("Selected phone is unavailable or does not support calls.", completed: true); return
         }
         guard permitsNextStep(operation) else { return }
         session.connected(phoneID: phoneID)
@@ -309,6 +498,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         phone?.delegate = nil
         phone?.disconnect()
         phone = nil
+        serviceConnected = false
         lock.lock()
         pendingOperation = nil
         uncertainCalls.removeAll()
@@ -335,7 +525,9 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         case .computerAudio:
             phone.transferAudioToComputer()
             if phone.isSCOConnected() {
-                session.setSCO(true); clearPending(operation)
+                session.setSCO(true)
+                session.setMuted(phone.isInputMuted)
+                clearPending(operation)
                 emit("Bluetooth audio connected; two-way laptop audio has not been verified.", completion: operation)
             }
         case .phoneAudio:
@@ -348,7 +540,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
             guard permitsNextStep(operation), session.context == context else { return }
             session.setMuted(phone.isInputMuted)
             clearPending(operation)
-            emit(session.muted ? "Mac HFP input muted." : "Mac HFP input unmuted.", completion: operation)
+            emit(session.muted ? "Mac microphone muted." : "Mac microphone unmuted.", completion: operation)
         }
     }
 
@@ -366,7 +558,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     ) {
         var snapshot = session
         if isUncertain(snapshot.context) { snapshot.markUnconfirmed(context: snapshot.context) }
-        onEvent?(generation, snapshot, message, completion ?? (completed ? workOperation() : nil), endedContext, phoneDisconnected)
+        onEvent?(generation, snapshot, message, serviceConnected, completion ?? (completed ? workOperation() : nil), endedContext, phoneDisconnected)
     }
     private func workOperation() -> Operation? {
         lock.lock(); defer { lock.unlock() }
@@ -401,20 +593,27 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     func handsFree(_ device: IOBluetoothHandsFree!, connected status: NSNumber!) {
         guard owns(device) else { return }
         if status?.int32Value == 0 {
+            serviceConnected = true
             emit("Phone connected. Waiting for calls.", completed: true)
             if phone?.indicator(IOBluetoothHandsFreeIndicatorCall) == 1 { session.setActive(true) }
             if phone?.indicator(IOBluetoothHandsFreeIndicatorCallSetup) == 1 { session.ringing(number: nil) }
-            if session.context != nil { emit("Current phone call detected.") }
+            if session.context != nil {
+                session.setSCO(phone?.isSCOConnected() == true)
+                session.setMuted(phone?.isInputMuted == true)
+                emit("Current phone call detected.")
+            }
             phone?.currentCallList()
         } else {
+            serviceConnected = false
             session.disconnected()
-            emit("Bluetooth service connection failed (\(status?.intValue ?? -1)).", completed: true)
+            emit("Phone call connection failed (\(status?.intValue ?? -1)).", completed: true)
         }
     }
     func handsFree(_ device: IOBluetoothHandsFree!, disconnected status: NSNumber!) {
         guard owns(device) else { return }
         let endedContext = session.context
         let completion = completePending(on: .callEnded)
+        serviceConnected = false
         session.disconnected()
         lock.lock(); uncertainCalls.removeAll(); lock.unlock()
         emit("Phone disconnected. Reconnect to enable calling.", completion: completion ?? workOperation(), endedContext: endedContext, phoneDisconnected: true)
@@ -423,6 +622,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         guard owns(device) else { return }
         let success = status?.int32Value == 0
         session.setSCO(success)
+        if success { session.setMuted(phone?.isInputMuted == true) }
         let completion = completePending(on: .sco(connected: success))
         emit(success ? "Bluetooth audio connected; two-way laptop audio has not been verified." : "Bluetooth audio connection failed. Use phone audio or reconnect.", completion: completion)
     }
@@ -458,7 +658,10 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         let endedContext = isActive ? nil : session.context
         let completion = completePending(on: isActive ? .callActive : .callEnded)
         session.setActive(isActive)
-        if isActive { session.setSCO(phone?.isSCOConnected() == true) }
+        if isActive {
+            session.setSCO(phone?.isSCOConnected() == true)
+            session.setMuted(phone?.isInputMuted == true)
+        }
         if !isActive { resolve(endedContext) }
         applyUncertainty()
         emit(isActive ? "Call active; check laptop audio." : "Call ended.", completion: completion, endedContext: endedContext)
@@ -467,6 +670,10 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         guard owns(device), let call,
               let status = call[IOBluetoothHandsFreeCallStatus] as? NSNumber else { return }
         session.observeCall(index: (call[IOBluetoothHandsFreeCallIndex] as? NSNumber)?.intValue, status: status.intValue)
+        if status.intValue == 0 {
+            session.setSCO(phone?.isSCOConnected() == true)
+            session.setMuted(phone?.isInputMuted == true)
+        }
         if status.intValue == 0, !session.hasWaitingCall { resolve(session.context) }
         applyUncertainty()
         emit(session.hasWaitingCall ? "Multiple calls; manage calls on the phone." : "Phone call state received.")

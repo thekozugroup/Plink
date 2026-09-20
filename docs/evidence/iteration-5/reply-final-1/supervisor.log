@@ -1,0 +1,2 @@
+SUBCHECK PASS: roundtrip synthetic encrypted roundtrip and owned host cleanup.
+Not tested: pairing UI, Notification Center interaction, actual messaging recipient, cellular calls/audio.

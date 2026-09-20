@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "scope": "Supplemental raw type classification cases; Unicode escapes retain JSON semantics, exact decoded fields and numeric token spelling remain mandatory. Original frozen files unchanged.",
+  "cases": [
+    {
+      "name": "escaped type property",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"ty\\u0070e\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 323
+    },
+    {
+      "name": "escaped event name",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconn\\u0065ct.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 323
+    },
+    {
+      "name": "escaped property with unknown envelope field",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"ty\\u0070e\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"},\"unexpected\":0}",
+      "rawEnvelopeBytes": 338
+    },
+    {
+      "name": "escaped event with duplicate version",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconn\\u0065ct.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 335
+    },
+    {
+      "name": "escaped property with float v",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"ty\\u0070e\":\"reconnect.hello\",\"payload\":{\"v\":1.0,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 325
+    },
+    {
+      "name": "escaped event with exponent v",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconn\\u0065ct.hello\",\"payload\":{\"v\":1e0,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 325
+    },
+    {
+      "name": "escaped property with duplicate payload nonce",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"ty\\u0070e\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 373
+    },
+    {
+      "name": "escaped event with unknown payload field",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconn\\u0065ct.hello\",\"payload\":{\"extra\":false,\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 337
+    },
+    {
+      "name": "escaped property alias duplicate",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconnect.hello\",\"ty\\u0070e\":\"reconnect.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 348
+    },
+    {
+      "name": "escaped event with fractional sentAt",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\"sentAt\":\"2026-09-20T00:00:00.000Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-pixel\",\"requiresAck\":false,\"type\":\"reconn\\u0065ct.hello\",\"payload\":{\"v\":1,\"m\":\"ABEiM0RVZneImaq7zN3u_wARIjNEVWZ3iJmqu8zd7v8\",\"mac\":\"192.168.50.10:45731\",\"phone\":\"192.168.50.20:45731\"}}",
+      "rawEnvelopeBytes": 327
+    }
+  ]
+}

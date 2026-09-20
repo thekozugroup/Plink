@@ -1,0 +1,20 @@
+{
+  "checks": {
+    "androidCleanupMarker": "passed",
+    "appState": "passed",
+    "hostCleanup": "passed",
+    "ownedArtifactRecovery": "passed",
+    "ownershipInventory": "passed",
+    "projection": "passed",
+    "services": "passed"
+  },
+  "cleanupErrors": [],
+  "forcedProcessStop": false,
+  "manifest": "manifest.json",
+  "manifestSHA256": "e776814f488f411203b1c84b869e9c2d10ebf9b68b054b1eb44fa66b2fcabf02",
+  "nativeMacWindowVerified": false,
+  "passed": true,
+  "physicalPixelVerified": false,
+  "pixelSubResult": "screen-frames/summary.json",
+  "testExitCode": 0
+}

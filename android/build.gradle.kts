@@ -58,6 +58,7 @@ android {
 
     buildFeatures {
         compose = true
+        aidl = true
     }
 
     kotlin {
@@ -76,6 +77,8 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
 
     debugImplementation(libs.compose.ui.tooling)
 

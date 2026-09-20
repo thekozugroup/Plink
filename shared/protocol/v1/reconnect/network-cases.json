@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 1,
+  "status": "FROZEN supplementary Astra cases before candidate policy implementation",
+  "contract": ".a5c/artifacts/implementation-decisions-5.json",
+  "scope": "Production candidate policy only. Does not establish actual interface routing, VPN exclusion or physical hotspot behavior. Each case supplies exactly one synthetic interface snapshot; test-only tunnel override must be disabled.",
+  "cases": [
+    {
+      "endpoint": "192.168.50.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "RFC1918 same connected prefix",
+      "expectedMac": true,
+      "expectedAndroid": true
+    },
+    {
+      "endpoint": "169.254.10.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "169.254.10.10",
+        "prefixLength": 16,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "link local same connected prefix",
+      "expectedMac": true,
+      "expectedAndroid": true
+    },
+    {
+      "endpoint": "10.23.5.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "10.23.5.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "10 slash24 same connected prefix",
+      "expectedMac": true,
+      "expectedAndroid": true
+    },
+    {
+      "endpoint": "172.31.255.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "172.31.255.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "172 last private slash24",
+      "expectedMac": true,
+      "expectedAndroid": true
+    },
+    {
+      "endpoint": "192.168.50.10:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "self",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "self address"
+    },
+    {
+      "endpoint": "192.168.50.0:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "network",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "network address"
+    },
+    {
+      "endpoint": "192.168.50.255:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "broadcast",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "broadcast address"
+    },
+    {
+      "endpoint": "192.168.51.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "private but off link",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "no connected prefix match"
+    },
+    {
+      "endpoint": "8.8.8.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "8.8.8.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "public even on prefix",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "outside allowed local ranges"
+    },
+    {
+      "endpoint": "100.64.1.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "100.64.1.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "CGNAT even on prefix",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "CGNAT excluded"
+    },
+    {
+      "endpoint": "172.15.1.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "172.15.1.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "just below 172 private range",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "outside allowed local ranges"
+    },
+    {
+      "endpoint": "172.32.1.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "172.32.1.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "just above 172 private range",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "outside allowed local ranges"
+    },
+    {
+      "endpoint": "127.0.0.1:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "loopback",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "0.0.0.0:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "unspecified",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "239.1.2.3:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "multicast",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "[fe80::1]:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "IPv6",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "pixel.local:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "hostname",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "http://192.168.50.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "URL",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "192.168.050.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "leading zero",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "192.168.50.20:45732",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "other port",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "192.168.50.20:0",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "port zero",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "192.168.50.20:65536",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "overflow port",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "unsupported canonical endpoint"
+    },
+    {
+      "endpoint": "192.168.50.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": false,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "interface down",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "interface ineligible"
+    },
+    {
+      "endpoint": "192.168.50.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": true,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "loopback interface",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "interface ineligible"
+    },
+    {
+      "endpoint": "192.168.50.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": true,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "point-to-point interface",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "interface ineligible"
+    },
+    {
+      "endpoint": "192.168.50.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": false,
+        "vpn": false,
+        "matchingAndroidNetwork": true
+      },
+      "name": "no broadcast interface",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "interface ineligible"
+    },
+    {
+      "endpoint": "192.168.50.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": true,
+        "matchingAndroidNetwork": true
+      },
+      "name": "VPN interface",
+      "expectedMac": false,
+      "expectedAndroid": false,
+      "reason": "interface ineligible"
+    },
+    {
+      "endpoint": "192.168.50.20:45731",
+      "interface": {
+        "name": "test-wlan",
+        "index": 7,
+        "localIPv4": "192.168.50.10",
+        "prefixLength": 24,
+        "up": true,
+        "loopback": false,
+        "pointToPoint": false,
+        "broadcast": true,
+        "vpn": false,
+        "matchingAndroidNetwork": false
+      },
+      "name": "Android no matching public Network",
+      "expectedMac": true,
+      "expectedAndroid": false,
+      "reason": "Android must bind an accessible matching Network; Mac uses native interface binding"
+    }
+  ]
+}

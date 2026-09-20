@@ -21,7 +21,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +34,7 @@ sealed interface BackgroundConnectionState {
     data object Disabled : BackgroundConnectionState
     data object Starting : BackgroundConnectionState
     data object Running : BackgroundConnectionState
+    data object AwaitingReconnect : BackgroundConnectionState
     data class RePairRequired(val message: String) : BackgroundConnectionState
     data class ActionRequired(val message: String) : BackgroundConnectionState
     data class Failed(val message: String) : BackgroundConnectionState
@@ -83,6 +86,7 @@ fun Context.notificationsAllowed(): Boolean {
 
 class BackgroundConnectionService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var statusJob: Job? = null
     override fun onCreate() {
         super.onCreate()
         createChannel()
@@ -147,23 +151,67 @@ class BackgroundConnectionService : Service() {
     }
 
     private fun activate(app: PlinkApplication): Int {
-        if (app.sessionController.status.value != SessionStatus.READY) {
-            app.featureSettings.setBackgroundConnectionEnabled(false)
-            BackgroundConnectionRuntime.update(
-                BackgroundConnectionState.ActionRequired("Pair with a Mac before enabling background connection.")
-            )
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
-            return START_NOT_STICKY
+        return when (app.sessionController.status.value) {
+            SessionStatus.READY -> {
+                app.sessionController.retryPendingEvents()
+                BackgroundConnectionRuntime.update(BackgroundConnectionState.Running)
+                updateNotification(awaitingReconnect = false)
+                observeSessionStatus(app)
+                START_STICKY
+            }
+            SessionStatus.AWAITING_RECONNECT -> {
+                BackgroundConnectionRuntime.update(BackgroundConnectionState.AwaitingReconnect)
+                updateNotification(awaitingReconnect = true)
+                observeSessionStatus(app)
+                START_STICKY
+            }
+            SessionStatus.DISCONNECTED, SessionStatus.REPAIR_REQUIRED -> {
+                app.featureSettings.setBackgroundConnectionEnabled(false)
+                BackgroundConnectionRuntime.update(
+                    BackgroundConnectionState.ActionRequired("Pair with a Mac before enabling background connection.")
+                )
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+                START_NOT_STICKY
+            }
         }
-        app.sessionController.retryPendingEvents()
-        BackgroundConnectionRuntime.update(BackgroundConnectionState.Running)
-        return START_STICKY
+    }
+
+    private fun observeSessionStatus(app: PlinkApplication) {
+        if (statusJob?.isActive == true) return
+        statusJob = serviceScope.launch {
+            app.sessionController.status.collect { status ->
+                if (!app.featureSettings.backgroundConnectionEnabled.value) return@collect
+                when (status) {
+                    SessionStatus.READY -> {
+                        app.sessionController.retryPendingEvents()
+                        BackgroundConnectionRuntime.update(BackgroundConnectionState.Running)
+                        updateNotification(awaitingReconnect = false)
+                    }
+                    SessionStatus.AWAITING_RECONNECT -> {
+                        BackgroundConnectionRuntime.update(BackgroundConnectionState.AwaitingReconnect)
+                        updateNotification(awaitingReconnect = true)
+                    }
+                    SessionStatus.DISCONNECTED, SessionStatus.REPAIR_REQUIRED -> {
+                        app.featureSettings.setBackgroundConnectionEnabled(false)
+                        BackgroundConnectionRuntime.update(
+                            BackgroundConnectionState.ActionRequired(
+                                "Pair with a Mac before enabling background connection."
+                            )
+                        )
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                        stopSelf()
+                    }
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
         serviceScope.cancel()
-        if (BackgroundConnectionRuntime.state.value == BackgroundConnectionState.Running) {
+        if (BackgroundConnectionRuntime.state.value == BackgroundConnectionState.Running ||
+            BackgroundConnectionRuntime.state.value == BackgroundConnectionState.AwaitingReconnect
+        ) {
             BackgroundConnectionRuntime.update(BackgroundConnectionState.Disabled)
         }
         super.onDestroy()
@@ -172,6 +220,23 @@ class BackgroundConnectionService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun startForeground() {
+        val notification = notification(awaitingReconnect = false)
+        ServiceCompat.startForeground(
+            this,
+            NOTIFICATION_ID,
+            notification,
+            if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING else 0
+        )
+    }
+
+    private fun updateNotification(awaitingReconnect: Boolean) {
+        getSystemService(NotificationManager::class.java).notify(
+            NOTIFICATION_ID,
+            notification(awaitingReconnect)
+        )
+    }
+
+    private fun notification(awaitingReconnect: Boolean): android.app.Notification {
         val stopIntent = Intent(this, BackgroundConnectionService::class.java).setAction(ACTION_STOP)
         val stopPendingIntent = PendingIntent.getService(
             this,
@@ -179,21 +244,19 @@ class BackgroundConnectionService : Service() {
             stopIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_plink)
-            .setContentTitle("Plink connection active")
-            .setContentText("Keeping your Pixel available to your paired Mac")
+            .setContentTitle(if (awaitingReconnect) "Plink paired" else "Plink connection active")
+            .setContentText(if (awaitingReconnect) {
+                "Waiting for your paired Mac to reconnect"
+            } else {
+                "Keeping your Pixel available to your paired Mac"
+            })
             .setOngoing(true)
             .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .addAction(0, "Stop", stopPendingIntent)
             .build()
-        ServiceCompat.startForeground(
-            this,
-            NOTIFICATION_ID,
-            notification,
-            if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING else 0
-        )
     }
 
     private fun createChannel() {

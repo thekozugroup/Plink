@@ -1,0 +1,18 @@
+{
+  "scope": "Diagnostic encrypted file transfers using actual Android and Swift engines with synthetic inputs and test-selected destinations. No native picker or physical Pixel proof.",
+  "passed": true,
+  "sizes": [
+    0,
+    1,
+    32768,
+    32769,
+    16777216
+  ],
+  "directions": 2,
+  "transfers": 10,
+  "cleanupPassed": true,
+  "captureInspection": "capture/independent-inspection.json",
+  "receiverSha256After": "bfc8bfd8b75f394112b4fbc2bb1d7839b675e6108afa62671741cab4b94c6964",
+  "provenanceLimit": "Receiver hash captured after subsequent compile attempts; do not treat as bound provenance. Final frozen build requires before/after runtime rerun.",
+  "physicalPixelTouched": false
+}

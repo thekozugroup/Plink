@@ -4,9 +4,11 @@ import app.plink.android.protocol.FileTransferPayloadPolicy
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -19,6 +21,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.joinAll
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -105,7 +108,8 @@ class FileTransferCoordinator(
         override val directory: File,
         override val startedAt: Long,
         override var lastActivityAt: Long,
-        override val revoked: AtomicBoolean = AtomicBoolean(false)
+        override val revoked: AtomicBoolean = AtomicBoolean(false),
+        val quiesced: CompletableDeferred<Unit> = CompletableDeferred()
     ) : ActiveTransfer
 
     private data class Outgoing(
@@ -147,6 +151,8 @@ class FileTransferCoordinator(
 
     private val mutex = Mutex()
     private val ownershipLock = Any()
+    private val cleanupJobs = mutableSetOf<Job>()
+    private val cleanupOwners = mutableSetOf<CompletableDeferred<Unit>>()
     @Volatile private var session: Session? = null
     @Volatile private var active: ActiveTransfer? = null
     @Volatile private var pendingView: Pair<String, IncomingFileOffer>? = null
@@ -174,14 +180,14 @@ class FileTransferCoordinator(
             session = null
             revokeOwnership("disconnected")
         } ?: return
-        scope.launch {
+        trackCleanup(scope.launch {
             mutex.withLock {
                 sendTerminalBestEffort(transfer, PlinkEventType.FileCancel, allowRevoked = true) {
                     put("reason", "disconnected")
                 }
                 cleanupDetached(transfer)
             }
-        }
+        })
     }
 
     fun close() {
@@ -251,6 +257,7 @@ class FileTransferCoordinator(
                 preparing.directory.deleteRecursively()
                 if (active === preparing) active = null
             }
+            preparing.quiesced.complete(Unit)
         }
     }
 
@@ -324,23 +331,50 @@ class FileTransferCoordinator(
 
     fun featureDisabled() {
         val transfer = revokeOwnership("cancelled") ?: return
-        scope.launch {
+        trackCleanup(scope.launch {
             mutex.withLock {
                 sendTerminalBestEffort(transfer, PlinkEventType.FileCancel, allowRevoked = true) {
                     put("reason", "cancelled")
                 }
                 cleanupDetached(transfer)
             }
+        })
+    }
+
+    suspend fun awaitQuiescence() {
+        while (true) {
+            val preparing = synchronized(ownershipLock) { active as? Preparing }
+            val jobs = synchronized(ownershipLock) { cleanupJobs.toList() }
+            val owners = synchronized(ownershipLock) { cleanupOwners.toList() }
+            preparing?.quiesced?.await()
+            jobs.joinAll()
+            owners.forEach { it.await() }
+            if (synchronized(ownershipLock) {
+                    active == null && cleanupJobs.isEmpty() && cleanupOwners.isEmpty()
+                }
+            ) return
         }
     }
 
     suspend fun cancelActive(reason: String = "cancelled", allowRevoked: Boolean = false) {
-        val transfer = revokeOwnership(reason) ?: return
-        mutex.withLock {
-            if (transfer !is Preparing) {
-                sendTerminalBestEffort(transfer, PlinkEventType.FileCancel, allowRevoked) { put("reason", reason) }
+        val owner = CompletableDeferred<Unit>()
+        synchronized(ownershipLock) { cleanupOwners += owner }
+        try {
+            val claimed = claimCancellation(reason) ?: return
+            val transfer = claimed.first
+            withContext(NonCancellable) {
+                mutex.withLock {
+                    if (claimed.second && transfer !is Preparing) {
+                        sendTerminalBestEffort(transfer, PlinkEventType.FileCancel, allowRevoked) {
+                            put("reason", reason)
+                        }
+                    }
+                    cleanupDetached(transfer)
+                }
             }
-            cleanupDetached(transfer)
+        } finally {
+            owner.complete(Unit)
+            synchronized(ownershipLock) { cleanupOwners -= owner }
         }
     }
 
@@ -725,6 +759,19 @@ class FileTransferCoordinator(
     private fun revokeOwnership(reason: String): ActiveTransfer? = synchronized(ownershipLock) {
         val transfer = active ?: return null
         if (!transfer.revoked.compareAndSet(false, true)) return null
+        publishRevocation(transfer, reason)
+        transfer
+    }
+
+    /** Returns the current owner even when another path already revoked it. */
+    private fun claimCancellation(reason: String): Pair<ActiveTransfer, Boolean>? = synchronized(ownershipLock) {
+        val transfer = active ?: return null
+        val newlyRevoked = transfer.revoked.compareAndSet(false, true)
+        if (newlyRevoked) publishRevocation(transfer, reason)
+        transfer to newlyRevoked
+    }
+
+    private fun publishRevocation(transfer: ActiveTransfer, reason: String) {
         // Keep the slot reserved until its IO owner has released streams and the
         // mutex-protected cleanup completes. A new transfer cannot be cleared by
         // delayed cleanup from the old one.
@@ -735,7 +782,6 @@ class FileTransferCoordinator(
         } else {
             FileTransferState.Failed(transfer.name, reason)
         }
-        return transfer
     }
 
     private fun cleanupDetached(transfer: ActiveTransfer) {
@@ -755,6 +801,11 @@ class FileTransferCoordinator(
         val destination = incoming.destination ?: return false
         if (!destination.newlyCreated) return incoming.destinationOpened
         return !runCatching { environment.deleteNewDestination(destination.token) }.getOrDefault(false)
+    }
+
+    private fun trackCleanup(job: Job) {
+        synchronized(ownershipLock) { cleanupJobs += job }
+        job.invokeOnCompletion { synchronized(ownershipLock) { cleanupJobs -= job } }
     }
 
     private suspend fun requirePreparing(preparing: Preparing) {

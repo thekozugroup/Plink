@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "exitCode": 0,
+  "inspectedAtUTC": "2026-09-20T11:22:15.944054+00:00",
+  "phases": [
+    {
+      "phase": "A",
+      "proofIdHash": "a2d88eee36dfaba4b910d9f5c4fbf5c644d60648c0f6bee932474d926b072c9b",
+      "sequenceMaxima": {
+        "mac": 5,
+        "phone": 5
+      },
+      "ordinaryFramesEachDirection": 1,
+      "hintAfter": {
+        "mac": "127.0.0.1:46731",
+        "phone": "127.0.0.1:46732"
+      }
+    },
+    {
+      "phase": "B",
+      "proofIdHash": "ca18b60a2478a6fda044c32eb285de3b6e6ac3f2a20d2ac27fb5f4f0d2e6f7da",
+      "sequenceMaxima": {
+        "mac": 10,
+        "phone": 10
+      },
+      "ordinaryFramesEachDirection": 1,
+      "hintAfter": {
+        "mac": "127.0.0.1:46741",
+        "phone": "127.0.0.1:46742"
+      }
+    },
+    {
+      "phase": "B-restart",
+      "proofIdHash": "033eb0099bcf9e2dd5e559f61bf65a15232844aa4d6e11f69523bd3403d85387",
+      "sequenceMaxima": {
+        "mac": 15,
+        "phone": 15
+      },
+      "ordinaryFramesEachDirection": 1,
+      "hintAfter": {
+        "mac": "127.0.0.1:46741",
+        "phone": "127.0.0.1:46742"
+      }
+    }
+  ],
+  "scope": "Production encrypted core, isolated Android admission lease callbacks and Mac lifetime; coordinated ordinary exchange over ADB loopback. No physical Network/mDNS/hotspot/native app restoration/replay-fault claim.",
+  "cleanupPassed": true,
+  "physicalPixelTouched": false,
+  "sourceAndBinaryProvenance": "host-ownership.json",
+  "hostOwnershipSHA256": "ad90052cc79d22d8fe3951ef47bb52a50e14cd3aa44ad863486945aa5ff40dbe",
+  "supervisorSHA256": "3dc7c58ac98f92fd137cd0eb7df03ea0afdaf453e0987c72cea36581281d1a86",
+  "runtimeValidationInputsSHA256": "72cf2770d706d764c2ef5eb55f7005a648f4cc02ce6051e302c6411d4e1ad90e"
+}

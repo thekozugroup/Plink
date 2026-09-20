@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -90,13 +91,35 @@ class InboundCommandHandlerTest {
             pairedDeviceId = "mac",
             executeReply = {},
             executeMedia = { _, _ -> },
-            executeHandoff = {},
+            executeHandoff = { HandoffResult.AwaitingUser },
             send = { sent += it }
         )
 
         handler.handle(command(PlinkEventType.WebOpen))
 
         assertEquals("awaiting_user", sent.single().payload["status"].toString().trim('"'))
+    }
+
+    @Test
+    fun automaticClipboardAcknowledgesOnlyCompletedWrite() = runTest {
+        val sent = mutableListOf<PlinkEnvelope>()
+        val handler = InboundCommandHandler(
+            localDeviceId = "pixel", pairedDeviceId = "mac", executeReply = {}, executeMedia = { _, _ -> },
+            executeHandoff = { HandoffResult.Executed }, send = { sent += it }
+        )
+        handler.handle(command(PlinkEventType.ClipboardUpdated))
+        assertEquals("executed", sent.single().payload["status"].toString().trim('"'))
+    }
+
+    @Test
+    fun rejectedAutomaticClipboardReturnsErrorInsteadOfPendingOrSuccess() = runTest {
+        val sent = mutableListOf<PlinkEnvelope>()
+        val handler = InboundCommandHandler(
+            localDeviceId = "pixel", pairedDeviceId = "mac", executeReply = {}, executeMedia = { _, _ -> },
+            executeHandoff = { error("Automatic clipboard sync is off.") }, send = { sent += it }
+        )
+        handler.handle(command(PlinkEventType.ClipboardUpdated))
+        assertEquals(PlinkEventType.Error, sent.single().type)
     }
 
     @Test
@@ -129,6 +152,47 @@ class InboundCommandHandlerTest {
             kotlinx.coroutines.runBlocking { handler.handle(command(PlinkEventType.MessageReply)) }
         }
         assertEquals(1, sends)
+    }
+
+    @Test
+    fun revokedAdmissionPreventsActionAndOutcome() = runTest {
+        val admission = OrdinaryAdmissionLease(generation = 7, binding = null, attemptToken = null, scope = this)
+        var executed = false
+        var sent = false
+        val handler = InboundCommandHandler(
+            localDeviceId = "pixel",
+            pairedDeviceId = "mac",
+            executeReply = {
+                check(admission.runIfAdmitted { executed = true })
+            },
+            executeMedia = { _, _ -> },
+            isAdmitted = admission::isAdmitted,
+            send = { sent = true }
+        )
+
+        admission.revoke()
+        handler.handle(command(PlinkEventType.MessageReply))
+
+        assertFalse(executed)
+        assertFalse(sent)
+    }
+
+    @Test
+    fun revocationAfterActionSuppressesOldGenerationOutcome() = runTest {
+        var admitted = true
+        var sent = false
+        val handler = InboundCommandHandler(
+            localDeviceId = "pixel",
+            pairedDeviceId = "mac",
+            executeReply = { admitted = false },
+            executeMedia = { _, _ -> },
+            isAdmitted = { admitted },
+            send = { sent = true }
+        )
+
+        handler.handle(command(PlinkEventType.MessageReply))
+
+        assertFalse(sent)
     }
 
     private fun command(type: String, sessionId: String = "", action: String = "") = PlinkEnvelope(

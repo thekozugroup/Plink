@@ -1,0 +1,89 @@
+{
+  "atUTC": "2026-09-20T13:15:25.165503+00:00",
+  "scope": "Live UI polish and automatic clipboard follow-up. Missing features remain deferred by user; original acceptance cases are not marked passed.",
+  "automated": {
+    "fullGateExit": 0,
+    "androidTests": 182,
+    "swiftTests": 191,
+    "swiftBreakdown": {
+      "XCTestLogicTests": 54,
+      "CoreSwiftTesting": 117,
+      "MacSwiftTesting": 20
+    },
+    "lintErrors": 0,
+    "lintWarnings": 39,
+    "finalAndroidBuild": "debug/release/instrumentation APK and lint pass after 70-percent status width and proportional line height",
+    "lastFullGateDelta": "ConnectionRing.kt fit correction and Mac menu glyph coordinate transform; then removal of one trailing blank source line in LucideIcons.kt. Final platform build/package logs included. No native UI test substitution.",
+    "rawEvidenceWhitespace": "Raw logs and empty ADB inventory captures retain original whitespace; source-only git diff --check passes. Raw artifact bytes were not altered to satisfy formatting checks."
+  },
+  "design": {
+    "androidNavigation": "System navigation inset plus 12dp; emulator screenshot confirms separation from gesture pill.",
+    "icons": "Bundled Lucide source icons; Android vectors and native Swift paths; temporary Lucide link app icon.",
+    "connectionText": "70 percent of ring width; native one-line autosizing 20sp\u201358sp; line height 1.1em. Installed on Pixel; final Connected-state screenshot awaits restored connection.",
+    "screenshots": {
+      "android-navigation.png": "Earlier matching icon/clipboard build; unpaired emulator, before status-fit change.",
+      "android-settings.png": "Same unpaired emulator build.",
+      "android-clipboard-setup.png": "No Shizuku on emulator; attempted enable remains off and shows setup guidance.",
+      "mac-app-icon.png": "Actual generated .icns image; not a Mac dashboard screenshot.",
+      "pixel-before-status-fit.png": "Real connected Pixel before status-fit change; documents reported overflow."
+    }
+  },
+  "clipboard": {
+    "liveAttempt": {
+      "pixel_copy_launch_exit": 0,
+      "pixel_to_mac_exact_match": false,
+      "pixel_read_launch_exit": 0,
+      "mac_to_pixel": {
+        "count": 1,
+        "matchedCount": 0,
+        "lastMatched": false
+      },
+      "mac_original_text_restored": true
+    },
+    "verdict": "NOT VERIFIED: neither direction matched. Mac saved clipboard-enabled key was absent. User was asked to reconnect and check the current toggle. Failed attempt is not attributed to a transport defect without confirming prerequisites.",
+    "routeIsolation": "Owned scrcpy ran with --no-clipboard-autosync. Fixture has no INTERNET permission. Exact fixed-string comparisons only; clipboard contents were not persisted or logged.",
+    "fixtureCopy": "Plink Pixel clipboard check",
+    "fixtureReadExpected": "Plink Mac clipboard check",
+    "attemptFixtureAPK_SHA256": "10d148aa681e95a9f20a4adced0b5784c82adbcc5c87062b1c6963119b02e7e1",
+    "retainedFixtureSource": "native-fixture-source-v3.tar.gz adds exact-match cleanup after the attempted v2 run; no v3 runtime result is claimed."
+  },
+  "macComputerUse": {
+    "latestResult": "Sky Computer Use native pipe closed before response",
+    "fallback": "No AppleScript, alternate UI automation or XC UI test used for these native checks."
+  },
+  "remainingLiveChecks": [
+    "Connected text after final install",
+    "Automatic two-way clipboard and off toggle",
+    "Native Notification Center reply",
+    "Cellular answer/decline/hangup and two-way laptop audio",
+    "Pixel USB webcam preview and release"
+  ],
+  "pixelPower": {
+    "atUTC": "2026-09-20T13:14:02.508261+00:00",
+    "stoppedOwnedScrcpyPID": 55524,
+    "stayAwake": "0",
+    "screenTimeout": "1800000",
+    "power": [
+      "mWakefulness=Dozing",
+      "mWakefulness=3"
+    ],
+    "screenTimeoutChangedByThisTask": false
+  },
+  "reviews": {
+    "statusFit": "Sol implementation, Astra bounded review; 82-percent draft narrowed to 70 percent for stroke and curvature clearance.",
+    "clipboard": "Astra source rereview closed earlier cancellation/privacy findings; this is not physical delivery proof.",
+    "staging": "Terra plaintext evidence review found no actual credentials, private messages/clipboard text or raw session secrets."
+  },
+  "cleanup": {
+    "atUTC": "2026-09-20T13:17:05.566443+00:00",
+    "fixturePackageAbsent": true,
+    "deviceScratchAbsent": true,
+    "stayAwake": "0",
+    "screenTimeout": "1800000",
+    "power": [
+      "mWakefulness=Dozing",
+      "mWakefulness=3"
+    ],
+    "clipboardCleanup": "Mac prior text restored in memory after test. Android fixture app and all its files removed; system clipboard clearing was not observed, and no arbitrary content was cleared."
+  }
+}

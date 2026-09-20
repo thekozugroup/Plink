@@ -3,6 +3,8 @@ package app.plink.android.protocol
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 
 @Serializable
 data class PlinkEnvelope(
@@ -25,10 +27,19 @@ data class PlinkEnvelope(
         }
 
         fun decode(raw: String): PlinkEnvelope {
+            ReconnectPayloadPolicy.validateRawJSON(raw)
             ScreenPreviewPayloadPolicy.validateRawJSON(raw)
             FileTransferPayloadPolicy.validateRawJSON(raw)
             return decodeUnchecked(raw)
         }
+
+        fun decode(raw: ByteArray): PlinkEnvelope = decode(decodeUtf8(raw))
+
+        internal fun decodeUtf8(raw: ByteArray): String = Charsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(raw))
+            .toString()
 
         internal fun decodeUnchecked(raw: String): PlinkEnvelope =
             json.decodeFromString(serializer(), raw)
@@ -63,4 +74,12 @@ object PlinkEventType {
     const val PermissionState = "permission.state"
     const val Ack = "ack"
     const val Error = "error"
+    const val ReconnectHello = "reconnect.hello"
+    const val ReconnectChallenge = "reconnect.challenge"
+    const val ReconnectProof = "reconnect.proof"
+    const val ReconnectReverse = "reconnect.reverse"
+    const val ReconnectReverseProof = "reconnect.reverse_proof"
+    const val ReconnectReady = "reconnect.ready"
+    const val ReconnectCommit = "reconnect.commit"
+    const val ReconnectDone = "reconnect.done"
 }

@@ -1,0 +1,6 @@
+2026-09-20 08:15:10.596 PlinkMac[10158:9337947] Plink startup pairing recovery started
+2026-09-20 08:15:10.630 PlinkMac[10158:9338024] Plink startup pairing recovery ready
+2026-09-20 08:15:10.652 PlinkMac[10158:9337942] Plink reconnect attempt started; deadline 30 seconds
+2026-09-20 08:15:10.652 PlinkMac[10158:9337942] Plink reconnect automatic: candidate selected
+2026-09-20 08:15:10.670 PlinkMac[10158:9337942] Plink reconnect handshake pass 1
+2026-09-20 08:15:11.667 PlinkMac[10158:9337942] Plink reconnect handshake completed

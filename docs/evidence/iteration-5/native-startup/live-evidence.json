@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-20",
+  "sourceScope": "Live startup/UI follow-up after canonical emulator evidence. Final icon/clipboard changes not yet included.",
+  "verified": {
+    "pixelPairingRestore": "Real saved Pixel pairing restored across several Mac restarts.",
+    "wifiReconnect": "Authenticated reconnect logged completion after correcting duplicate path callbacks.",
+    "battery": "User screenshot shows 100 percent and charging.",
+    "macNotificationPermission": "User screenshot shows Notifications enabled.",
+    "titlebar": "Computer-use screenshot shows native title bar background."
+  },
+  "notVerified": [
+    "Native Notification Center delivery and interactive reply",
+    "Cellular laptop audio and controls",
+    "USB webcam video",
+    "Automatic clipboard sync"
+  ],
+  "computerUse": "Initial launch AX and screenshots succeeded. Subsequent Plink inspections frequently failed: Sky Computer Use native pipe closed before response. Finder remained inspectable. No AppleScript fallback used after user requested computer-use retry.",
+  "pixel": {
+    "ownSettingsChanges": [],
+    "originalScreenTimeoutMs": 1800000,
+    "latestObservedScreenTimeoutMs": 120000,
+    "latestStayAwake": 0,
+    "latestPowerState": "Dozing; Plink display not left lit",
+    "settingsNote": "Timeout changed externally during shared-device work. We made no timeout changes and did not overwrite the newer setting.",
+    "removedScratch": [
+      "/data/local/tmp/plink-live-ui.xml"
+    ],
+    "pendingSyntheticNotificationCleanup": "com.android.shell tag plink-verification"
+  },
+  "proofFiles": [
+    "connected-user.png",
+    "disconnected-user.png",
+    "live-native.log",
+    "live-titlebar.log"
+  ]
+}

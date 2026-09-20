@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "exitCode": 0,
+  "completedAtUTC": "2026-09-20T11:08:16.403076+00:00",
+  "command": "./scripts/verify.sh",
+  "log": "verification-5-third.log",
+  "logSHA256": "bb504284db7163045fc036c6f380dc2742ab34334c869b1fffb0d2da6827b5d5",
+  "sourceManifest": "canonical-source-manifest.json",
+  "sourceManifestSHA256": "1676c18408c2d50403fed15744bce040b2e63597d0315d70247099bec910a56f",
+  "sourceHashesUnchanged": true,
+  "androidJUnit": {
+    "tests": 171,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "swift": {
+    "XCTest": 54,
+    "SwiftTestingCore": 117,
+    "SwiftTestingMac": 15,
+    "total": 186,
+    "failures": 0
+  },
+  "androidLint": {
+    "Warning": 35
+  },
+  "binariesSHA256": {
+    "android/build/outputs/apk/debug/android-debug.apk": "1675762a32d870db904cbbd35753ffbf911b3b1cd323770eb78cf73eb01dda1c",
+    "android/build/outputs/apk/release/android-release-unsigned.apk": "9bcd484addf55cf81792de998f065d304b8243e0a1b267029c40bcf473381164",
+    "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk": "112b112e8a9c151eb2b57cd7acd2aee88d6a0e3c2f24415018663dfd12322b0c",
+    "macos/.build/debug/PlinkMacDebugReceiver": "1d5a3f628f348b8ca32a18ab3de4a81d23bc59e9487fd57132b1c690b1dccbb3",
+    "build/PlinkMac.app.zip": "83f2f8f39634bee5aa2356b95f6064217eb4e0d94b5d4a8fa4a87233ece90f0b"
+  },
+  "nativeMacHardwareVerified": false,
+  "physicalPixelTouched": false,
+  "previousAttempts": [
+    "verification-5-first.log: FAIL two NewApi issues",
+    "verification-5-second.log: PASS before instrumentation-only cleanup fix"
+  ]
+}

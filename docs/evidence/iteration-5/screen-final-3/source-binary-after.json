@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "sourceHashesUnchanged": true,
+  "binaryChecks": {
+    "testAPK": true,
+    "receiver": true,
+    "mainAPK": true
+  },
+  "manifestSHA256": "e776814f488f411203b1c84b869e9c2d10ebf9b68b054b1eb44fa66b2fcabf02"
+}

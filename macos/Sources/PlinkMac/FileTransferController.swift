@@ -59,6 +59,11 @@ final class FileTransferController: ObservableObject {
         state = MacFileTransfer.State()
     }
 
+    func suspendAndAwait() async {
+        reset()
+        await work?.value
+    }
+
     func cancel(reason: String = "cancelled") {
         terminateCurrent(reason: reason)
     }
