@@ -1,0 +1,10 @@
+{
+  "trial": "Bonjour correlation only, not fix verification",
+  "baselineReady": true,
+  "selectedServicePresent": true,
+  "fixtureRemoved": true,
+  "killAtUTC": "2026-09-21T12:36:13.620731+00:00",
+  "method": "Physical display asleep, app-UID SIGKILL only; no launch or diagnostic broadcast before spontaneous service recovery.",
+  "serviceRecovered": true,
+  "recoveryElapsedSeconds": 1.95
+}

@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "iteration": 8,
+  "reviewer": "Astra",
+  "status": "final_bounded_source_review",
+  "decision": "approved_for_checkpoint_commit_with_explicit_runtime_limits",
+  "productionCodeFindings": [],
+  "blockingCodeFindings": 0,
+  "verified": false,
+  "overallScore": null,
+  "scope": {
+    "description": "Final frozen startup recovery state, dashboard/menu presentation, startup helper tests, self-notification filter and generic phone copy only.",
+    "sourceSHA256": {
+      "android/src/main/java/app/plink/android/services/BackgroundConnectionService.kt": "da0fbbbde613a2147a6a75f08575b3fa1f43660d563675c2c5facb255407c72a",
+      "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": "baf6910587b66312ceaaf2548940a19ccba569d8691e852f5137a72100d75d02",
+      "macos/Sources/PlinkMac/DashboardWindow.swift": "68b055d83317c9218cdd5a795489cfaf1997d239d2fa1d5875fd31c81139bfd7",
+      "macos/Sources/PlinkMac/PlinkMacApp.swift": "e6309d380774358db53d373ca4bb4f7d81ed3cc22e9e13c7eee323cdbb81dbdc",
+      "macos/Tests/PlinkMacTests/StartupRecoveryTests.swift": "6309a1f9da74797d5466d7d9fcd1ee9636091b305ebab6ad56f07cb9476eacb0"
+    },
+    "method": "Read-only source diff and existing evidence/log review. Astra ran no builds, tests, devices or native UI actions and changed no production source. Review performed without production changes.",
+    "lifecycle": "Parent owns existing run 01M2Y9TWMMWJD1CGEHGZVW2JRY; no new run created."
+  },
+  "sourceConclusions": [
+    {
+      "area": "Startup publication and failure gates",
+      "result": "No material regression found",
+      "evidence": "Publication checks the captured pairing attempt and termination state. The identity assignment and post-cleanup application also guard current ownership. Missing or non-32-byte keys fail before restoration; selection errors and listener-start failure do not publish ready. Only a ready outcome schedules pending automatic recovery."
+    },
+    {
+      "area": "State meaning and final copy",
+      "result": "Approved by source inspection",
+      "evidence": "Ready means saved pairing/listener restored, not authenticated connectivity. Final user-facing copy uses saved connection and phone rather than identity, key or journal. Permission wording is conditional. Missing-data copy does not promise that restarting repairs it. The ready copy says Your phone is paired."
+    },
+    {
+      "area": "Dashboard and menu",
+      "result": "No material regression found",
+      "evidence": "Pending recovery suppresses premature first-run and connection labels. Terminal errors remove the progress indicator and retain the incomplete recovery gate. Normal completed connected headers still depend on existing connection state. Native rendering and accessibility are unverified."
+    },
+    {
+      "area": "Security and saved data",
+      "result": "Existing policy preserved in this diff",
+      "evidence": "Keychain query/access policy and saved pairing storage are unchanged. There is no permission bypass, reset, new authentication mode, watcher or heartbeat in these five files."
+    },
+    {
+      "area": "Android self-notification noise",
+      "result": "Approved by source inspection",
+      "evidence": "The shared forward function rejects the app's own package for both posted and removed notifications before session/key snapshot, mapping and dispatch. Third-party notifications remain eligible. Background copy now says phone. Previously delivered Mac notifications are not retrospectively removed by this patch."
+    }
+  ],
+  "verification": {
+    "parentFullGate": {
+      "exitCodeReported": 0,
+      "androidTestsReported": 191,
+      "macTests": 207,
+      "macBreakdown": {
+        "xctest": 54,
+        "appSwiftTesting": 36,
+        "coreSwiftTesting": 117
+      },
+      "evidence": "docs/evidence/iteration-8/verification.log",
+      "reviewerObservation": "Log contains Android BUILD SUCCESSFUL and the three successful Mac test totals. Android count is parent-reported; no independent test execution by Astra."
+    },
+    "finalCopySwiftRerun": {
+      "exitCodeReported": 0,
+      "macTests": 207,
+      "evidence": "docs/evidence/iteration-8/swift-final.log",
+      "reviewerObservation": "Read log summaries: 54 XCTest with zero failures, 36 app Swift Testing passed and 117 Core Swift Testing passed."
+    },
+    "finalSignedPackaging": {
+      "exitCodeReported": 0,
+      "evidence": "docs/evidence/iteration-8/package-final.log",
+      "reviewerObservation": "Log records production build completion, signature replacement and app/zip output. Astra did not independently run signature verification. Existing unused withLock-result warning remains; no zero-warning claim."
+    },
+    "startupCoverageLimit": "Five tests exercise state/error helpers, key length validation and stale/terminating publication rejection. They do not execute a suspended real Keychain restore pipeline or prove OS prompt/UI behavior.",
+    "installEvidence": {
+      "evidence": "docs/evidence/iteration-8/installed-builds.json",
+      "parentRecordedAndroidHashMatch": true,
+      "androidSHA256": "4c96f003454455005e277b939d3bf1500bd652924e30b86fe64b888a367ef176",
+      "macExecutableSHA256": "f50e1ee684ee8b26a349b8ea209752fa304d2d5c5889b31f1af1b08460374a1a",
+      "limit": "Parent verified the installed Android hash; Astra did not access the device. Historical positive feature trials are not reruns on these binaries. Parent separately verified the bounded Mac pending-startup presentation.",
+      "localBuiltHashesRecheckedByReviewer": {
+        "android/build/outputs/apk/debug/android-debug.apk": "4c96f003454455005e277b939d3bf1500bd652924e30b86fe64b888a367ef176",
+        "build/PlinkMac.app/Contents/MacOS/PlinkMac": "f50e1ee684ee8b26a349b8ea209752fa304d2d5c5889b31f1af1b08460374a1a"
+      },
+      "localBuiltHashesMatchRecorded": true
+    },
+    "nativeStartupObservation": {
+      "status": "parent_verified_bounded_startup_state",
+      "basis": "Parent latest direct report: updated Mac CUA AX and getScreenshot succeeded while Keychain access awaited; observed copy matched the new startup wording.",
+      "limit": "Only the pending-startup presentation was observed. Keychain completion, connected presentation, other Mac native flows and native reply are not verified. User was asked to handle the Keychain prompt; no security bypass."
+    },
+    "finalCleanup": {
+      "status": "parent_confirmed",
+      "basis": "Latest direct report confirms cleanup, settings and power state. Astra performed no device actions.",
+      "evidence": "docs/evidence/iteration-8/cleanup.json"
+    }
+  },
+  "remainingEvidence": [
+    {
+      "item": "Phone-only process restart automatic authenticated recovery",
+      "status": "observed_failure_unresolved_by_checkpoint8",
+      "evidence": "docs/evidence/iteration-8/bonjour-kill-result.json",
+      "detail": "Foreground service returned in 1.95 seconds and selected Bonjour service disappeared/reappeared, but session remained awaiting reconnect without ordinary clipboard admission at 60.31 seconds. Discovery events are not authenticated admission evidence."
+    },
+    {
+      "item": "Native Notification Center reply",
+      "status": "unexecuted",
+      "evidence": "docs/evidence/iteration-8/native-reply-result.json",
+      "detail": "Fixture expired after its 600-second TTL; observation at 631 seconds had count 0 and matchedCount 0. CUA exposed the Date widget only. No direct dispatch substitutes for native reply."
+    },
+    {
+      "item": "Native reply fixture cleanup",
+      "status": "parent_recorded_complete",
+      "evidence": "docs/evidence/iteration-8/native-fixture-cleanup.json",
+      "detail": "STOP completed, owned files absent before uninstall, uninstall succeeded, host fixture directory removed."
+    },
+    {
+      "item": "Mac native presentation, actual calls and complete remaining acceptance",
+      "status": "bounded_startup_observed_remaining_flows_unverified",
+      "detail": "Parent verified updated Mac pending-startup copy through actual CUA AX and screenshot while Keychain access awaited. No claim of completed startup, connected/native-flow verification, actual carrier-call/audio pass, reply pass or overall 100 score."
+    }
+  ],
+  "acceptanceIntegrity": {
+    "originalsModified": false,
+    "frozenEvaluatorStatus": "Previously recorded exit 2: Device addendum changed; refresh acceptance explicitly",
+    "exactDriftEditProven": false,
+    "detail": "Preserve original freeze and scores. This bounded checkpoint review does not replace the original evaluator or award credit for removed screen sharing/webcam or deferred missing features."
+  },
+  "nextProtocolDecision": {
+    "status": "approved_test_first_bounded_extension_no_watcher",
+    "basis": "docs/evidence/iteration-8/recovery-design.json",
+    "contract": [
+      "Add a versioned authenticated non-destructive status exchange using existing transport security. Report admitted, awaitingReconnect or busy; bind response to a fresh request, current pairing/identities, verified network binding and opaque admission-state token.",
+      "Status alone cannot authorize teardown. Android atomically checks an eligible unadmitted token and reserves one bounded attempt, returning authenticated acceptance. Mac keeps its admission until acceptance and captured local lifetime/generation/cancellation/network/deadline checks pass.",
+      "Recheck ownership and state at subsequent destructive transitions. An intervening successful reconnect invalidates stale status, acceptance and Proof. Never pass a stale conditional attempt into unconditional retirement of newer admission.",
+      "Authenticate explicit version, mode, direction and phase separation throughout the transcript. Do not overload legacy Challenge, ACK or nonce fields. Preserve full bidirectional proof and durable replay protection.",
+      "Unsupported status, timeout, auth failure, malformed data, healthy or busy responses preserve existing admission. Automatic recovery never falls back to destructive legacy reconnect; retain existing manual compatibility.",
+      "All status, handoff, cleanup and handshake work fits the existing 30-second ceiling. No permanent retry, heartbeat, user-action replay or sensitive logging. Cleanup owns only this attempt's resources."
+    ],
+    "authorizedNextWork": "Contract and shared Swift/Kotlin vectors plus deterministic ownership tests first; then narrowly implement status and conditional handoff behind an explicit internal entry point. Review production paths before any discovery-event wiring.",
+    "requiredTests": [
+      "Healthy admission and active transfer survive status and forged/duplicate discovery hints unchanged.",
+      "An unadmitted restarted peer permits exactly one authenticated replacement.",
+      "Admission installed between status and handoff rejects the older token without teardown.",
+      "Reject expired, duplicate, replayed, wrong-peer, wrong-mode and wrong-phase messages.",
+      "Fence cancellation, lock/network changes, pairing replacement and stale callbacks at suspension points.",
+      "Verify old/new peer compatibility, shared deadline exhaustion and cleanup that cannot close newer resources."
+    ],
+    "notAuthorizedInThisCheckpoint": [
+      "Bonjour watcher implementation",
+      "heartbeat",
+      "broad crypto rewrite",
+      "new native verification claims"
+    ],
+    "laterPhysicalProof": "Parent repeats phone-only process kill with Mac process and network unchanged, observes authenticated recovery, then verifies actual ordinary traffic. Service recovery alone is insufficient.",
+    "delivery": "Separate follow-up scope; not a checkpoint 8 commit or lifecycle completion prerequisite."
+  }
+}

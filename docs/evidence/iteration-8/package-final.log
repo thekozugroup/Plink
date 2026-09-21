@@ -1,0 +1,20 @@
+Building for production...
+[3 / 11] PlinkCore
+<repository>/macos/Sources/PlinkCore/ReconnectEndpointStore.swift:80:14: warning: result of call to 'withLock' is unused [#NoUsage]
+ 78 |
+ 79 |     fileprivate func invalidate(candidateID: UUID) {
+ 80 |         lock.withLock { candidates.removeValue(forKey: candidateID) }
+    |              `- warning: result of call to 'withLock' is unused [#NoUsage]
+ 81 |     }
+ 82 |
+
+[#NoUsage]: <https://docs.swift.org/compiler/documentation/diagnostics/no-usage>
+[5 / 12] PlinkCore
+[8 / 10] PlinkMac-product
+[9 / 11] PlinkMac-product
+[12 / 14] PlinkMac-product
+[13 / 14] PlinkMac-product
+Build complete! (11.42 sec)
+<repository>/build/PlinkMac.app: replacing existing signature
+<repository>/build/PlinkMac.app
+<repository>/build/PlinkMac.app.zip

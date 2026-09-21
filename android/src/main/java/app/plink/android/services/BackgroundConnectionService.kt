@@ -250,7 +250,7 @@ class BackgroundConnectionService : Service() {
             .setContentText(if (awaitingReconnect) {
                 "Waiting for your paired Mac to reconnect"
             } else {
-                "Keeping your Pixel available to your paired Mac"
+                "Keeping your phone available to your paired Mac"
             })
             .setOngoing(true)
             .setSilent(true)

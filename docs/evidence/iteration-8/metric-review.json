@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 1,
+  "iteration": 8,
+  "title": "Checkpoint 8 adversarial metric review against original acceptance",
+  "task": "Compare original spec, verbatim acceptance capture and bounded evidence without fabricating valid scores.",
+  "owner": "Astra",
+  "reviewedAtUTC": "2026-09-21T12:58:35.484847+00:00",
+  "effectId": "01M320DC4TF66BZFHBH9T4GY06",
+  "runId": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+  "status": "complete_review_original_scoring_invalid",
+  "verified": false,
+  "metricsValid": false,
+  "overallScore": null,
+  "allMetricsAt100": false,
+  "decision": {
+    "checkpointCodeReview": "approved",
+    "blockingCodeFindings": 0,
+    "checkpointCommitMayProceed": true,
+    "authorizedEngineeringMayContinue": true,
+    "permissionRequired": false,
+    "sourceReview": "docs/evidence/iteration-8/astra-review.json",
+    "reason": "Historical integrity failure invalidates original scoring, not authorization to commit a bounded checkpoint or continue engineering. This is not a full-completion declaration."
+  },
+  "comparison": {
+    "specPath": ".a5c/spec.md",
+    "specReadVerbatim": true,
+    "specSHA256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+    "acceptanceCapture": "docs/evidence/iteration-8/acceptance-artifacts-result.json",
+    "captureSHA256": "ae905e6c0a65846657063acd0ee181063bdead5d30cbb2cb92527c82b0c9bbcf",
+    "captureCommandExitCode": 0,
+    "captureExitMeaning": "Capture exit 0 is not evaluator success. Six acceptance files were captured; original spec was read independently.",
+    "capturedFiles": [
+      {
+        "path": ".a5c/artifacts/acceptance/README.md",
+        "verbatimMatchesCurrent": true,
+        "capturedUTF8SHA256": "38c8cb613ccab0585d801cf900d1da2fee8d021340c054d8763ef0425a2c5bc6"
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/baseline.json",
+        "verbatimMatchesCurrent": true,
+        "capturedUTF8SHA256": "eb17389f239128deb57ba6fdfa66cd6d1cd1540c8cc822637c2905deae6719a1"
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/evaluate.py",
+        "verbatimMatchesCurrent": true,
+        "capturedUTF8SHA256": "73af5bd851e503eba2834b540637d7d135b700a889d2456e121bb82c90f33d78"
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/freeze.json",
+        "verbatimMatchesCurrent": true,
+        "capturedUTF8SHA256": "1bca89b7246baa5eca82b740309738fadc4a0be366865e7a1b45f4fcdd9194fb"
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/matrix.json",
+        "verbatimMatchesCurrent": true,
+        "capturedUTF8SHA256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274"
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/verification.json",
+        "verbatimMatchesCurrent": true,
+        "capturedUTF8SHA256": "c5c5a92b0102f99799019b32fb46a6fac51c04fac68998a987100f1cc406b766"
+      }
+    ],
+    "caseCount": 27,
+    "metricCount": 9
+  },
+  "originalIntegrity": {
+    "valid": false,
+    "hashChecks": [
+      {
+        "path": ".a5c/spec.md",
+        "expectedSHA256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+        "actualSHA256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+        "matches": true
+      },
+      {
+        "path": ".a5c/device-constraints.md",
+        "expectedSHA256": "c3be51adce89b8234fc3bb6001dcc88c78418582a953cbb7d13994e65c0da313",
+        "actualSHA256": "9f0a4086d97729c3eb893918e7fcec67c16ac0f7a394285fedca388a76f1c59b",
+        "matches": false
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/matrix.json",
+        "expectedSHA256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+        "actualSHA256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+        "matches": true
+      }
+    ],
+    "recordedSelfTestExitCode": 2,
+    "recordedDefaultExitCode": 2,
+    "message": "Device addendum changed; refresh acceptance explicitly",
+    "priorExecutionEvidence": ".a5c/artifacts/iteration7/acceptance-drift-audit.json",
+    "reviewerReranEvaluator": false,
+    "currentCorroboration": "Fresh hashes confirm the same failing condition. Evaluator checks integrity before self-test/scoring; no current score was computed.",
+    "historicalRecords": "Captured acceptance/verification.json contains historical self-test exit 0 and empty-evidence exit 1. Those records and baseline.json do not override the current mismatch or grade checkpoint 8.",
+    "exactDriftEditProven": false,
+    "attribution": "Exact edit, author and date remain unproven. Do not attribute drift to OnePlus or scope removal without prior bytes.",
+    "originalsModified": false
+  },
+  "metrics": [
+    {
+      "id": "cellularCalls",
+      "weight": 25,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "CALL-01",
+        "CALL-02",
+        "CALL-03",
+        "CALL-04"
+      ],
+      "caseCount": 4,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "handle calls just as if I had an iPhone"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "call available on my laptop"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "handle calls just as if I had an iPhone"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "handle calls just as if I had an iPhone"
+        }
+      ],
+      "remainingEvidence": "No real incoming carrier call, native answer, laptop two-way audio, lifecycle controls or post-recovery real call proof. Bluetooth bonding and source/tests are insufficient."
+    },
+    {
+      "id": "notificationReplies",
+      "weight": 15,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "MSG-01",
+        "MSG-02",
+        "MSG-03"
+      ],
+      "caseCount": 3,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "respond to them directly from the notification center on my Mac"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "respond to them directly from the notification center on my Mac"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "respond to them directly from the notification center on my Mac"
+        }
+      ],
+      "remainingEvidence": "Native reply unexecuted. Fixture expired at 631 seconds with count 0/matchedCount 0 and was cleaned. Controlled recipient, native Unicode routing and fresh real reply after recovery remain unverified."
+    },
+    {
+      "id": "nativeMac",
+      "weight": 8,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "MAC-01",
+        "MAC-02"
+      ],
+      "caseCount": 2,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "adhere to Apple HIG guidelines wherever possible and use native Swift"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "adhere to Apple HIG guidelines wherever possible and use native Swift"
+        }
+      ],
+      "remainingEvidence": "Native Swift build and parent-observed pending-startup AX/screenshot support bounded progress only. Complete native controls, VoiceOver/keyboard, accessibility/appearance and permission recovery remain unverified; Keychain completion is not established."
+    },
+    {
+      "id": "tomatoAndroid",
+      "weight": 15,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "TOM-01",
+        "TOM-02",
+        "TOM-03"
+      ],
+      "caseCount": 3,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "use the open source code base as a basis, and restructure on top to meet my needs"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "same interface, design, fonts, animations"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "same interface, design, fonts, animations"
+        }
+      ],
+      "remainingEvidence": "No complete new pinned-reference mapping, visual/font comparison, measured animation/accessibility review or actual Pixel motion proof."
+    },
+    {
+      "id": "continuity",
+      "weight": 12,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "CON-01",
+        "CON-02",
+        "CON-03"
+      ],
+      "caseCount": 3,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "other further integrations between the two devices for as close to feature parity as with a native iphone + mac combo"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "other further integrations between the two devices for as close to feature parity as with a native iphone + mac combo"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "other further integrations between the two devices for as close to feature parity as with a native iphone + mac combo"
+        }
+      ],
+      "remainingEvidence": "Historical OnePlus shell-helper clipboard and LAN file-harness passes are bounded, not final-build native evidence for all features. Browser/task handoff and complete inventory remain open. Removed/deferred features receive no original credit and need no renewed implementation in current scope."
+    },
+    {
+      "id": "security",
+      "weight": 8,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "SEC-01",
+        "SEC-02",
+        "SEC-03"
+      ],
+      "caseCount": 3,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "deep audit"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "deep audit"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "deep audit"
+        }
+      ],
+      "remainingEvidence": "Reviewed changes preserve security policy and reject self-notifications before session snapshot. Complete matching-build adversarial transport, privacy, revocation and protected-storage acceptance remains unverified."
+    },
+    {
+      "id": "stability",
+      "weight": 7,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "STAB-01",
+        "STAB-02",
+        "STAB-03"
+      ],
+      "caseCount": 3,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "when the functionality is actually verified"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "when the functionality is actually verified"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "when the functionality is actually verified"
+        }
+      ],
+      "remainingEvidence": "Parent gate 191 Android/207 Mac passed; final Swift and signed packaging passed. Phone-only restart restored service in 1.95 seconds but no authenticated admission at 60.31 seconds. Full lifecycle with real calls/replies and two-hour/100-notification proof remain missing."
+    },
+    {
+      "id": "deviceEndToEnd",
+      "weight": 7,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "E2E-01",
+        "E2E-02",
+        "E2E-03",
+        "E2E-04"
+      ],
+      "caseCount": 4,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "when the functionality is actually verified"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "my pixel and other Android devices with a similar setup for the Mac side"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "Any functionality that actually requires my own input, you can wait until I am back at my desk"
+        },
+        {
+          "type": "latest_user_constraint",
+          "text": "Another task shares Pixel. Minimize device time, never leave screen on; no timeout/stay-awake changes without recording/restoring. Parent set screen off with KEYCODE_SLEEP, saved settings in .a5c/artifacts/pixel-original-settings.json. Agents must not mutate device or UI. Keep all temporary files inventoried for cleanup on Mac and Pixel at final completion.",
+          "path": ".a5c/device-constraints.md"
+        }
+      ],
+      "remainingEvidence": "Installed OnePlus APK hash and bounded cleanup verified by parent. Original Pixel call/reply correlation, OnePlus core calls/replies, all human-assisted cases and complete historical cleanup remain unverified."
+    },
+    {
+      "id": "processIntegrity",
+      "weight": 3,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "PROC-01",
+        "PROC-02"
+      ],
+      "caseCount": 2,
+      "originalSpecReferences": [
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "Use a mix of GPT-6 Astra, Sol, Luna, and Terra"
+        },
+        {
+          "path": ".a5c/spec.md",
+          "line": 5,
+          "verbatimAnchor": "Please push and commit directly to main after major checkpoints and report back when fully complete."
+        }
+      ],
+      "remainingEvidence": "Astra independent review and honest reporting support progress. Parent owns staged publication; no commit/push completion claimed here. Full historical model-mix/process evidence and original completion remain unverified."
+    }
+  ],
+  "scopedProgressSeparateFromOriginalScore": [
+    {
+      "item": "Final five-file source/copy review",
+      "status": "approved",
+      "evidence": "docs/evidence/iteration-8/astra-review.json",
+      "limit": "No blocking findings; source review is not full-feature/native proof."
+    },
+    {
+      "item": "Build and regression checks",
+      "status": "parent_pass_logs_reviewed",
+      "androidTestsReported": 191,
+      "macTests": 207,
+      "evidence": [
+        "docs/evidence/iteration-8/verification.log",
+        "docs/evidence/iteration-8/swift-final.log",
+        "docs/evidence/iteration-8/package-final.log"
+      ],
+      "limit": "Final copy Swift rerun and signed packaging exit 0 reported by parent; log completions reviewed. Astra ran no tests or builds."
+    },
+    {
+      "item": "Binary provenance",
+      "status": "parent_installed_android_hash_match",
+      "evidence": "docs/evidence/iteration-8/installed-builds.json",
+      "limit": "Local APK/Mac hashes also rechecked in source review; old positive trials are not final-build reruns."
+    },
+    {
+      "item": "Mac pending-startup UI",
+      "status": "parent_bounded_native_AX_and_screenshot_pass",
+      "evidence": "docs/evidence/iteration-8/installed-builds.json",
+      "limit": "Observed correct saved-connection copy while Keychain awaited access. No completed startup, connected presentation or security bypass claimed."
+    },
+    {
+      "item": "Cleanup/settings/power",
+      "status": "parent_confirmed_iteration8",
+      "evidence": [
+        "docs/evidence/iteration-8/native-fixture-cleanup.json",
+        "docs/evidence/iteration-8/cleanup.json"
+      ],
+      "limit": "Fixture absent, monitor stopped, brightness 56/manual, timeout 120000, stay-awake 0, Dozing, helper mode unchanged. Not a certificate for all historical task cleanup."
+    }
+  ],
+  "preservedFailuresAndLimits": [
+    {
+      "item": "Phone-only automatic recovery",
+      "status": "failed_observation",
+      "evidence": "docs/evidence/iteration-8/bonjour-kill-result.json",
+      "detail": "Service restored in 1.95 seconds and selected Bonjour service returned; no ordinary admission at 60.31 seconds. Separate Mac-restart diagnostic control is not an automatic recovery pass."
+    },
+    {
+      "item": "Native Notification Center reply",
+      "status": "unexecuted",
+      "evidence": "docs/evidence/iteration-8/native-reply-result.json",
+      "detail": "Date-widget-only access did not execute a reply. Fixture count 0 is not a pass; fixture was cleaned."
+    },
+    {
+      "item": "Actual carrier calls/audio",
+      "status": "unverified",
+      "detail": "No real incoming call/native answer/laptop audio confirmation in checkpoint 8."
+    }
+  ],
+  "authorizedCurrentScope": {
+    "replacementPhone": "OnePlus CPH2749/API37",
+    "removed": [
+      "Screen sharing",
+      "USB webcam"
+    ],
+    "deferred": "Missing features per later explicit user instructions.",
+    "meaning": "Later authorized instructions govern ongoing work. Preserve historical spec/freeze/matrix and do not retroactively award original-case credit. Removed/deferred work does not become mandatory engineering through this review.",
+    "futureAmendment": "A separate versioned current-scope amendment may be designed later. It is not a permission prerequisite or an original 100 score."
+  },
+  "nextWork": {
+    "plan": ".a5c/artifacts/iteration9-plan.json",
+    "scope": "Test-first authenticated non-destructive status and conditional reconnect design; no watcher or production implementation in this pass.",
+    "independentOfHumanNativeChecks": true
+  },
+  "reviewerActions": {
+    "productionWrites": false,
+    "deviceActions": false,
+    "builds": false,
+    "testRuns": false,
+    "commits": false,
+    "pushes": false
+  }
+}

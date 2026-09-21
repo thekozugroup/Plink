@@ -1,0 +1,15 @@
+{
+  "atUTC": "2026-09-21T12:49:03.157815+00:00",
+  "brightness": "56",
+  "brightnessMode": "0",
+  "timeout": "120000",
+  "stayAwake": "0",
+  "wakefulness": [
+    "mWakefulness=Dozing",
+    "mWakefulness=3"
+  ],
+  "fixtureInstalled": false,
+  "fixtureMacTempExists": false,
+  "bonjourMonitor": "stopped with Ctrl-C; exit130",
+  "Shizuku": "unchanged this iteration; initial status reported root mode"
+}

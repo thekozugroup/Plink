@@ -1,0 +1,11 @@
+{
+  "result": {
+    "count": 0,
+    "matchedCount": 0,
+    "lastMatched": false
+  },
+  "resultFileAgeSeconds": 631,
+  "replyRouteTTLSeconds": 600,
+  "nativeReplyExecuted": false,
+  "reason": "Notification Center closed after necessary Mac restart; panel not reopened before this observation. No direct Android reply or fabricated dispatch used."
+}

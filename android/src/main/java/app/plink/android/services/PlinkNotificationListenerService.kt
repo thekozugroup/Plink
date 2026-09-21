@@ -46,6 +46,7 @@ class PlinkNotificationListenerService : NotificationListenerService() {
 
     private fun forward(sbn: StatusBarNotification?, removed: Boolean) {
         sbn ?: return
+        if (sbn.packageName == packageName) return
         val app = applicationContext as PlinkApplication
         val session = app.sessionController.snapshot() ?: return
         try {

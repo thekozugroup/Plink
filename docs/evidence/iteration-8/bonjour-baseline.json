@@ -1,0 +1,21 @@
+{
+  "events": [
+    {
+      "time": "8:25:50.864",
+      "event": "Add",
+      "selectedReplacementPhone": false
+    },
+    {
+      "time": "8:25:50.864",
+      "event": "Add",
+      "selectedReplacementPhone": true
+    },
+    {
+      "time": "8:26:29.935",
+      "event": "Rmv",
+      "selectedReplacementPhone": false
+    }
+  ],
+  "selectedPhonePresent": true,
+  "method": "Match public Bonjour instance suffix to SHA256 of saved pairing device ID for named replacement phone; no secrets read."
+}

@@ -3,6 +3,7 @@ import CoreGraphics
 import CryptoKit
 import Network
 import PlinkCore
+import Security
 import SwiftUI
 import UserNotifications
 
@@ -11,6 +12,89 @@ private struct ReconnectPathSignature: Equatable, Sendable {
     let interfaces: [String]
     let supportsIPv4: Bool
     let localInterfaces: Set<ReconnectInterfaceSnapshot>
+}
+
+struct StartupRecoveryState: Sendable {
+    enum Failure: Equatable, Sendable {
+        case rollback, metadata, identity, selection, missingKey, invalidKey
+        case accessCancelled, accessDenied, accessUnavailable, keyUnreadable, listener
+
+        var message: String {
+            switch self {
+            case .rollback: return "Plink couldn’t restore your saved connection. Quit and reopen Plink to try again."
+            case .metadata: return "Plink couldn’t restore your saved connection."
+            case .identity: return "Plink couldn’t restore your saved connection."
+            case .selection: return "Plink couldn’t restore your saved connection."
+            case .missingKey: return "Part of your saved connection is missing."
+            case .invalidKey: return "Plink couldn’t restore your saved connection."
+            case .accessCancelled: return "Access to your saved connection was cancelled. Quit and reopen Plink to try again."
+            case .accessDenied: return "Plink wasn’t allowed to access your saved connection. Quit and reopen Plink to try again."
+            case .accessUnavailable: return "Access to your saved connection is unavailable. If macOS asks for permission, review the request. Quit and reopen Plink to try again."
+            case .keyUnreadable: return "Plink couldn’t restore your saved connection."
+            case .listener: return "Plink couldn’t start the phone connection. Quit and reopen Plink to try again."
+            }
+        }
+    }
+
+    enum Phase: Equatable, Sendable {
+        case restoring, keyAccess, restoringConnection, unpaired, needsPairing, ready
+        case failed(Failure)
+    }
+
+    private(set) var phase: Phase = .restoring
+    var complete: Bool {
+        switch phase {
+        case .unpaired, .needsPairing, .ready: return true
+        default: return false
+        }
+    }
+    var error: String? {
+        if case .failed(let failure) = phase { return failure.message }
+        return nil
+    }
+    var detail: String {
+        switch phase {
+        case .restoring: return "Restoring your saved connection…"
+        case .keyAccess: return "Checking your saved connection. If macOS asks for permission, review the request."
+        case .restoringConnection: return "Restoring your saved connection…"
+        case .unpaired: return "Pair your phone to get started."
+        case .needsPairing: return "Pair your phone again to choose it."
+        case .ready: return "Your phone is paired."
+        case .failed(let failure): return failure.message
+        }
+    }
+    var menuStatus: String {
+        switch phase {
+        case .restoring, .keyAccess, .restoringConnection: return "Restoring your saved connection…"
+        case .failed: return "Saved connection needs attention"
+        case .unpaired: return "No phone paired"
+        case .needsPairing: return "Choose your phone again"
+        case .ready: return "Your phone is paired."
+        }
+    }
+
+    @discardableResult
+    mutating func publish(_ phase: Phase, expectedAttempt: UUID, currentAttempt: UUID, terminating: Bool) -> Bool {
+        guard expectedAttempt == currentAttempt, !terminating else { return false }
+        self.phase = phase
+        return true
+    }
+
+    static func keyFailure(_ key: Data?) -> Failure? {
+        guard let key else { return .missingKey }
+        return key.count == 32 ? nil : .invalidKey
+    }
+
+    static func keychainFailure(_ error: Error) -> Failure {
+        guard let error = error as? KeychainSecretStoreError,
+              case .status(let status) = error else { return .keyUnreadable }
+        switch status {
+        case errSecUserCanceled: return .accessCancelled
+        case errSecAuthFailed: return .accessDenied
+        case errSecInteractionNotAllowed, errSecNotAvailable: return .accessUnavailable
+        default: return .keyUnreadable
+        }
+    }
 }
 
 @main
@@ -64,6 +148,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var priorPairing: (device: PairedDevice, key: Data)?
     @Published private(set) var pairingRecoveryComplete = false
     @Published private(set) var pairingRecoveryError: String?
+    @Published private(set) var startupRecovery = StartupRecoveryState()
     @Published private(set) var pairedPhoneName: String?
     @Published private(set) var isPairing = false
     @Published private(set) var pairingCompleted = false
@@ -1068,9 +1153,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         pairingInFlight = false
     }
 
+    @discardableResult
+    private func publishStartupRecovery(_ phase: StartupRecoveryState.Phase, attempt: UUID) -> Bool {
+        var next = startupRecovery
+        guard next.publish(phase, expectedAttempt: attempt, currentAttempt: pairingAttempt,
+                           terminating: terminationPending) else { return false }
+        startupRecovery = next
+        pairingRecoveryComplete = startupRecovery.complete
+        pairingRecoveryError = startupRecovery.error
+        // A restored pairing may already be reconnecting; keep its connection feedback.
+        if phase != .ready { lastDeliveryState = startupRecovery.detail }
+        return true
+    }
+
     private func restoreSavedPairingAsync() {
         let attempt = pairingAttempt
         Task.detached { [domainName = "com.thekozugroup.plink.mac"] in
+            guard await self.publishStartupRecovery(.restoring, attempt: attempt) else { return }
             NSLog("Plink startup pairing recovery started")
             let store = UserDefaultsPairingStore(domainName: domainName)
             let secretStore = KeychainPairingSecretStore()
@@ -1079,10 +1178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 try finalization.rollback()
             } catch {
                 NSLog("Plink startup pairing rollback failed: \(error.localizedDescription)")
-                await MainActor.run {
-                    self.pairingRecoveryError = "Saved pairing recovery failed. Pairing is disabled until recovery succeeds."
-                    self.lastDeliveryState = "Saved pairing recovery failed. Pairing is disabled until recovery succeeds."
-                }
+                await self.publishStartupRecovery(.failed(.rollback), attempt: attempt)
                 return
             }
             let devices: [PairedDevice]
@@ -1090,10 +1186,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 devices = try store.all()
             } catch {
                 NSLog("Plink startup pairing store read failed: \(error.localizedDescription)")
-                await MainActor.run {
-                    self.pairingRecoveryError = "Saved pairing data could not be read. Device identity was not changed."
-                    self.lastDeliveryState = "Saved pairing data could not be read. Device identity was not changed."
-                }
+                await self.publishStartupRecovery(.failed(.metadata), attempt: attempt)
                 return
             }
             let identity: String
@@ -1102,90 +1195,95 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 identity = try MacDeviceIdentity.resolve(defaults: UserDefaults.standard, hasSavedPairings: !devices.isEmpty)
             } catch {
                 NSLog("Plink startup device identity recovery failed: \(error)")
-                await MainActor.run {
-                    self.pairingRecoveryError = "Device identity could not be restored. Existing pairing data was preserved."
-                    self.lastDeliveryState = "Device identity could not be restored. Existing pairing data was preserved."
-                }
+                await self.publishStartupRecovery(.failed(.identity), attempt: attempt)
                 return
             }
-            await MainActor.run {
+            let identityIsCurrent = await MainActor.run {
+                guard self.pairingAttempt == attempt, !self.terminationPending else { return false }
                 self.localMacDeviceId = identity
-                self.pairingRecoveryError = nil
+                return true
             }
+            guard identityIsCurrent else { return }
             let selected: PairedDevice?
             do { selected = try finalization.selectedDevice(localDeviceID: identity) }
             catch {
                 NSLog("Plink startup selected device read failed: \(error.localizedDescription)")
-                await MainActor.run {
-                    self.pairingRecoveryError = "Saved phone selection could not be read. Existing pairing records were preserved."
-                    self.lastDeliveryState = "Saved phone selection could not be read. Existing pairing records were preserved."
-                }
+                await self.publishStartupRecovery(.failed(.selection), attempt: attempt)
                 return
             }
-            NSLog("Plink startup pairing recovery ready")
             guard let device = selected else {
-                await MainActor.run { self.pairingRecoveryComplete = true }
-                if !devices.isEmpty {
-                    await MainActor.run {
-                        self.lastDeliveryState = devices.contains(where: { $0.trusted && $0.securityVersion == 2 })
-                            ? "Pair your intended phone again to select it. Saved phones were preserved."
-                            : "Pair again to enable updated transport security."
-                    }
-                }
-                NSLog("Plink async restore found no saved devices")
+                guard await self.publishStartupRecovery(devices.isEmpty ? .unpaired : .needsPairing,
+                                                        attempt: attempt) else { return }
+                NSLog("Plink startup recovery completed without an active phone selection")
                 return
             }
+            guard await self.publishStartupRecovery(.keyAccess, attempt: attempt) else { return }
+            NSLog("Plink startup saved pairing access started")
             let storedSessionKey: Data?
             do {
                 storedSessionKey = try secretStore.load(sessionId: device.sessionId)
             } catch {
                 NSLog("Plink async restore failed to load session key: \(error.localizedDescription)")
-                await MainActor.run {
-                    self.pairingRecoveryError = "Saved pairing key could not be read. Existing pairing records were preserved."
-                }
+                await self.publishStartupRecovery(.failed(StartupRecoveryState.keychainFailure(error)), attempt: attempt)
                 return
             }
-            guard let sessionKey = storedSessionKey else {
-                await MainActor.run {
-                    self.pairingRecoveryError = "Saved pairing key is unavailable. Unlock your keychain and restart Plink."
-                }
+            NSLog("Plink startup saved pairing access returned")
+            if let failure = StartupRecoveryState.keyFailure(storedSessionKey) {
+                await self.publishStartupRecovery(.failed(failure), attempt: attempt)
                 return
             }
-            await self.applyRestoredPairing(device: device, sessionKey: sessionKey,
-                                            expectedPairingAttempt: attempt)
+            guard let sessionKey = storedSessionKey,
+                  await self.publishStartupRecovery(.restoringConnection, attempt: attempt),
+                  let outcome = await self.applyRestoredPairing(device: device, sessionKey: sessionKey,
+                                                               expectedPairingAttempt: attempt) else { return }
             await MainActor.run {
-                self.pairingRecoveryComplete = true
-                self.schedulePendingAutomaticRecovery()
+                guard self.publishStartupRecovery(outcome, attempt: attempt) else { return }
+                if outcome == .ready {
+                    NSLog("Plink startup saved pairing restored")
+                    self.schedulePendingAutomaticRecovery()
+                }
             }
         }
     }
 
+    @discardableResult
     private func applyRestoredPairing(
         device: PairedDevice,
         sessionKey: Data,
         expectedPairingAttempt: UUID
-    ) async {
-        guard pairingAttempt == expectedPairingAttempt, pendingManualOffer == nil else { return }
+    ) async -> StartupRecoveryState.Phase? {
+        guard pairingAttempt == expectedPairingAttempt, !terminationPending, pendingManualOffer == nil else { return nil }
         guard device.trusted, device.securityVersion == 2 else {
-            lastDeliveryState = "Pair again to enable updated transport security."
-            return
+            lastDeliveryState = "Pair your phone again to continue."
+            return .needsPairing
         }
-        guard let selected = try? pairingFinalization.selectedDevice(localDeviceID: localMacDeviceId),
+        let selected: PairedDevice?
+        do { selected = try pairingFinalization.selectedDevice(localDeviceID: localMacDeviceId) }
+        catch {
+            lastDeliveryState = StartupRecoveryState.Failure.selection.message
+            return .failed(.selection)
+        }
+        guard let selected,
               selected.id == device.id, selected.sessionId == device.sessionId else {
-            lastDeliveryState = "Pair your intended phone again to select it. Saved phones were preserved."
-            return
+            lastDeliveryState = "Pair your phone again to choose it."
+            return .needsPairing
         }
-        guard canConfirmPairing == false, sessionKey.count == 32 else { return }
-        guard let lifecycleToken = await preparePairLifetimeReplacement() else { return }
-        guard pairingAttempt == expectedPairingAttempt, pendingManualOffer == nil else { return }
+        guard !canConfirmPairing else { return nil }
+        if let failure = StartupRecoveryState.keyFailure(sessionKey) {
+            lastDeliveryState = failure.message
+            return .failed(failure)
+        }
+        guard let lifecycleToken = await preparePairLifetimeReplacement() else { return nil }
+        guard pairingAttempt == expectedPairingAttempt, !terminationPending, pendingManualOffer == nil else { return nil }
         activePairing = (device, sessionKey)
         pairedPhoneName = device.name
         calling.configurePairedPhone(peerID: device.id)
         stopPairingAdvertiser()
         stopPairingConfirmationReceiver()
         guard startPairLifetime(device: device, sessionKey: sessionKey,
-                                lifecycleToken: lifecycleToken) else { return }
+                                lifecycleToken: lifecycleToken) else { return .failed(.listener) }
         scheduleAutomaticReconnect(device: device, sessionKey: sessionKey)
+        return .ready
     }
 
     private func publishPairingOffer(_ offer: PairingOffer) {

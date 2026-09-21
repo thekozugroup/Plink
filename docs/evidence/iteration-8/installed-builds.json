@@ -1,0 +1,18 @@
+{
+  "atUTC": "2026-09-21T12:48:26.247158+00:00",
+  "hashes": {
+    "android/build/outputs/apk/debug/android-debug.apk": "4c96f003454455005e277b939d3bf1500bd652924e30b86fe64b888a367ef176",
+    "build/PlinkMac.app/Contents/MacOS/PlinkMac": "f50e1ee684ee8b26a349b8ea209752fa304d2d5c5889b31f1af1b08460374a1a"
+  },
+  "installedAndroidSHA256": "4c96f003454455005e277b939d3bf1500bd652924e30b86fe64b888a367ef176",
+  "androidMatches": true,
+  "phoneSession": {
+    "sessionStatus": "AWAITING_RECONNECT",
+    "reconnectState": "Idle",
+    "clipboardConnected": false,
+    "clipboardSyncEnabled": true,
+    "clipboardState": "Clipboard sync is waiting for your Mac."
+  },
+  "macLaunch": "Updated bundle launched through computer use; native startup view captured; Keychain access pending.",
+  "nativeUI": "Restoring your saved connection\u2026; Checking your saved connection. If macOS asks for permission, review the request."
+}

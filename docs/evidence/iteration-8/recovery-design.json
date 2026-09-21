@@ -1,0 +1,218 @@
+{
+  "iteration": 8,
+  "status": "design_complete_no_safe_existing_handshake_ordering_for_approved_requirement",
+  "authorized_scope": "Read-only bounded design. No watcher, heartbeat, probe, transport, admission, protocol or source implementation authorized or performed.",
+  "decision": {
+    "answer": "No protocol-preserving ordering of the existing handshake supplies authenticated peer restart/admission state before either endpoint may retire a potentially healthy ordinary session.",
+    "important_distinction": "Existing Challenge can authenticate the paired phone and fresh challenge response. It cannot distinguish a restarted/unadmitted phone from a healthy admitted phone, because both execute the same Challenge path and return the same field set.",
+    "current_code": "Mac tears down even before peer authentication. Android waits for authenticated matching Proof before retirement, but Proof expresses an authorized reconnect attempt, not evidence that the old ordinary connection was stale.",
+    "implementation_recommendation": "Keep production read-only. Do not connect Bonjour events directly to startReconnectAttempt or claim that moving one closeOrdinaryAdmission call solves the safety requirement."
+  },
+  "physical_evidence": {
+    "trial_artifact": "docs/evidence/iteration-8/bonjour-kill-trial.json",
+    "result_artifact": "docs/evidence/iteration-8/bonjour-kill-result.json",
+    "parent_performed": true,
+    "baseline_ready": true,
+    "service_recovered": true,
+    "service_recovery_seconds": 1.95,
+    "final_observation_seconds": 60.31,
+    "final_session_status": "AWAITING_RECONNECT",
+    "final_reconnect_state": "Idle",
+    "final_ordinary_clipboard_connection": false,
+    "selected_service_events": [
+      {
+        "time": "8:25:50.864",
+        "event": "Add"
+      },
+      {
+        "time": "8:36:15.226",
+        "event": "Rmv"
+      },
+      {
+        "time": "8:36:17.096",
+        "event": "Add"
+      }
+    ],
+    "conclusion": "Selected service removal/re-addition correlated with phone process death; service returned in 1.95 seconds, while authenticated recovery remained absent at 60.31 seconds. This establishes availability of a candidate discovery hint in this trial, not authenticated restart evidence or fix verification.",
+    "android_two_line_patch": "Parent reports the frozen self-notification guard and generic-phone copy passed the full 191-test gate. This design did not execute that gate."
+  },
+  "handshake_timeline": [
+    {
+      "phase": "Mac starts reconnect",
+      "evidence_available": "Untrusted candidate hint and existing local pairing only.",
+      "ordinary_effect": "Mac closes admission and retires sender before contacting phone."
+    },
+    {
+      "phase": "Phone authenticates Hello",
+      "evidence_available": "Expected paired identity, encrypted frame/replay validation and proposed endpoints; no asserted peer restart state.",
+      "ordinary_effect": "Phone starts owned attempt and updates reconnect UI state; existing ordinary admission is not yet suspended by this step."
+    },
+    {
+      "phase": "Mac authenticates Challenge",
+      "evidence_available": "Paired-key response tied to fresh m and phone nonce p plus endpoint/phase checks. Healthy and restarted phones produce equivalent response shape.",
+      "ordinary_effect": "Mac is already retired in current implementation; a refactor could delay this, but still would not learn whether replacement is needed."
+    },
+    {
+      "phase": "Phone authenticates Proof",
+      "evidence_available": "Mac possesses the key and returned current nonce p. No admission-state or process-generation corroboration.",
+      "ordinary_effect": "Phone unconditionally suspends ordinary admission for this owned attempt."
+    },
+    {
+      "phase": "Reverse / ReverseProof / Ready",
+      "evidence_available": "Bidirectional authenticated endpoint/nonce proof and replacement preparation.",
+      "ordinary_effect": "Too late for the requirement: phone ordinary admission has already been retired."
+    },
+    {
+      "phase": "Commit / Done",
+      "evidence_available": "Existing replacement completion checks.",
+      "ordinary_effect": "New ordinary admission can be published; this cannot retroactively justify non-destructive preflight."
+    }
+  ],
+  "assessed_options": [
+    {
+      "option": "Bonjour removal/re-add immediately invokes existing automatic recovery",
+      "verdict": "Reject under current requirement.",
+      "reason": "The hint is unauthenticated and existing app startup plus core initiator both retire Mac admission before Challenge."
+    },
+    {
+      "option": "Delay only Mac retirement until Challenge",
+      "verdict": "Insufficient, even though it could establish identity first.",
+      "reason": "Healthy phone also answers Challenge. Continuing with Proof retires that phone; stopping leaves no restart/admission-state information. Both app-level retirement and core close at line 911, plus failure/deadline cleanup ownership, would need redesign."
+    },
+    {
+      "option": "Wait for Reverse or Ready as corroboration",
+      "verdict": "Too late.",
+      "reason": "Phone suspends ordinary admission immediately after Proof and before opening the reverse connection."
+    },
+    {
+      "option": "Hello/Challenge then abort as a read-only check",
+      "verdict": "Not a safe existing state query.",
+      "reason": "It authenticates reachability only; does not reveal restart/admission state, changes reconnect state/attempt bookkeeping, consumes frame counters and requires failure cleanup. No probe is authorized."
+    },
+    {
+      "option": "Interpret fresh nonce, source address, TXT record or persistent frame sequence as process restart",
+      "verdict": "Invalid evidence.",
+      "reason": "Nonces change every attempt including healthy sessions; addresses/TXT are discovery data; frame counters are replay protection and survive process restoration rather than proving a new process epoch."
+    },
+    {
+      "option": "Overload generic ACK, nonce contents or optional-looking payload extras with status",
+      "verdict": "Not protocol-preserving.",
+      "reason": "Reconnect payloads have exact whitelists and no status semantics. Generic ACK parsing flexibility does not establish a current endpoint\u2019s pre-admission response behavior, correlation or safe transition contract."
+    }
+  ],
+  "minimum_future_contract_if_astra_chooses_separate_protocol_design": {
+    "approval_status": "Requirements only; no new protocol fields, messages or implementation are approved here.",
+    "necessary_properties": [
+      "A bounded authenticated exchange must report whether the selected peer still has the ordinary generation that Mac believes is live, or is unadmitted after restart. Bind the result to a fresh request, current pairing and intended peer; discovery remains only a hint.",
+      "The status exchange must be permitted while ordinary admission is absent and must not invalidate either existing admission, sender, file transfer, command/reply context or healthy connection display.",
+      "Carry a suitable authenticated state/epoch token. Recheck it atomically when a later reconnect would retire admission; reject a stale observation if another handshake or session change installed a healthy generation in between.",
+      "Healthy/matching response preserves both admissions and does not reconnect. Failed authentication, timeout, unsupported version and malformed discovery hints preserve the potentially healthy connection rather than become proof of death.",
+      "Confirmed stale/unadmitted state may authorize the existing bounded reconnect under current lifecycle/generation and user-Cancel gates; replacement still requires the full bidirectional handshake.",
+      "Keep one bounded attempt per coalesced eligible hint, with explicit compatibility behavior for old peers. No permanent retry or heartbeat loop; no replay of user actions."
+    ],
+    "why_not_a_two_line_reorder": "The current wire messages carry no admission state/epoch and have no non-destructive status operation or conditional retirement check. Those are semantics/ownership changes, not scheduling alone."
+  },
+  "verification_required_for_any_later_approved_design": [
+    "A healthy pair with duplicate or forged matching discovery hints retains the same ordinary admissions, active transfer, queued commands and reply contexts on both ends.",
+    "A restarted phone can provide authenticated unadmitted-state evidence while Mac retains its existing local admission until that evidence is validated.",
+    "Timeout, auth failure, unavailable status support and stale callback cannot close a healthy admission.",
+    "An intervening successful reconnect between status response and retirement makes the older result ineligible; it cannot retire the newer generation.",
+    "A genuine restart and valid state corroboration result in one bounded existing handshake; full authentication/cleanup/publication checks remain intact.",
+    "The parent repeats the physical phone-only kill with no Mac restart/network change and separately records process/service recovery, corroboration and actual ordinary traffic after handshake."
+  ],
+  "source_references": [
+    {
+      "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+      "line": 678,
+      "detail": "startReconnectAttempt retires Mac ordinary admission at line 698, clears peer/command/notification state, invalidates sender and awaits cleanup, before any candidate handshake response."
+    },
+    {
+      "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+      "line": 899,
+      "detail": "performAttempt independently closes Mac ordinary admission at line 911, before TCP connect and Hello."
+    },
+    {
+      "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+      "line": 923,
+      "detail": "Hello -> authenticated Challenge -> Proof precedes reverse connection, Ready, Commit and Done. Existing initiator offers no non-retiring preflight operation."
+    },
+    {
+      "path": "macos/Sources/PlinkCore/ReconnectSession.swift",
+      "line": 440,
+      "detail": "Receive decrypts/authenticates using expected peer and local IDs and the persistent frame state; require() at line 986 checks phase, nonces and endpoints."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+      "line": 120,
+      "detail": "Authenticated Hello begins one owned, rate-limited attempt. It does not require ordinary admission to be absent."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+      "line": 212,
+      "detail": "admissionInitiallyClosed is captured locally, but it does not select the response or gate whether a healthy ordinary session can be replaced."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+      "line": 235,
+      "detail": "Phone generates and sends Challenge, then authenticates matching Proof at line 242. Challenge fields do not reveal admission state or process epoch."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+      "line": 246,
+      "detail": "After Proof, suspendOrdinaryAndAwait retires ordinary resources before the reverse channel and Reverse/Ready evidence can be returned."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+      "line": 342,
+      "detail": "suspendOrdinaryAndAwait unconditionally deactivates ordinary admission for the owned attempt at line 352 and waits for quiescence."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+      "line": 312,
+      "detail": "ordinaryAdmissionInitiallyClosed appears only in local successful diagnostics, after the replacement flow; it is not authenticated peer-visible preflight evidence."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt",
+      "line": 334,
+      "detail": "An incomplete attempt enters failure/cancellation cleanup. Stopping after Challenge is not an existing side-effect-free status API."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/services/PlinkSessionController.kt",
+      "line": 553,
+      "detail": "Revocation is attempt-owned. Before suspension/publication it need not close pre-existing ordinary admission, but reconnect state and attempt bookkeeping still change."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/protocol/ReconnectProtocol.kt",
+      "line": 181,
+      "detail": "Exact allowed payload keys are v/m/mac/phone for Hello, plus p for Challenge/Proof, plus r for later phases. Admission state, restart epoch and status-query semantics are absent."
+    },
+    {
+      "path": "macos/Sources/PlinkCore/ReconnectProtocol.swift",
+      "line": 192,
+      "detail": "ReconnectMessage contains only type, m/p/r and endpoints. Exact payload validation at line 284 rejects additional state fields."
+    },
+    {
+      "path": "android/src/main/java/app/plink/android/reconnect/ReconnectLifecycleOwner.kt",
+      "line": 23,
+      "detail": "Attempt ownership is local. Token creation/commit/invalidation guards do not transmit a shared old-admission generation to the peer."
+    }
+  ],
+  "source_sha256": {
+    "android/src/main/java/app/plink/android/protocol/ReconnectProtocol.kt": "d5962aedd285296b05e44f4e3132d88a7cec024b76fa074d62032ab8cba5fe6b",
+    "android/src/main/java/app/plink/android/reconnect/ReconnectCoordinator.kt": "7ca795d72155fdd7d67a1efb59bf68b13af49ea426bc6adc000a859b6970c3ce",
+    "android/src/main/java/app/plink/android/reconnect/ReconnectLifecycleOwner.kt": "f707445079d3a9a77ca771f0793e9f46bc5a055e3294197360c5df1af1a47baa",
+    "android/src/main/java/app/plink/android/services/PlinkSessionController.kt": "0235792b5efd4d0748d5866d8dfe5bdfcb30ce26b8732c18d3c99f69bf5a4568",
+    "macos/Sources/PlinkCore/ReconnectProtocol.swift": "5dd6a882a15569f9586ae3e9498451bf9b1b5249cf38a397414bfc5a30fee576",
+    "macos/Sources/PlinkCore/ReconnectSession.swift": "8968fa507f5095d536fb1a36c5260cbacfe0639ed7b431d72e6e4d19ad49a50f",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "e6309d380774358db53d373ca4bb4f7d81ed3cc22e9e13c7eee323cdbb81dbdc"
+  },
+  "verification": {
+    "builds": false,
+    "tests_executed": false,
+    "device_actions": false,
+    "ui_actions": false,
+    "private_notification_data_read": false,
+    "source_changes": false
+  },
+  "freeze": "Only docs/evidence/iteration-8/recovery-design.json written. Production remains frozen; parent/Astra owns any next protocol-design decision."
+}

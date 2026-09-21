@@ -1,0 +1,11 @@
+{
+  "sessionStatus": "AWAITING_RECONNECT",
+  "reconnectState": "Idle",
+  "clipboardConnected": false,
+  "clipboardSyncEnabled": true,
+  "clipboardState": "Clipboard sync is waiting for your Mac.",
+  "targetSecondsAfterServiceRecovery": 10,
+  "actualSecondsAfterServiceRecovery": 33.43,
+  "PIDContinuous": true,
+  "atUTC": "2026-09-21T12:22:26.235865+00:00"
+}

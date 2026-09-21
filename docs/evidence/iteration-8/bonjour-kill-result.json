@@ -1,0 +1,46 @@
+{
+  "atUTC": "2026-09-21T12:37:14.025094+00:00",
+  "elapsedSeconds": 60.31,
+  "phonePIDContinuous": true,
+  "macPIDContinuous": true,
+  "session": {
+    "sessionStatus": "AWAITING_RECONNECT",
+    "reconnectState": "Idle",
+    "clipboardConnected": false,
+    "clipboardSyncEnabled": true,
+    "clipboardState": "Clipboard sync is waiting for your Mac."
+  },
+  "bonjourEvents": [
+    {
+      "time": "8:25:50.864",
+      "event": "Add",
+      "selectedReplacementPhone": false,
+      "possibleRenamedSelectedService": false
+    },
+    {
+      "time": "8:25:50.864",
+      "event": "Add",
+      "selectedReplacementPhone": true,
+      "possibleRenamedSelectedService": false
+    },
+    {
+      "time": "8:26:29.935",
+      "event": "Rmv",
+      "selectedReplacementPhone": false,
+      "possibleRenamedSelectedService": false
+    },
+    {
+      "time": "8:36:15.226",
+      "event": "Rmv",
+      "selectedReplacementPhone": true,
+      "possibleRenamedSelectedService": false
+    },
+    {
+      "time": "8:36:17.096",
+      "event": "Add",
+      "selectedReplacementPhone": true,
+      "possibleRenamedSelectedService": false
+    }
+  ],
+  "automaticRecoveryVerified": false
+}

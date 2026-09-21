@@ -1,0 +1,32 @@
+{
+  "baseCommit": "0801459612616b47789f79d56a49362d0645220a",
+  "sourceSHA256": {
+    "android/src/main/java/app/plink/android/services/BackgroundConnectionService.kt": "da0fbbbde613a2147a6a75f08575b3fa1f43660d563675c2c5facb255407c72a",
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": "baf6910587b66312ceaaf2548940a19ccba569d8691e852f5137a72100d75d02",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "e6309d380774358db53d373ca4bb4f7d81ed3cc22e9e13c7eee323cdbb81dbdc",
+    "macos/Sources/PlinkMac/DashboardWindow.swift": "68b055d83317c9218cdd5a795489cfaf1997d239d2fa1d5875fd31c81139bfd7",
+    "macos/Tests/PlinkMacTests/StartupRecoveryTests.swift": "6309a1f9da74797d5466d7d9fcd1ee9636091b305ebab6ad56f07cb9476eacb0"
+  },
+  "fullGate": {
+    "exitCode": 0,
+    "AndroidTests": 191,
+    "MacTests": 207,
+    "lintErrors": 0,
+    "lintWarnings": 39,
+    "log": "verification.log"
+  },
+  "postCopySwift": {
+    "exitCode": 0,
+    "MacTests": 207,
+    "log": "swift-final.log"
+  },
+  "finalPackage": {
+    "exitCode": 0,
+    "strictCodesignVerification": 0,
+    "log": "package-final.log"
+  },
+  "limitations": [
+    "Unit and build checks do not prove native reply, cellular audio, or automatic reconnection.",
+    "Full gate preceded final copy-only change; Swift and package rerun after it."
+  ]
+}

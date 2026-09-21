@@ -37,10 +37,10 @@ struct DashboardWindow: View {
     }
 
     @ViewBuilder private var home: some View {
-        if appDelegate.pairedPeerID != nil {
+        if appDelegate.pairingRecoveryComplete && appDelegate.pairedPeerID != nil {
             ContinuityPanel(appDelegate: appDelegate)
             FileTransferPanel(controller: appDelegate.files)
-        } else {
+        } else if appDelegate.pairingRecoveryComplete {
             VStack(alignment: .leading, spacing: 16) {
                 Text(appDelegate.pairedPhoneName == nil ? "Your phone, closer." : "Let’s connect.")
                     .font(.title2.weight(.semibold))
@@ -116,7 +116,7 @@ struct ConnectionHeader: View {
         }
     }
     private var title: String {
-        if !appDelegate.pairingRecoveryComplete { return appDelegate.pairingRecoveryError == nil ? "Starting Plink…" : "Setup needs attention" }
+        if !appDelegate.pairingRecoveryComplete { return appDelegate.pairingRecoveryError == nil ? "Restoring your saved connection…" : "Setup needs attention" }
         if appDelegate.isPairing { return appDelegate.canConfirmPairing ? "Confirm your phone" : "Pairing your phone" }
         if connected { return "Connected" }
         if busy { return "Connecting…" }
@@ -124,10 +124,14 @@ struct ConnectionHeader: View {
     }
     private var detail: String {
         if let error = appDelegate.pairingRecoveryError { return error }
+        if !appDelegate.pairingRecoveryComplete { return appDelegate.startupRecovery.detail }
         if appDelegate.isPairing { return "Compare the code on both devices." }
         if connected { return "Your phone is ready to use." }
         if case .failed(let reason) = reconnect.state { return reason }
         if busy { return "Keep Plink open on your phone." }
+        if appDelegate.pairedPhoneName == nil && appDelegate.startupRecovery.phase == .needsPairing {
+            return appDelegate.startupRecovery.detail
+        }
         return appDelegate.pairedPhoneName == nil ? "Start with a quick, secure pairing." : "Your pairing is saved. Connect when your phone is nearby."
     }
 
@@ -144,28 +148,35 @@ struct ConnectionHeader: View {
                     if !compact { Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
                 }
                 Spacer(minLength: 0)
-                if busy && !appDelegate.isPairing { ProgressView().controlSize(.small) }
-            }
-            if let error = appDelegate.pairingRecoveryError, compact {
-                Text(error).font(.caption).foregroundStyle(.red)
-            }
-            HStack(spacing: 16) {
-                Label {
-                    Text(connected ? "Wi-Fi connected" : "Wi-Fi disconnected")
-                } icon: {
-                    LucideIcon(name: connected ? .wifi : .wifiOff)
+                if !appDelegate.pairingRecoveryComplete && appDelegate.pairingRecoveryError == nil {
+                    ProgressView("Restoring your saved connection…").controlSize(.small).labelsHidden()
+                } else if appDelegate.pairingRecoveryComplete && busy && !appDelegate.isPairing {
+                    ProgressView().controlSize(.small)
                 }
-                    .foregroundStyle(connected ? Color.green : Color.secondary)
-                Label {
-                    VStack(alignment: .leading) {
-                        Text(calling.bluetoothPaired ? "Bluetooth paired" : "Bluetooth not paired")
-                        Text(calling.serviceConnected ? "Calls connected" : "Calls disconnected")
+            }
+            if !appDelegate.pairingRecoveryComplete, compact {
+                Text(detail).font(.caption)
+                    .foregroundStyle(appDelegate.pairingRecoveryError == nil ? Color.secondary : Color.red)
+            }
+            if appDelegate.pairingRecoveryComplete {
+                HStack(spacing: 16) {
+                    Label {
+                        Text(connected ? "Wi-Fi connected" : "Wi-Fi disconnected")
+                    } icon: {
+                        LucideIcon(name: connected ? .wifi : .wifiOff)
                     }
-                } icon: {
-                    LucideIcon(name: .bluetooth)
-                }
-                    .foregroundStyle(calling.serviceConnected ? Color.green : Color.secondary)
-            }.font(.caption)
+                        .foregroundStyle(connected ? Color.green : Color.secondary)
+                    Label {
+                        VStack(alignment: .leading) {
+                            Text(calling.bluetoothPaired ? "Bluetooth paired" : "Bluetooth not paired")
+                            Text(calling.serviceConnected ? "Calls connected" : "Calls disconnected")
+                        }
+                    } icon: {
+                        LucideIcon(name: .bluetooth)
+                    }
+                        .foregroundStyle(calling.serviceConnected ? Color.green : Color.secondary)
+                }.font(.caption)
+            }
             if appDelegate.pairingRecoveryComplete && !connected {
                 if appDelegate.isPairing {
                     Button("Continue Pairing") { appDelegate.showPairingWindow() }.buttonStyle(.borderedProminent)
@@ -197,14 +208,18 @@ struct MenuBarPanel: View {
     var body: some View {
         Button("Open Plink") { appDelegate.showDashboardWindow() }
         Divider()
-        Text(appDelegate.pairedPhoneName ?? "No phone paired")
-        Label {
-            Text(appDelegate.pairedPeerID == nil ? "Wi-Fi disconnected" : "Wi-Fi connected")
-        } icon: {
-            LucideIcon(name: appDelegate.pairedPeerID == nil ? .wifiOff : .wifi)
+        if !appDelegate.pairingRecoveryComplete {
+            Text(appDelegate.pairingRecoveryError == nil ? "Restoring your saved connection…" : "Saved connection needs attention")
+        } else {
+            Text(appDelegate.pairedPhoneName ?? appDelegate.startupRecovery.menuStatus)
+            Label {
+                Text(appDelegate.pairedPeerID == nil ? "Wi-Fi disconnected" : "Wi-Fi connected")
+            } icon: {
+                LucideIcon(name: appDelegate.pairedPeerID == nil ? .wifiOff : .wifi)
+            }
+            Text(calling.bluetoothPaired ? "Bluetooth paired" : "Bluetooth not paired")
+            Text(calling.serviceConnected ? "Calls connected" : "Calls disconnected")
         }
-        Text(calling.bluetoothPaired ? "Bluetooth paired" : "Bluetooth not paired")
-        Text(calling.serviceConnected ? "Calls connected" : "Calls disconnected")
         Divider()
         if appDelegate.pairedPeerID != nil {
             FileTransferMenu(controller: appDelegate.files, openDashboard: { appDelegate.showDashboardWindow() })
@@ -212,7 +227,7 @@ struct MenuBarPanel: View {
             Button("Continue Pairing…") { appDelegate.showPairingWindow() }
         } else if appDelegate.pairedPhoneName != nil {
             Button("Connect Phone") { reconnect.beginDiscovery() }
-                .disabled(reconnect.state == .finding || reconnect.state == .verifying || reconnect.state == .disconnecting)
+                .disabled(!appDelegate.pairingRecoveryComplete || reconnect.state == .finding || reconnect.state == .verifying || reconnect.state == .disconnecting)
         } else {
             Button("Pair Phone…") { appDelegate.showPairingWindow() }.disabled(!appDelegate.pairingRecoveryComplete)
         }

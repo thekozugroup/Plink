@@ -1,0 +1,7 @@
+{
+  "startedAtUTC": "2026-09-21T12:21:50.854957+00:00",
+  "installedAndroidSha256": "1fe4b3dfc04f9754237d232eaf8671a91ec1470dfe37c5169fcfcb09be472f7e",
+  "stimulus": "Screen sleep then app-UID SIGKILL of confirmed Plink PID. No Mac restart/network changes/app launch.",
+  "serviceRecovered": true,
+  "recoveryElapsedSeconds": 1.95
+}

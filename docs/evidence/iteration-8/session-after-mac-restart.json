@@ -1,0 +1,8 @@
+{
+  "sessionStatus": "READY",
+  "reconnectState": "ConnectedInternetUnverified",
+  "clipboardConnected": true,
+  "clipboardSyncEnabled": true,
+  "clipboardState": "Unlock your phone's personal profile to sync clipboard text.",
+  "method": "Read-only session observation after deliberate same-binary Mac restart; not automatic recovery."
+}
