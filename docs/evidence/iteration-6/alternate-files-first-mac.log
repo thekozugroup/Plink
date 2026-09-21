@@ -1,0 +1,5 @@
+listening mode=files port=63195 expectedSource=test-pixel expectedTarget=test-mac
+Mac saved bytes=0 sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+FILE ROUNDTRIP boundary=0 Android and Mac saved; SHA-256 checked
+Mac saved bytes=1 sha256=6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d
+receiver error: readFailed

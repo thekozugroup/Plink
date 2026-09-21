@@ -1,0 +1,153 @@
+> Task :android:preBuild UP-TO-DATE
+> Task :android:preDebugBuild UP-TO-DATE
+> Task :android:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :android:compileDebugAidl UP-TO-DATE
+> Task :android:generateDebugResources UP-TO-DATE
+> Task :android:packageDebugResources UP-TO-DATE
+> Task :android:processDebugNavigationResources UP-TO-DATE
+> Task :android:parseDebugLocalResources UP-TO-DATE
+> Task :android:generateDebugRFile UP-TO-DATE
+> Task :android:javaPreCompileDebug UP-TO-DATE
+> Task :android:generateDebugAssets UP-TO-DATE
+> Task :android:mergeDebugAssets UP-TO-DATE
+> Task :android:compressDebugAssets UP-TO-DATE
+> Task :android:desugarDebugFileDependencies UP-TO-DATE
+> Task :android:checkDebugAarMetadata UP-TO-DATE
+> Task :android:compileDebugNavigationResources UP-TO-DATE
+> Task :android:mapDebugSourceSetPaths UP-TO-DATE
+> Task :android:mergeDebugResources UP-TO-DATE
+> Task :android:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :android:extractDeepLinksDebug UP-TO-DATE
+> Task :android:processDebugMainManifest UP-TO-DATE
+> Task :android:processDebugManifest UP-TO-DATE
+> Task :android:processDebugManifestForPackage UP-TO-DATE
+> Task :android:processDebugResources UP-TO-DATE
+> Task :android:checkDebugDuplicateClasses UP-TO-DATE
+> Task :android:mergeExtDexDebug UP-TO-DATE
+> Task :android:mergeLibDexDebug UP-TO-DATE
+> Task :android:mergeDebugJniLibFolders UP-TO-DATE
+> Task :android:mergeDebugNativeLibs UP-TO-DATE
+> Task :android:stripDebugDebugSymbols UP-TO-DATE
+> Task :android:validateSigningDebug UP-TO-DATE
+> Task :android:writeDebugAppMetadata UP-TO-DATE
+> Task :android:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :android:preReleaseBuild UP-TO-DATE
+> Task :android:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :android:mergeReleaseNativeLibs UP-TO-DATE
+> Task :android:stripReleaseDebugSymbols UP-TO-DATE
+> Task :android:extractReleaseNativeSymbolTables UP-TO-DATE
+> Task :android:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :android:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :android:compileReleaseAidl UP-TO-DATE
+> Task :android:generateReleaseResources UP-TO-DATE
+> Task :android:packageReleaseResources UP-TO-DATE
+> Task :android:processReleaseNavigationResources UP-TO-DATE
+> Task :android:parseReleaseLocalResources UP-TO-DATE
+> Task :android:generateReleaseRFile UP-TO-DATE
+> Task :android:javaPreCompileRelease UP-TO-DATE
+> Task :android:mergeReleaseArtProfile UP-TO-DATE
+> Task :android:checkReleaseAarMetadata UP-TO-DATE
+> Task :android:compileReleaseNavigationResources UP-TO-DATE
+> Task :android:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :android:mergeReleaseResources UP-TO-DATE
+> Task :android:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :android:extractDeepLinksRelease UP-TO-DATE
+> Task :android:processReleaseMainManifest UP-TO-DATE
+> Task :android:processReleaseManifest UP-TO-DATE
+> Task :android:processReleaseManifestForPackage UP-TO-DATE
+> Task :android:processReleaseResources UP-TO-DATE
+> Task :android:extractProguardFiles UP-TO-DATE
+> Task :android:mergeReleaseStartupProfile UP-TO-DATE
+> Task :android:generateReleaseAssets UP-TO-DATE
+> Task :android:mergeReleaseAssets UP-TO-DATE
+> Task :android:compressReleaseAssets UP-TO-DATE
+> Task :android:extractReleaseVersionControlInfo UP-TO-DATE
+> Task :android:optimizeReleaseResources UP-TO-DATE
+> Task :android:collectReleaseDependencies UP-TO-DATE
+> Task :android:sdkReleaseDependencyData UP-TO-DATE
+> Task :android:writeReleaseAppMetadata UP-TO-DATE
+> Task :android:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :android:preDebugAndroidTestBuild SKIPPED
+> Task :android:compileDebugAndroidTestAidl NO-SOURCE
+> Task :android:generateDebugAndroidTestResources UP-TO-DATE
+> Task :android:packageDebugAndroidTestResources UP-TO-DATE
+> Task :android:processDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :android:parseDebugAndroidTestLocalResources UP-TO-DATE
+> Task :android:generateDebugAndroidTestRFile UP-TO-DATE
+> Task :android:javaPreCompileDebugAndroidTest UP-TO-DATE
+> Task :android:generateDebugAndroidTestAssets UP-TO-DATE
+> Task :android:mergeDebugAndroidTestAssets UP-TO-DATE
+> Task :android:compressDebugAndroidTestAssets UP-TO-DATE
+> Task :android:desugarDebugAndroidTestFileDependencies UP-TO-DATE
+> Task :android:checkDebugAndroidTestAarMetadata UP-TO-DATE
+> Task :android:compileDebugAndroidTestNavigationResources UP-TO-DATE
+> Task :android:mapDebugAndroidTestSourceSetPaths UP-TO-DATE
+> Task :android:mergeDebugAndroidTestResources UP-TO-DATE
+> Task :android:processDebugAndroidTestManifest UP-TO-DATE
+> Task :android:processDebugAndroidTestResources UP-TO-DATE
+> Task :android:checkDebugAndroidTestDuplicateClasses UP-TO-DATE
+> Task :android:mergeExtDexDebugAndroidTest UP-TO-DATE
+> Task :android:mergeLibDexDebugAndroidTest UP-TO-DATE
+> Task :android:mergeDebugAndroidTestJniLibFolders UP-TO-DATE
+> Task :android:mergeDebugAndroidTestNativeLibs NO-SOURCE
+> Task :android:stripDebugAndroidTestDebugSymbols NO-SOURCE
+> Task :android:validateSigningDebugAndroidTest UP-TO-DATE
+> Task :android:writeDebugAndroidTestSigningConfigVersions UP-TO-DATE
+> Task :android:preDebugUnitTestBuild UP-TO-DATE
+> Task :android:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :android:compileDebugKotlin
+> Task :android:compileDebugJavaWithJavac UP-TO-DATE
+> Task :android:dexBuilderDebug
+> Task :android:processDebugJavaRes UP-TO-DATE
+> Task :android:mergeDebugJavaResource UP-TO-DATE
+> Task :android:mergeProjectDexDebug
+> Task :android:mergeDebugGlobalSynthetics
+> Task :android:bundleDebugClassesToCompileJar
+> Task :android:bundleDebugClassesToRuntimeJar
+> Task :android:generateDebugLintReportModel
+> Task :android:compileDebugAndroidTestKotlin
+> Task :android:generateDebugAndroidTestLintModel
+> Task :android:compileDebugAndroidTestJavaWithJavac NO-SOURCE
+> Task :android:dexBuilderDebugAndroidTest UP-TO-DATE
+> Task :android:mergeDebugAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :android:processDebugAndroidTestJavaRes UP-TO-DATE
+> Task :android:mergeDebugAndroidTestJavaResource UP-TO-DATE
+> Task :android:mergeProjectDexDebugAndroidTest UP-TO-DATE
+> Task :android:packageDebugAndroidTest UP-TO-DATE
+> Task :android:createDebugAndroidTestApkListingFileRedirect UP-TO-DATE
+> Task :android:assembleDebugAndroidTest UP-TO-DATE
+> Task :android:generateDebugUnitTestLintModel
+> Task :android:compileDebugUnitTestKotlin
+> Task :android:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :android:packageDebug
+> Task :android:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :android:assembleDebug
+> Task :android:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :android:compileReleaseKotlin
+> Task :android:testDebugUnitTest
+> Task :android:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :android:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :android:processReleaseJavaRes UP-TO-DATE
+> Task :android:mergeReleaseJavaResource UP-TO-DATE
+> Task :android:generateReleaseLintVitalReportModel
+> Task :android:expandReleaseArtProfileWildcards
+> Task :android:produceReleaseComposeMapping
+> Task :android:reportReleaseComposeMappingErrors
+> Task :android:lintAnalyzeDebugAndroidTest
+> Task :android:lintAnalyzeDebugUnitTest
+> Task :android:lintVitalAnalyzeRelease
+> Task :android:lintVitalReportRelease UP-TO-DATE
+> Task :android:lintVitalRelease
+> Task :android:minifyReleaseWithR8
+> Task :android:mergeReleaseComposeMapping
+> Task :android:compileReleaseArtProfile
+> Task :android:packageRelease
+> Task :android:createReleaseApkListingFileRedirect UP-TO-DATE
+> Task :android:assembleRelease
+> Task :android:lintAnalyzeDebug
+> Task :android:lintReportDebug UP-TO-DATE
+> Task :android:lintDebug
+
+BUILD SUCCESSFUL in 25s
+131 actionable tasks: 28 executed, 103 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.3.1/userguide/configuration_cache_enabling.html

@@ -11,7 +11,7 @@ struct PairingView: View {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(appDelegate.pairingCompleted ? "Phone paired" : "Connect your phone")
                         .font(.title.weight(.semibold))
-                    Text(appDelegate.pairingCompleted ? "One last step for calls." : "Wi-Fi for sharing. Bluetooth for calls.")
+                    Text(appDelegate.pairingCompleted ? "Bluetooth for calls." : "Wi-Fi for sharing. Bluetooth for calls.")
                         .foregroundStyle(.secondary)
                 }
             }
@@ -78,15 +78,23 @@ private struct CallingSetupStep: View {
         VStack(alignment: .leading, spacing: 18) {
             Label { Text("\(phoneName) is paired with Plink") } icon: { LucideIcon(name: .circleCheck) }
                 .foregroundStyle(.green)
-            Text(controller.serviceConnected ? "Bluetooth connected. Your phone can now report incoming calls." : "Select the same phone in the Bluetooth window. Confirm any code shown on both devices.")
+            if controller.bluetoothPaired {
+                Label { Text("Bluetooth paired") } icon: { LucideIcon(name: .circleCheck) }
+                    .foregroundStyle(.green)
+                Text(controller.serviceConnected ? "Calls connected. Your phone can now report incoming calls." : "Calls are disconnected. Reconnect when your phone is nearby.")
+            } else {
+                Text("Select the same phone in the Bluetooth window. Confirm any code shown on both devices.")
+            }
             if controller.busy { ProgressView("Connecting calls…") }
             Text(controller.status).font(.callout).foregroundStyle(.secondary)
             HStack {
-                if controller.serviceConnected {
+                if !controller.serviceConnected {
+                    Button(controller.bluetoothPaired ? "Reconnect Calls" : "Connect Calls") { controller.beginSetup(phoneName: phoneName) }
+                        .disabled(controller.busy || controller.blocked)
+                }
+                if controller.bluetoothPaired {
                     Button("Done", action: finish).buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction)
                 } else {
-                    Button("Connect Calls") { controller.beginSetup(phoneName: phoneName) }
-                        .buttonStyle(.borderedProminent).disabled(controller.busy || controller.blocked)
                     Button("Not Now", action: finish)
                 }
             }

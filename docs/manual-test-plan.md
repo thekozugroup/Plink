@@ -16,6 +16,20 @@ The Mac must be unlocked. Reserve a short Pixel time slot with any other task us
 4. Run the same script with `files` as the last argument for both-direction file checks at 0, 1, 32,768, 32,769 and 16,777,216 bytes. The production transfer deadline remains 300 seconds; the aggregate harness allows multiple transfers.
 5. Retain endpoint logs, capture summaries, source/binary hashes, and independent review. Remove task-owned raw captures after review. Confirm instrumentation-package and ADB-mapping cleanup.
 
+## Direct Wi-Fi comparison for file checks
+
+For the isolated file harness, provide both private IPv4 addresses:
+
+```sh
+PLINK_TEST_MAC_HOST=192.168.1.10 PLINK_TEST_ANDROID_HOST=192.168.1.20 ./scripts/verify-device.sh SERIAL FRESH_OUTPUT_DIRECTORY files
+```
+
+This sends file traffic over Wi-Fi; ADB only installs and controls the test. LAN mode creates no USB forwarding mappings and cannot be combined with the existing loopback capture mode. Both devices acknowledge each completed transfer before the next begins. The final acknowledgment is required too. This verifies the file engines and bytes, not native file pickers or saved production pairing.
+
+## Bluetooth setup regression checks
+
+Select an already OS-paired phone in Connect Calls: its explicit selection must save the association without pairing again. Drop HFP: Bluetooth paired and Done must remain, while calls show disconnected. Retry after a returned connect timeout; also switch paired peers during that timeout. Old callbacks must not attach the previous peer. A blocked native invocation must still quarantine calling. Actual HFP stability and bidirectional call audio require separate live checks.
+
 ## Human-assisted cases
 
 All rows remain pending until actual observations exist. The test operator records evidence; the independent reviewer decides whether every criterion of the corresponding frozen case is satisfied.
@@ -32,17 +46,11 @@ All rows remain pending until actual observations exist. The test operator recor
 | Clipboard, links, battery and media (CON-02, CON-03) | Use synthetic text and an innocuous HTTPS URL, then a controlled local media item. Compare live battery/media state and exercise the supported commands. | The intended paired device receives the exact selected data. Links require valid HTTP(S) routing. Controls affect the selected live media session. Feature disable and peer replacement stop access. Restore any temporary clipboard content without writing it into evidence. |
 | Background/reconnect (STAB-02, STAB-03) | After user-enabled background connection, run three reconnect cycles including Mac sleep/wake, phone process recreation and network changes; follow recovery with a real call and native reply. Separately run the frozen two-hour background/Doze scenario and 100-notification burst, including permission loss. | The app reports actual connection/capability state, preserves replay protection, recovers permitted sessions, and never resurrects revoked replies or resends a file operation. Record elapsed time, latency, resource use, battery drain, and any OS battery restrictions. Preserve the frozen scenario thresholds and duration. |
 | Native Mac and Tomato UI (MAC-01, MAC-02, TOM-01–03) | User/reviewer inspects the real Mac app and Android app in light/dark appearance, normal/large text, normal/reduced motion, keyboard/VoiceOver/TalkBack use, and narrow layouts. Compare the pinned Tomato source and mapped interactions. | Native controls, clear permission states, readable full labels, reachable actions, sensible focus order, and matching documented font/motion parameters. Preserve screenshots and real recordings tied to the tested binaries. A static image cannot prove animation or screen-reader behavior. |
-| Further integrations and other Android devices (CON-01, CON-03, E2E-02) | Review the explicit parity inventory, then exercise each implemented camera/hotspot/mirroring path on supported hardware. On a physical non-Pixel Android device, also verify the core carrier call, two-way laptop audio, and native Notification Center reply flows. | Observe the actual advertised capability and its consent/cleanup behavior. USB webcam preview is not wireless Continuity Camera; local-only networking is not Internet tethering; viewing a screen is not remote touch control. Unimplemented paths remain open. |
+| Further integrations and other Android devices (CON-01, CON-03, E2E-02) | Review the explicit parity inventory, then exercise only integrations available in the current apps on supported hardware. Screen sharing, USB webcam and other missing features are deferred. On a physical non-Pixel Android device, also verify the core carrier call, two-way laptop audio, and native Notification Center reply flows. | Observe the actual advertised capability and its consent/cleanup behavior. USB webcam preview is not wireless Continuity Camera; local-only networking is not Internet tethering; viewing a screen is not remote touch control. Unimplemented paths remain open. |
 
-## Supplemental screen and webcam checks
+## Deferred screen and webcam checks
 
-These checks support the original continuity cases; they do not replace the frozen acceptance criteria.
-
-For the screen test, use a dedicated API 34+ `sdk_gphone` emulator with no saved Plink pairing. Install the matching debug APK and run `./scripts/verify-screen-preview.sh SERIAL FRESH_OUTPUT_DIRECTORY`. The normal Plink Share action and Android capture-consent dialog must be operated within the pending request window. Choose the entire emulator screen for the debug pattern activity. Do not inject a capture token or grant capture app-ops. The harness checks four spatial color bars, a changing marker, decoded-pixel hashes and remote stop using the production native ImageIO decoder. Its two saved synthetic PNGs are test evidence; production screen viewing does not save frames. Confirm `dumpsys media_projection` reports no projection afterward, then check feature preferences, synthetic state files, the instrumentation package and owned port mappings are restored or removed. This harness does not exercise the native Mac preview window.
-
-For native screen acceptance, pair the real apps, enable Screen preview deliberately and open the Mac screen window. Start, allow the exact request on Android, and observe changing synthetic content in the Mac window. Check aspect ratio during rotation, protected-content withholding, request expiry/denial, and stop from phone, system controls and Mac. Close/hide the Mac window, lock either device and disconnect; the image must clear, capture must stop, and unlock/reconnect must not resume without fresh consent. Physical Pixel capture requires a coordinated exception to the current screen-off constraint; leave it pending until the user is available.
-
-For USB webcam acceptance, connect a data cable and choose the Pixel's stock Webcam USB mode. Open Plink's webcam window, grant camera access, select the external device and explicitly start preview. Observe physical scene changes while the Pixel display is off. Stop and confirm a second Mac app can acquire the same camera without placing a call. Exercise unplug, selected-device changes, denial, window hiding, session lock and camera contention. Record device identity, OS versions and application hashes. Samples alone do not prove that the phone is showing live camera imagery rather than its blocked-camera logo. USB preview does not provide a wireless or virtual camera.
+Screen sharing and USB webcam were removed from the current apps at the user’s request. Do not request capture or camera permissions or run their former product flows. Earlier harnesses and evidence are historical; deferred cases remain unverified and receive no completion credit.
 
 ## Release and cleanup record
 

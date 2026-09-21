@@ -1,0 +1,12 @@
+listening mode=files port=52973 expectedSource=test-pixel expectedTarget=test-mac
+Mac saved bytes=0 sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+FILE ROUNDTRIP boundary=0 Android and Mac saved; SHA-256 checked; cleanup ACK sent
+Mac saved bytes=1 sha256=6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d
+FILE ROUNDTRIP boundary=1 Android and Mac saved; SHA-256 checked; cleanup ACK sent
+Mac saved bytes=32768 sha256=09fed9cbfb98b6ab0f3e8ff63b7b1f9b0e07d58b225295c78fdc023cc4985a72
+FILE ROUNDTRIP boundary=32768 Android and Mac saved; SHA-256 checked; cleanup ACK sent
+Mac saved bytes=32769 sha256=346e2310c7233f7723048e8289ba7a299d635ded9723dfea5248773f5b7684b8
+FILE ROUNDTRIP boundary=32769 Android and Mac saved; SHA-256 checked; cleanup ACK sent
+Mac saved bytes=16777216 sha256=287507f403176f1f5b22b9a4d9cb49f7d7f88ac19e406b5ae87ce109564846bd
+FILE ROUNDTRIP boundary=16777216 Android and Mac saved; SHA-256 checked; cleanup ACK sent
+FILE ROUNDTRIP PASSED: 10 encrypted transfers; 0, 1, 32768, 32769, 16777216 bytes; real file IO and cleanup

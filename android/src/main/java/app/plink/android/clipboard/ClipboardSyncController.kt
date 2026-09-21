@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.IBinder
+import android.os.Handler
+import android.os.Looper
 import android.os.Build
 import android.os.PersistableBundle
 import android.os.Process
@@ -69,6 +71,7 @@ class ClipboardSyncController(
 ) {
     private val context = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val keyguard = context.getSystemService(KeyguardManager::class.java)
     private val users = context.getSystemService(UserManager::class.java)
     private val clipboard = context.getSystemService(ClipboardManager::class.java)
@@ -85,9 +88,16 @@ class ClipboardSyncController(
         .daemon(false).processNameSuffix("clipboard").tag("plink-clipboard").version(1)
     private val binderReceived = Shizuku.OnBinderReceivedListener { refresh() }
     private val binderDead = Shizuku.OnBinderDeadListener {
-        invalidate()
-        _state.value = ClipboardSyncState("Shizuku stopped. Open Shizuku to restart it.")
-        refresh()
+        val connection = bound
+        helperDead = true
+        policy.clear()
+        // Shizuku may still be iterating listeners. Main.immediate coroutines can resume inline.
+        mainHandler.post {
+            if (bound !== connection) return@post
+            invalidate()
+            _state.value = ClipboardSyncState("Shizuku stopped. Open Shizuku to restart it.")
+            refresh()
+        }
     }
     private val permissionResult = Shizuku.OnRequestPermissionResultListener { code, _ ->
         if (code == PERMISSION_REQUEST) {
@@ -158,10 +168,10 @@ class ClipboardSyncController(
             val connection = sessions.clipboardConnection()
             val problem = when {
                 connection == null -> "Clipboard sync is waiting for your Mac."
-                Process.myUid() / 100_000 != 0 -> "Clipboard sync supports only the Pixel personal profile."
-                !unlockedForegroundUser() -> "Unlock the Pixel personal profile to sync clipboard text."
-                !Shizuku.pingBinder() -> "Open Shizuku and start it to send copied text from Pixel."
-                !permissionGranted() -> "Allow Plink in Shizuku to send copied text from Pixel."
+                Process.myUid() / 100_000 != 0 -> "Clipboard sync supports only your phone's personal profile."
+                !unlockedForegroundUser() -> "Unlock your phone's personal profile to sync clipboard text."
+                !Shizuku.pingBinder() -> "Open Shizuku and start it to send copied text from your phone."
+                !permissionGranted() -> "Allow Plink in Shizuku to send copied text from your phone."
                 runCatching { Shizuku.getUid() != 2000 }.getOrDefault(true) ->
                     "Clipboard sync requires Shizuku running as shell."
                 else -> null
@@ -192,7 +202,7 @@ class ClipboardSyncController(
                     result.getLong(ShizukuClipboardService.TIMESTAMP),
                     result.getBoolean(ShizukuClipboardService.SENSITIVE),
                     result.getString(ShizukuClipboardService.ORIGIN))
-                _state.value = ClipboardSyncState("Automatic clipboard sync is active while Pixel is unlocked.",
+                _state.value = ClipboardSyncState("Automatic clipboard sync is active while your phone is unlocked.",
                     canSend = true, canReceive = true)
                 if (!settings.backgroundConnectionEnabled.value) {
                     _state.value = _state.value.copy(message = "Clipboard sync is active. Enable Background connection to keep Plink connected when closed.")
@@ -241,9 +251,13 @@ class ClipboardSyncController(
                 helperDead = true
                 reader = null
                 policy.clear()
-                sendJob?.cancel()
-                ready.completeExceptionally(IllegalStateException("Clipboard helper stopped."))
-                refresh()
+                // Completion/cancellation can resume monitor() and unbind, so defer both.
+                mainHandler.post {
+                    if (bound !== this) return@post
+                    sendJob?.cancel()
+                    ready.completeExceptionally(IllegalStateException("Clipboard helper stopped."))
+                    refresh()
+                }
             }
         }
         bound = connection

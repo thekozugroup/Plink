@@ -73,7 +73,6 @@ import app.plink.android.permissions.PermissionAction
 import app.plink.android.permissions.PermissionOnboardingStep
 import app.plink.android.services.BackgroundConnectionState
 import app.plink.android.services.SessionStatus
-import app.plink.android.screen.ScreenPreviewPhase
 import app.plink.android.reconnect.ReconnectState
 import app.plink.android.ui.theme.PlinkShapeDefaults
 import app.plink.android.ui.theme.plinkTopBarTitleStyle
@@ -94,7 +93,6 @@ fun PlinkAppScreen(
         sessionStatus = when {
             state.sessionStatus == SessionStatus.REPAIR_REQUIRED -> SessionStatus.REPAIR_REQUIRED
             reconnectState is ReconnectState.ConnectedInternetUnverified -> SessionStatus.READY
-            state.sessionStatus == SessionStatus.READY -> SessionStatus.AWAITING_RECONNECT
             state.sessionStatus == SessionStatus.DISCONNECTED && reconnectAvailable ->
                 SessionStatus.AWAITING_RECONNECT
             else -> state.sessionStatus
@@ -150,11 +148,6 @@ private fun ConnectionScreen(
     onCancelReconnect: () -> Unit,
     contentPadding: PaddingValues
 ) {
-    val hasActiveScreenPreview = when (state.screenPreviewState.phase) {
-        ScreenPreviewPhase.AWAITING_CONSENT, ScreenPreviewPhase.STARTING,
-        ScreenPreviewPhase.CAPTURING, ScreenPreviewPhase.STOPPING -> true
-        else -> false
-    }
     ScreenScaffold("Plink", "Pixel + Mac continuity", contentPadding) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -162,13 +155,6 @@ private fun ConnectionScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (hasActiveScreenPreview) {
-                item(key = "activeScreenPreview") {
-                    Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
-                        ScreenPreviewControls(state.screenPreviewState, actions.onBeginScreenConsent, actions.onStopScreenPreview)
-                    }
-                }
-            }
             item { ConnectionRing(state.sessionStatus) }
             if (reconnectAvailable) {
                 item {
@@ -196,13 +182,6 @@ private fun ConnectionScreen(
                     modifier = Modifier.widthIn(max = 420.dp).padding(horizontal = 24.dp)
                 )
             }
-            if (!hasActiveScreenPreview) {
-                item(key = "idleScreenPreview") {
-                    Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
-                        ScreenPreviewControls(state.screenPreviewState, actions.onBeginScreenConsent, actions.onStopScreenPreview)
-                    }
-                }
-            }
             item {
                 Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
                     ManualPairingCard()
@@ -221,7 +200,8 @@ private fun ConnectionScreen(
 private fun ActivityScreen(state: PlinkUiState, reconnectAvailable: Boolean, contentPadding: PaddingValues) {
     ScreenScaffold("Activity", "Current status", contentPadding) { innerPadding ->
         val visibleFeatures = state.features.filterNot {
-            it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard
+            it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard ||
+                it.feature == ContinuityFeature.ScreenMirror
         }
         val enabled = visibleFeatures.count { it.enabled && it.available } +
             if (state.clipboardSyncEnabled &&
@@ -277,7 +257,8 @@ private fun SettingsScreen(
     contentPadding: PaddingValues
 ) {
     val visibleFeatures = state.features.filterNot {
-        it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard
+        it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard ||
+            it.feature == ContinuityFeature.ScreenMirror
     }
     ScreenScaffold(
         title = "Settings",

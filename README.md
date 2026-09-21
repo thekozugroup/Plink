@@ -20,9 +20,7 @@ Four Pixel synthetic `RemoteInput` checks passed: one-time delivery with reuse r
 
 ## Further integrations
 
-- Screen preview uses explicit Android 14+ capture consent, encrypted bounded JPEG transport, and a native Mac window. A synthetic emulator-to-Mac stream passes; native window behavior and physical-device acceptance remain pending.
-- Pixel USB webcam preview provides external camera selection, explicit camera permission, and a native Mac preview. Controller regressions pass with a fake camera driver; physical UVC behavior, native rendering, and actual camera release remain pending.
-- Instant Hotspot, wireless Continuity Camera, a virtual webcam for other Mac apps, and remote screen input remain open.
+Screen sharing and Pixel USB webcam were removed from the current apps at the user’s request. Their earlier implementation evidence remains historical. Instant Hotspot and other unimplemented parity features are deferred. Current verification focuses on calls, notifications, clipboard, files and reliable connection.
 
 Background connection is an explicit optional Android UI switch. Foreground-service ownership is implemented and requires notification permission plus a paired Mac. Physical restart, process recreation, and Doze acceptance remain pending; Plink does not promise delivery in every background condition or claim full Apple Continuity parity.
 

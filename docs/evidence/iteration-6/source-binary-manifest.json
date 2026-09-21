@@ -1,0 +1,42 @@
+{
+  "atUTC": "2026-09-21T01:19:50.385431+00:00",
+  "baselineCommit": "1057387c9da0c42336019757b62bab9f941cea3b",
+  "changedSource": {
+    "README.md": "c9ba2ab9b908d90a17a13a6048defc54a74a6686b28c04a7537e5bd9f81b0a59",
+    "android/src/androidTest/java/app/plink/android/FileTransferDeviceCheck.kt": "ddb5bac0a190cbe50e8b55df060cbef763788a1090ba069614ad150356ffa0e0",
+    "android/src/androidTest/java/app/plink/android/PlinkDeviceTestRunner.kt": "088e6e222557267446f1a3fa99d8684b2d02ac74a58612951d74f9575c6fe3a3",
+    "android/src/androidTest/java/app/plink/android/ScreenPreviewDeviceCheck.kt": "deleted",
+    "android/src/androidTest/java/app/plink/android/ScreenPreviewTestSession.kt": "deleted",
+    "android/src/debug/AndroidManifest.xml": "a3f846e14082efae68dcd7ce4532bb1039240324d2ac20b3075245baf49715c6",
+    "android/src/debug/java/app/plink/android/debug/DebugSessionStateReceiver.kt": "1508e1aace0243039ab9ac0225942364c3cec495596c0e67ad4796aa8cc81687",
+    "android/src/debug/java/app/plink/android/debug/ScreenPreviewPatternActivity.kt": "deleted",
+    "android/src/main/AndroidManifest.xml": "cbd9927dde857c31677237cb04587f278cde542fb5504596c0ec0c1afd27e2f1",
+    "android/src/main/java/app/plink/android/MainActivity.kt": "40f6f4c854049daa25adfa08d737482c3469b6ed2f2b8b9a84661ecf10f171bd",
+    "android/src/main/java/app/plink/android/clipboard/ClipboardSyncController.kt": "c5e6a283b1da52034167e7470ae669e4e6978141bbe4feda541462a00f14e66f",
+    "android/src/main/java/app/plink/android/features/FeatureState.kt": "263d6944f277edb9e500dbe0c80748ab2834b4a24ca842bf58e4ce7a1becc887",
+    "android/src/main/java/app/plink/android/services/PlinkSessionController.kt": "0235792b5efd4d0748d5866d8dfe5bdfcb30ce26b8732c18d3c99f69bf5a4568",
+    "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt": "9055e1706cd6b9615b1d1b270199cd57b6dd10ba43144f446c88202707c71cfb",
+    "android/src/main/java/app/plink/android/ui/PlinkUiState.kt": "3e079f813c3cc85ce0d847847c63426d92f22a7dc0b2f7302d8ef5ca744202e8",
+    "android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt": "deleted",
+    "android/src/test/java/app/plink/android/features/FeaturePolicyTest.kt": "bdfd0811d9d47e814e5718df1d275e7e79113eae63dbbd111957e83fd7febd38",
+    "docs/architecture.md": "18cc9bedad34c96956317ba33ae8eeb8b4d40637e9de776e59775f27f9bc281b",
+    "docs/feature-parity.md": "85b0aa8fcca706df9efb262b4b4a42a6ca8956f900b0f028ce26824288807ae5",
+    "docs/manual-test-plan.md": "6df6e58d82b74b8014e86cc5b5f0a3a12de8e8fc39edfe9b81ceef85aff7aecf",
+    "macos/Resources/Info.plist": "a7eb5a8b828e0fc63ea3dd9f01725f83d268209f9726f2eec6063514a7040d06",
+    "macos/Resources/PlinkMac.entitlements": "a4c38d1176956704c6beff55aa1bd570544db9355f1974a8aee85a4e4f6cd5fb",
+    "macos/Sources/PlinkMac/BluetoothCallController.swift": "8ef2685a79b24d793908c390c3b8135145a73d463d579a796bc5b20164850518",
+    "macos/Sources/PlinkMac/DashboardWindow.swift": "d2a1d1a8dd3d9ce6a8d38dfe08535bb878a71654f9be3b90b50e1200f41b37d8",
+    "macos/Sources/PlinkMac/PairingView.swift": "6dcdb6ceff5c0fdef49ee75c00bb32705952389b1ec70c62884cab9feb2d38dd",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "4b21145a62d67e8906035803fa5114c0e5d2eef11670a69d137265ef11ccbec2",
+    "macos/Sources/PlinkMacDebugReceiver/FileRoundtrip.swift": "6b39a76bbd3099314ba9caec4d50f3d441aca62657ba5683c1c2932987190cff",
+    "macos/Sources/PlinkMacDebugReceiver/main.swift": "3b6d073bcae32368b4879a01402bce914b9580275aa9aaefc4a5dc2b600a64da",
+    "scripts/verify-device.sh": "06e0b941d4e535219d5f3dfcd7c97189bfe3bbd7d4d7d0fb9ac93dad5a6589fc",
+    "scripts/verify-screen-preview.sh": "deleted"
+  },
+  "binaries": {
+    "android/build/outputs/apk/debug/android-debug.apk": "549aab68e83738d64831e345338916dc439bb345c5f0cf445683c82aedf0e4ff",
+    "android/build/outputs/apk/release/android-release-unsigned.apk": "18db47088ff34309f82624cbc8f127a5f6455600713dda955c8f5290e8fe6853",
+    "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk": "080db96f4d54d76b7adcca9152498f37cf7f1c1acee1fd6730f6d1d6851793f3",
+    "build/PlinkMac.app/Contents/MacOS/PlinkMac": "a4ab81355587b5ffe33c20ed4c92a6531d82e023a2c7e5ad9db9edb59551273b"
+  }
+}

@@ -1,9 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
-        <activity
-            android:name=".debug.ScreenPreviewPatternActivity"
-            android:exported="false"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+        <receiver
+            android:name=".debug.DebugSessionStateReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="app.plink.android.DEBUG_SESSION_STATE" />
+            </intent-filter>
+        </receiver>
         <receiver
             android:name=".debug.DebugPairingReceiver"
             android:exported="false" />

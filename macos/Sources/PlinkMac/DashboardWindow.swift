@@ -40,16 +40,6 @@ struct DashboardWindow: View {
         if appDelegate.pairedPeerID != nil {
             ContinuityPanel(appDelegate: appDelegate)
             FileTransferPanel(controller: appDelegate.files)
-            HStack {
-                Button { appDelegate.showScreenWindow() } label: {
-                    Label { Text("View Phone Screen") } icon: { LucideIcon(name: .monitorSmartphone) }
-                }
-                    .disabled(!appDelegate.screenPreviewEnabled)
-                Spacer()
-                Button { appDelegate.showWebcamWindow() } label: {
-                    Label { Text("USB Webcam") } icon: { LucideIcon(name: .video) }
-                }
-            }
         } else {
             VStack(alignment: .leading, spacing: 16) {
                 Text(appDelegate.pairedPhoneName == nil ? "Your phone, closer." : "Let’s connect.")
@@ -67,9 +57,6 @@ struct DashboardWindow: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
-            Button { appDelegate.showWebcamWindow() } label: {
-                Label { Text("Use Phone as USB Webcam…") } icon: { LucideIcon(name: .video) }
-            }
         }
     }
 }
@@ -100,8 +87,6 @@ struct PlinkSettingsContent: View {
                 VStack(alignment: .leading, spacing: 12) {
                     ClipboardSyncSettings(controller: appDelegate.clipboard)
                     Toggle("Open links sent from phone", isOn: $appDelegate.receiveURLs)
-                    Toggle("Allow phone screen preview", isOn: $appDelegate.screenPreviewEnabled)
-                    Text("Your phone asks before sharing its screen.").font(.caption).foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity, alignment: .leading).padding(8)
             }
             Button("Pair Another Phone…") { appDelegate.showPairingWindow() }
@@ -172,7 +157,10 @@ struct ConnectionHeader: View {
                 }
                     .foregroundStyle(connected ? Color.green : Color.secondary)
                 Label {
-                    Text(calling.serviceConnected ? "Bluetooth connected" : "Bluetooth disconnected")
+                    VStack(alignment: .leading) {
+                        Text(calling.bluetoothPaired ? "Bluetooth paired" : "Bluetooth not paired")
+                        Text(calling.serviceConnected ? "Calls connected" : "Calls disconnected")
+                    }
                 } icon: {
                     LucideIcon(name: .bluetooth)
                 }
@@ -215,12 +203,11 @@ struct MenuBarPanel: View {
         } icon: {
             LucideIcon(name: appDelegate.pairedPeerID == nil ? .wifiOff : .wifi)
         }
-        Text(calling.serviceConnected ? "Bluetooth connected" : "Bluetooth disconnected")
+        Text(calling.bluetoothPaired ? "Bluetooth paired" : "Bluetooth not paired")
+        Text(calling.serviceConnected ? "Calls connected" : "Calls disconnected")
         Divider()
         if appDelegate.pairedPeerID != nil {
             FileTransferMenu(controller: appDelegate.files, openDashboard: { appDelegate.showDashboardWindow() })
-            Button("View Phone Screen…") { appDelegate.showScreenWindow() }
-                .disabled(!appDelegate.screenPreviewEnabled)
         } else if appDelegate.isPairing {
             Button("Continue Pairing…") { appDelegate.showPairingWindow() }
         } else if appDelegate.pairedPhoneName != nil {
@@ -229,7 +216,6 @@ struct MenuBarPanel: View {
         } else {
             Button("Pair Phone…") { appDelegate.showPairingWindow() }.disabled(!appDelegate.pairingRecoveryComplete)
         }
-        Button("USB Webcam…") { appDelegate.showWebcamWindow() }
         Divider()
         Button("Quit Plink") { appDelegate.quit() }.keyboardShortcut("q")
     }

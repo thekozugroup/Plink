@@ -1,0 +1,11 @@
+{
+  "checks": {
+    "hostProcesses": "passed",
+    "testPackage": "passed"
+  },
+  "cleanupExitCode": 0,
+  "errors": [],
+  "passed": true,
+  "primaryExitCode": 0,
+  "scope": "Owned test package and exact transport mappings"
+}

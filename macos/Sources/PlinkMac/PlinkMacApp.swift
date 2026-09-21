@@ -73,13 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     let calling = BluetoothCallController()
     let clipboard = ClipboardSyncController()
     let files = FileTransferController()
-    let screen = ScreenPreviewController()
-    let webcam = PixelWebcamController()
     let reconnect = ReconnectController()
-    private let screenIngress = ScreenPreviewIngress()
-    @Published var screenPreviewEnabled = true {
-        didSet { screen.setEnabled(screenPreviewEnabled) }
-    }
     @Published var deviceStatus: MacDeviceStatus?
     @Published var mediaState: MacMediaState?
     @Published var mediaSessions: [String: MacMediaState] = [:]
@@ -109,8 +103,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     @Published var canConfirmPairing: Bool = false
     private var dashboardWindow: NSWindow?
     private var pairingWindow: NSWindow?
-    private var screenWindow: NSWindow?
-    private var webcamWindow: NSWindow?
     private var workspaceObservers: [NSObjectProtocol] = []
     private var terminationPending = false
     private var terminationReplied = false
@@ -120,7 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var reconnectPathSignature: ReconnectPathSignature?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        installPreviewLifecycleObservers()
+        installReconnectLifecycleObservers()
         startReconnectPathMonitor()
         reconnect.onDiscoveryStart = { [weak self] in self?.startReconnectAttempt() ?? false }
         reconnect.onDiscoveredCandidates = { [weak self] candidates in
@@ -194,8 +186,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         guard !terminationPending else { return .terminateLater }
         terminationPending = true
         clipboard.stop()
-        screen.beginShutdown()
-        webcam.beginShutdown()
         cancelReconnect()
         let reconnectCleanup = reconnectTask
         terminationWatchdog = Task { [weak self] in
@@ -209,8 +199,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             reconnectListener = nil
             pairLifetime?.invalidate()
             pairLifetime = nil
-            await screen.shutdown()
-            await webcam.shutdown()
             replyToTermination()
         }
         return .terminateLater
@@ -313,84 +301,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         calling.beginSetup(phoneName: pairedPhoneName)
     }
 
-    func showScreenWindow() {
-        guard !terminationPending else { return }
-        if screenWindow == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 760),
-                                  styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-            window.title = "Phone Screen"
-            window.isReleasedWhenClosed = false
-            window.delegate = self
-            window.contentView = NSHostingView(rootView: ScreenPreviewView(controller: screen))
-            window.center()
-            screenWindow = window
-        }
-        screenWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate()
-        screen.setVisible(true)
-    }
-
-    func showWebcamWindow() {
-        guard !terminationPending else { return }
-        if webcamWindow == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 720, height: 620),
-                                  styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-            window.title = "Pixel USB Webcam"
-            window.isReleasedWhenClosed = false
-            window.delegate = self
-            window.contentView = NSHostingView(rootView: PixelWebcamView(controller: webcam))
-            window.center()
-            webcamWindow = window
-        }
-        webcamWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate()
-        webcam.activate()
-    }
-
-    func applicationDidResignActive(_ notification: Notification) {
-        screen.setVisible(false)
-        webcam.deactivate()
-    }
-
     func applicationDidBecomeActive(_ notification: Notification) {
         guard !terminationPending else { return }
         notificationBridge.refreshAuthorization()
-        if screenWindow?.isKeyWindow == true { screen.setVisible(true) }
-        if webcamWindow?.isKeyWindow == true { webcam.activate() }
     }
 
-    func windowDidBecomeKey(_ notification: Notification) {
-        guard !terminationPending, NSApp.isActive, let window = notification.object as? NSWindow else { return }
-        if window === screenWindow { screen.setVisible(true) }
-        if window === webcamWindow { webcam.activate() }
-    }
-
-    func windowDidResignKey(_ notification: Notification) { stopHiddenPreview(notification) }
     func windowWillClose(_ notification: Notification) {
-        stopHiddenPreview(notification)
         if let window = notification.object as? NSWindow, window === pairingWindow, isPairing { cancelPairing() }
     }
-    func windowDidMiniaturize(_ notification: Notification) { stopHiddenPreview(notification) }
-    func windowDidChangeOcclusionState(_ notification: Notification) {
-        guard let window = notification.object as? NSWindow else { return }
-        if !window.occlusionState.contains(.visible) { stopHiddenPreview(notification) }
-        else if window.isKeyWindow && NSApp.isActive { windowDidBecomeKey(notification) }
-    }
 
-    private func stopHiddenPreview(_ notification: Notification) {
-        guard let window = notification.object as? NSWindow else { return }
-        if window === screenWindow { screen.setVisible(false) }
-        if window === webcamWindow { webcam.deactivate() }
-    }
-
-    private func installPreviewLifecycleObservers() {
+    private func installReconnectLifecycleObservers() {
         let center = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.sessionDidResignActiveNotification, NSWorkspace.screensDidSleepNotification, NSWorkspace.willSleepNotification] {
             workspaceObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
-                    self?.screen.stop(reason: .locked)
-                    self?.screen.setVisible(false)
-                    self?.webcam.deactivate()
                     self?.invalidateReconnectForEnvironmentChange(
                         "Reconnect is required after the Mac sleeps or locks."
                     )
@@ -425,7 +349,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     private func clearTransport() {
         clipboard.setConnected(false)
-        screen.unbind()
         let previous = activeTransport ?? retiringTransport
         previous?.invalidate()
         activeTransport = nil
@@ -462,7 +385,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         reconnectAttempt = UUID()
         let token = reconnectAttempt
         pairLifetime?.closeOrdinaryAdmission()
-        screen.unbind()
         let ownedTransport = activeTransport ?? retiringTransport
         ownedTransport?.invalidate()
         activeTransport = nil
@@ -470,8 +392,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         await previous?.value
         guard !Task.isCancelled, reconnectAttempt == token else { return nil }
         await files.suspendAndAwait()
-        guard !Task.isCancelled, reconnectAttempt == token else { return nil }
-        await screen.suspendAndAwait()
         guard !Task.isCancelled, reconnectAttempt == token else { return nil }
         if let ownedTransport {
             await ownedTransport.shutdown()
@@ -491,32 +411,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         connectionGeneration = UUID()
         let lifetime = PairSessionLifetime(localID: localMacDeviceId, peerID: device.id,
             sessionID: device.sessionId, sessionKey: sessionKey, stateStore: frameStateStore)
-        let localID = localMacDeviceId
-        let peerID = device.id
-        let ingress = screenIngress
-        let previewAdmission = screen.admissionGeneration
         let listener = ReconnectListener(port: receiverPort, lifetime: lifetime) { [weak self, weak lifetime] result, generation in
             guard let lifetime, lifetime.isCurrent else { return }
             switch result {
             case .success(let envelope) where ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type):
-                guard let previewGeneration = previewAdmission.current(),
-                      let admission = ingress.admit(envelope, expectedSourceDeviceID: peerID,
-                        expectedTargetDeviceID: localID, connectionGeneration: generation) else { return }
-                Task { @MainActor in
-                    guard let self, self.pairLifetime === lifetime,
-                          self.connectionGeneration == generation else { admission.release(); return }
-                    self.screen.receive(envelope, admission: admission, previewGeneration: previewGeneration)
-                }
-            case .failure(let error) where error is AuthenticatedScreenProtocolRejection:
-                guard let previewGeneration = previewAdmission.current(),
-                      let rejection = error as? AuthenticatedScreenProtocolRejection,
-                      let admission = ingress.admit(rejection, expectedPeerDeviceID: peerID,
-                                                    connectionGeneration: generation) else { return }
-                Task { @MainActor in
-                    guard let self, self.pairLifetime === lifetime,
-                          self.connectionGeneration == generation else { admission.release(); return }
-                    self.screen.receive(rejection, admission: admission, previewGeneration: previewGeneration)
-                }
+                // Screen sharing is unavailable; discard frames before scheduling UI work.
+                return
             case .failure:
                 return
             default:
@@ -593,7 +493,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         mediaState = nil
         mediaSessions.removeAll()
         lastPeerActivity = nil
-        screen.unbind()
         let ownedTransport = activeTransport ?? retiringTransport
         ownedTransport?.invalidate()
         activeTransport = nil
@@ -604,8 +503,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             guard let self, self.reconnectAttempt == token,
                   self.reconnectAuthority === authority else { return }
             await self.files.suspendAndAwait()
-            guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
-            await self.screen.suspendAndAwait()
             guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
             if let ownedTransport {
                 await ownedTransport.shutdown()
@@ -720,7 +617,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         mediaState = nil
         mediaSessions.removeAll()
         lastPeerActivity = nil
-        screen.unbind()
         let ownedTransport = activeTransport ?? retiringTransport
         ownedTransport?.invalidate()
         activeTransport = nil
@@ -729,8 +625,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             await previous?.value
             guard let self, self.reconnectAttempt == token else { return }
             await self.files.suspendAndAwait()
-            guard self.reconnectAttempt == token else { return }
-            await self.screen.suspendAndAwait()
             guard self.reconnectAttempt == token else { return }
             if let ownedTransport {
                 await ownedTransport.shutdown()
@@ -785,8 +679,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 connectionGeneration = generation
                 pairedPeerID = pairing.device.id
                 files.bind(localID: localMacDeviceId, peerID: pairing.device.id, transport: sender)
-                screen.bind(localID: localMacDeviceId, peerID: pairing.device.id,
-                    generation: generation, sender: sender)
                 reconnect.setConnected()
                 lastDeliveryState = "Connected to \(pairing.device.name) on the local network."
                 authority.invalidate()
@@ -1251,6 +1143,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     func handleInbound(_ result: Result<PlinkEnvelope, Error>) {
         switch result {
+        case .success(let envelope) where ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type):
+            return
+        case .failure(let error) where error is AuthenticatedScreenProtocolRejection:
+            return
         case .success(let envelope):
             guard envelope.sourceDeviceId == pairedPeerID, envelope.targetDeviceId == localMacDeviceId else { return }
             lastPeerActivity = .now
@@ -1393,6 +1289,9 @@ struct BluetoothCallingView: View {
         GroupBox("Cellular calls") {
             VStack(alignment: .leading, spacing: 10) {
                 Text(controller.status).textSelection(.enabled)
+                if controller.bluetoothPaired {
+                    Label { Text("Bluetooth paired") } icon: { LucideIcon(name: .bluetooth) }
+                }
                 if controller.busy { ProgressView("Connecting calls…") }
                 if controller.serviceConnected {
                     Label {
@@ -1404,12 +1303,13 @@ struct BluetoothCallingView: View {
                     Button("Disconnect Calls") { controller.disconnect() }
                         .disabled(controller.busy || controller.blocked)
                 } else if let phoneName {
-                    Button("Connect Calls") { controller.beginSetup(phoneName: phoneName) }
+                    Text("Calls disconnected").foregroundStyle(.secondary)
+                    Button(controller.bluetoothPaired ? "Reconnect Calls" : "Connect Calls") { controller.beginSetup(phoneName: phoneName) }
                         .buttonStyle(.borderedProminent).disabled(controller.busy || controller.blocked)
                 } else {
                     Text("Pair your phone to set up calls.").foregroundStyle(.secondary)
                 }
-                if let context = controller.call.context {
+                if controller.serviceConnected, let context = controller.call.context {
                     Text(controller.call.number ?? "Unknown caller").font(.headline)
                     Text(controller.call.phase.rawValue.capitalized)
                     HStack {
@@ -1434,7 +1334,7 @@ struct BluetoothCallingView: View {
     }
     private func callButton(_ title: String, _ action: MacCallAction, _ context: MacCallContext) -> some View {
         Button(title) { controller.perform(action, context: context) }
-            .disabled(controller.busy || controller.blocked || !controller.call.permits(action, context: context))
+            .disabled(!controller.serviceConnected || controller.busy || controller.blocked || !controller.call.permits(action, context: context))
     }
 }
 

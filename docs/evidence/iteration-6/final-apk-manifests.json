@@ -1,0 +1,12 @@
+{
+  "debug": {
+    "diagnosticReceiver": true,
+    "screenCaptureService": false,
+    "mediaProjectionPermission": false
+  },
+  "release": {
+    "diagnosticReceiver": false,
+    "screenCaptureService": false,
+    "mediaProjectionPermission": false
+  }
+}

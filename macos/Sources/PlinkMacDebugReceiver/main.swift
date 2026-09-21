@@ -74,7 +74,8 @@ let screenHarness = screenRoundtrip ? ScreenRoundtripHarness(codec: codec, frame
         if !passed { exitState.fail() }
         semaphore.signal()
     } : nil
-let fileHarness = fileRoundtrip ? FileRoundtripHarness(codec: codec, frameState: frameState, replyPort: replyPort) { passed in
+let fileHarness = fileRoundtrip ? FileRoundtripHarness(codec: codec, frameState: frameState, replyPort: replyPort,
+    replyHost: ProcessInfo.processInfo.environment["PLINK_DEBUG_REPLY_HOST"] ?? "127.0.0.1") { passed in
     if !passed { exitState.fail() }
     semaphore.signal()
 } : nil

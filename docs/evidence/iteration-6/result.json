@@ -1,0 +1,131 @@
+{
+  "scope": "Screen sharing and USB webcam removed from current product per explicit user request. Remaining missing features remain deferred.",
+  "fullGate": {
+    "exitCode": 0,
+    "AndroidUnitTests": 183,
+    "SwiftTests": 191,
+    "SwiftBreakdown": {
+      "XCTestLogic": 54,
+      "CoreSwiftTesting": 117,
+      "MacSwiftTesting": 20
+    },
+    "androidLintErrors": 0,
+    "androidLintWarnings": 39,
+    "builds": [
+      "Android debug",
+      "Android release",
+      "Android instrumentation",
+      "Mac debug",
+      "Mac signed release app"
+    ],
+    "finalAndroidFollowup": "clipboard-death-fix-build.log: debug/release/instrumentation,183unit tests,lint pass after crash fix"
+  },
+  "packagedChecks": {
+    "projectionServiceAbsent": true,
+    "projectionForegroundPermissionAbsent": true,
+    "debugCaptureActivityAbsent": true,
+    "macCameraEntitlementAbsent": true,
+    "macCameraUsageDescriptionAbsent": true,
+    "macCallMicrophoneRetained": true,
+    "diagnosticReceiverDebugOnly": true
+  },
+  "sourceReview": "Astra bounded removal review found no reachable capture/camera product entry points; persisted ScreenMirror true is ignored; clipboard/file/reconnect and lock/sleep behavior retained.",
+  "screenshots": {
+    "android-home.png": "Current matching debug APK on task-owned emulator; unpaired state. No screen card.",
+    "android-settings.png": "Current matching debug APK on task-owned emulator; no screen-sharing integration.",
+    "alternate-android-home.png": "Actual CPH2749/API37 running matching debugAPK, unpaired. No connected or clipboard claim.",
+    "alternate-connected.png": "Actual OnePlus connected through authenticated session, latest debug APK; Connected text stays inside circle."
+  },
+  "nativeMac": {
+    "updatedBundleLaunchedByComputerUse": true,
+    "startupAX": "Home/Calls/Settings; pairing card; no camera action",
+    "postStartupScreenshot": "Sky Computer Use native pipe closed before response",
+    "fallbackUsed": false
+  },
+  "remainingUnverified": [
+    "Final Connected text on physical Pixel (verified on OnePlus instead)",
+    "Mac clipboard off toggle through native UI",
+    "Native Notification Center reply",
+    "Cellular controls and laptop audio",
+    "Sustained background connection and recovery after Android process restart"
+  ],
+  "scopeLimit": "Deferred features receive no verification credit. Existing low-level screen/webcam sources and unit tests are dormant, not exposed by the apps.",
+  "pixel": {
+    "APKUpdatedPreservingData": true,
+    "screenSleepSent": true,
+    "stayAwakeObserved": 0,
+    "screenTimeoutObserved": 1800000,
+    "settingsChangedThisTurn": false,
+    "currentAvailability": "Pixel disconnected; with user. Replaced for further tests by CPH2749."
+  },
+  "cleanup": {
+    "emulatorTemporaryXMLRemoved": true,
+    "physicalTestFixtureInstalledThisTurn": true,
+    "alternateTemporaryXMLRemoved": true,
+    "alternateAbortedFileRootRemoved": "plink-file-roundtrip-a7fbc6f9-8ec1-4c7a-b69f-e63087279f28",
+    "emulatorStoppedAndOwnedTempRemoved": true,
+    "physicalTestFixtureRemoved": true,
+    "shizukuRootRestored": true,
+    "ownedScrcpyStopped": true,
+    "settingsVerified": "final-device-cleanup.json",
+    "ownedFixtureBuildRemoved": true
+  },
+  "remainingInput": "Mac CUA fails with native pipe closed. Existing Bluetooth association needs native selection; real call/laptop audio and native Notification Center reply need user-assisted checks.",
+  "clipboardPreference": {
+    "userReportsEnabled": true,
+    "freshDefaultsRead": 1,
+    "confirmed": true
+  },
+  "alternateDevice": {
+    "model": "CPH2749",
+    "api": 37,
+    "installedCurrentPlink": true,
+    "pairingStatus": "Authenticated reconnect succeeded after Mac app restart; live session READY and clipboardConnection true.",
+    "clipboardStatus": "Both directions pass on OnePlus with Shizuku shell. Android off toggle blocks both directions. Original root mode restored; phone-to-Mac helper requires shell mode.",
+    "originalSettings": {
+      "screenBrightness": 1,
+      "brightnessMode": 0,
+      "timeoutMillis": 120000,
+      "stayAwake": 0
+    },
+    "temporarySetting": "Brightness1/manual, timeout120000 and stayAwake0 restored/verified; physical display Dozing.",
+    "screen": "Dozing after cleanup",
+    "encryptedReplyRoundtrip": "passed; owned host cleanup passed",
+    "filesFirstAttempt": "USB path failed; ACK synchronization and bounded receive added. DirectLAN all10 passes. USB half-close rootcause unresolved.",
+    "filesLAN": {
+      "passed": true,
+      "transfers": 10,
+      "bytesEachDirection": [
+        0,
+        1,
+        32768,
+        32769,
+        16777216
+      ],
+      "byteEquality": true,
+      "cleanup": "passed",
+      "scope": "Production engines via isolated synthetic identities, directLAN, noUSBforwarding. NotappfilepickerUI proof."
+    }
+  },
+  "bluetoothFix": {
+    "implemented": true,
+    "swiftTests": 191,
+    "packageVerified": true,
+    "review": "Astra passed bond/HFP distinction, returned-worker timeout recovery, peer-switch cleanup and explicit existing-bond selector.",
+    "runtime": "Installed; bond/HFP separation initially observed in menu. Actual pairing association, reconnect and audio remain unverified.",
+    "diagnostic": "OS reportsOnePlus15 paired,linkconnected,HFPgateway;Plink bluetoothPeers keyabsent. No automaticbindingbydevicename."
+  },
+  "clipboardVerification": {
+    "positive": "clipboard-live-result.json",
+    "androidOff": "clipboard-off-result.json",
+    "offExpected": "phoneToMacMatched=false and macToPhone.lastMatched=false; matchedCount cumulative stays2",
+    "finalAppPIDBeforeAndAfter": 12514,
+    "foregroundRetainsConnection": true,
+    "shizukuServerRestartRetainsProcess": true,
+    "freshProcessAndroidRuntimeErrors": 0,
+    "originalMacClipboardRestored": true,
+    "scrcpyClipboardAutosync": false,
+    "scope": "Fixed local tokens using foreground fixture; real production pairing and transports. Phone unlocked, Shizuku shell during test. No external recipient."
+  },
+  "crashFix": "Defer Shizuku death callback cleanup to avoid reentrant connection-set mutation; revoke clipboard authority immediately. Astra reviewed; live two-way/reopen/off/on/serverrestart all retained process."
+}

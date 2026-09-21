@@ -24,7 +24,7 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 - Android Keystore-backed paired-device storage for production metadata and secrets; local tests use injectable memory storage.
 - Secure socket client/server with encrypted length-prefixed frames.
 - A listener for authenticated reconnect that admits ordinary traffic only after fresh proof, with public Android `Network` binding for production sockets.
-- Android 14+ screen projection service and request-bound, single-use in-memory consent. Screen frames use a bounded volatile send path rather than the durable notification outbox.
+- Screen capture is not connected to the production app. Its earlier protocol and decoder implementation remains dormant for reference.
 
 ### macOS
 
@@ -39,8 +39,8 @@ Plink does not attempt to use private Apple Continuity APIs. It implements the c
 - Pasteboard/URL handoff adapters and consented file transfer with native file pickers.
 - Secure `Network.framework` sender and receiver using length-prefixed encrypted frames.
 - A local IPv4 reconnect coordinator with paired-device discovery, explicit address entry, interface-bound sockets and fresh proof in both directions.
-- A shared serialized sender per paired peer, with bounded and cancellable screen work behind ordinary commands and file traffic.
-- Native view-only screen and external USB webcam windows, both foreground-only. Their implementation and physical verification status are recorded separately in the feature inventory.
+- A shared serialized sender per paired peer for ordinary commands and file traffic.
+- Screen-preview and USB-webcam windows are removed from the app. The app does not construct their controllers.
 
 ## Pairing Flow
 
@@ -110,7 +110,7 @@ Runtime events are validated before send and after receive:
 - `media.state`
 - `media.command`
 - `permission.state`
-- `screen.request`, `screen.state`, `screen.pull`, `screen.frame`, `screen.idle`, `screen.stop`
+- Reserved historical screen types: `screen.request`, `screen.state`, `screen.pull`, `screen.frame`, `screen.idle`, `screen.stop`. Current app dispatch does not activate capture or preview.
 - `reconnect.hello`, `reconnect.challenge`, `reconnect.proof`, `reconnect.reverse`, `reconnect.reverse_proof`, `reconnect.ready`, `reconnect.commit`, `reconnect.done`
 - `ack`
 - `error`
@@ -127,14 +127,14 @@ Android:
 - Manual clipboard handoff uses Android sharing and an explicit incoming notification action.
 - Automatic clipboard sync is separately opt-in. It uses an explicitly authorized, non-daemon Shizuku shell helper for personal-profile clipboard reads while the phone is unlocked. The helper has no transport or pairing secrets. It refuses sensitive-marked, non-text and oversized content; clipboard text is not persisted. Baseline continuity does not require Shizuku, and Plink does not install or start it.
 - Automatic clipboard updates carry `automatic: true`, bypass manual handoff notifications only while the sync toggle is on, and are volatile. A new session or enable period establishes a fresh baseline. Off, replacement, disconnection and timeout cancel owned sends; already-written network bytes cannot be recalled.
-- Screen preview requires fresh MediaProjection consent per session. Consent tokens, JPEG data and decoded frames remain in memory; no screen audio, recording or remote control is provided.
+- Screen sharing is removed from the production app; it does not request MediaProjection consent or declare a capture service.
 
 macOS:
 
 - Notifications: required for call/message presentation and reply actions.
 - Local network: required for peer connection.
 - Pasteboard/files: used only when the user enables related features.
-- Camera: requested explicitly in the USB webcam window, separately from selecting a device or starting preview. Screen preview does not need Mac screen-recording access.
+- Camera access is not requested. Microphone access remains available for cellular calls.
 
 ## Feature Strategy
 
@@ -148,7 +148,7 @@ macOS:
 | Web handoff | Yes | URL open event |
 | Battery/device | Yes | State event and UI |
 | Media controls | Yes | Event model and UI controls |
-| Screen mirroring | Under development | Consented native MediaProjection/JPEG preview; see the feature inventory for verification status |
+| Screen mirroring and USB webcam | Deferred | Removed from current apps at the user’s request; historical source and evidence do not imply current availability |
 
 ## Threat Model
 

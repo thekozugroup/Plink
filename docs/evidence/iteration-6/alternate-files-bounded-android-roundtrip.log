@@ -1,0 +1,11 @@
+FILE ROUNDTRIP boundary=0: Android returned bytes verified, temporary files removed, Mac cleanup acknowledged
+
+FILE ROUNDTRIP boundary=1: Android returned bytes verified, temporary files removed, Mac cleanup acknowledged
+
+FILE ROUNDTRIP boundary=32768: Android returned bytes verified, temporary files removed, Mac cleanup acknowledged
+
+FILE ROUNDTRIP boundary=32769: Android returned bytes verified, temporary files removed, Mac cleanup acknowledged
+
+FILE ROUNDTRIP boundary=16777216 receive_timeout
+
+PLINK DEVICE CHECKS FAILED: TimeoutCancellationException: Timed out waiting for 30000 ms

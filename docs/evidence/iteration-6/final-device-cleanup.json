@@ -1,0 +1,18 @@
+{
+  "screenBrightness": "1",
+  "brightnessMode": "0",
+  "timeoutMillis": "120000",
+  "stayAwake": "0",
+  "shizukuProcesses": [
+    "root         13538 shizuku_server"
+  ],
+  "screenState": [
+    "mWakefulness=Dozing",
+    "mWakefulness=3"
+  ],
+  "fixtureAbsent": true,
+  "xmlAbsent": true,
+  "fixtureBuildAbsent": true,
+  "scrcpyStopped": true,
+  "timeoutRestoredFromObserved1800000": true
+}

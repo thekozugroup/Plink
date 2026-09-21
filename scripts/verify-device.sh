@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
-# Isolated synthetic replies, files, or normal consented emulator screen capture.
+# Isolated synthetic replies and files.
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 exec python3 - "$ROOT_DIR" "${1:?Pass the exact adb serial.}" "${2:-$ROOT_DIR/build/device-verification}" "${3:-roundtrip}" "${ADB:-adb}" "${4:-run}" <<'PY'
 from pathlib import Path
-import base64, hashlib, json, os, re, signal, socket, subprocess, sys, time
+import base64, hashlib, ipaddress, json, os, re, signal, socket, subprocess, sys, time
 
 root, serial, out, mode, adb, operation = sys.argv[1:]
 root, out = Path(root), Path(out).resolve()
-if mode not in ('roundtrip', 'files', 'screen') or operation not in ('run', 'recover'):
+if mode not in ('roundtrip', 'files') or operation not in ('run', 'recover'):
     raise SystemExit('Invalid verification mode or operation.')
-if mode == 'screen' and not re.fullmatch(r'emulator-[0-9]+', serial):
-    raise SystemExit('Screen integration requires an isolated emulator and normal OS consent.')
+lan_mac = os.environ.get('PLINK_TEST_MAC_HOST')
+lan_android = os.environ.get('PLINK_TEST_ANDROID_HOST')
+lan = bool(lan_mac or lan_android)
+if operation == 'run' and lan:
+    if not (lan_mac and lan_android) or mode != 'files' or os.environ.get('PLINK_CAPTURE_TRANSPORT') == '1':
+        raise SystemExit('LAN requires both device addresses, files mode, and capture disabled.')
+    private_networks = [ipaddress.ip_network(value) for value in ('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16')]
+    try:
+        if not all(any(ipaddress.IPv4Address(value) in network for network in private_networks)
+                   for value in (lan_mac, lan_android)):
+            raise ValueError()
+    except ValueError:
+        raise SystemExit('LAN addresses must be explicit private IPv4 addresses.')
 out.mkdir(parents=True, exist_ok=True)
 journal = out/'host-ownership.json'
 ADB_TIMEOUT = 20
@@ -103,8 +114,6 @@ def cleanup(primary):
         except Exception as error:
             checks[name] = 'failed'; errors.append(name+': '+str(error))
     step('hostProcesses', stop_children)
-    if primary == 124 and mode == 'screen' and state.get('instrumentStarted'):
-        step('timeoutForceStop', lambda: device('shell', 'am', 'force-stop', 'app.plink.android', log='timeout-force-stop.log'))
     for kind in ('forward', 'reverse'):
         item = state.get(kind)
         if not item or item['phase'] == 'failed': continue
@@ -140,7 +149,7 @@ def cleanup(primary):
         step('testPackage', remove_package)
     result = {'primaryExitCode':primary, 'cleanupExitCode':int(bool(errors)),
               'passed':primary == 0 and not errors, 'checks':checks, 'errors':errors,
-              'scope':'Owned test package and exact transport mappings; screen finalizer verifies capture and app state'}
+              'scope':'Owned test package and exact transport mappings'}
     write('host-recovery.json' if operation == 'recover' else 'host-cleanup.json', result)
     return not errors
 
@@ -161,23 +170,24 @@ try:
     inventory = packages()
     if 'app.plink.android' not in inventory: raise RuntimeError('Install the matching debug app first.')
     if 'app.plink.android.test' in inventory: raise RuntimeError('Preserve the existing test package; use an isolated device.')
-    state = {'schemaVersion':1, 'serial':serial, 'mode':mode,
+    state = {'schemaVersion':1, 'serial':serial, 'mode':mode, 'transport':'lan' if lan else 'adb',
              'testAPKSHA256':digest(test_apk), 'testPackageAbsentBefore':True}
     save()
     def port():
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0)); return sock.getsockname()[1]
     mac_port, phone_port, forward_port = port(), 45791, port()
-    if any(row[1] == 'tcp:'+str(forward_port) for row in mappings('forward')):
-        raise RuntimeError('Selected forward already exists.')
-    state['forward'] = {'local':'tcp:'+str(forward_port), 'remote':'tcp:'+str(phone_port), 'phase':'pending'}
-    save()
-    try: device('forward', '--no-rebind', state['forward']['local'], state['forward']['remote'])
-    except subprocess.CalledProcessError as error:
-        if 'cannot rebind' in str(error.output):
-            state['forward']['phase']='failed'; save()
-        raise
-    state['forward']['phase']='acquired'; save()
+    if not lan:
+        if any(row[1] == 'tcp:'+str(forward_port) for row in mappings('forward')):
+            raise RuntimeError('Selected forward already exists.')
+        state['forward'] = {'local':'tcp:'+str(forward_port), 'remote':'tcp:'+str(phone_port), 'phase':'pending'}
+        save()
+        try: device('forward', '--no-rebind', state['forward']['local'], state['forward']['remote'])
+        except subprocess.CalledProcessError as error:
+            if 'cannot rebind' in str(error.output):
+                state['forward']['phase']='failed'; save()
+            raise
+        state['forward']['phase']='acquired'; save()
     phone_target, mac_target = mac_port, forward_port
     if os.environ.get('PLINK_CAPTURE_TRANSPORT') == '1':
         if (out/'capture').exists(): raise RuntimeError('Use a fresh capture directory.')
@@ -193,7 +203,7 @@ try:
             time.sleep(.05)
         targets = json.loads(ready.read_text())
         phone_target, mac_target = targets['android-to-mac'], targets['mac-to-android']
-    if not serial.startswith('emulator-'):
+    if not lan and not serial.startswith('emulator-'):
         if any(row[1] == 'tcp:45790' for row in mappings('reverse')): raise RuntimeError('Reverse port already exists.')
         state['reverse'] = {'local':'tcp:45790','remote':'tcp:'+str(phone_target),'phase':'pending'}; save()
         try: device('reverse','--no-rebind','tcp:45790',state['reverse']['remote'])
@@ -202,12 +212,11 @@ try:
                 state['reverse']['phase']='failed'; save()
             raise
         state['reverse']['phase']='acquired'; save()
-    if mode == 'screen': (out/'screen-frames').mkdir()
     key = base64.b64encode(os.urandom(32)).decode()
     env = dict(os.environ, PLINK_DEBUG_SESSION_KEY_BASE64=key, PLINK_DEBUG_PAIRED_DEVICE_ID='test-pixel',
         PLINK_DEBUG_TARGET_DEVICE_ID='test-mac', PLINK_DEBUG_RECEIVER_MODE=mode,
-        PLINK_DEBUG_RECEIVER_PORT=str(mac_port), PLINK_DEBUG_REPLY_PORT=str(mac_target),
-        PLINK_DEBUG_SCREEN_EVIDENCE_DIR=str(out/'screen-frames'))
+        PLINK_DEBUG_RECEIVER_PORT=str(mac_port), PLINK_DEBUG_REPLY_PORT=str(phone_port if lan else mac_target),
+        PLINK_DEBUG_REPLY_HOST=lan_android if lan else '127.0.0.1')
     receiver_log = (out/'mac-roundtrip.log').open('w')
     receiver_process = subprocess.Popen([str(receiver)], env=env, stdout=receiver_log, stderr=subprocess.STDOUT)
     children.append(receiver_process)
@@ -220,8 +229,8 @@ try:
         raise
     state['install']['phase']='acquired'; save()
     if apk_hash('app.plink.android.test') != state['testAPKSHA256']: raise RuntimeError('Installed test APK mismatch.')
-    test_host = '10.0.2.2' if serial.startswith('emulator-') else '127.0.0.1'
-    test_port = phone_target if serial.startswith('emulator-') else 45790
+    test_host = lan_mac if lan else ('10.0.2.2' if serial.startswith('emulator-') else '127.0.0.1')
+    test_port = mac_port if lan else (phone_target if serial.startswith('emulator-') else 45790)
     state['instrumentStarted']=True; save()
     device('shell','am','instrument','-w','-e','mode',mode,'-e','macHost',test_host,
         '-e','macPort',str(test_port),'-e','replyPort',str(phone_port),'-e','sessionKey',key,
@@ -232,7 +241,7 @@ try:
     if os.environ.get('PLINK_CAPTURE_TRANSPORT') == '1':
         capture.terminate(); capture.wait(timeout=5)
         if not json.loads((out/'capture/summary.json').read_text())['passed']: raise RuntimeError('Wire capture failed.')
-    expected = {'screen':'SCREEN ROUNDTRIP PASSED','files':'FILE ROUNDTRIP PASSED','roundtrip':'ROUNDTRIP PASSED'}[mode]
+    expected = {'files':'FILE ROUNDTRIP PASSED','roundtrip':'ROUNDTRIP PASSED'}[mode]
     if expected not in (out/'mac-roundtrip.log').read_text(): raise RuntimeError('Receiver checks failed.')
     status = 0
 except subprocess.TimeoutExpired:
@@ -246,7 +255,6 @@ finally:
         if not cleanup(status): status = status or 1
 if status == 0:
     print('SUBCHECK PASS: '+mode+' synthetic encrypted roundtrip and owned host cleanup.')
-    print('Not tested: native Mac preview window, physical Pixel capture, camera, cellular calls/audio.' if mode == 'screen'
-          else 'Not tested: pairing UI, Notification Center interaction, actual messaging recipient, cellular calls/audio.')
+    print('Not tested: pairing UI, Notification Center interaction, actual messaging recipient, cellular calls/audio.')
 raise SystemExit(status)
 PY

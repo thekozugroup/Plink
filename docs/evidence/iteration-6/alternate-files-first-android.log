@@ -1,0 +1,5 @@
+FILE ROUNDTRIP boundary=0: Android returned bytes verified and temporary files removed
+
+FILE ROUNDTRIP boundary=1: Android returned bytes verified and temporary files removed
+
+PLINK DEVICE CHECKS FAILED: IllegalStateException: Transfer failed: Failed(name=boundary-32768.bin, reason=busy, cleanupNeeded=false)

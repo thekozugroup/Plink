@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import Network
 import PlinkCore
 
 /// Isolated synthetic integration driver. It exercises the production engine and
@@ -16,20 +17,22 @@ final class FileRoundtripHarness: @unchecked Sendable {
     private static let sizes = [0, 1, 32_768, 32_769, 16_777_216]
 
     init(codec: EncryptedFrameCodec, frameState: InMemoryFrameStateStore, replyPort: UInt16,
+         replyHost: String = "127.0.0.1",
          finish: @escaping @Sendable (Bool) -> Void) {
         let pair = AsyncStream<PlinkEnvelope>.makeStream(bufferingPolicy: .bufferingOldest(4))
         stream = pair.stream; continuation = pair.continuation
         root = FileManager.default.temporaryDirectory.appendingPathComponent("plink-file-roundtrip-\(UUID().uuidString)")
         engine = MacFileTransfer(localID: "test-mac", peerID: "test-pixel", root: root.appendingPathComponent("stage"))
-        client = SecureNetworkPlinkClient(host: "127.0.0.1", port: replyPort, codec: codec, stateStore: frameState)
+        client = SecureNetworkPlinkClient(host: replyHost, port: replyPort, codec: codec, stateStore: frameState)
         self.finish = finish
     }
 
     func start() {
         worker = Task { [self] in
             var passed = false
+            var rootRemoved = false
             defer {
-                do { try FileManager.default.removeItem(at: root) }
+                do { if !rootRemoved { try FileManager.default.removeItem(at: root) } }
                 catch { passed = false; fputs("File roundtrip cleanup failed: \(error)\n", stderr) }
                 finish(passed)
                 stopped.signal()
@@ -39,6 +42,7 @@ final class FileRoundtripHarness: @unchecked Sendable {
                 _ = await engine.setReceivingEnabled(true)
                 var completed = 0
                 var returningFile = false
+                var returnTransferID: String?
                 for await event in stream {
                     try Task.checkCancellation()
                     guard completed < Self.sizes.count, FileTransferPayloadPolicy.eventTypes.contains(event.type) else {
@@ -52,15 +56,39 @@ final class FileRoundtripHarness: @unchecked Sendable {
                         }
                         update = await engine.accept(transferID: id, destination: destination)
                     }
-                    for outbound in update.outgoing { try await client.send(outbound) }
+                    for outbound in update.outgoing { try await send(outbound) }
                     guard ![.failed, .cancelled, .unconfirmed].contains(update.state.phase) else {
                         throw failure(update.state.detail)
                     }
                     if update.state.phase == .saved {
                         if returningFile {
-                            print("FILE ROUNDTRIP boundary=\(Self.sizes[completed]) Android and Mac saved; SHA-256 checked")
+                            guard event.type == .fileResult,
+                                  event.payload["status"]?.stringValue == "saved",
+                                  let transferID = returnTransferID,
+                                  event.payload["transferId"]?.stringValue == transferID else {
+                                throw failure("Unexpected return result")
+                            }
+                            guard try FileManager.default.contentsOfDirectory(atPath: root.appendingPathComponent("stage").path).isEmpty else {
+                                throw failure("Return staging was not cleaned")
+                            }
                             try FileManager.default.removeItem(at: destination)
-                            completed += 1; returningFile = false
+                            let boundaryIndex = completed
+                            let size = Self.sizes[completed]
+                            completed += 1; returningFile = false; returnTransferID = nil
+                            if completed == Self.sizes.count {
+                                try FileManager.default.removeItem(at: root)
+                                rootRemoved = true
+                            }
+                            // Harness-only barrier carried by the existing encrypted ACK type.
+                            // Sent only after the matching result releases the engine and files.
+                            try await send(PlinkEnvelope(
+                                id: UUID().uuidString.lowercased(), type: .ack, sentAt: .now,
+                                sourceDeviceId: "test-mac", targetDeviceId: "test-pixel",
+                                payload: ["eventId": .string(event.id), "status": .string("executed"),
+                                          "transferId": .string(transferID), "sizeBytes": .int(size),
+                                          "boundaryIndex": .int(boundaryIndex)]
+                            ))
+                            print("FILE ROUNDTRIP boundary=\(size) Android and Mac saved; SHA-256 checked; cleanup ACK sent")
                             if completed == Self.sizes.count {
                                 print("FILE ROUNDTRIP PASSED: 10 encrypted transfers; 0, 1, 32768, 32769, 16777216 bytes; real file IO and cleanup")
                                 passed = true; return
@@ -76,7 +104,11 @@ final class FileRoundtripHarness: @unchecked Sendable {
                             }
                             returningFile = true
                             let offered = try await engine.prepareSend(source: destination)
-                            for outbound in offered.outgoing { try await client.send(outbound) }
+                            guard offered.state.phase == .offered, let id = offered.state.transferID else {
+                                throw failure("Return offer was not prepared")
+                            }
+                            returnTransferID = id
+                            for outbound in offered.outgoing { try await send(outbound) }
                         }
                     }
                 }
@@ -99,4 +131,21 @@ final class FileRoundtripHarness: @unchecked Sendable {
     }
 
     private func failure(_ text: String) -> NSError { NSError(domain: "PlinkFileRoundtrip", code: 1, userInfo: [NSLocalizedDescriptionKey: text]) }
+
+    private func send(_ envelope: PlinkEnvelope) async throws {
+        do { try await client.send(envelope) }
+        catch {
+            let category: String
+            switch error {
+            case is CancellationError: category = "cancelled"
+            case FoundationPlinkServerError.timedOut: category = "timeout"
+            case is NWError: category = "network"
+            case is FoundationPlinkServerError: category = "socket"
+            case is PayloadPolicyError, is NetworkPlinkServerError: category = "validation"
+            default: category = "other"
+            }
+            fputs("FILE ROUNDTRIP send_failed type=\(envelope.type.rawValue) category=\(category)\n", stderr)
+            throw error
+        }
+    }
 }

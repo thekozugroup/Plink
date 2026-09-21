@@ -90,16 +90,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
         targetContext.registerReceiver(receiver, IntentFilter("app.plink.TEST_REPLY"), Context.RECEIVER_NOT_EXPORTED)
         try {
             if (arguments.getString("mode") == "screen") {
-                checks += runBlocking {
-                    checkScreenRoundtrip(this@PlinkDeviceTestRunner, arguments) { message ->
-                        sendStatus(1, Bundle().apply { putString("stream", "\n$message\n") })
-                    }
-                }
-                result.putString("stream", "\nPLINK DEVICE CHECKS PASSED: ${checks.joinToString(", ")}\n")
-                result.putInt("checks", checks.size)
-                targetContext.unregisterReceiver(receiver)
-                finish(0, result)
-                return
+                error("Screen sharing is not available in this version.")
             }
             testRemoteInput()
             testProtectedAndDataOnlyActions()

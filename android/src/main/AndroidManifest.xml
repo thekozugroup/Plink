@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
     <application
         android:name=".PlinkApplication"
@@ -64,12 +63,6 @@
             android:name=".services.BackgroundConnectionService"
             android:exported="false"
             android:foregroundServiceType="remoteMessaging"
-            android:stopWithTask="false" />
-
-        <service
-            android:name=".screen.ScreenProjectionService"
-            android:exported="false"
-            android:foregroundServiceType="mediaProjection"
             android:stopWithTask="false" />
 
         <service
