@@ -2,6 +2,76 @@ import Darwin
 import Foundation
 import PlinkCore
 
+// One event-driven request per environment change; no retry timer or network authority.
+@MainActor
+final class ReconnectRecoveryPolicy {
+    private(set) var token = UUID()
+    private(set) var pending = false
+    private(set) var suppressed = false
+    private var queued: Task<Void, Never>?
+
+    func invalidate() {
+        queued?.cancel()
+        queued = nil
+        token = UUID()
+        pending = false
+    }
+
+    func request() {
+        invalidate()
+        pending = !suppressed
+    }
+
+    func cancelByUser() {
+        invalidate()
+        suppressed = true
+    }
+
+    func resumeByUser() {
+        invalidate()
+        suppressed = false
+    }
+
+    func consume(token: UUID, eligible: Bool, connected: Bool, attempting: Bool) -> Bool {
+        guard self.token == token, pending, !suppressed, eligible, !connected, !attempting else { return false }
+        pending = false
+        return true
+    }
+
+    @discardableResult
+    func schedule(eligible: @escaping () -> Bool, connected: @escaping () -> Bool,
+                  attempting: @escaping () -> Bool, start: @escaping () -> Void) -> Task<Void, Never>? {
+        guard pending, queued == nil else { return nil }
+        let token = token
+        let task = Task { [weak self] in
+            guard let self, self.token == token else { return }
+            self.queued = nil
+            guard !Task.isCancelled,
+                  self.consume(token: token, eligible: eligible(), connected: connected(), attempting: attempting()) else { return }
+            start()
+        }
+        queued = task
+        return task
+    }
+
+    static func attemptDeadline(from now: ContinuousClock.Instant) -> ContinuousClock.Instant {
+        now.advanced(by: .seconds(30))
+    }
+
+    static func requireCurrent(deadline: ContinuousClock.Instant, now: ContinuousClock.Instant = .now,
+                               isCurrent: Bool) throws {
+        try Task.checkCancellation()
+        guard now < deadline else { throw ReconnectSessionError.timedOut }
+        guard isCurrent else { throw CancellationError() }
+    }
+
+    static func afterCleanup(_ cleanup: Task<Void, Never>?, deadline: ContinuousClock.Instant,
+                             now: () -> ContinuousClock.Instant = { .now }, isCurrent: () -> Bool) async throws {
+        await cleanup?.value
+        try requireCurrent(deadline: deadline, now: now(), isCurrent: isCurrent())
+    }
+}
+
 enum ReconnectUIState: Equatable {
     case idle
     case finding
@@ -36,14 +106,36 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     var onDiscoveredCandidates: (([ReconnectCandidate]) -> Void)?
     var onCandidate: ((ReconnectCandidate) -> Void)?
     var onCancel: (() -> Void)?
+    var onManualConnect: (() -> Void)?
 
     private var peerID = ""
     private var browser: NetServiceBrowser?
     private var services: [NetService] = []
     private var candidates: [ReconnectCandidate] = []
     private var discovery = UUID()
+    private let search: (NetServiceBrowser) -> Void
+    private let resolve: (NetService) -> Void
+    private let scheduleTimeout: (@escaping @MainActor () -> Void) -> Void
+    private let interfaces: () -> [ReconnectInterfaceSnapshot]
+
+    init(search: @escaping (NetServiceBrowser) -> Void = { $0.searchForServices(ofType: "_plink._tcp.", inDomain: "local.") },
+         resolve: @escaping (NetService) -> Void = { $0.resolve(withTimeout: 2) },
+         scheduleTimeout: @escaping (@escaping @MainActor () -> Void) -> Void = { finish in
+             Task { @MainActor in
+                 try? await Task.sleep(for: .seconds(4))
+                 finish()
+             }
+         },
+         interfaces: @escaping () -> [ReconnectInterfaceSnapshot] = { ReconnectCandidatePolicy.currentInterfaces() }) {
+        self.search = search
+        self.resolve = resolve
+        self.scheduleTimeout = scheduleTimeout
+        self.interfaces = interfaces
+        super.init()
+    }
 
     func configure(peerID: String, pairedName: String) {
+        stopDiscoveryForLifecycle()
         self.peerID = peerID
         self.pairedName = pairedName
         refreshAddresses()
@@ -51,7 +143,8 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
         state = .idle
     }
 
-    func beginDiscovery() {
+    func beginDiscovery(automatically: Bool = false) {
+        if !automatically { onManualConnect?() }
         stopDiscovery()
         guard !peerID.isEmpty else { state = .failed("No active paired phone."); return }
         guard onDiscoveryStart?() == true else {
@@ -66,16 +159,16 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
         let browser = NetServiceBrowser()
         browser.delegate = self
         self.browser = browser
-        browser.searchForServices(ofType: "_plink._tcp.", inDomain: "local.")
+        search(browser)
         let token = discovery
-        Task { [weak self] in
-            try? await Task.sleep(for: .seconds(4))
+        scheduleTimeout { [weak self] in
             guard let self, self.discovery == token, self.state == .finding else { return }
             self.finishDiscovery(token: token)
         }
     }
 
     func reconnectManually() {
+        onManualConnect?()
         stopDiscovery()
         let value = manualIPv4.trimmingCharacters(in: .whitespacesAndNewlines)
         let endpointText = value.contains(":") ? value : "\(value):45731"
@@ -87,7 +180,7 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
             state = .failed("The reconnect port must be 45731.")
             return
         }
-        guard let candidate = ReconnectCandidatePolicy.currentInterfaces().compactMap({
+        guard let candidate = interfaces().compactMap({
             ReconnectCandidatePolicy.candidate(endpoint: endpoint.description, interface: $0)
         }).first else {
             state = .failed("Use the phone address shown in Plink, with both devices on the same local network.")
@@ -111,21 +204,23 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     func setIdle() { state = .idle }
 
     func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
-        guard state == .finding, services.count < 8 else { return }
+        guard browser === self.browser, state == .finding, services.count < 8,
+              !services.contains(where: { $0 === service }) else { return }
         services.append(service)
         service.delegate = self
-        service.resolve(withTimeout: 2)
+        resolve(service)
     }
 
     func netServiceDidResolveAddress(_ sender: NetService) {
-        guard state == .finding, let txtData = sender.txtRecordData(), txtData.count <= 512 else { return }
+        guard state == .finding, services.contains(where: { $0 === sender }),
+              let txtData = sender.txtRecordData(), txtData.count <= 512 else { return }
         let txt = NetService.dictionary(fromTXTRecord: txtData)
         guard txtString(txt["reconnect"]) == "1", txtString(txt["deviceId"]) == peerID,
               txtString(txt["platform"]) == "android", sender.port == 45_731 else { return }
         for addressData in sender.addresses ?? [] {
             guard let address = ipv4(from: addressData) else { continue }
             let endpoint = "\(address):45731"
-            for interface in ReconnectCandidatePolicy.currentInterfaces() {
+            for interface in interfaces() {
                 guard let candidate = ReconnectCandidatePolicy.candidate(endpoint: endpoint, interface: interface),
                       !candidates.contains(candidate), candidates.count < 4 else { continue }
                 candidates.append(candidate)
@@ -149,19 +244,30 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     }
 
     func netService(_ sender: NetService, didNotResolve errorDict: [String: NSNumber]) {
+        guard services.contains(where: { $0 === sender }) else { return }
         services.removeAll { $0 === sender }
+        sender.delegate = nil
+        sender.stop()
+    }
+
+    func stopDiscoveryForLifecycle() {
+        stopDiscovery()
     }
 
     private func stopDiscovery() {
-        browser?.stop()
-        browser?.delegate = nil
+        discovery = UUID()
+        let previousBrowser = browser
+        let previousServices = services
         browser = nil
-        services.forEach { $0.stop(); $0.delegate = nil }
         services.removeAll()
+        candidates.removeAll()
+        previousBrowser?.delegate = nil
+        previousBrowser?.stop()
+        previousServices.forEach { $0.delegate = nil; $0.stop() }
     }
 
     private func refreshAddresses() {
-        currentAddresses = ReconnectCandidatePolicy.currentInterfaces()
+        currentAddresses = interfaces()
             .filter { $0.up && $0.broadcast && !$0.loopback && !$0.pointToPoint && !$0.vpn }
             .map(\.localIPv4).sorted()
     }

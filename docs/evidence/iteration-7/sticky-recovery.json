@@ -1,0 +1,5 @@
+{
+  "stimulus": "Home then app-UID SIGKILL; no force-stop, launch or broadcast while waiting",
+  "backgroundServiceRestored": true,
+  "elapsedSeconds": 1.13
+}

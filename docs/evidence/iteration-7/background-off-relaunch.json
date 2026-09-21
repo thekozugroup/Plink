@@ -1,0 +1,7 @@
+{
+  "preference": {
+    "background_connection_enabled": "false"
+  },
+  "backgroundServicePresent": false,
+  "method": "Turned Off in observed Settings UI, force-stopped and launched normally. No background toggle action during relaunch."
+}

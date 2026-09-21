@@ -1,0 +1,26 @@
+One-second sample of the running packaged Mac app during Starting Plink. Selected startup thread only.
+    +       866 partial apply for closure #1 in AppDelegate.restoreSavedPairingAsync()  (in PlinkMac) + 1  [address omitted]
+    +         866 closure #1 in AppDelegate.restoreSavedPairingAsync()  (in PlinkMac) + 456  [address omitted]  PlinkMacApp.swift:1140
+    +           866 KeychainPairingSecretStore.load(sessionId:)  (in PlinkMac) + 460  [address omitted]  PairingStore.swift:133
+    +             866 SecItemCopyMatching  (in Security) + 344  [address omitted]
+    +               866 SecItemCopyMatching_osx(__CFDictionary const*, void const**)  (in Security) + 2140  [address omitted]
+    +                 866 AddItemResults(__SecKeychainItem*, __SecIdentity*, SecItemParams*, __CFAllocator const*, __CFArray**, void const**)  (in Security) + 548  [address omitted]
+    +                   866 SecKeychainItemCopyContent  (in Security) + 316  [address omitted]
+    +                     866 Security::KeychainCore::ItemImpl::getContent(SecItemClass*, SecKeychainAttributeList*, unsigned int*, void**)  (in Security) + 760  [address omitted]
+    +                       866 Security::KeychainCore::ItemImpl::getContent(Security::CssmClient::DbAttributes*, Security::CssmDataContainer*)  (in Security) + 572  [address omitted]
+    +                         866 Security::CssmClient::SSDbUniqueRecordImpl::get(Security::CssmClient::DbAttributes*, Security::CssmDataContainer*, cssm_access_credentials const*)  (in Security) + 288  [address omitted]
+    +                           866 Security::CssmClient::SSGroupImpl::decodeDataBlob(cssm_data const&, cssm_access_credentials const*, Security::Allocator&, cssm_data&)  (in Security) + 640  [address omitted]
+    +                             866 CSSM_DecryptDataFinal  (in Security) + 172  [address omitted]
+    +                               866 cssm_DecryptDataFinal(long, unsigned long long, cssm_data*)  (in Security) + 208  [address omitted]
+    +                                 866 Security::CSPFullPluginSession::CSPContext::final(Security::CssmData&, Security::Allocator&)  (in Security) + 68  [address omitted]
+    +                                   866 SSCryptContext::outputSize(bool, unsigned long)  (in Security) + 332  [address omitted]
+    +                                     866 Security::SecurityServer::ClientSession::decrypt(Security::Context const&, unsigned int, Security::CssmData const&, Security::CssmData&, Security::Allocator&)  (in Security) + 764  [address omitted]
+    +                                       866 mach_msg  (in libsystem_kernel.dylib) + 24  [address omitted]
+    +                                         866 mach_msg_overwrite  (in libsystem_kernel.dylib) + 480  [address omitted]
+    +                                           866 mach_msg2_internal  (in libsystem_kernel.dylib) + 76  [address omitted]
+    +                                             866 mach_msg2_trap  (in libsystem_kernel.dylib) + 8  [address omitted]
+    866 Thread_10566758
+      866 start_wqthread  (in libsystem_pthread.dylib) + 8  [address omitted]
+        866 _pthread_wqthread  (in libsystem_pthread.dylib) + 368  [address omitted]
+          866 __workq_kernreturn  (in libsystem_kernel.dylib) + 8  [address omitted]
+

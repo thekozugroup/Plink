@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "iteration": 7,
+  "reviewer": "Astra",
+  "status": "final_bounded_code_and_provenance_review_frozen; original_acceptance_and_native_recovery_incomplete",
+  "verified": false,
+  "productComplete": false,
+  "completionClaim": false,
+  "originalGate": {
+    "status": "blocked_device_addendum_hash_drift",
+    "checks": [
+      {
+        "path": ".a5c/spec.md",
+        "expectedSHA256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+        "actualSHA256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+        "matches": true
+      },
+      {
+        "path": ".a5c/device-constraints.md",
+        "expectedSHA256": "c3be51adce89b8234fc3bb6001dcc88c78418582a953cbb7d13994e65c0da313",
+        "actualSHA256": "9f0a4086d97729c3eb893918e7fcec67c16ac0f7a394285fedca388a76f1c59b",
+        "matches": false
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/matrix.json",
+        "expectedSHA256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+        "actualSHA256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+        "matches": true
+      }
+    ],
+    "selfTestExitCode": 2,
+    "defaultExitCode": 2,
+    "executionGrade": "parent_reported; source/hash independently corroborated",
+    "message": "Device addendum changed; refresh acceptance explicitly",
+    "selfTestCasesRan": false,
+    "scoringRan": false,
+    "exactEditResponsible": "unproven; exact frozen addendum text/history not recovered",
+    "originalsUnchanged": true,
+    "protectedHashesAtReview": {
+      ".a5c/spec.md": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+      ".a5c/device-constraints.md": "9f0a4086d97729c3eb893918e7fcec67c16ac0f7a394285fedca388a76f1c59b",
+      ".a5c/artifacts/acceptance/freeze.json": "1bca89b7246baa5eca82b740309738fadc4a0be366865e7a1b45f4fcdd9194fb",
+      ".a5c/artifacts/acceptance/matrix.json": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+      ".a5c/artifacts/acceptance/evaluate.py": "73af5bd851e503eba2834b540637d7d135b700a889d2456e121bb82c90f33d78"
+    }
+  },
+  "codeReview": {
+    "Android": {
+      "status": "no_material_findings_in_frozen_scope",
+      "files": [
+        "android/src/main/java/app/plink/android/MainActivity.kt",
+        "android/src/main/java/app/plink/android/PlinkApplication.kt",
+        "android/src/main/java/app/plink/android/services/BackgroundConnectionRestoration.kt",
+        "android/src/test/java/app/plink/android/services/BackgroundConnectionRestorationTest.kt"
+      ],
+      "conclusion": "Resumed collection handles late restore completion and rechecks live opt-in/status/permission/runtime before non-suspending start. Starting suppresses duplicates; Off/Stop and lifecycle cancellation block stale work. Existing start-failure behavior retained.8production-helper regressions plus bounded native checks support this fix."
+    },
+    "Mac": {
+      "status": "no_additional_concrete_production_regression_found",
+      "files": [
+        "macos/Sources/PlinkMac/PlinkMacApp.swift",
+        "macos/Sources/PlinkMac/ReconnectController.swift",
+        "macos/Tests/PlinkMacTests/ReconnectLifecycleTests.swift"
+      ],
+      "reviewedInvariants": [
+        "Event-driven eligible wake/session/network return; no heartbeat or passive peer watcher.",
+        "Separate system/screen/session/unlock gates plus fresh lock/console read; authentication/ordinary admission remain guarded.",
+        "One existing30second authority covers cleanup and discovery; candidate8second cap and existing bounded transient retries remain.",
+        "Explicit user Cancel suppresses automatic events; manual Connect/new pairing resumes.",
+        "Queued generation/peer/pairing/termination checks prevent stale start.",
+        "Browser identity, service membership and timer tokens reject prior discovery callbacks."
+      ],
+      "P2": "resolved_after_production_seams_and_test_ordering_correction",
+      "correction": "Both held-cleanup tests signal attemptReachedCleanup immediately before production afterCleanup, and await that signal before changing time/cancellation/currentness or releasing cleanup. Same MainActor execution reaches the unresolved cleanup await before the test resumes; no arbitrary sleep.",
+      "testScope": "Production queued policy, discovery callbacks, deadline and cleanup helper paths exercised. AppDelegate observer registration/eligibility wiring remains source-audited, not an OS simulation or native runtime proof.",
+      "existingCoreCoverage": [
+        "reconnectEndpointCommitIsAuthenticatedAndStaleCommitCannotReplaceIt",
+        "invalidatedPairLifetimeClosesAdmissionAndQueuedWriter",
+        "candidateDeadlineClosesReverseChannelWhileBlockedCommitJoins"
+      ],
+      "limits": "No native wake/unlock/network recovery verified; phone-only restart still lacks automatic handshake proof."
+    }
+  },
+  "findings": [
+    {
+      "id": "I7-MAC-TEST-P2",
+      "severity": "P2",
+      "status": "resolved",
+      "detail": "Production-seam tests plus corrected held-cleanup ordering passed15focused lifecycle tests. No OS/runtime verification inferred."
+    },
+    {
+      "id": "I7-ACCEPTANCE-DRIFT",
+      "severity": "P2",
+      "status": "open_integrity_gate",
+      "detail": "Frozen device addendum hash mismatch prevents self-test and scoring. Immutable originals unchanged; additive current-scope audit is separate."
+    },
+    {
+      "id": "I7-ANDROID-PROVENANCE",
+      "severity": "P2",
+      "status": "resolved_with_distinct_build_evidence",
+      "detail": "APK content difference explicitly recorded, not dismissed. Final installed clean gate APK matches local hash and savedON/foreground-service relaunch was rechecked. Earlier Off/SIGKILL proof remains on2ba25728 and was not claimed rerun on1fe4b3df."
+    },
+    {
+      "id": "I7-MAC-STARTUP",
+      "status": "blocked_runtime",
+      "detail": "Existing Keychain retrieval blocks startup; protected SecurityAgent access denied. User-mediated resolution remains pending; no new reconnect-root-cause claim."
+    },
+    {
+      "id": "I7-AUTO-RECOVERY",
+      "status": "unverified_known_limit",
+      "detail": "Wake/network recovery source/tests improved; native trials not completed. Phone-only restart remains separately unresolved."
+    }
+  ],
+  "runtimeBlockers": {
+    "macStartup": {
+      "status": "blocked_before_authenticated_reconnection",
+      "atUTC": "2026-09-21T03:45:39.472294+00:00",
+      "buildLaunched": true,
+      "nativeUI": "CUA observed Starting Plink and captured window screenshot. No Connect click performed.",
+      "startupStack": [
+        "AppDelegate.restoreSavedPairingAsync",
+        "KeychainPairingSecretStore.load(sessionId:)",
+        "SecItemCopyMatching",
+        "Security keychain content retrieval/decryption"
+      ],
+      "promptInspection": "SecurityAgent process present; CUA rejected access to com.apple.SecurityAgent for safety reasons. User requested to handle the prompt. Prompt content not inspected.",
+      "secretsRead": false,
+      "pairingReset": false,
+      "recoveryVerified": false
+    },
+    "interpretation": "Startup is blocked in existing saved-pair Keychain retrieval before reconnect starts. A prompt cause is not established: prompt content was not inspected. Do not attribute this to the new lifecycle patch without evidence.",
+    "computerUseBoundary": "CUA access to com.apple.SecurityAgent explicitly rejected for safety reasons. No bypass, secret extraction, pairing reset or unauthorized prompt interaction. Parent requested user handling; no resolution recorded.",
+    "earlierAX": "CUA SIGTRAP also occurred while disconnected; malformed Plink AX or connectedHome root cause remains unproven. New startup AX/screenshot succeeded, which does not resolve the later/native controls limitation.",
+    "nativeReplies": "Notification permission verified and local fixture posted, but native reply never executed; count0/matchedCount0. No real-recipient proof.",
+    "calls": "Plink selector/association, real cellular controls and laptop audio remain unverified; no external calls authorized.",
+    "automaticRecovery": "Service restoration and manual Mac Connect/launch are not phone-only automatic authenticated recovery. Native wake/unlock recovery blocked before handshake.",
+    "soak": "Two-hour background/100notification workload and resource/latency acceptance remain unverified."
+  },
+  "note": "Bounded independent review; original scoring gate failed before evaluation. Full review retained in Babysitter run artifacts."
+}

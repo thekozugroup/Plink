@@ -1,0 +1,17 @@
+{
+  "atUTC": "2026-09-21T03:48:51.728837+00:00",
+  "installedAndroidSha256": "1fe4b3dfc04f9754237d232eaf8671a91ec1470dfe37c5169fcfcb09be472f7e",
+  "gateApkSha256": "1fe4b3dfc04f9754237d232eaf8671a91ec1470dfe37c5169fcfcb09be472f7e",
+  "preferences": {
+    "background_connection_enabled": "true",
+    "clipboard_sync_enabled": "true"
+  },
+  "backgroundServicePresent": true,
+  "foregroundTrue": true,
+  "wakefulness": [
+    "mWakefulness=Dozing",
+    "mWakefulness=3"
+  ],
+  "method": "Installed clean gate APK preserving data, ordinary MainActivity launch; observed service before diagnostic broadcast. Did not change screen settings.",
+  "installedMatchesGate": true
+}

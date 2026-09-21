@@ -32,6 +32,10 @@ Select an already OS-paired phone in Connect Calls: its explicit selection must 
 
 ## Human-assisted cases
 
+For the bounded Android service check, enable Background connection, force-stop Plink, then open it normally. Observe the saved switch and foreground service before any diagnostic broadcast. Repeat with the switch Off: reopening must not start the service. Separately, with the service running, send the app to the background and kill only its process; record whether Android recreates the service without launching the activity. Service presence alone does not prove an authenticated connection or feature delivery.
+
+For Mac recovery, lock or sleep the Mac, then unlock or wake it on the same local network. Also test an actual network change. Confirm a fresh authenticated connection and ordinary feature delivery without clicking Connect. Cancel during recovery, repeat the environment change, and verify that automatic recovery stays suppressed until explicit Connect. Unit tests with injected lifecycle events do not replace these native checks.
+
 All rows remain pending until actual observations exist. The test operator records evidence; the independent reviewer decides whether every criterion of the corresponding frozen case is satisfied.
 
 | Case | Prerequisite and owner action | Expected observation and evidence |

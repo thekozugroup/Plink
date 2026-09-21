@@ -1,0 +1,30 @@
+{
+  "macNotifications": {
+    "nativeSettingsVerified": true,
+    "allowNotifications": true,
+    "desktop": true,
+    "notificationCenter": true,
+    "lockScreen": true,
+    "style": "Temporary"
+  },
+  "bluetooth": {
+    "initialNativeSystemSettings": "Phone Connected",
+    "laterNativeSystemSettings": "Phone Not Connected",
+    "plinkAssociation": "Not verified; selector unreachable"
+  },
+  "notificationFixture": {
+    "posted": true,
+    "result": {
+      "count": 0,
+      "matchedCount": 0,
+      "lastMatched": false
+    },
+    "nativeReply": "Not executed; CUA targets desktop Date widget, cannot open NotificationCenter panel. Fn unsupported; ControlCenter/SystemUIServer targets timeout."
+  },
+  "computerUse": {
+    "Plink": "SIGTRAP in SkyComputerUseService Array.remove(at:), repeatedafterrestartandkernelreset",
+    "fallbackUsed": false,
+    "customKeyboardShortcutChanged": false,
+    "keyboardBrightnessRestored": 0.6916466
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "lane": "Native verification and bounded fixes",
+  "status": "completed_available_checks_with_user_and_tool_blockers",
+  "verified": false,
+  "evidenceDirectory": "docs/evidence/iteration-7",
+  "passed": [
+    "Android saved-On foreground-service restoration",
+    "Android Off survives relaunch on initial tested APK",
+    "Android app-UID process death restores foreground service on initial tested APK",
+    "macOS native notification permission verified",
+    "Clean gate APK installed; saved On service running; phone Dozing",
+    "Temporary fixture/scrcpy/settings cleanup"
+  ],
+  "blocked": [
+    "Native Mac startup now waits inside existing Keychain retrieval; SecurityAgent inaccessible to CUA by safety policy; user action pending",
+    "Native Notification Center reply not executed",
+    "Bluetooth association and real cellular laptop audio not established",
+    "Actual sleep/wake/network-change recovery unverified"
+  ],
+  "buildResult": "build-result.json",
+  "nativeStartupResult": "mac-startup-result.json",
+  "sourceBinaryManifest": "source-binary-manifest.json",
+  "build": {
+    "AndroidUnitTests": 191,
+    "MacUnitTests": 202,
+    "correctedFocusedMacTests": 15,
+    "androidLintErrors": 0,
+    "androidLintWarnings": 39
+  },
+  "currentScopeComplete": false,
+  "review": "review.json",
+  "finalAndroidInstall": "final-android-install.json",
+  "finalCleanup": "final-cleanup.json"
+}

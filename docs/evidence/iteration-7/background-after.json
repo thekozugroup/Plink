@@ -1,0 +1,9 @@
+{
+  "preferences": {
+    "background_connection_enabled": "true",
+    "clipboard_sync_enabled": "true"
+  },
+  "backgroundServicePresent": true,
+  "foregroundTrue": true,
+  "method": "UpdatedAPK explicit force-stop then ordinary MainActivity launch. No toggles changed; no diagnostic broadcast before service snapshot."
+}

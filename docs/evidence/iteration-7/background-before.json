@@ -1,0 +1,9 @@
+{
+  "preferences": {
+    "background_connection_enabled": "true",
+    "clipboard_sync_enabled": "true"
+  },
+  "backgroundServicePresent": false,
+  "notificationListenerPresent": true,
+  "method": "App explicit relaunch after force-stop; before restoration fix. No toggles changed."
+}

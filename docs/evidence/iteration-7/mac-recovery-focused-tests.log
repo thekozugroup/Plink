@@ -1,0 +1,52 @@
+Building for debugging...
+[2 / 26]
+[3 / 27] PlinkCore
+[5 / 28] PlinkCore
+[8 / 13] PlinkMacTests-product
+[10 / 15] PlinkMacTests-product
+[14 / 17] PlinkMacTests-product
+[16 / 20] PlinkMacTests-product
+Build complete! (1.86 sec)
+◇ Test run started.
+↳ Testing Library Version: 2084
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite ReconnectLifecycleTests started.
+◇ Test discoveryAndHandshakeCannotResetDeadlineAfterCleanup() started.
+◇ Test heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) started.
+◇ Test restoredControllerIsInertUntilExplicitReconnect() started.
+◇ Test recoveryWaitsForEligibilityAndConsumesOnlyOnce() started.
+◇ Test manualReconnectRejectsNonnumericAndNonstandardPortsBeforeCallback() started.
+◇ Test duplicateEligibleWakeQueuesOneProductionDiscovery() started.
+◇ Test discoveryNotifiesLifecycleOwnerBeforeBrowsing() started.
+◇ Test cancelClosesDiscoveryStateAndNotifiesLifecycleOwnerOnce() started.
+◇ Test changedEnvironmentRejectsQueuedRecoveryFromOldGeneration() started.
+◇ Test userCancelSurvivesEnvironmentChangesUntilExplicitResume() started.
+◇ Test recoveryCannotReplaceHealthyConnectionOrRunningAttempt() started.
+◇ Test lifecycleDiscoveryStopDoesNotBecomeUserCancellation() started.
+◇ Test case passing 1 argument event → "deadline" to heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) started.
+◇ Test pairingOrTerminationInvalidationRejectsQueuedRecovery() started.
+◇ Test case passing 1 argument event → "replacement" to heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) started.
+◇ Test replacedDiscoveryIgnoresOldFindResolveAndTimerCallbacks() started.
+◇ Test case passing 1 argument event → "cancel" to heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) started.
+◇ Test queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test case passing 1 argument event → "lock" to queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test case passing 1 argument event → "cancel" to queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test case passing 1 argument event → "pair replacement" to queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test case passing 1 argument event → "termination" to queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+✔ Test duplicateEligibleWakeQueuesOneProductionDiscovery() passed after 0.001 seconds.
+✔ Test cancelClosesDiscoveryStateAndNotifiesLifecycleOwnerOnce() passed after 0.001 seconds.
+✔ Test recoveryCannotReplaceHealthyConnectionOrRunningAttempt() passed after 0.001 seconds.
+✔ Test changedEnvironmentRejectsQueuedRecoveryFromOldGeneration() passed after 0.001 seconds.
+✔ Test pairingOrTerminationInvalidationRejectsQueuedRecovery() passed after 0.001 seconds.
+✔ Test lifecycleDiscoveryStopDoesNotBecomeUserCancellation() passed after 0.001 seconds.
+✔ Test manualReconnectRejectsNonnumericAndNonstandardPortsBeforeCallback() passed after 0.001 seconds.
+✔ Test discoveryNotifiesLifecycleOwnerBeforeBrowsing() passed after 0.001 seconds.
+✔ Test queuedRecoveryRechecksLifecycleBeforeStarting(event:) with 4 test cases passed after 0.001 seconds.
+✔ Test userCancelSurvivesEnvironmentChangesUntilExplicitResume() passed after 0.001 seconds.
+✔ Test replacedDiscoveryIgnoresOldFindResolveAndTimerCallbacks() passed after 0.001 seconds.
+✔ Test restoredControllerIsInertUntilExplicitReconnect() passed after 0.001 seconds.
+✔ Test recoveryWaitsForEligibilityAndConsumesOnlyOnce() passed after 0.001 seconds.
+✔ Test discoveryAndHandshakeCannotResetDeadlineAfterCleanup() passed after 0.001 seconds.
+✔ Test heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) with 3 test cases passed after 0.001 seconds.
+✔ Suite ReconnectLifecycleTests passed after 0.002 seconds.
+✔ Test run with 15 tests in 1 suite passed after 0.002 seconds.

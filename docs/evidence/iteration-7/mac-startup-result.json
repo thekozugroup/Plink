@@ -1,0 +1,16 @@
+{
+  "status": "blocked_before_authenticated_reconnection",
+  "atUTC": "2026-09-21T03:45:39.472294+00:00",
+  "buildLaunched": true,
+  "nativeUI": "CUA observed Starting Plink and captured window screenshot. No Connect click performed.",
+  "startupStack": [
+    "AppDelegate.restoreSavedPairingAsync",
+    "KeychainPairingSecretStore.load(sessionId:)",
+    "SecItemCopyMatching",
+    "Security keychain content retrieval/decryption"
+  ],
+  "promptInspection": "SecurityAgent process present; CUA rejected access to com.apple.SecurityAgent for safety reasons. User requested to handle the prompt. Prompt content not inspected.",
+  "secretsRead": false,
+  "pairingReset": false,
+  "recoveryVerified": false
+}

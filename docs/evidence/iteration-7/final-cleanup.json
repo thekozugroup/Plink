@@ -1,0 +1,17 @@
+{
+  "atUTC": "2026-09-21T03:50:26.476592+00:00",
+  "brightness": "56",
+  "brightnessMode": "0",
+  "timeout": "120000",
+  "stayAwake": "0",
+  "wakefulness": [
+    "mWakefulness=Dozing",
+    "mWakefulness=3"
+  ],
+  "fixtureAbsent": true,
+  "temporaryUiDumpAbsent": true,
+  "shizukuMode": "root",
+  "ownedScrcpyStopped": true,
+  "temporaryFixtureDirectoryAbsent": true,
+  "pairingDataPreserved": true
+}

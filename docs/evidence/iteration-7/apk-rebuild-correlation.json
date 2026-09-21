@@ -1,0 +1,13 @@
+{
+  "atUTC": "2026-09-21T03:47:24.647107+00:00",
+  "installedApkSha256": "2ba25728ca747f5929dc8bf650acc24cb3964440868f0716e0f6a2f2f662b369",
+  "cleanBuildApkSha256": "1fe4b3dfc04f9754237d232eaf8671a91ec1470dfe37c5169fcfcb09be472f7e",
+  "entryCountInstalled": 140,
+  "entryCountCleanBuild": 140,
+  "differentEntries": [
+    "classes4.dex",
+    "classes7.dex"
+  ],
+  "allUncompressedEntriesIdentical": false,
+  "method": "Read-only installed APK copied into owned TemporaryDirectory, compare every uncompressed ZIP entry, remove temporary directory. No phone reinstall or launch."
+}

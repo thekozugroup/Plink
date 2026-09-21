@@ -1,0 +1,22 @@
+{
+  "atUTC": "2026-09-21T03:49:41.302084+00:00",
+  "baselineCommit": "7339070ba0404da3fad9b1f3e78d4bcba06158bb",
+  "changedSource": {
+    "README.md": "f1de70f53f70417b82061decfda6efdf8122c09805f730c20074b41630d45a95",
+    "android/src/main/java/app/plink/android/MainActivity.kt": "d06c4e1fb07fa5c4523b62509a64f6071e5b598a7a5196cc1a946a072e9db495",
+    "android/src/main/java/app/plink/android/PlinkApplication.kt": "585950592659da58312c8c9429b6bf6b2e9e2b78470249c8b9456a975ac4c351",
+    "docs/manual-test-plan.md": "02caf0275861c84ea4699af49dac74ccca2cfaa7a02966cc08c00a3ae2a63690",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "e562c3969ad17c24aa7a86c5d0e3a34ced2711253ae5451cd8ce6a42899a49ce",
+    "macos/Sources/PlinkMac/ReconnectController.swift": "417ee3920a7526dff09f10689e20377807507b58755ff27111067c85b100e966",
+    "macos/Tests/PlinkMacTests/ReconnectLifecycleTests.swift": "2d70c231b7982f91584560199848aa13e3e9e761b5967b9bb15697ec99539eb5",
+    "android/src/main/java/app/plink/android/services/BackgroundConnectionRestoration.kt": "a6a42f7289565a9d967069112d95d4c7322bd13cb122039f730ebc2e32683df6",
+    "android/src/test/java/app/plink/android/services/BackgroundConnectionRestorationTest.kt": "d99533a0779f023ab4045b9aca421397849152993a6c089b946494844a1555fe"
+  },
+  "binaries": {
+    "android/build/outputs/apk/debug/android-debug.apk": "1fe4b3dfc04f9754237d232eaf8671a91ec1470dfe37c5169fcfcb09be472f7e",
+    "android/build/outputs/apk/release/android-release-unsigned.apk": "3f61006e57e0d59c7d462e66fe0c8625c100a904eeb7d57dd7e69923862a31e5",
+    "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk": "39345b98b176363aa90f6e922fb41483ae077b8fa6a8c8e993ee08d174f565d2",
+    "build/PlinkMac.app/Contents/MacOS/PlinkMac": "9d97ea926346a967d4e07013ad6cee18fd7dcbe0786785d1363e1dbec9c0c58b"
+  },
+  "note": "Full build then test-only ordering correction and focused rerun; production source unchanged after packaging."
+}

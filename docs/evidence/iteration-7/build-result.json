@@ -1,0 +1,27 @@
+{
+  "command": "./scripts/verify.sh",
+  "exitCode": 0,
+  "androidUnitTests": {
+    "tests": 191,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "swiftTests": {
+    "XCTest": 54,
+    "appSwiftTesting": 31,
+    "coreSwiftTesting": 117,
+    "total": 202
+  },
+  "androidLint": {
+    "errors": 0,
+    "warnings": 39
+  },
+  "signedMacBundleStrictVerification": "passed",
+  "scope": "Full build, regression and packaging gate plus focused test-only ordering correction rerun. Native device behavior recorded separately.",
+  "focusedCorrection": {
+    "command": "swift test --filter ReconnectLifecycleTests",
+    "exitCode": 0,
+    "change": "Tests now ensure the attempt is waiting for held cleanup before cancellation/deadline/replacement. No production change after full gate."
+  }
+}

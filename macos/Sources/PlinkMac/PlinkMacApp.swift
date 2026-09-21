@@ -1,4 +1,5 @@
 import AppKit
+import CoreGraphics
 import CryptoKit
 import Network
 import PlinkCore
@@ -104,6 +105,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var dashboardWindow: NSWindow?
     private var pairingWindow: NSWindow?
     private var workspaceObservers: [NSObjectProtocol] = []
+    private var sessionObservers: [NSObjectProtocol] = []
+    private let recoveryPolicy = ReconnectRecoveryPolicy()
+    private var reconnectSystemAwake = true
+    private var reconnectScreenAwake = true
+    private var reconnectSessionActive = true
+    private var reconnectSessionUnlocked = true
+    private var reconnectPathEligible = false
     private var terminationPending = false
     private var terminationReplied = false
     private var terminationWatchdog: Task<Void, Never>?
@@ -115,6 +123,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         installReconnectLifecycleObservers()
         startReconnectPathMonitor()
         reconnect.onDiscoveryStart = { [weak self] in self?.startReconnectAttempt() ?? false }
+        reconnect.onManualConnect = { [weak self] in
+            guard let self else { return }
+            self.cancelPendingAutomaticRecovery()
+            self.recoveryPolicy.resumeByUser()
+            if self.reconnectAuthority != nil { self.cancelReconnect() }
+        }
         reconnect.onDiscoveredCandidates = { [weak self] candidates in
             self?.continueReconnect(candidates: candidates)
         }
@@ -122,7 +136,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             guard let self, self.startReconnectAttempt() else { return }
             self.continueReconnect(candidates: [candidate])
         }
-        reconnect.onCancel = { [weak self] in self?.cancelReconnect() }
+        reconnect.onCancel = { [weak self] in
+            self?.recoveryPolicy.cancelByUser()
+            self?.cancelReconnect()
+        }
         ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
         ProcessInfo.processInfo.disableSuddenTermination()
         NSApplication.shared.setActivationPolicy(.regular)
@@ -216,9 +233,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        terminationPending = true
+        cancelPendingAutomaticRecovery()
+        reconnect.stopDiscoveryForLifecycle()
         reconnectPathMonitor.cancel()
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         workspaceObservers.removeAll()
+        sessionObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
+        sessionObservers.removeAll()
         files.reset()
         housekeeping?.cancel()
         reconnectTask?.cancel()
@@ -304,6 +326,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     func applicationDidBecomeActive(_ notification: Notification) {
         guard !terminationPending else { return }
         notificationBridge.refreshAuthorization()
+        schedulePendingAutomaticRecovery()
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -315,9 +338,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         for name in [NSWorkspace.sessionDidResignActiveNotification, NSWorkspace.screensDidSleepNotification, NSWorkspace.willSleepNotification] {
             workspaceObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
-                    self?.invalidateReconnectForEnvironmentChange(
+                    guard let self else { return }
+                    if name == NSWorkspace.willSleepNotification { self.reconnectSystemAwake = false }
+                    if name == NSWorkspace.screensDidSleepNotification { self.reconnectScreenAwake = false }
+                    if name == NSWorkspace.sessionDidResignActiveNotification { self.reconnectSessionActive = false }
+                    self.invalidateReconnectForEnvironmentChange(
                         "Reconnect is required after the Mac sleeps or locks."
                     )
+                }
+            })
+        }
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
+            workspaceObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    if name == NSWorkspace.didWakeNotification { self.reconnectSystemAwake = true }
+                    if name == NSWorkspace.screensDidWakeNotification { self.reconnectScreenAwake = true }
+                    if name == NSWorkspace.sessionDidBecomeActiveNotification { self.reconnectSessionActive = true }
+                    self.schedulePendingAutomaticRecovery()
+                }
+            })
+        }
+        // These are hints only: a fresh system session/lock read gates every attempt.
+        for name in ["com.apple.screenIsLocked", "com.apple.screenIsUnlocked"] {
+            sessionObservers.append(DistributedNotificationCenter.default().addObserver(
+                forName: Notification.Name(name), object: nil, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    if name == "com.apple.screenIsLocked" {
+                        self.reconnectSessionUnlocked = false
+                        self.invalidateReconnectForEnvironmentChange("Reconnect is required after the Mac locks.")
+                    } else {
+                        self.reconnectSessionUnlocked = true
+                        self.schedulePendingAutomaticRecovery()
+                    }
                 }
             })
         }
@@ -328,10 +383,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             let signature = ReconnectPathSignature(status: String(describing: path.status),
                 interfaces: path.availableInterfaces.map(\.name).sorted(), supportsIPv4: path.supportsIPv4,
                 localInterfaces: Set(ReconnectCandidatePolicy.currentInterfaces()))
+            let pathEligible = path.status == .satisfied && path.supportsIPv4
             Task { @MainActor in
-                guard let self else { return }
-                defer { self.reconnectPathSignature = signature }
-                guard let previous = self.reconnectPathSignature, previous != signature else { return }
+                guard let self, !self.terminationPending else { return }
+                let previous = self.reconnectPathSignature
+                self.reconnectPathSignature = signature
+                self.reconnectPathEligible = pathEligible
+                guard let previous else {
+                    self.schedulePendingAutomaticRecovery()
+                    return
+                }
+                guard previous != signature else { return }
                 self.invalidateReconnectForEnvironmentChange(
                     "The local network changed. Reconnect to verify the new path."
                 )
@@ -341,10 +403,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func invalidateReconnectForEnvironmentChange(_ message: String) {
-        guard reconnectAuthority != nil || pairLifetime?.ordinaryAdmission() != nil else { return }
-        reconnect.setFailed(message)
-        lastDeliveryState = message
-        cancelReconnect()
+        guard !terminationPending else { return }
+        cancelPendingAutomaticRecovery()
+        reconnect.stopDiscoveryForLifecycle()
+        if reconnectAuthority != nil || pairLifetime?.ordinaryAdmission() != nil {
+            reconnect.setFailed(message)
+            lastDeliveryState = message
+            cancelReconnect()
+        }
+        recoveryPolicy.request()
+        schedulePendingAutomaticRecovery()
+    }
+
+    private var reconnectEnvironmentEligible: Bool {
+        guard reconnectSystemAwake, reconnectScreenAwake, reconnectSessionActive, reconnectSessionUnlocked,
+              reconnectPathEligible, ClipboardSyncController.systemIsUnlocked(),
+              let session = CGSessionCopyCurrentDictionary() as? [String: Any],
+              session[kCGSessionOnConsoleKey as String] as? Bool == true else { return false }
+        return ReconnectCandidatePolicy.currentInterfaces().contains {
+            $0.up && $0.broadcast && !$0.loopback && !$0.pointToPoint && !$0.vpn &&
+                $0.index > 0 && !$0.name.isEmpty && (1...30).contains($0.prefixLength) &&
+                (try? IPv4Endpoint(address: $0.localIPv4, port: receiverPort)) != nil
+        }
+    }
+
+    private func cancelPendingAutomaticRecovery() {
+        recoveryPolicy.invalidate()
+    }
+
+    private func schedulePendingAutomaticRecovery() {
+        guard recoveryPolicy.pending,
+              pairingRecoveryComplete, !terminationPending, !isPairing, !pairingInFlight,
+              reconnectEnvironmentEligible, let lifetime = pairLifetime, lifetime.isCurrent,
+              let pairing = activePairing, pairing.device.id == lifetime.peerID,
+              pairing.device.sessionId == lifetime.sessionID, reconnectListener != nil,
+              reconnectAuthority == nil, pairedPeerID == nil, lifetime.ordinaryAdmission() == nil else { return }
+        let attempt = reconnectAttempt
+        let pairingToken = pairingAttempt
+        recoveryPolicy.schedule(eligible: { [weak self, weak lifetime] in
+            guard let self, let lifetime, self.pairLifetime === lifetime, lifetime.isCurrent,
+                  self.reconnectAttempt == attempt, self.pairingAttempt == pairingToken,
+                  self.activePairing?.device.id == lifetime.peerID,
+                  self.activePairing?.device.sessionId == lifetime.sessionID,
+                  self.pairingRecoveryComplete, !self.terminationPending,
+                  !self.isPairing, !self.pairingInFlight, self.reconnectListener != nil else { return false }
+            return self.reconnectEnvironmentEligible
+        }, connected: { [weak self, weak lifetime] in
+            guard let self, let lifetime else { return true }
+            return self.pairedPeerID != nil || lifetime.ordinaryAdmission() != nil
+        }, attempting: { [weak self] in
+            guard let self else { return true }
+            return self.reconnectAuthority != nil
+        }, start: { [weak self] in
+            // beginDiscovery starts the existing 30-second authority before awaiting retirement.
+            self?.reconnect.beginDiscovery(automatically: true)
+        })
     }
 
     private func clearTransport() {
@@ -363,6 +476,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func stopPairLifetime() {
+        cancelPendingAutomaticRecovery()
+        reconnect.stopDiscoveryForLifecycle()
         reconnectAuthority?.invalidate()
         reconnectAuthority = nil
         reconnectDeadlineTask?.cancel()
@@ -375,6 +490,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func preparePairLifetimeReplacement() async -> UUID? {
+        cancelPendingAutomaticRecovery()
+        reconnect.stopDiscoveryForLifecycle()
         clipboard.setConnected(false)
         let previous = reconnectTask
         reconnectAuthority?.invalidate()
@@ -445,6 +562,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     private func scheduleAutomaticReconnect(device: PairedDevice, sessionKey: Data) {
         guard let lifetime = pairLifetime, lifetime.peerID == device.id, lifetime.sessionID == device.sessionId else { return }
+        guard !recoveryPolicy.suppressed else { return }
+        guard reconnectEnvironmentEligible, !isPairing, !pairingInFlight else {
+            recoveryPolicy.request()
+            return
+        }
         guard startReconnectAttempt() else { return }
         let stored = try? reconnectEndpointStore.load(
             localID: localMacDeviceId,
@@ -469,7 +591,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func startReconnectAttempt() -> Bool {
-        guard let lifetime = pairLifetime, reconnectListener != nil, activePairing != nil else {
+        cancelPendingAutomaticRecovery()
+        guard !terminationPending, !isPairing, !pairingInFlight, reconnectEnvironmentEligible else { return false }
+        guard let lifetime = pairLifetime, lifetime.isCurrent, reconnectListener != nil,
+              let pairing = activePairing, pairing.device.id == lifetime.peerID,
+              pairing.device.sessionId == lifetime.sessionID else {
             reconnect.setFailed("No active paired phone.")
             return false
         }
@@ -479,7 +605,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         previous?.cancel()
         reconnectAttempt = UUID()
         let token = reconnectAttempt
-        let deadline = ContinuousClock.now.advanced(by: .seconds(30))
+        let deadline = ReconnectRecoveryPolicy.attemptDeadline(from: .now)
         let authority = ReconnectCommitAuthority(deadline: deadline)
         reconnectAuthority = authority
         reconnectDeadline = deadline
@@ -543,10 +669,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             }
         }
         reconnectTask = Task { [weak self] in
-            await cleanup?.value
-            guard let self, self.reconnectAttempt == token,
-                  self.reconnectAuthority === authority else { return }
+            guard let self else { return }
             do {
+                try await ReconnectRecoveryPolicy.afterCleanup(cleanup, deadline: deadline, isCurrent: {
+                    self.reconnectAttempt == token && self.reconnectAuthority === authority
+                })
                 guard !boundedCandidates.isEmpty else { throw ReconnectSessionError.invalidCandidate }
                 let retryDelays: [Duration] = [.milliseconds(500), .seconds(1), .seconds(2)]
                 var lastError: Error = ReconnectSessionError.invalidCandidate
@@ -599,6 +726,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func cancelReconnect() {
+        cancelPendingAutomaticRecovery()
+        reconnect.stopDiscoveryForLifecycle()
         let previous = reconnectTask
         reconnectAuthority?.invalidate()
         reconnectAuthority = nil
@@ -646,12 +775,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
               reconnectAuthority === authority else { throw CancellationError() }
         var lastError: Error = ReconnectSessionError.invalidCandidate
         for candidate in candidates {
-            try Task.checkCancellation()
-            guard ContinuousClock.now < deadline, reconnectAttempt == token, pairLifetime === lifetime,
-                  reconnectAuthority === authority, activePairing?.device.id == pairing.device.id else {
-                if ContinuousClock.now >= deadline { throw ReconnectSessionError.timedOut }
-                throw CancellationError()
-            }
+            try ReconnectRecoveryPolicy.requireCurrent(deadline: deadline, isCurrent:
+                reconnectEnvironmentEligible && !terminationPending && !isPairing && !pairingInFlight &&
+                reconnectAttempt == token && pairLifetime === lifetime && reconnectAuthority === authority &&
+                activePairing?.device.id == pairing.device.id)
             reconnect.setVerifying()
             let candidateDeadline = min(deadline, ContinuousClock.now.advanced(by: .seconds(8)))
             do {
@@ -666,12 +793,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                         }
                     })
                     .attempt(candidate: candidate, deadline: candidateDeadline)
-                try Task.checkCancellation()
-                guard ContinuousClock.now < deadline, reconnectAttempt == token, pairLifetime === lifetime,
-                      reconnectAuthority === authority, activePairing?.device.id == pairing.device.id else {
-                    if ContinuousClock.now >= deadline { throw ReconnectSessionError.timedOut }
-                    throw CancellationError()
-                }
+                try ReconnectRecoveryPolicy.requireCurrent(deadline: deadline, isCurrent:
+                    reconnectEnvironmentEligible && !terminationPending && !isPairing && !pairingInFlight &&
+                    reconnectAttempt == token && pairLifetime === lifetime && reconnectAuthority === authority &&
+                    activePairing?.device.id == pairing.device.id)
                 let generation = try lifetime.openOrdinaryAdmission(binding: result.binding)
                 let sender = SerializedPlinkSender(transport: BoundSecureNetworkPlinkClient(
                     lifetime: lifetime, binding: result.binding, generation: generation))
@@ -753,6 +878,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     @discardableResult
     func prepareManualPairing() -> PairingOffer {
+        cancelPendingAutomaticRecovery()
+        recoveryPolicy.resumeByUser()
+        reconnect.stopDiscoveryForLifecycle()
         isPairing = true
         pairingCompleted = false
         pairingAttempt = UUID()
@@ -1025,7 +1153,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             }
             await self.applyRestoredPairing(device: device, sessionKey: sessionKey,
                                             expectedPairingAttempt: attempt)
-            await MainActor.run { self.pairingRecoveryComplete = true }
+            await MainActor.run {
+                self.pairingRecoveryComplete = true
+                self.schedulePendingAutomaticRecovery()
+            }
         }
     }
 

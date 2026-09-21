@@ -1,0 +1,103 @@
+{
+  "iteration": 7,
+  "lane": "android_saved_background_service_restoration",
+  "status": "passed_bounded_scope_frozen",
+  "scope": "Restore the existing foreground service from saved Background connection opt-in after normal app relaunch, subject to activity RESUMED, asynchronous session restore COMPLETE, eligible pairing, notification permission, and no already active/starting service runtime. Preserve Off and existing start failure handling.",
+  "source_status": "Frozen. No source changes during evidence recording.",
+  "implementation_files": [
+    "android/src/main/java/app/plink/android/MainActivity.kt",
+    "android/src/main/java/app/plink/android/PlinkApplication.kt",
+    "android/src/main/java/app/plink/android/services/BackgroundConnectionRestoration.kt",
+    "android/src/test/java/app/plink/android/services/BackgroundConnectionRestorationTest.kt"
+  ],
+  "evidence_provenance": "Parent performed builds and live device checks. This lane read recorded artifacts and existing JUnit XML only; it did not execute builds, devices or Git commands.",
+  "build_and_tests": {
+    "debug_assemble_and_unit_tests": {
+      "result": "passed",
+      "artifact": ".a5c/artifacts/iteration7/android-recovery-build.log"
+    },
+    "unit_test_counts": {
+      "tests": 191,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suite_files": 39,
+      "source": "android/build/test-results/testDebugUnitTest/TEST-*.xml",
+      "verification": "Read-only aggregate of existing JUnit XML; build log confirms testDebugUnitTest completed successfully."
+    },
+    "release_and_lint": {
+      "result": "passed",
+      "artifact": ".a5c/artifacts/iteration7/android-release-lint.log",
+      "observed_tasks": [
+        "assembleRelease",
+        "lintVitalRelease",
+        "lintDebug"
+      ],
+      "qualification": "These tasks completed successfully; this does not assert an absence of every lint warning."
+    }
+  },
+  "live_checks": [
+    {
+      "id": "saved_on_before_fix",
+      "artifact": ".a5c/artifacts/iteration7/background-before.json",
+      "result": "baseline_gap_confirmed",
+      "saved_background_on": true,
+      "background_service_present": false,
+      "method": "Explicit relaunch after force-stop; no toggle changes."
+    },
+    {
+      "id": "saved_on_after_fix",
+      "artifact": ".a5c/artifacts/iteration7/background-after.json",
+      "result": "passed",
+      "saved_background_on": true,
+      "background_service_present": true,
+      "foreground_true": true,
+      "method": "Updated APK, explicit force-stop then ordinary MainActivity launch; no toggle changes or diagnostic broadcast before snapshot."
+    },
+    {
+      "id": "sticky_process_recovery",
+      "artifact": ".a5c/artifacts/iteration7/sticky-recovery.json",
+      "result": "passed_observed_service_recovery",
+      "elapsed_seconds": 1.13,
+      "background_service_restored": true,
+      "method": "Home then app-UID SIGKILL; new PID appeared without force-stop, activity launch or diagnostic broadcast while waiting.",
+      "qualification": "Observed one device recovery time, not a guaranteed recovery deadline or evidence of encrypted reconnect completion."
+    },
+    {
+      "id": "off_survives_relaunch",
+      "artifact": ".a5c/artifacts/iteration7/background-off-relaunch.json",
+      "result": "passed",
+      "saved_background_on": false,
+      "background_service_present": false,
+      "method": "Native Settings UI Off, force-stop then normal relaunch; no toggle during relaunch."
+    },
+    {
+      "id": "original_on_restored",
+      "artifact": ".a5c/artifacts/iteration7/background-restored-on.json",
+      "result": "passed",
+      "saved_background_on": true,
+      "background_service_present": true,
+      "foreground_true": true,
+      "method": "Original ON preference restored with native Android Settings switch."
+    }
+  ],
+  "device_restoration": {
+    "original_settings_artifact": ".a5c/artifacts/iteration7/original-settings.json",
+    "parent_report": {
+      "brightness": 56,
+      "stay_awake": 0,
+      "phone_asleep": true,
+      "root_unchanged": true
+    },
+    "qualification": "Original brightness/stay-awake values match the recorded baseline. Final restoration, phone sleep and unchanged root are parent-reported; no additional device inspection was performed."
+  },
+  "limits": [
+    "This is a bounded foreground-service restoration result, not an overall background/reconnect pass.",
+    "Service presence and process recovery do not prove a completed encrypted reconnect or working ordinary feature traffic.",
+    "Automatic Mac sleep/wake recovery, no-click reconnect, network transition recovery, and CUA reliability are not established by these artifacts.",
+    "No new heartbeat, transport, authentication or Android handshake initiator was introduced.",
+    "The live Off result is recorded; other ordering, duplicate-start and start-failure cases are covered by authored unit regressions, not additional live claims."
+  ],
+  "analysis_artifact": ".a5c/artifacts/iteration7/android-recovery-analysis.json",
+  "handoff": "Android bounded lane frozen for parent/Astra review. Further changes require notice."
+}

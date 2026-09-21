@@ -1,0 +1,11 @@
+{
+  "computerUse": "Disconnected Home AX works. Connect click succeeds; connected Home causes native service SIGTRAP Array.remove(at:). SystemSettings Bluetooth AX works.",
+  "state": {
+    "sessionStatus": "READY",
+    "reconnectPhase": "ConnectedInternetUnverified",
+    "clipboardConnected": true,
+    "clipboardSyncEnabled": true,
+    "clipboardState": "Clipboard sync requires Shizuku running as shell."
+  },
+  "sanitization": "Removed process identities, raw broadcast wrapper, interface details and addresses; retained public status and observed computer-use result."
+}

@@ -12,6 +12,8 @@ import app.plink.android.services.BackgroundConnectionState
 import app.plink.android.services.SessionStatus
 import app.plink.android.services.ActivePlinkSession
 import app.plink.android.services.notificationsAllowed
+import app.plink.android.services.observeBackgroundConnectionRestoration
+import app.plink.android.services.startBackgroundConnectionService
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import app.plink.android.features.FeatureSettings
@@ -78,15 +80,7 @@ class PlinkApplication : Application() {
             )
             BackgroundConnectionDecision.Start -> {
                 featureSettings.setBackgroundConnectionEnabled(true)
-                BackgroundConnectionRuntime.update(BackgroundConnectionState.Starting)
-                try {
-                    ContextCompat.startForegroundService(this, Intent(this, BackgroundConnectionService::class.java))
-                    BackgroundConnectionRequestResult.Started
-                } catch (_: SecurityException) {
-                    startFailed("Plink lacks permission to run the background connection.")
-                } catch (_: RuntimeException) {
-                    startFailed("Android blocked the background connection start. Open Plink and try again.")
-                }
+                startBackgroundConnection()
             }
         }
     }
@@ -97,11 +91,26 @@ class PlinkApplication : Application() {
         return BackgroundConnectionRequestResult.ActionRequired(message)
     }
 
-    private fun startFailed(message: String): BackgroundConnectionRequestResult.Failed {
-        featureSettings.setBackgroundConnectionEnabled(false)
-        BackgroundConnectionRuntime.update(BackgroundConnectionState.Failed(message))
-        return BackgroundConnectionRequestResult.Failed(message)
+    suspend fun restoreBackgroundConnectionWhileResumed(isResumed: () -> Boolean) {
+        observeBackgroundConnectionRestoration(
+            restoreState = sessionRestoreState,
+            enabled = featureSettings.backgroundConnectionEnabled,
+            sessionStatus = sessionController.status,
+            runtime = backgroundConnectionState,
+            isResumed = isResumed,
+            notificationsAllowed = { notificationsAllowed() },
+            start = { startBackgroundConnection() }
+        )
     }
+
+    private fun startBackgroundConnection(): BackgroundConnectionRequestResult =
+        startBackgroundConnectionService(
+            setEnabled = featureSettings::setBackgroundConnectionEnabled,
+            setState = BackgroundConnectionRuntime::update,
+            startService = {
+                ContextCompat.startForegroundService(this, Intent(this, BackgroundConnectionService::class.java))
+            }
+        )
 
     private fun restoreSavedSession() {
         val generation = synchronized(restoreLock) {

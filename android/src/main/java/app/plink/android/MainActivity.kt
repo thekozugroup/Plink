@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.plink.android.features.FeaturePolicy
 import app.plink.android.permissions.AndroidPermissionReader
@@ -29,6 +31,7 @@ import app.plink.android.ui.PlinkAppScreen
 import app.plink.android.ui.PlinkUiActions
 import app.plink.android.ui.PlinkUiState
 import app.plink.android.ui.theme.PlinkTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     /** Bind the clipboard setup button to this explicit user action. */
@@ -48,6 +51,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                (application as PlinkApplication).restoreBackgroundConnectionWhileResumed {
+                    lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+                }
+            }
+        }
         setContent {
             PlinkApp(
                 onRequestPostNotifications = {

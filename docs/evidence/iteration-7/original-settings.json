@@ -1,0 +1,11 @@
+{
+  "brightness": "56",
+  "brightnessMode": "0",
+  "timeout": "120000",
+  "stayAwake": "0",
+  "power": [
+    "mWakefulness=Awake",
+    "mWakefulness=1"
+  ],
+  "keyguard": []
+}

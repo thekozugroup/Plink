@@ -1,0 +1,8 @@
+{
+  "preference": {
+    "background_connection_enabled": "true"
+  },
+  "backgroundServicePresent": true,
+  "foregroundTrue": true,
+  "method": "Restored original ON setting via native Android Settings switch."
+}

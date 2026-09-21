@@ -7,6 +7,7 @@ Pixel-to-Mac continuity with native Android and macOS apps.
 - Two-sided, authenticated pairing consent with code comparison.
 - Android notification mirroring and a validated inbound reply server for eligible free-form `RemoteInput` actions.
 - Android battery and media collectors, plus text and URL share handoff in both directions.
+- Automatic text clipboard sync with off toggles. Phone-to-Mac sync currently requires an unlocked personal profile and Shizuku running in shell mode.
 - Bidirectional encrypted file transfer with explicit consent, native file selection, a 16 MiB limit, and verified saved results.
 - Explicit Android background-connection control backed by an application-owned foreground service.
 - Native macOS call controls through an experimental Bluetooth HFP controller.
@@ -22,9 +23,11 @@ Four Pixel synthetic `RemoteInput` checks passed: one-time delivery with reuse r
 
 Screen sharing and Pixel USB webcam were removed from the current apps at the user’s request. Their earlier implementation evidence remains historical. Instant Hotspot and other unimplemented parity features are deferred. Current verification focuses on calls, notifications, clipboard, files and reliable connection.
 
-Background connection is an explicit optional Android UI switch. Foreground-service ownership is implemented and requires notification permission plus a paired Mac. Physical restart, process recreation, and Doze acceptance remain pending; Plink does not promise delivery in every background condition or claim full Apple Continuity parity.
+Background connection is an explicit optional Android UI switch and requires notification permission plus a paired Mac. Reopening the app restores the service when the saved switch remains on. On OnePlus 15, ordinary relaunch and process-death service recovery passed; an off switch remained off after relaunch. Service recovery does not establish authenticated reconnection, full phone reboot recovery, or Doze delivery.
 
 ## Evidence
+
+Recent verification: [checkpoint 6](docs/evidence/iteration-6/README.md) records two-way clipboard, Android's off toggle, ten direct-LAN file transfers, Bluetooth setup fixes, and removal of screen sharing/webcam. [Checkpoint 7](docs/evidence/iteration-7/README.md) records service recovery and the remaining native verification limits. These are bounded results, not full Apple Continuity parity.
 
 Development evidence includes [checkpoint 4 screen/webcam development and final capture checks](docs/evidence/iteration-4/README.md), [checkpoint 3 reply/call corrections and Android design checks](docs/evidence/iteration-3/README.md), the [checkpoint 2 file transfers](docs/evidence/2026-09-20/README.md), and the [earlier native Mac dashboard](docs/evidence/2026-09-19/README.md).
 
