@@ -116,7 +116,10 @@ struct ConnectionHeader: View {
         }
     }
     private var title: String {
-        if !appDelegate.pairingRecoveryComplete { return appDelegate.pairingRecoveryError == nil ? "Restoring your saved connection…" : "Setup needs attention" }
+        if !appDelegate.pairingRecoveryComplete {
+            if appDelegate.startupRecovery.isDelayed { return "Still restoring your saved connection" }
+            return appDelegate.pairingRecoveryError == nil ? "Restoring your saved connection…" : "Setup needs attention"
+        }
         if appDelegate.isPairing { return appDelegate.canConfirmPairing ? "Confirm your phone" : "Pairing your phone" }
         if connected { return "Connected" }
         if busy { return "Connecting…" }
@@ -148,7 +151,7 @@ struct ConnectionHeader: View {
                     if !compact { Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
                 }
                 Spacer(minLength: 0)
-                if !appDelegate.pairingRecoveryComplete && appDelegate.pairingRecoveryError == nil {
+                if !appDelegate.pairingRecoveryComplete && appDelegate.startupRecovery.showsProgress {
                     ProgressView("Restoring your saved connection…").controlSize(.small).labelsHidden()
                 } else if appDelegate.pairingRecoveryComplete && busy && !appDelegate.isPairing {
                     ProgressView().controlSize(.small)
@@ -209,7 +212,10 @@ struct MenuBarPanel: View {
         Button("Open Plink") { appDelegate.showDashboardWindow() }
         Divider()
         if !appDelegate.pairingRecoveryComplete {
-            Text(appDelegate.pairingRecoveryError == nil ? "Restoring your saved connection…" : "Saved connection needs attention")
+            Text(appDelegate.startupRecovery.menuStatus)
+            if appDelegate.startupRecovery.isDelayed {
+                Text(appDelegate.startupRecovery.detail)
+            }
         } else {
             Text(appDelegate.pairedPhoneName ?? appDelegate.startupRecovery.menuStatus)
             Label {

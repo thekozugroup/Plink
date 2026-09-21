@@ -43,6 +43,18 @@ struct StartupRecoveryState: Sendable {
     }
 
     private(set) var phase: Phase = .restoring
+    private(set) var isDelayed = false
+    var isRestoring: Bool {
+        switch phase {
+        case .restoring, .keyAccess, .restoringConnection: return true
+        default: return false
+        }
+    }
+    var showsProgress: Bool { isRestoring && !isDelayed }
+    mutating func markDelayed() {
+        if isRestoring { isDelayed = true }
+    }
+    mutating func clearDelayed() { isDelayed = false }
     var complete: Bool {
         switch phase {
         case .unpaired, .needsPairing, .ready: return true
@@ -54,6 +66,9 @@ struct StartupRecoveryState: Sendable {
         return nil
     }
     var detail: String {
+        if isDelayed {
+            return "Restoring your saved connection is taking longer than expected. Plink is still trying. You can wait, or quit and reopen Plink."
+        }
         switch phase {
         case .restoring: return "Restoring your saved connection…"
         case .keyAccess: return "Checking your saved connection. If macOS asks for permission, review the request."
@@ -65,6 +80,7 @@ struct StartupRecoveryState: Sendable {
         }
     }
     var menuStatus: String {
+        if isDelayed { return "Still restoring your saved connection" }
         switch phase {
         case .restoring, .keyAccess, .restoringConnection: return "Restoring your saved connection…"
         case .failed: return "Saved connection needs attention"
@@ -78,6 +94,7 @@ struct StartupRecoveryState: Sendable {
     mutating func publish(_ phase: Phase, expectedAttempt: UUID, currentAttempt: UUID, terminating: Bool) -> Bool {
         guard expectedAttempt == currentAttempt, !terminating else { return false }
         self.phase = phase
+        if !isRestoring { clearDelayed() }
         return true
     }
 
@@ -95,6 +112,51 @@ struct StartupRecoveryState: Sendable {
         case errSecInteractionNotAllowed, errSecNotAvailable: return .accessUnavailable
         default: return .keyUnreadable
         }
+    }
+}
+
+/// Owns the existing startup worker until it actually returns; the timer is presentation only.
+@MainActor
+final class StartupRecoveryOperation {
+    private var operationID: UUID?
+    private(set) var watchdogTask: Task<Void, Never>?
+    private let sleep: @Sendable (ContinuousClock.Instant) async throws -> Void
+    var isRunning: Bool { operationID != nil }
+
+    init(sleep: @escaping @Sendable (ContinuousClock.Instant) async throws -> Void = {
+        try await ContinuousClock().sleep(until: $0)
+    }) { self.sleep = sleep }
+
+    @discardableResult
+    func start(isCurrent: @escaping @MainActor () -> Bool,
+               onSlow: @escaping @MainActor () -> Void,
+               onFinish: @escaping @MainActor () -> Void,
+               work: @escaping @Sendable () async -> Void) -> Task<Void, Never>? {
+        guard operationID == nil, isCurrent() else { return nil }
+        let id = UUID()
+        operationID = id
+        let deadline = ContinuousClock.now.advanced(by: .seconds(30))
+        watchdogTask = Task {
+            do { try await sleep(deadline) } catch { return }
+            guard !Task.isCancelled, operationID == id, isCurrent() else { return }
+            onSlow()
+        }
+        return Task.detached {
+            await work()
+            await self.finished(id: id, isCurrent: isCurrent, onFinish: onFinish)
+        }
+    }
+
+    func cancelWatchdog() {
+        watchdogTask?.cancel()
+        watchdogTask = nil
+    }
+
+    private func finished(id: UUID, isCurrent: @MainActor () -> Bool, onFinish: @MainActor () -> Void) {
+        guard operationID == id else { return }
+        cancelWatchdog()
+        operationID = nil
+        if isCurrent() { onFinish() }
     }
 }
 
@@ -202,12 +264,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     @Published private(set) var pairingRecoveryComplete = false
     @Published private(set) var pairingRecoveryError: String?
     @Published private(set) var startupRecovery = StartupRecoveryState()
+    private let startupOperation = StartupRecoveryOperation()
     @Published private(set) var pairedPhoneName: String?
     @Published private(set) var isPairing = false
     @Published private(set) var pairingCompleted = false
     private lazy var pairingFinalization = MacPairingFinalization(devices: pairingStore, secrets: pairingSecretStore)
     @Published private(set) var pairingInFlight = false
-    private var pairingAttempt = UUID()
+    private var pairingAttempt = UUID() {
+        didSet {
+            startupOperation.cancelWatchdog()
+            startupRecovery.clearDelayed()
+        }
+    }
     private var pairingExpiryTask: Task<Void, Never>?
     let calling = BluetoothCallController()
     let clipboard = ClipboardSyncController()
@@ -250,7 +318,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var reconnectSessionActive = true
     private var reconnectSessionUnlocked = true
     private var reconnectPathEligible = false
-    private var terminationPending = false
+    private var terminationPending = false {
+        didSet {
+            if terminationPending { startupOperation.cancelWatchdog() }
+        }
+    }
     private var terminationReplied = false
     private var terminationWatchdog: Task<Void, Never>?
     private let reconnectPathMonitor = NWPathMonitor()
@@ -1401,6 +1473,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         guard next.publish(phase, expectedAttempt: attempt, currentAttempt: pairingAttempt,
                            terminating: terminationPending) else { return false }
         startupRecovery = next
+        if !next.isRestoring { startupOperation.cancelWatchdog() }
         pairingRecoveryComplete = startupRecovery.complete
         pairingRecoveryError = startupRecovery.error
         // A restored pairing may already be reconnecting; keep its connection feedback.
@@ -1410,7 +1483,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     private func restoreSavedPairingAsync() {
         let attempt = pairingAttempt
-        Task.detached { [domainName = "com.thekozugroup.plink.mac"] in
+        startupOperation.start(isCurrent: { [weak self] in
+            guard let self else { return false }
+            return self.pairingAttempt == attempt && !self.terminationPending
+        }, onSlow: { [weak self] in
+            guard let self else { return }
+            self.startupRecovery.markDelayed()
+            if self.startupRecovery.isDelayed { self.lastDeliveryState = self.startupRecovery.detail }
+        }, onFinish: { [weak self] in
+            self?.startupRecovery.clearDelayed()
+        }, work: { [domainName = "com.thekozugroup.plink.mac"] in
             guard await self.publishStartupRecovery(.restoring, attempt: attempt) else { return }
             NSLog("Plink startup pairing recovery started")
             let store = UserDefaultsPairingStore(domainName: domainName)
@@ -1485,7 +1567,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     self.schedulePendingAutomaticRecovery()
                 }
             }
-        }
+        })
     }
 
     @discardableResult
