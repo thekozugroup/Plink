@@ -1,0 +1,45 @@
+CONTENT TYPE UNMutableNotificationContent
+CLASS UNNotificationIcon
+instance description @16@0:8
+instance uti @16@0:8
+instance applicationIdentifier @16@0:8
+instance hash Q16@0:8
+instance initWithCoder: @24@0:8@16
+instance systemImageName @16@0:8
+instance name @16@0:8
+instance path @16@0:8
+instance init @16@0:8
+instance .cxx_destruct v16@0:8
+instance data @16@0:8
+instance isEqual: B24@0:8@16
+instance dateComponents @16@0:8
+instance _initWithIconInfo:type:shouldSuppressMask: @36@0:8@16q24B32
+instance copyWithZone: @24@0:8^{_NSZone=}16
+instance applicationURL @16@0:8
+instance encodeWithCoder: v24@0:8@16
+instance shouldSuppressMask B16@0:8
+class supportsSecureCoding B16@0:8
+class iconForApplicationURL: @24@0:8@16
+class iconAtPath:shouldSuppressMask: @28@0:8@16B24
+class iconNamed: @24@0:8@16
+class iconWithUTI: @24@0:8@16
+class iconWithData: @24@0:8@16
+class iconForApplicationIdentifier: @24@0:8@16
+class iconForSystemImageNamed: @24@0:8@16
+class iconWithDateComponents:calendarIdentifier:format: @40@0:8@16@24q32
+class iconNamed:shouldSuppressMask: @28@0:8@16B24
+class iconAtPath: @24@0:8@16
+CLASS UNMutableNotificationContent
+instance setIcon: v24@0:8@16
+instance setAccessoryImageName: v24@0:8@16
+instance setLaunchImageName: v24@0:8@16
+instance setShouldShowSubordinateIcon: v20@0:8B16
+CLASS UNNotificationContent
+instance shouldShowSubordinateIcon B16@0:8
+instance accessoryImageName @16@0:8
+instance icon @16@0:8
+instance launchImageName @16@0:8
+instance _initWithContentType:communicationContext:accessoryImageName:attachments:rawAppEntityIdentifiers:badge:body:attributedBody:categoryIdentifier:date:icon:defaultActionTitle:defaultActionURL:defaultActionBundleIdentifier:expirationDate:header:footer:launchImageName:peopleIdentifiers:shouldHideDate:shouldHideTime:shouldIgnoreDoNotDisturb:shouldIgnoreDowntime:shouldSuppressScreenLightUp:shouldAuthenticateDefaultAction:shouldBackgroundDefaultAction:shouldPreventNotificationDismissalAfterDefaultAction:shouldShowSubordinateIcon:shouldSuppressDefaultAction:shouldSuppressSyncDismissalWhenRemoved:shouldUseRequestIdentifierForDismissalSync:shouldPreemptPresentedNotification:shouldDisplayActionsInline:sound:subtitle:threadIdentifier:title:topicIdentifiers:realertCount:summaryArgument:summaryArgumentCount:targetContentIdentifier:interruptionLevel:relevanceScore:filterCriteria:screenCaptureProhibited:speechLanguage:userInfo: @340@0:8@16@24@32@40@48@56@64@72@80@88@96@104@112@120@128@136@144@152@160B168B172B176B180B184B188B192B196B200B204B208B212B216B220@224@232@240@248@256Q264@272Q280@288Q296d304@312B320@324@332
+REGISTERED <workspace>/build/PlinkMac.app
+EXPORTED packaged 1024x1024
+EXPORTED registered 1024x1024

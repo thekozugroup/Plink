@@ -1,0 +1,79 @@
+{
+  "status": "source_frozen_for_parent_compile_and_Astra_review",
+  "authorization": ".a5c/artifacts/iteration11/astra-left-icon-decision.json",
+  "files": [
+    {
+      "path": "macos/Package.swift",
+      "sha256": "4b9e5b656de8f717cd91b12ca3b98acd16412887b8b9ab6582aeb18f49083503"
+    },
+    {
+      "path": "macos/Sources/PlinkNotificationIconBridge/include/PlinkNotificationIconBridge.h",
+      "sha256": "e52142f4eace64ab97af81345b6d72e403635dbbcf362c6c339d40ba0aedce21"
+    },
+    {
+      "path": "macos/Sources/PlinkNotificationIconBridge/PlinkNotificationIconBridge.m",
+      "sha256": "2129a041479fc8fb4d3c5e040c130f2b1dc893ca97d8b21ec310afaad00d9628"
+    },
+    {
+      "path": "macos/Sources/PlinkMac/NotificationArtwork.swift",
+      "sha256": "aac3c12e81090e75f2ed900b9a641ca2a7f2f7acb6c7860bcafdddcbde4553fe"
+    },
+    {
+      "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+      "sha256": "eb0fa3314e0b5d6416d3fcabdd8d501b0b0e0d4afb461017a7d24ede1cf2942f"
+    },
+    {
+      "path": "macos/Tests/PlinkMacTests/NotificationArtworkTests.swift",
+      "sha256": "34bf9d85f7759364cb37b6ddef0e7bc6f26df0a0804f785cd2e87e10b5ca1fb3"
+    }
+  ],
+  "implemented": [
+    "Tiny ARC Objective-C target guards private icon class/selector ABI, wraps factory/setter/getter, content/request copying and icon submission in Objective-C exception boundaries.",
+    "Icon applied to a content copy; untouched public content retained for sole ordinary fallback. No KVC, sender substitution, helper app, entitlement changes or fake person.",
+    "Existing bounded PNG validation retained; phone badge now Apple SF Symbols iphone in local circular blue/white badge.",
+    "Removed right attachments, temporary file staging and artwork cache. No synthetic artwork when optional source is missing or invalid.",
+    "Outstanding decorated submissions capped at128, including obsolete requests awaiting callbacks. Current token required before one plain retry. Replacement, tombstone, context clear, reply and dismissal revoke retry authority.",
+    "Native action handler exposed internally for deterministic response tests; HFP rendering/control branch unchanged."
+  ],
+  "tests": {
+    "authoredBeforeProduction": true,
+    "cleanRedCaptured": false,
+    "agentRanTests": false,
+    "cases": [
+      "Missing class/selector and mismatched constructor ABI return nil without modifying ordinary content.",
+      "Injected failed icon construction still delivers ordinary text and actions without attachments.",
+      "Preserved byte/type/frame/dimension/static PNG rejection and sanitized subtitle coverage.",
+      "One plain retry; no retry after replacement/tombstone/pair switch/dismiss/reply; one-shot reply retains package/peer/token.",
+      "Pending icon count remains bounded even when the same source notification is repeatedly replaced."
+    ],
+    "limits": "Compiler/test outcome pending parent. Tests inject icon request creation for deterministic delivery failure; live private-object serialization proven only by parent probe, not newly executed here."
+  },
+  "previewAPI": "@MainActor NotificationArtwork.renderedPNG(base64: String) -> Data? remains standalone. Uses AppKit/ImageIO/UniformTypeIdentifiers only.",
+  "privateAPIRisks": [
+    "Undocumented selectors may disappear, change signatures, throw, or be ignored by the notification daemon. Guard/exception fallback is ordinary notification, never right-hand artwork.",
+    "Successful construction/copy/submission does not establish left placement, badge rendering, mask behavior, or compatibility on other macOS versions. Parent native screenshot required."
+  ],
+  "cleanup": "This patch creates no temporary files. Earlier artwork staging namespace was NSTemporaryDirectory()/com.thekozugroup.plink.notification-artwork; parent owns cleanup of earlier-build leftovers after old submissions finish.",
+  "unchanged": [
+    "Frozen Mac/Android launcher assets",
+    "Android producer",
+    "PlinkMacApp paired-name wiring",
+    "entitlements and bundle identity"
+  ],
+  "agentBuildsDevicesGit": false,
+  "asyncAdjudication": {
+    "authorization": ".a5c/artifacts/iteration11/astra-left-async-adjudication.json",
+    "status": "implemented_and_frozen_for_parent_Mac_retest",
+    "changes": [
+      "All asynchronous submissions now acquire a current per-ID token, including ordinary fallback. Completion releases pending icon tracking before gating every subsequent effect by current ownership.",
+      "Dismiss uses shared pending/delivered removal before dropping bookkeeping."
+    ],
+    "testsAuthoredBeforeFix": [
+      "stalePlainFallbackFailureCannotEvictSameIDReplacement",
+      "dismissCancelsPendingPlainFallbackAndIgnoresItsLateFailure"
+    ],
+    "testsRunByAgent": false,
+    "prePatchParentGate": "454 tests passed (207 Android + 247 Swift), per parent; not attributed to corrected snapshot.",
+    "androidChanged": false
+  }
+}

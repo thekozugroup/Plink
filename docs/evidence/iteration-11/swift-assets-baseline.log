@@ -1,0 +1,681 @@
+Building for debugging...
+[6 / 30] PlinkNotificationIconBridge
+[8 / 35] PlinkCore
+[10 / 36] PlinkCore
+[14 / 24] PlinkMac
+[34 / 57] PlinkMac
+[43 / 57] PlinkMac
+[47 / 57] PlinkMac-product
+[52 / 62] PlinkMac
+[54 / 62] PlinkMac-product
+[56 / 64] PlinkMac-product
+[59 / 64] PlinkMacTests-product
+[69 / 74] PlinkMacTests-product
+[71 / 74] PlinkMacTests-product
+[73 / 77] PlinkMacTests-product
+Build complete! (4.09 sec)
+Test Suite 'All tests' started at 2026-09-21 14:10:25.798.
+Test Suite 'All tests' passed at 2026-09-21 14:10:25.799.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'All tests' started at 2026-09-21 14:10:25.862.
+Test Suite 'PlinkCoreTests.xctest' started at 2026-09-21 14:10:25.862.
+Test Suite 'MacContinuityTests' started at 2026-09-21 14:10:25.862.
+Test Case '-[PlinkCoreTests.MacContinuityTests testAckRequiresMatchingActionPeerAndPendingCommand]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testAckRequiresMatchingActionPeerAndPendingCommand]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testActiveRefreshDoesNotReenablePendingHangup]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testActiveRefreshDoesNotReenablePendingHangup]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testAwaitingUserDoesNotClaimExecutionAndAcceptsLaterOutcome]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testAwaitingUserDoesNotClaimExecutionAndAcceptsLaterOutcome]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testCallActionsRequireCurrentIdentityAndObservedState]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testCallActionsRequireCurrentIdentityAndObservedState]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testDisconnectAndCallCancellationInvalidateActions]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testDisconnectAndCallCancellationInvalidateActions]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testEveryCallActionCancelsOnTerminalStateWithoutMigratingIdentity]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testEveryCallActionCancelsOnTerminalStateWithoutMigratingIdentity]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testExecutingInvocationQuarantinesEvenAfterRemoteEnd]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testExecutingInvocationQuarantinesEvenAfterRemoteEnd]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testExpiredExecutingWorkStaysQuarantinedAfterLateReturn]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testExpiredExecutingWorkStaysQuarantinedAfterLateReturn]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testHeldOrDifferentCallIndexMakesTopologyAmbiguous]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testHeldOrDifferentCallIndexMakesTopologyAmbiguous]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testIncorrectAckDoesNotConsumePendingCommand]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testIncorrectAckDoesNotConsumePendingCommand]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testLateOperationAndOldGenerationCannotCompleteReplacement]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testLateOperationAndOldGenerationCannotCompleteReplacement]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testNativeContinuationIsDeniedAfterExpiryOrCancellation]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testNativeContinuationIsDeniedAfterExpiryOrCancellation]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testQueuedExpiredWorkNeverStartsAndReturnedCompletionCanBeDelayed]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testQueuedExpiredWorkNeverStartsAndReturnedCompletionCanBeDelayed]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testReplyContextsExpireReplaceAndClear]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testReplyContextsExpireReplaceAndClear]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testReplyRevocationIsScopedToPeerAndNotification]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testReplyRevocationIsScopedToPeerAndNotification]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testReturnedInvocationTimesOutRecoverablyAndInvalidatesCallActions]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testReturnedInvocationTimesOutRecoverablyAndInvalidatesCallActions]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOAndGenericActiveCannotResolveUnconfirmedAnswer]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOAndGenericActiveCannotResolveUnconfirmedAnswer]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOCannotCompleteAnswerOrHangup]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOCannotCompleteAnswerOrHangup]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOCannotCreateCallOrGrantActions]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testSCOCannotCreateCallOrGrantActions]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testSocketWriteIsNotExecutionAndTimeoutIsUnknown]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testSocketWriteIsNotExecutionAndTimeoutIsUnknown]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testStatusRejectsInvalidBatteryAndMediaCommands]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testStatusRejectsInvalidBatteryAndMediaCommands]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testWaitingCallCannotReuseOriginalActionIdentityAfterSetupEnds]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testWaitingCallCannotReuseOriginalActionIdentityAfterSetupEnds]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacContinuityTests testWaitingCallDoesNotBecomeActionableWithoutCallIndexSupport]' started.
+Test Case '-[PlinkCoreTests.MacContinuityTests testWaitingCallDoesNotBecomeActionableWithoutCallIndexSupport]' passed (0.000 seconds).
+Test Suite 'MacContinuityTests' passed at 2026-09-21 14:10:25.865.
+	 Executed 23 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'MacDeviceIdentityTests' started at 2026-09-21 14:10:25.865.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testDifferentInstallationsGetDifferentIdentities]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testDifferentInstallationsGetDifferentIdentities]' passed (0.002 seconds).
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testFreshIdentityPersistsAcrossInstances]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testFreshIdentityPersistsAcrossInstances]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testLegacyPairingGetsDurableFreshOfferIdentity]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testLegacyPairingGetsDurableFreshOfferIdentity]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testMalformedPersistedIdentityFailsClosedWithoutReplacement]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testMalformedPersistedIdentityFailsClosedWithoutReplacement]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testTwoUpgradedMacsHaveDifferentFreshOfferIdentities]' started.
+Test Case '-[PlinkCoreTests.MacDeviceIdentityTests testTwoUpgradedMacsHaveDifferentFreshOfferIdentities]' passed (0.002 seconds).
+Test Suite 'MacDeviceIdentityTests' passed at 2026-09-21 14:10:25.871.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
+Test Suite 'MacFileTransferTests' started at 2026-09-21 14:10:25.871.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testAbsoluteDeadlineCannotBeExtendedBySuccessfulProgress]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testAbsoluteDeadlineCannotBeExtendedBySuccessfulProgress]' passed (0.002 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testBidirectionalBoundaryFilesSaveIdenticalBytesOnlyAfterConsent]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testBidirectionalBoundaryFilesSaveIdenticalBytesOnlyAfterConsent]' passed (2.083 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testBusyAndStaleConsentCannotTakeOverExistingTransfer]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testBusyAndStaleConsentCannotTakeOverExistingTransfer]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testCancellationFeatureOffAndSessionResetRevokeConsentAndClean]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testCancellationFeatureOffAndSessionResetRevokeConsentAndClean]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testChooserRejectsChangedTransferAndGenerationBeforeMutation]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testChooserRejectsChangedTransferAndGenerationBeforeMutation]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDeadlineCrossingDuringExportPreservesExistingDestination]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDeadlineCrossingDuringExportPreservesExistingDestination]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDeferredChooserCannotCancelReplacementOffer]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDeferredChooserCannotCancelReplacementOffer]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDisabledBusyForeignAndUnacceptedMessagesCannotWrite]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testDisabledBusyForeignAndUnacceptedMessagesCannotWrite]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testExportFailureNeverReportsSavedAndPathTraversalRejected]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testExportFailureNeverReportsSavedAndPathTraversalRejected]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testMalformedActiveChunkStopsAndCleans]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testMalformedActiveChunkStopsAndCleans]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testMonotonicOfferInactivityAndAbsoluteDeadlines]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testMonotonicOfferInactivityAndAbsoluteDeadlines]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testNoncanonicalBase64IsRejectedBeforeWrite]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testNoncanonicalBase64IsRejectedBeforeWrite]' passed (0.002 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testOversizeNeverOffersAndCleansSnapshot]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testOversizeNeverOffersAndCleansSnapshot]' passed (0.013 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testRepeatedCancellationPreservesUnconfirmedSavedOutcome]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testRepeatedCancellationPreservesUnconfirmedSavedOutcome]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testSenderNeverSendsBeforeAcceptOrTreatsTransportAsSaved]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testSenderNeverSendsBeforeAcceptOrTreatsTransportAsSaved]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testSnapshotSurvivesInputMutationAndTerminalFramesDoNotResave]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testSnapshotSurvivesInputMutationAndTerminalFramesDoNotResave]' passed (0.004 seconds).
+Test Case '-[PlinkCoreTests.MacFileTransferTests testWrongIndexLengthAndDigestNeverSave]' started.
+Test Case '-[PlinkCoreTests.MacFileTransferTests testWrongIndexLengthAndDigestNeverSave]' passed (0.002 seconds).
+Test Suite 'MacFileTransferTests' passed at 2026-09-21 14:10:27.985.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 2.113 (2.114) seconds
+Test Suite 'MacPairingFinalizationTests' started at 2026-09-21 14:10:27.985.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testCommitFailureInvalidatesReplacementBeforeRollback]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testCommitFailureInvalidatesReplacementBeforeRollback]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testCommitKeepsNewTrustAndExistingSessionKeyCannotBeOverwritten]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testCommitKeepsNewTrustAndExistingSessionKeyCannotBeOverwritten]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testInterruptedDifferentPhonePairingRestoresPreviousSelection]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testInterruptedDifferentPhonePairingRestoresPreviousSelection]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testLegacyV2RecordCannotActivateAfterFailedFreshPairing]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testLegacyV2RecordCannotActivateAfterFailedFreshPairing]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testPairingDifferentPhoneRestoresExplicitLatestSelection]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testPairingDifferentPhoneRestoresExplicitLatestSelection]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testPartiallyWrittenMetadataFailureRollsBackBothStores]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testPartiallyWrittenMetadataFailureRollsBackBothStores]' passed (0.000 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testRecoveryAfterInterruptedSaveRestoresOldTrust]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testRecoveryAfterInterruptedSaveRestoresOldTrust]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testRollbackRestoresPriorDeviceAndRemovesOnlyNewKey]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testRollbackRestoresPriorDeviceAndRemovesOnlyNewKey]' passed (0.001 seconds).
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testUnselectedStoredRecordsNeverChooseFirstPhone]' started.
+Test Case '-[PlinkCoreTests.MacPairingFinalizationTests testUnselectedStoredRecordsNeverChooseFirstPhone]' passed (0.000 seconds).
+Test Suite 'MacPairingFinalizationTests' passed at 2026-09-21 14:10:27.994.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+Test Suite 'PlinkCoreTests.xctest' passed at 2026-09-21 14:10:27.994.
+	 Executed 54 tests, with 0 failures (0 unexpected) in 2.129 (2.132) seconds
+Test Suite 'All tests' passed at 2026-09-21 14:10:27.994.
+	 Executed 54 tests, with 0 failures (0 unexpected) in 2.129 (2.132) seconds
+◇ Test run started.
+↳ Testing Library Version: 2084
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite BluetoothCallControllerTests started.
+◇ Suite ClipboardSyncControllerTests started.
+◇ Suite StartupRecoveryTests started.
+◇ Suite ReconnectLifecycleTests started.
+◇ Suite NotificationBridgeTests started.
+◇ Suite ScreenPreviewControllerTests started.
+◇ Test backgroundCatalogAndSavedLookupDoNotInvokeSetup() started.
+◇ Test chooserAndShortcutUseSameValidatedCommitPath() started.
+◇ Test concealedBlankAndOversizedTextAreRefused() started.
+◇ Test freshPairingContinuationRequiresCurrentCommittedOwner(outcome:) started.
+◇ Suite PixelWebcamControllerTests started.
+◇ Suite NotificationArtworkTests started.
+◇ Test changedRevisionDiscardsRacedSnapshotAndRemoteWrite() started.
+◇ Test pendingKeyAccessStaysUnknownAndUsesConditionalPromptCopy() started.
+◇ Test heldSetupRejectsStaleOrCancelledCompletion(reason:) started.
+◇ Test nonExactOrUnusableCandidatesRetainChooser(reason:) started.
+◇ Test staleAndTerminatingPublicationsCannotReplaceCurrentPhase() started.
+◇ Test pendingSendIsCanceledByLatestTextAndEveryOffState() started.
+◇ Test missingAndInvalidFakeKeysCannotProduceReady() started.
+◇ Test catalogDeduplicatesCanonicalAddressesButNeverNames() started.
+◇ Test deferredSendRechecksUnlockedState() started.
+◇ Test modalSelectionAndBondRecheckCannotCommitStaleResults() started.
+◇ Test clearContextsRemovesKeyedAndUnkeyedMirrorsAndRevokesIdentity() started.
+◇ Test explicitExactNameSetupCommitsOnceAfterCatalogAndKeepsSingleFlight() started.
+◇ Test changedEnvironmentRejectsQueuedRecoveryFromOldGeneration() started.
+◇ Test heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) started.
+◇ Test clearContextsPreservesHFPNotificationAndContext() started.
+◇ Test discoveryNotifiesLifecycleOwnerBeforeBrowsing() started.
+◇ Test selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test duplicateEligibleWakeQueuesOneProductionDiscovery() started.
+◇ Test mirroredRemovalRequiresTheSamePeerAndNotificationKey() started.
+◇ Test hidingStopsSynchronouslyAndReopeningNeedsExplicitStart() started.
+◇ Test mirroredCallTombstoneNeverRemovesOrReplacesHFPNotification() started.
+◇ Test oldMirroredCallRemovalPreservesReplacementUntilItsOwnRemoval() started.
+◇ Test syncDoesNotReplayInactiveContentAndSuppressesOnlyRemoteRevision() started.
+◇ Test cancelClosesDiscoveryStateAndNotifiesLifecycleOwnerOnce() started.
+◇ Test selectedReturnRejectsUntrustedOrIneligibleResolution(fault:) started.
+◇ Test conditionalHandoffChecksRealCleanupAndNeverPublishesLate(event:) started.
+◇ Test absentPairingAndSavedRecordsWithoutSelectionAreDifferent() started.
+◇ Test disabledOrInactivePreviewCannotStart() started.
+◇ Test discoveryAndHandshakeCannotResetDeadlineAfterCleanup() started.
+◇ Test queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test selectedReturnCooldownSurvivesObserverRestartAndHasNoTimerRetry() started.
+◇ Test case passing 1 argument outcome → "failed" to freshPairingContinuationRequiresCurrentCommittedOwner(outcome:) started.
+◇ Test pairingOrTerminationInvalidationRejectsQueuedRecovery() started.
+◇ Test case passing 1 argument outcome → "committed" to freshPairingContinuationRequiresCurrentCommittedOwner(outcome:) started.
+◇ Test decodedPixelsDisappearImmediatelyWhenPreviewStops() started.
+◇ Test case passing 1 argument outcome → "cancelled" to freshPairingContinuationRequiresCurrentCommittedOwner(outcome:) started.
+◇ Test recoveryCannotReplaceHealthyConnectionOrRunningAttempt() started.
+◇ Test staleConnectionRejectionCannotEndReplacementPreview() started.
+◇ Test restoredControllerIsInertUntilExplicitReconnect() started.
+◇ Test replacedDiscoveryIgnoresOldFindResolveAndTimerCallbacks() started.
+◇ Test case passing 1 argument reason → "case" to nonExactOrUnusableCandidatesRetainChooser(reason:) started.
+◇ Test case passing 1 argument reason → "peer" to heldSetupRejectsStaleOrCancelledCompletion(reason:) started.
+◇ Test case passing 1 argument reason → "blank" to nonExactOrUnusableCandidatesRetainChooser(reason:) started.
+◇ Test selectedReturnOriginalDeadlineExpiresDuringResolutionOrQueuedDispatch(expireWhileResolving:) started.
+◇ Test case passing 1 argument outcome → "restored" to freshPairingContinuationRequiresCurrentCommittedOwner(outcome:) started.
+◇ Test case passing 1 argument reason → "unpaired" to nonExactOrUnusableCandidatesRetainChooser(reason:) started.
+◇ Test case passing 1 argument outcome → "superseded" to freshPairingContinuationRequiresCurrentCommittedOwner(outcome:) started.
+◇ Test selectedReturnDeadlineBelongsToMatchingCandidate(rejected:) started.
+◇ Test case passing 1 argument reason → "busy" to heldSetupRejectsStaleOrCancelledCompletion(reason:) started.
+◇ Test case passing 1 argument reason → "ambiguous" to nonExactOrUnusableCandidatesRetainChooser(reason:) started.
+◇ Test case passing 1 argument reason → "alias" to nonExactOrUnusableCandidatesRetainChooser(reason:) started.
+◇ Test case passing 1 argument reason → "non-hfp" to nonExactOrUnusableCandidatesRetainChooser(reason:) started.
+◇ Test case passing 1 argument reason → "quarantine" to heldSetupRejectsStaleOrCancelledCompletion(reason:) started.
+◇ Test selectedReturnBoundsResolutionAndRejectsNonmatchingBaseline() started.
+◇ Test case passing 1 argument reason → "call" to heldSetupRejectsStaleOrCancelledCompletion(reason:) started.
+◇ Test userCancelSurvivesEnvironmentChangesUntilExplicitResume() started.
+◇ Test selectedReturnEquivalentRemovalFromOldBrowserCannotRemoveCurrentService() started.
+◇ Test case passing 1 argument reason → "cancel" to heldSetupRejectsStaleOrCancelledCompletion(reason:) started.
+◇ Test selectedReturnAcceptsEquivalentRemovalAndIgnoresDiscardedResolution() started.
+◇ Test conditionalReturnAppDispatchRechecksEligibilityAndExactDeadline() started.
+◇ Test manualReconnectRejectsNonnumericAndNonstandardPortsBeforeCallback() started.
+◇ Test case passing 1 argument event → "deadline" to heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) started.
+◇ Test case passing 1 argument event → "cancel" to heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) started.
+◇ Test case passing 1 argument event → "replacement" to heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) started.
+◇ Test recoveryWaitsForEligibilityAndConsumesOnlyOnce() started.
+◇ Test case passing 2 arguments reason → "cancel", whileResolving → false to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test case passing 2 arguments reason → "cancel", whileResolving → true to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test case passing 2 arguments reason → "lock", whileResolving → false to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test rejectedConditionalHandoffLeavesOrdinaryGenerationUntouched() started.
+◇ Test case passing 2 arguments reason → "lock", whileResolving → true to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test case passing 2 arguments reason → "pair replacement", whileResolving → false to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test case passing 1 argument reason → "generation" to heldSetupRejectsStaleOrCancelledCompletion(reason:) started.
+◇ Test selectedReturnRechecksAppGateAndDropsBusyWorkWithoutRetry() started.
+◇ Test case passing 1 argument event → "cancel" to conditionalHandoffChecksRealCleanupAndNeverPublishesLate(event:) started.
+◇ Test returnedFakeKeychainErrorsHaveTruthfulDistinctStates() started.
+◇ Test case passing 1 argument event → "replacement" to conditionalHandoffChecksRealCleanupAndNeverPublishesLate(event:) started.
+◇ Test lifecycleDiscoveryStopDoesNotBecomeUserCancellation() started.
+◇ Test case passing 1 argument fault → "wrong-peer" to selectedReturnRejectsUntrustedOrIneligibleResolution(fault:) started.
+◇ Test case passing 1 argument event → "pair replacement" to conditionalHandoffChecksRealCleanupAndNeverPublishesLate(event:) started.
+◇ Test case passing 1 argument fault → "wrong-port" to selectedReturnRejectsUntrustedOrIneligibleResolution(fault:) started.
+◇ Test case passing 2 arguments reason → "termination", whileResolving → false to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test case passing 1 argument event → "lock" to queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test case passing 1 argument event → "lock" to conditionalHandoffChecksRealCleanupAndNeverPublishesLate(event:) started.
+◇ Test beginShutdownClosesStartGateAndAsyncShutdownWaitsForTeardown() started.
+◇ Test case passing 2 arguments reason → "termination", whileResolving → true to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test duplicateTeardownCannotClearOrUncancelReplacementStart() started.
+◇ Test case passing 1 argument event → "cancel" to queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test case passing 1 argument event → "termination" to conditionalHandoffChecksRealCleanupAndNeverPublishesLate(event:) started.
+◇ Test authorizationLossBehindBlockedDiscoveryPreventsNativeInputOrStart() started.
+◇ Test unavailablePrivateIconStillDeliversOrdinaryMessage() started.
+◇ Test displayLabelsRemoveControlsAndBoundScalars() started.
+◇ Test case passing 2 arguments reason → "network change", whileResolving → true to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test configuredAfterFirstSampleAttachesButStoppedGenerationCannotAttach() started.
+◇ Test stalePlainFallbackFailureCannotEvictSameIDReplacement() started.
+◇ Test case passing 2 arguments reason → "manual connect", whileResolving → false to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test outstandingIconRequestsAreBoundedEvenWhenTheSameMessageIsReplaced() started.
+◇ Test selectedDisconnectInvalidatesImmediatelyAndReplugNeverRestarts() started.
+◇ Test case passing 2 arguments reason → "network change", whileResolving → false to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test case passing 1 argument event → "termination" to queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test case passing 1 argument fault → "oversized-txt" to selectedReturnRejectsUntrustedOrIneligibleResolution(fault:) started.
+◇ Test case passing 1 argument event → "pair replacement" to queuedRecoveryRechecksLifecycleBeforeStarting(event:) started.
+◇ Test case passing 1 argument fault → "wrong-platform" to selectedReturnRejectsUntrustedOrIneligibleResolution(fault:) started.
+◇ Test onlyBoundedStaticPNGCanRender() started.
+◇ Test case passing 1 argument expireWhileResolving → false to selectedReturnOriginalDeadlineExpiresDuringResolutionOrQueuedDispatch(expireWhileResolving:) started.
+◇ Test case passing 1 argument rejected → "unrelated" to selectedReturnDeadlineBelongsToMatchingCandidate(rejected:) started.
+◇ Test case passing 1 argument rejected → "malformed" to selectedReturnDeadlineBelongsToMatchingCandidate(rejected:) started.
+◇ Test case passing 2 arguments reason → "manual connect", whileResolving → true to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test case passing 1 argument expireWhileResolving → true to selectedReturnOriginalDeadlineExpiresDuringResolutionOrQueuedDispatch(expireWhileResolving:) started.
+◇ Test case passing 1 argument rejected → "failed" to selectedReturnDeadlineBelongsToMatchingCandidate(rejected:) started.
+✔ Test staleAndTerminatingPublicationsCannotReplaceCurrentPhase() passed after 0.001 seconds.
+✔ Test pendingKeyAccessStaysUnknownAndUsesConditionalPromptCopy() passed after 0.001 seconds.
+✔ Test missingAndInvalidFakeKeysCannotProduceReady() passed after 0.001 seconds.
+◇ Test missingPrivateIconClassFallsBackWithoutMutatingContent() started.
+◇ Test iconFailureRetriesOnlyWhileNotificationIsCurrent(outcome:) started.
+◇ Test queuedAmbiguousRejectionCannotCrossLocalStartAndQuitIsTerminal() started.
+◇ Test selectedReturnUsesConditionalAppDispatchOnceAndPreservesConnectedState() started.
+◇ Test constructionIsInertUntilExplicitActivation() started.
+◇ Test case passing 1 argument fault → "invalid-interface" to selectedReturnRejectsUntrustedOrIneligibleResolution(fault:) started.
+◇ Test case passing 1 argument event → "deadline" to conditionalHandoffChecksRealCleanupAndNeverPublishesLate(event:) started.
+◇ Test case passing 1 argument outcome → "tombstone" to iconFailureRetriesOnlyWhileNotificationIsCurrent(outcome:) started.
+◇ Test invalidOptionalArtworkDoesNotDropOrRerouteMessage() started.
+◇ Test case passing 1 argument reason → "none" to nonExactOrUnusableCandidatesRetainChooser(reason:) started.
+◇ Test case passing 2 arguments reason → "pair replacement", whileResolving → true to selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) started.
+◇ Test case passing 1 argument outcome → "replacement" to iconFailureRetriesOnlyWhileNotificationIsCurrent(outcome:) started.
+◇ Test case passing 1 argument outcome → "reply" to iconFailureRetriesOnlyWhileNotificationIsCurrent(outcome:) started.
+◇ Test case passing 1 argument outcome → "pair-switch" to iconFailureRetriesOnlyWhileNotificationIsCurrent(outcome:) started.
+◇ Test case passing 1 argument outcome → "failure" to iconFailureRetriesOnlyWhileNotificationIsCurrent(outcome:) started.
+◇ Test case passing 1 argument outcome → "dismiss" to iconFailureRetriesOnlyWhileNotificationIsCurrent(outcome:) started.
+◇ Test dismissCancelsPendingPlainFallbackAndIgnoresItsLateFailure() started.
+✔ Test returnedFakeKeychainErrorsHaveTruthfulDistinctStates() passed after 0.001 seconds.
+✔ Test absentPairingAndSavedRecordsWithoutSelectionAreDifferent() passed after 0.001 seconds.
+✔ Suite StartupRecoveryTests passed after 0.001 seconds.
+✔ Test constructionIsInertUntilExplicitActivation() passed after 0.006 seconds.
+✔ Test backgroundCatalogAndSavedLookupDoNotInvokeSetup() passed after 0.007 seconds.
+✔ Test chooserAndShortcutUseSameValidatedCommitPath() passed after 0.007 seconds.
+2026-09-21 14:10:28.045 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.045 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.046 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.047 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.048 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.084 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.084 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.085 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.085 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.088 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+2026-09-21 14:10:28.088 swiftpm-testing-helper[93841:11797284] Plink selected peer observation established
+✔ Test clearContextsRemovesKeyedAndUnkeyedMirrorsAndRevokesIdentity() passed after 0.116 seconds.
+✔ Test modalSelectionAndBondRecheckCannotCommitStaleResults() passed after 0.116 seconds.
+✔ Test changedEnvironmentRejectsQueuedRecoveryFromOldGeneration() passed after 0.116 seconds.
+✔ Test freshPairingContinuationRequiresCurrentCommittedOwner(outcome:) with 5 test cases passed after 0.117 seconds.
+✔ Test clearContextsPreservesHFPNotificationAndContext() passed after 0.117 seconds.
+✔ Test catalogDeduplicatesCanonicalAddressesButNeverNames() passed after 0.117 seconds.
+✔ Test oldMirroredCallRemovalPreservesReplacementUntilItsOwnRemoval() passed after 0.117 seconds.
+✔ Test heldSetupRejectsStaleOrCancelledCompletion(reason:) with 6 test cases passed after 0.117 seconds.
+✔ Test explicitExactNameSetupCommitsOnceAfterCatalogAndKeepsSingleFlight() passed after 0.117 seconds.
+✔ Test duplicateEligibleWakeQueuesOneProductionDiscovery() passed after 0.117 seconds.
+✔ Test cancelClosesDiscoveryStateAndNotifiesLifecycleOwnerOnce() passed after 0.117 seconds.
+✔ Test discoveryNotifiesLifecycleOwnerBeforeBrowsing() passed after 0.117 seconds.
+✔ Test recoveryCannotReplaceHealthyConnectionOrRunningAttempt() passed after 0.116 seconds.
+✔ Test restoredControllerIsInertUntilExplicitReconnect() passed after 0.117 seconds.
+✔ Test selectedReturnCooldownSurvivesObserverRestartAndHasNoTimerRetry() passed after 0.117 seconds.
+✔ Test replacedDiscoveryIgnoresOldFindResolveAndTimerCallbacks() passed after 0.116 seconds.
+✔ Test mirroredCallTombstoneNeverRemovesOrReplacesHFPNotification() passed after 0.117 seconds.
+✔ Test selectedReturnEquivalentRemovalFromOldBrowserCannotRemoveCurrentService() passed after 0.116 seconds.
+✔ Test conditionalReturnAppDispatchRechecksEligibilityAndExactDeadline() passed after 0.117 seconds.
+✔ Test mirroredRemovalRequiresTheSamePeerAndNotificationKey() passed after 0.117 seconds.
+✔ Test pairingOrTerminationInvalidationRejectsQueuedRecovery() passed after 0.117 seconds.
+✔ Test disabledOrInactivePreviewCannotStart() passed after 0.117 seconds.
+✔ Test queuedRecoveryRechecksLifecycleBeforeStarting(event:) with 4 test cases passed after 0.117 seconds.
+✔ Test selectedReturnBoundsResolutionAndRejectsNonmatchingBaseline() passed after 0.116 seconds.
+✔ Test selectedReturnAcceptsEquivalentRemovalAndIgnoresDiscardedResolution() passed after 0.117 seconds.
+✔ Suite NotificationBridgeTests passed after 0.117 seconds.
+✔ Test rejectedConditionalHandoffLeavesOrdinaryGenerationUntouched() passed after 0.116 seconds.
+✔ Test manualReconnectRejectsNonnumericAndNonstandardPortsBeforeCallback() passed after 0.116 seconds.
+✔ Test recoveryWaitsForEligibilityAndConsumesOnlyOnce() passed after 0.116 seconds.
+✔ Test selectedReturnDeadlineBelongsToMatchingCandidate(rejected:) with 3 test cases passed after 0.117 seconds.
+✔ Test userCancelSurvivesEnvironmentChangesUntilExplicitResume() passed after 0.117 seconds.
+✔ Test selectedReturnOriginalDeadlineExpiresDuringResolutionOrQueuedDispatch(expireWhileResolving:) with 2 test cases passed after 0.117 seconds.
+✔ Test selectedReturnRechecksAppGateAndDropsBusyWorkWithoutRetry() passed after 0.117 seconds.
+✔ Test selectedReturnRejectsUntrustedOrIneligibleResolution(fault:) with 5 test cases passed after 0.117 seconds.
+✔ Test nonExactOrUnusableCandidatesRetainChooser(reason:) with 7 test cases passed after 0.118 seconds.
+✔ Test unavailablePrivateIconStillDeliversOrdinaryMessage() passed after 0.117 seconds.
+✔ Test stalePlainFallbackFailureCannotEvictSameIDReplacement() passed after 0.117 seconds.
+✔ Test selectedReturnUsesConditionalAppDispatchOnceAndPreservesConnectedState() passed after 0.117 seconds.
+✔ Test displayLabelsRemoveControlsAndBoundScalars() passed after 0.117 seconds.
+✔ Test onlyBoundedStaticPNGCanRender() passed after 0.117 seconds.
+✔ Test missingPrivateIconClassFallsBackWithoutMutatingContent() passed after 0.117 seconds.
+✔ Test invalidOptionalArtworkDoesNotDropOrRerouteMessage() passed after 0.117 seconds.
+✔ Test selectedReturnInvalidationDropsHeldCallbacks(reason:whileResolving:) with 12 test cases passed after 0.118 seconds.
+✔ Test outstandingIconRequestsAreBoundedEvenWhenTheSameMessageIsReplaced() passed after 0.117 seconds.
+✔ Test lifecycleDiscoveryStopDoesNotBecomeUserCancellation() passed after 0.117 seconds.
+✔ Test iconFailureRetriesOnlyWhileNotificationIsCurrent(outcome:) with 6 test cases passed after 0.117 seconds.
+✔ Suite BluetoothCallControllerTests passed after 0.118 seconds.
+✔ Test dismissCancelsPendingPlainFallbackAndIgnoresItsLateFailure() passed after 0.117 seconds.
+✔ Suite NotificationArtworkTests passed after 0.118 seconds.
+✔ Test conditionalHandoffChecksRealCleanupAndNeverPublishesLate(event:) with 6 test cases passed after 0.118 seconds.
+✔ Test deferredSendRechecksUnlockedState() passed after 0.118 seconds.
+✔ Test concealedBlankAndOversizedTextAreRefused() passed after 0.119 seconds.
+✔ Test heldCleanupCannotAdmitAfterAttemptExpiresOrChanges(event:) with 3 test cases passed after 0.119 seconds.
+✔ Test discoveryAndHandshakeCannotResetDeadlineAfterCleanup() passed after 0.118 seconds.
+✔ Test staleConnectionRejectionCannotEndReplacementPreview() passed after 0.118 seconds.
+✔ Suite ReconnectLifecycleTests passed after 0.119 seconds.
+✔ Test changedRevisionDiscardsRacedSnapshotAndRemoteWrite() passed after 0.119 seconds.
+✔ Test syncDoesNotReplayInactiveContentAndSuppressesOnlyRemoteRevision() passed after 0.119 seconds.
+✔ Test pendingSendIsCanceledByLatestTextAndEveryOffState() passed after 0.121 seconds.
+✔ Suite ClipboardSyncControllerTests passed after 0.121 seconds.
+✔ Test authorizationLossBehindBlockedDiscoveryPreventsNativeInputOrStart() passed after 0.122 seconds.
+✔ Test hidingStopsSynchronouslyAndReopeningNeedsExplicitStart() passed after 0.124 seconds.
+✔ Test beginShutdownClosesStartGateAndAsyncShutdownWaitsForTeardown() passed after 0.123 seconds.
+✔ Test selectedDisconnectInvalidatesImmediatelyAndReplugNeverRestarts() passed after 0.125 seconds.
+✔ Test duplicateTeardownCannotClearOrUncancelReplacementStart() passed after 0.127 seconds.
+✔ Test queuedAmbiguousRejectionCannotCrossLocalStartAndQuitIsTerminal() passed after 0.130 seconds.
+✔ Test decodedPixelsDisappearImmediatelyWhenPreviewStops() passed after 0.130 seconds.
+✔ Suite ScreenPreviewControllerTests passed after 0.130 seconds.
+✔ Test configuredAfterFirstSampleAttachesButStoppedGenerationCannotAttach() passed after 0.131 seconds.
+✔ Suite PixelWebcamControllerTests passed after 0.132 seconds.
+✔ Test run with 71 tests in 8 suites passed after 0.132 seconds.
+◇ Test run started.
+↳ Testing Library Version: 2084
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Test preframeIdleDoesNotRenewFirstFrameLease() started.
+◇ Test webcamPolicyFailsClosedWhenSelectedDeviceDisappears() started.
+◇ Test confirmWithoutOfferFailsClosed() started.
+◇ Test cancelledQueuedProducerCannotSendAfterBlockerClears() started.
+◇ Test oldBoundClientCannotReactivateAfterSameBindingIsReproved() started.
+◇ Test clipboardEnvelopeCreatesHandoffAction() started.
+◇ Test replayWindowKeepsDuplicateRejectionAfterEviction() started.
+◇ Test reconnectWriteTimesOutWhenPeerStopsReading() started.
+◇ Test demoPairingCodeMatchesSharedFixture() started.
+◇ Test webcamCaptureGateRejectsCancelledAndCurrentAuthorizationLossBeforeNativeCalls() started.
+◇ Test conditionalReconnectSharedWireVectors() started.
+◇ Test parallelReservationsAcrossStoreInstancesAreUnique() started.
+◇ Test foundationSecureServerRejectsReplay() started.
+◇ Test successorScreenExpiryAndCancellationRunWhilePredecessorIsHeld() started.
+◇ Test transcriptEndpointAndTupleAreBound() started.
+◇ Test deterministicEncryptedScreenVectorMatchesProductionCodec() started.
+◇ Test pairingConsentFieldsHaveUnambiguousBoundaries() started.
+◇ Test conditionalReconnectStaleReverseCancellationPreservesReplacement() started.
+◇ Test failedIVGenerationPreventsSealing() started.
+◇ Test conditionalReconnectExchangesShareDurableReplayWindow(order:) started.
+◇ Test maximumFileChunkFitsEncryptedFrame() started.
+◇ Test screenControlLimitUsesOriginalPlaintextBytes() started.
+◇ Test replyRouterBuildsPairedDeviceReplyEnvelope() started.
+◇ Test cancellingStalledReconnectReceiveJoinsOwnedIO() started.
+◇ Test webcamCaptureGateConsumesOnlyMatchingTeardownAndPreservesReplacementWatchdog() started.
+◇ Test codecPersistsOnlyFullyAuthenticatedFramesAndBindsScope() started.
+◇ Test unsafeWebURLFailsPolicy() started.
+◇ Test bonjourRecordRoundTripsPairingOffer() started.
+◇ Test explicitFixtureIVStillSupportsDeterministicVectors() started.
+◇ Test screenQueueRejectsWorkBeyondControlAndFrameCaps() started.
+◇ Test acceptsManualPairingConfirmation() started.
+◇ Test shutdownReturnsOnlyAfterActiveProducerCompletes() started.
+◇ Test envelopeRoundTrips() started.
+◇ Test lateCleanupCannotRemoveReplacementOrSameKeyFromAnotherPeer() started.
+◇ Test partialSocketDeadlineAllowsNextCompleteFrame() started.
+◇ Test threeOversizeResponsesStopCapture() started.
+◇ Test replyRouterRejectsBlankReplies() started.
+◇ Test screenSessionUsesProductionDecoderAndPullCadence() started.
+◇ Test reconnectEndpointVectorsUseProductionAuthenticationAndFilenameHelpers() started.
+◇ Test confirmCreatesTrustedDevice() started.
+◇ Test legacyTrustDoesNotAcquireDurableTransportVersion() started.
+◇ Test webcamPolicyRejectsAStaleDiscoveryResultAfterAStop() started.
+◇ Test inMemorySecretStoreRoundTripsSessionKey() started.
+◇ Test encryptedFrameRejectsUnexpectedDeviceIds() started.
+◇ Test messageBookkeepingEvictsOnlyOldestMessageAtCapacity() started.
+◇ Test reconnectEncryptedVectorsMatchMacWirePolicy() started.
+◇ Test lengthPrefixedFrameRoundTrips() started.
+◇ Test fileTransferSharedContractVectors() started.
+◇ Test expectedLengthWaitsForCompletePayload() started.
+◇ Test matchingPeerStopNeverEchoesAtLeaseBoundary() started.
+◇ Test manualPairingPayloadRoundTripsOffer() started.
+◇ Test conditionalReconnectAdmissionPreservesUntilRetirementAndFencesReplacement() started.
+◇ Test messageBookkeepingRemovesIndexesOnReplyDismissalFailureAndExpiry() started.
+◇ Test receiveShowsKeyBoundVerificationCode() started.
+◇ Test invalidatedPairLifetimeClosesAdmissionAndQueuedWriter() started.
+◇ Test authenticatedMalformedScreenVectorsAreSanitizedAfterReplayAcceptance() started.
+◇ Test productionDecoderRejectsNonFrameInputWithoutAllocation() started.
+◇ Test webcamPolicyUsesOnlyCurrentExternalUniqueIDAndStopsOnSelectionChange() started.
+◇ Test replacementWaitsForPredecessorShutdownCompletion() started.
+◇ Test webcamPolicyAcceptsConfiguredAfterFirstSampleForCurrentGenerationOnly() started.
+◇ Test queuedScreenPayloadExpiresWhileOrdinaryWriteIsBlocked() started.
+◇ Test decodesAndroidFractionalIsoDates() started.
+◇ Test foundationSecureServerRejectsWrongDeviceId() started.
+◇ Test pairWriteGateGrantsQueuedLeasesInFIFOOrder() started.
+◇ Test failedIVGenerationBurnsReservedSequence() started.
+◇ Test confirmRejectsMissingPublicKey() started.
+◇ Test closingSocketDuringReceiveCannotCloseReusedDescriptor() started.
+◇ Test conditionalReconnectConnectWaitsForHeldOrdinaryGateAndDoesNotRetry() started.
+◇ Test failedSecureRandomDoesNotReturnAnIV() started.
+◇ Test emptyLengthPrefixedFrameFailsClosed() started.
+◇ Test deriveChangesWithNonce() started.
+◇ Test encryptedFrameRoundTripsAndRejectsReplay() started.
+◇ Test webcamPolicyWatchdogInvalidatesLateSamplesUntilTeardownCompletes() started.
+◇ Test webcamPolicyRequiresPermissionSelectionAndExplicitStart() started.
+◇ Test untrustedOrStaleMalformedFramesNeverBecomeScreenRejections() started.
+◇ Test reconnectFixtureCasesMatchMacWirePolicy() started.
+◇ Test productionDecoderRejectsMalformedAndUnsupportedImages() started.
+◇ Test durableFrameStateSurvivesRecreationAndAcceptsReordering() started.
+◇ Test stopClosesAcceptedClientAndAllowsRebind() started.
+◇ Test replyContextStoreConsumesOnce() started.
+◇ Test monotonicSendDeadlineRejectsBoundaryAndLateSuccess() started.
+◇ Test pairingConsentProofBindsBothIdentitiesEndpointAndStage() started.
+◇ Test durableFrameStateFailsClosedOnCorruption() started.
+◇ Test secureEnvelopeRejectsTampering() started.
+◇ Test pairingNumericHighBitVectorMatchesAndroid() started.
+◇ Test acceptedSocketLeaseCannotRecaptureAfterReproof() started.
+◇ Test replyRouterRejectsTextAboveExistingLimit() started.
+◇ Test reconnectEndpointStoreRejectsInvalidUTF8ByteLength() started.
+◇ Test reconnectEndpointCommitIsAuthenticatedAndStaleCommitCannotReplaceIt() started.
+◇ Test messageEnvelopeCreatesReplyNotificationPlan() started.
+◇ Test scopedScreenCancellationAllowsOrdinaryTrafficToProgress() started.
+◇ Test boundedIngressReleasesFrameAndControlSlots() started.
+◇ Test expiredSendBurnsSequenceButWritesNoBytes() started.
+◇ Test strongVerificationBindsPublicKeys() started.
+◇ Test case passing 1 argument order → "ordinary-first" to conditionalReconnectExchangesShareDurableReplayWindow(order:) started.
+◇ Test screenPreviewSharedContractVectors() started.
+◇ Test reconnectEscapedClassificationMatchesMacWirePolicy() started.
+◇ Test staleTrafficAndSanitizedRejectionsRespectCurrentSession() started.
+◇ Test deriveIsStable() started.
+◇ Test replyRouterPreservesExactUTF8Bytes(_:) started.
+◇ Test sharedSenderSerializesTrafficAndPrioritizesOrdinaryWork() started.
+◇ Test case passing 1 argument order → "hello-first" to conditionalReconnectExchangesShareDurableReplayWindow(order:) started.
+◇ Test reconnectListenerStopJoinsAuthenticatedReplayPersistence() started.
+◇ Test case passing 1 argument order → "boundary-expire" to conditionalReconnectExchangesShareDurableReplayWindow(order:) started.
+◇ Test case passing 1 argument order → "boundary-accept" to conditionalReconnectExchangesShareDurableReplayWindow(order:) started.
+◇ Test replyContextDerivesFromMessageEnvelope() started.
+◇ Test webcamPolicyInvalidatesAQueuedStartBeforeNativeConfiguration() started.
+◇ Test conditionalReconnectAdmissionRejectsCompetingAndStaleUnadmittedCapture() started.
+◇ Test secureEnvelopeOpensValidMessage() started.
+◇ Test reconnectNetworkFixturesUseProductionCandidatePolicy() started.
+◇ Test conditionalReconnectHandshakePreservesUntilAcceptanceAndBindsAllPhases(reply:) started.
+◇ Test invalidateClosesAdmissionSynchronously() started.
+◇ Test encryptedFrameRejectsTampering() started.
+◇ Test reconnectReceiveRejectsCompletionAfterReplayPersistenceDeadline(expiresAtCompletion:) started.
+◇ Test startReportsBindFailureSynchronously() started.
+◇ Test reconnectOuterTimestampsMatchMacWirePolicy() started.
+◇ Test foundationSecureServerReceivesAndroidCompatibleFrame() started.
+◇ Test pairingConsentRejectsLegacyUnconfirmedPayload() started.
+◇ Test replyContextRequiresReplyCapabilityAndRouteFields() started.
+◇ Test candidateDeadlineClosesReverseChannelWhileBlockedCommitJoins() started.
+◇ Test invalidLocalTextLeavesReplyContextAvailable() started.
+◇ Test redactionMasksSensitivePayloadValues() started.
+◇ Test replyLengthMatchesAndroidUTF16Units(_:) started.
+◇ Test webcamPolicyReleasesOnlyAfterAuthorizationLossTeardownCompletes() started.
+◇ Test bonjourRecordRejectsUnsupportedProtocol() started.
+◇ Test persistenceFailurePreventsAuthenticatedDispatch() started.
+◇ Test bonjourRecordFallsBackToResolvedEndpoint() started.
+◇ Test reconnectReceiveUsesOneDeadlineAcrossHeaderAndBody() started.
+✔ Test clipboardEnvelopeCreatesHandoffAction() passed after 0.021 seconds.
+✔ Test demoPairingCodeMatchesSharedFixture() passed after 0.025 seconds.
+✔ Test webcamPolicyFailsClosedWhenSelectedDeviceDisappears() passed after 0.027 seconds.
+✔ Test pairingConsentFieldsHaveUnambiguousBoundaries() passed after 0.027 seconds.
+✔ Test webcamCaptureGateRejectsCancelledAndCurrentAuthorizationLossBeforeNativeCalls() passed after 0.027 seconds.
+✔ Test confirmWithoutOfferFailsClosed() passed after 0.027 seconds.
+✔ Test replayWindowKeepsDuplicateRejectionAfterEviction() passed after 0.028 seconds.
+✔ Test oldBoundClientCannotReactivateAfterSameBindingIsReproved() passed after 0.048 seconds.
+◇ Test case passing 1 argument text → "  reply  " to replyRouterPreservesExactUTF8Bytes(_:) started.
+◇ Test case passing 1 argument text → "	first
+second
+ " to replyRouterPreservesExactUTF8Bytes(_:) started.
+✔ Test replyRouterBuildsPairedDeviceReplyEnvelope() passed after 0.048 seconds.
+◇ Test case passing 1 argument text → "é|é|👩🏽‍💻|🇺🇳|終
+" to replyRouterPreservesExactUTF8Bytes(_:) started.
+◇ Test case passing 1 argument text → "
+	 x
+" to replyRouterPreservesExactUTF8Bytes(_:) started.
+✔ Test webcamCaptureGateConsumesOnlyMatchingTeardownAndPreservesReplacementWatchdog() passed after 0.049 seconds.
+✔ Test bonjourRecordRoundTripsPairingOffer() passed after 0.053 seconds.
+◇ Test case passing 1 argument reply → "conditional" to conditionalReconnectHandshakePreservesUntilAcceptanceAndBindsAllPhases(reply:) started.
+◇ Test case passing 1 argument reply → "legacy" to conditionalReconnectHandshakePreservesUntilAcceptanceAndBindsAllPhases(reply:) started.
+◇ Test case passing 1 argument reply → "close" to conditionalReconnectHandshakePreservesUntilAcceptanceAndBindsAllPhases(reply:) started.
+✔ Test transcriptEndpointAndTupleAreBound() passed after 0.054 seconds.
+◇ Test case passing 1 argument expiresAtCompletion → false to reconnectReceiveRejectsCompletionAfterReplayPersistenceDeadline(expiresAtCompletion:) started.
+◇ Test case passing 1 argument expiresAtCompletion → true to reconnectReceiveRejectsCompletionAfterReplayPersistenceDeadline(expiresAtCompletion:) started.
+✔ Test envelopeRoundTrips() passed after 0.057 seconds.
+✔ Test lateCleanupCannotRemoveReplacementOrSameKeyFromAnotherPeer() passed after 0.059 seconds.
+✔ Test acceptsManualPairingConfirmation() passed after 0.059 seconds.
+✔ Test replyRouterRejectsBlankReplies() passed after 0.059 seconds.
+✔ Test unsafeWebURLFailsPolicy() passed after 0.059 seconds.
+✔ Test failedIVGenerationPreventsSealing() passed after 0.059 seconds.
+✔ Test reconnectEndpointVectorsUseProductionAuthenticationAndFilenameHelpers() passed after 0.059 seconds.
+✔ Test confirmCreatesTrustedDevice() passed after 0.059 seconds.
+◇ Test case passing 1 argument unit → "😀" to replyLengthMatchesAndroidUTF16Units(_:) started.
+◇ Test case passing 1 argument unit → "é" to replyLengthMatchesAndroidUTF16Units(_:) started.
+✔ Test legacyTrustDoesNotAcquireDurableTransportVersion() passed after 0.061 seconds.
+✔ Test webcamPolicyRejectsAStaleDiscoveryResultAfterAStop() passed after 0.061 seconds.
+✔ Test inMemorySecretStoreRoundTripsSessionKey() passed after 0.061 seconds.
+✔ Test preframeIdleDoesNotRenewFirstFrameLease() passed after 0.062 seconds.
+✔ Test messageBookkeepingEvictsOnlyOldestMessageAtCapacity() passed after 0.061 seconds.
+✔ Test lengthPrefixedFrameRoundTrips() passed after 0.061 seconds.
+✔ Test threeOversizeResponsesStopCapture() passed after 0.061 seconds.
+✔ Test encryptedFrameRejectsUnexpectedDeviceIds() passed after 0.061 seconds.
+✔ Test expectedLengthWaitsForCompletePayload() passed after 0.061 seconds.
+✔ Test explicitFixtureIVStillSupportsDeterministicVectors() passed after 0.061 seconds.
+✔ Test conditionalReconnectAdmissionPreservesUntilRetirementAndFencesReplacement() passed after 0.061 seconds.
+✔ Test messageBookkeepingRemovesIndexesOnReplyDismissalFailureAndExpiry() passed after 0.061 seconds.
+✔ Test manualPairingPayloadRoundTripsOffer() passed after 0.061 seconds.
+✔ Test webcamPolicyUsesOnlyCurrentExternalUniqueIDAndStopsOnSelectionChange() passed after 0.061 seconds.
+✔ Test productionDecoderRejectsNonFrameInputWithoutAllocation() passed after 0.061 seconds.
+✔ Test webcamPolicyAcceptsConfiguredAfterFirstSampleForCurrentGenerationOnly() passed after 0.061 seconds.
+✔ Test receiveShowsKeyBoundVerificationCode() passed after 0.061 seconds.
+✔ Test decodesAndroidFractionalIsoDates() passed after 0.061 seconds.
+✔ Test confirmRejectsMissingPublicKey() passed after 0.061 seconds.
+✔ Test failedSecureRandomDoesNotReturnAnIV() passed after 0.061 seconds.
+✔ Test emptyLengthPrefixedFrameFailsClosed() passed after 0.061 seconds.
+✔ Test deriveChangesWithNonce() passed after 0.061 seconds.
+✔ Test parallelReservationsAcrossStoreInstancesAreUnique() passed after 0.062 seconds.
+✔ Test webcamPolicyWatchdogInvalidatesLateSamplesUntilTeardownCompletes() passed after 0.061 seconds.
+✔ Test webcamPolicyRequiresPermissionSelectionAndExplicitStart() passed after 0.062 seconds.
+✔ Test failedIVGenerationBurnsReservedSequence() passed after 0.061 seconds.
+✔ Test matchingPeerStopNeverEchoesAtLeaseBoundary() passed after 0.061 seconds.
+✔ Test durableFrameStateSurvivesRecreationAndAcceptsReordering() passed after 0.061 seconds.
+✔ Test maximumFileChunkFitsEncryptedFrame() passed after 0.062 seconds.
+✔ Test replyContextStoreConsumesOnce() passed after 0.061 seconds.
+✔ Test monotonicSendDeadlineRejectsBoundaryAndLateSuccess() passed after 0.061 seconds.
+✔ Test pairingConsentProofBindsBothIdentitiesEndpointAndStage() passed after 0.061 seconds.
+✔ Test codecPersistsOnlyFullyAuthenticatedFramesAndBindsScope() passed after 0.062 seconds.
+✔ Test durableFrameStateFailsClosedOnCorruption() passed after 0.061 seconds.
+✔ Test acceptedSocketLeaseCannotRecaptureAfterReproof() passed after 0.061 seconds.
+✔ Test pairingNumericHighBitVectorMatchesAndroid() passed after 0.061 seconds.
+✔ Test replyRouterRejectsTextAboveExistingLimit() passed after 0.062 seconds.
+✔ Test reconnectEndpointCommitIsAuthenticatedAndStaleCommitCannotReplaceIt() passed after 0.061 seconds.
+✔ Test reconnectEndpointStoreRejectsInvalidUTF8ByteLength() passed after 0.061 seconds.
+✔ Test messageEnvelopeCreatesReplyNotificationPlan() passed after 0.061 seconds.
+✔ Test secureEnvelopeRejectsTampering() passed after 0.061 seconds.
+✔ Test strongVerificationBindsPublicKeys() passed after 0.061 seconds.
+✔ Test encryptedFrameRoundTripsAndRejectsReplay() passed after 0.062 seconds.
+✔ Test productionDecoderRejectsMalformedAndUnsupportedImages() passed after 0.062 seconds.
+✔ Test staleTrafficAndSanitizedRejectionsRespectCurrentSession() passed after 0.061 seconds.
+✔ Test deriveIsStable() passed after 0.061 seconds.
+✔ Test screenSessionUsesProductionDecoderAndPullCadence() passed after 0.062 seconds.
+✔ Test replyRouterPreservesExactUTF8Bytes(_:) with 4 test cases passed after 0.061 seconds.
+✔ Test replyContextDerivesFromMessageEnvelope() passed after 0.061 seconds.
+✔ Test webcamPolicyInvalidatesAQueuedStartBeforeNativeConfiguration() passed after 0.061 seconds.
+✔ Test conditionalReconnectAdmissionRejectsCompetingAndStaleUnadmittedCapture() passed after 0.061 seconds.
+✔ Test secureEnvelopeOpensValidMessage() passed after 0.060 seconds.
+✔ Test reconnectNetworkFixturesUseProductionCandidatePolicy() passed after 0.060 seconds.
+✔ Test stopClosesAcceptedClientAndAllowsRebind() passed after 0.066 seconds.
+✔ Test encryptedFrameRejectsTampering() passed after 0.064 seconds.
+✔ Test deterministicEncryptedScreenVectorMatchesProductionCodec() passed after 0.066 seconds.
+✔ Test screenControlLimitUsesOriginalPlaintextBytes() passed after 0.066 seconds.
+✔ Test pairingConsentRejectsLegacyUnconfirmedPayload() passed after 0.064 seconds.
+✔ Test replyContextRequiresReplyCapabilityAndRouteFields() passed after 0.064 seconds.
+✔ Test invalidLocalTextLeavesReplyContextAvailable() passed after 0.064 seconds.
+✔ Test redactionMasksSensitivePayloadValues() passed after 0.064 seconds.
+✔ Test boundedIngressReleasesFrameAndControlSlots() passed after 0.066 seconds.
+✔ Test webcamPolicyReleasesOnlyAfterAuthorizationLossTeardownCompletes() passed after 0.060 seconds.
+✔ Test bonjourRecordRejectsUnsupportedProtocol() passed after 0.060 seconds.
+✔ Test replyLengthMatchesAndroidUTF16Units(_:) with 2 test cases passed after 0.060 seconds.
+✔ Test bonjourRecordFallsBackToResolvedEndpoint() passed after 0.060 seconds.
+✔ Test untrustedOrStaleMalformedFramesNeverBecomeScreenRejections() passed after 0.066 seconds.
+✔ Test reconnectEscapedClassificationMatchesMacWirePolicy() passed after 0.066 seconds.
+✔ Test persistenceFailurePreventsAuthenticatedDispatch() passed after 0.061 seconds.
+✔ Test invalidateClosesAdmissionSynchronously() passed after 0.065 seconds.
+✔ Test authenticatedMalformedScreenVectorsAreSanitizedAfterReplayAcceptance() passed after 0.073 seconds.
+✔ Test invalidatedPairLifetimeClosesAdmissionAndQueuedWriter() passed after 0.077 seconds.
+✔ Test shutdownReturnsOnlyAfterActiveProducerCompletes() passed after 0.079 seconds.
+✔ Test reconnectOuterTimestampsMatchMacWirePolicy() passed after 0.080 seconds.
+✔ Test pairWriteGateGrantsQueuedLeasesInFIFOOrder() passed after 0.088 seconds.
+✔ Test scopedScreenCancellationAllowsOrdinaryTrafficToProgress() passed after 0.093 seconds.
+✔ Test reconnectFixtureCasesMatchMacWirePolicy() passed after 0.097 seconds.
+✔ Test reconnectWriteTimesOutWhenPeerStopsReading() passed after 0.102 seconds.
+✔ Test screenQueueRejectsWorkBeyondControlAndFrameCaps() passed after 0.107 seconds.
+✔ Test cancelledQueuedProducerCannotSendAfterBlockerClears() passed after 0.111 seconds.
+✔ Test replacementWaitsForPredecessorShutdownCompletion() passed after 0.111 seconds.
+✔ Test screenPreviewSharedContractVectors() passed after 0.112 seconds.
+✔ Test cancellingStalledReconnectReceiveJoinsOwnedIO() passed after 0.117 seconds.
+✔ Test closingSocketDuringReceiveCannotCloseReusedDescriptor() passed after 0.117 seconds.
+✔ Test reconnectEncryptedVectorsMatchMacWirePolicy() passed after 0.119 seconds.
+✔ Test reconnectReceiveRejectsCompletionAfterReplayPersistenceDeadline(expiresAtCompletion:) with 2 test cases passed after 0.119 seconds.
+✔ Test conditionalReconnectConnectWaitsForHeldOrdinaryGateAndDoesNotRetry() passed after 0.120 seconds.
+✔ Test sharedSenderSerializesTrafficAndPrioritizesOrdinaryWork() passed after 0.122 seconds.
+✔ Test reconnectListenerStopJoinsAuthenticatedReplayPersistence() passed after 0.134 seconds.
+✔ Test conditionalReconnectExchangesShareDurableReplayWindow(order:) with 4 test cases passed after 0.154 seconds.
+✔ Test startReportsBindFailureSynchronously() passed after 0.156 seconds.
+✔ Test foundationSecureServerReceivesAndroidCompatibleFrame() passed after 0.163 seconds.
+✔ Test conditionalReconnectSharedWireVectors() passed after 0.184 seconds.
+✔ Test fileTransferSharedContractVectors() passed after 0.204 seconds.
+✔ Test foundationSecureServerRejectsWrongDeviceId() passed after 0.216 seconds.
+✔ Test foundationSecureServerRejectsReplay() passed after 0.217 seconds.
+✔ Test conditionalReconnectStaleReverseCancellationPreservesReplacement() passed after 0.248 seconds.
+✔ Test partialSocketDeadlineAllowsNextCompleteFrame() passed after 0.253 seconds.
+✔ Test conditionalReconnectHandshakePreservesUntilAcceptanceAndBindsAllPhases(reply:) with 3 test cases passed after 0.267 seconds.
+✔ Test reconnectReceiveUsesOneDeadlineAcrossHeaderAndBody() passed after 0.311 seconds.
+✔ Test expiredSendBurnsSequenceButWritesNoBytes() passed after 1.029 seconds.
+✔ Test queuedScreenPayloadExpiresWhileOrdinaryWriteIsBlocked() passed after 1.083 seconds.
+✔ Test successorScreenExpiryAndCancellationRunWhilePredecessorIsHeld() passed after 1.090 seconds.
+✔ Test candidateDeadlineClosesReverseChannelWhileBlockedCommitJoins() passed after 2.177 seconds.
+✔ Test run with 124 tests in 0 suites passed after 2.179 seconds.

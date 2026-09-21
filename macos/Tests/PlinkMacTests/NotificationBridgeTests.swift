@@ -49,6 +49,8 @@ struct NotificationBridgeTests {
         bridge.show(envelope: call(.callEnded, key: "A"))
         bridge.show(envelope: call(.callRinging, key: "B"))
         #expect(notifications.delivered[id]?.categoryIdentifier == "plink.call.ringing")
+        #expect(notifications.delivered[id]?.subtitle.isEmpty == true)
+        #expect(notifications.delivered[id]?.attachments.isEmpty == true)
         #expect(notifications.delivered["plink.call.mirrored"] == nil)
         #expect(notifications.removals.count == removedBefore)
         hfp.setActive(true)

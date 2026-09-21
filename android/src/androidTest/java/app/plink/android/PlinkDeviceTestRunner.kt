@@ -60,6 +60,24 @@ class PlinkDeviceTestRunner : Instrumentation() {
 
     override fun onStart() {
         val result = Bundle()
+        if (arguments.getString("mode") == "notificationArtwork") {
+            try {
+                val metadata = app.plink.android.notifications.NotificationArtwork.read(
+                    targetContext.packageManager, "app.plink.fixture.nativecheck")
+                check(!metadata.name.isNullOrBlank()) { "Source label unavailable" }
+                val encoded = requireNotNull(metadata.iconPng) { "Source icon unavailable" }
+                val bytes = Base64.getDecoder().decode(encoded)
+                check(bytes.size in 1..16_384 && encoded.length <= 21_848)
+                val image = requireNotNull(android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size))
+                try { check(image.width == 96 && image.height == 96) } finally { image.recycle() }
+                result.putString("stream", "\nNOTIFICATION ARTWORK PASSED: label=true, icon=true, bounded=true, pixels=96x96\n")
+                finish(0, result)
+            } catch (error: Exception) {
+                result.putString("stream", "\nNOTIFICATION ARTWORK FAILED: ${error.javaClass.simpleName}: ${error.message}\n")
+                finish(1, result)
+            }
+            return
+        }
         if (arguments.getString("mode") == "reconnectCleanup") {
             try {
                 cleanupReconnectRun(targetContext, arguments)

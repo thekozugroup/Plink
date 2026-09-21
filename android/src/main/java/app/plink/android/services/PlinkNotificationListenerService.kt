@@ -6,6 +6,7 @@ import android.service.notification.StatusBarNotification
 import app.plink.android.PlinkApplication
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.notifications.NotificationMapper
+import app.plink.android.notifications.NotificationArtwork
 import app.plink.android.notifications.RemoteInputReplyRegistry
 import app.plink.android.notifications.ReplyCapabilityGeneration
 import app.plink.android.notifications.ReplyDispatchLock
@@ -68,8 +69,14 @@ class PlinkNotificationListenerService : NotificationListenerService() {
                 if (removed) mapper.removed(sbn) else mapper.map(sbn)
             }
             handoff ?: return
-            SharedNotificationEvents.trySend(handoff.envelope)
-            app.sessionController.sendEnvelope(handoff.envelope)
+            // Package lookup and drawable rendering must never hold the reply authority lock.
+            val envelope = if (app.sessionController.status.value == SessionStatus.READY) {
+                NotificationArtwork.decorate(handoff.envelope) {
+                    NotificationArtwork.read(packageManager, sbn.packageName)
+                }
+            } else handoff.envelope
+            SharedNotificationEvents.trySend(envelope)
+            app.sessionController.sendEnvelope(envelope)
         } finally {
             session.sessionKey.fill(0)
         }

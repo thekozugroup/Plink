@@ -1,0 +1,19 @@
+{
+  "compiledAssets": true,
+  "assetBytes": 99816,
+  "iconName": "AppIcon",
+  "plainBaseline": true,
+  "nativeRendering": "failed: blank template primary icon",
+  "packageLog": "package-assets-baseline.log",
+  "swiftTests": 249,
+  "swiftGateExit": 0,
+  "swiftLog": "swift-assets-baseline.log",
+  "nativeReply": {
+    "origin": "CUA Mac Notification Center before asset packaging",
+    "count": 1,
+    "matched": 1
+  },
+  "nativeVisualAcceptance": false,
+  "evidence": "notification-assets-installed-failed.png",
+  "evidenceSource": "User supplied screenshot 2026-09-21 14:15:27 EDT"
+}

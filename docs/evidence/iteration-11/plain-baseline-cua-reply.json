@@ -1,0 +1,8 @@
+{
+  "origin": "Mac Notification Center via CUA",
+  "payload": "testword",
+  "result": {
+    "count": 1,
+    "matched": 1
+  }
+}

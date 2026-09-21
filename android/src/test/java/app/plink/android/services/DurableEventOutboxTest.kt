@@ -19,6 +19,24 @@ import java.time.ZoneId
 class DurableEventOutboxTest {
     @get:Rule val temporaryFolder = TemporaryFolder()
 
+    @Test fun replayDropsArtworkAndReplyTokenButKeepsLabelAndIdentity() {
+        val outbox = DurableEventOutbox(temporaryFolder.newFolder(), byteArrayOf(1, 2, 3), "mac", fixedClock())
+        val base = message("artwork", "preview", "reply-secret")
+        val decorated = base.copy(payload = kotlinx.serialization.json.JsonObject(base.payload + mapOf(
+            "sourceAppName" to kotlinx.serialization.json.JsonPrimitive("Mail"),
+            "sourceAppIconPng" to kotlinx.serialization.json.JsonPrimitive("A".repeat(21_848))
+        )))
+        assertTrue(outbox.store(decorated))
+        val replay = outbox.pending().single()
+        assertNull(replay.payload["sourceAppIconPng"])
+        assertNull(replay.payload["replyToken"])
+        assertEquals(decorated.payload["sourceAppName"], replay.payload["sourceAppName"])
+        assertEquals(base.payload["notificationKey"], replay.payload["notificationKey"])
+        assertEquals(base.payload["packageName"], replay.payload["packageName"])
+        assertEquals("false", replay.payload["canReply"].toString())
+        assertFalse(replay.requiresAck)
+    }
+
     @Test
     fun encryptedFileDoesNotContainNotificationTextOrReplyToken() {
         val directory = temporaryFolder.newFolder("plink-outbox")

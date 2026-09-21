@@ -5,6 +5,11 @@ import Foundation
 // Static asset source: Lucide link.svg at 951813ce76a859d4d8b145366972cbb237147a4e (ISC).
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
 let output = root.appending(path: "macos/Resources/Plink.icns")
+// Optional: --preview /absolute/path/Plink.png writes the same 1024px asset.
+let arguments = Array(CommandLine.arguments.dropFirst())
+guard arguments.isEmpty || (arguments.count == 2 && arguments[0] == "--preview") else {
+    fatalError("Usage: swift scripts/generate-macos-icon.swift [--preview /path/Plink.png]")
+}
 let work = URL(fileURLWithPath: NSTemporaryDirectory()).appending(path: "plink-icon-\(UUID().uuidString)")
 let iconset = work.appending(path: "Plink.iconset")
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
@@ -34,14 +39,14 @@ func png(size: Int, name: String) throws {
         let context = NSGraphicsContext.current!.cgContext
         let inset = rect.width * 0.0625
         let background = CGRect(x: inset, y: inset, width: rect.width - inset * 2, height: rect.height - inset * 2)
-        context.setFillColor(NSColor(red: 0.949, green: 0.957, blue: 0.969, alpha: 1).cgColor)
+        context.setFillColor(NSColor(srgbRed: 0, green: 122.0 / 255.0, blue: 1, alpha: 1).cgColor)
         context.addPath(CGPath(roundedRect: background, cornerWidth: rect.width * 0.203, cornerHeight: rect.width * 0.203, transform: nil))
         context.fillPath()
         context.saveGState()
         let scale = rect.width / 24 * 0.72
         context.translateBy(x: rect.midX - 12 * scale, y: rect.midY + 12 * scale)
         context.scaleBy(x: scale, y: -scale)
-        context.setStrokeColor(NSColor.systemBlue.cgColor)
+        context.setStrokeColor(NSColor.white.cgColor)
         context.setLineWidth(2)
         context.setLineCap(.round)
         context.setLineJoin(.round)
@@ -64,3 +69,7 @@ process.arguments = ["-c", "icns", iconset.path, "-o", output.path]
 try process.run()
 process.waitUntilExit()
 guard process.terminationStatus == 0 else { throw CocoaError(.fileWriteUnknown) }
+if arguments.count == 2 {
+    try Data(contentsOf: iconset.appending(path: "icon_512x512@2x.png"))
+        .write(to: URL(fileURLWithPath: arguments[1]))
+}

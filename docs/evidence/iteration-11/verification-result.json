@@ -1,0 +1,205 @@
+{
+  "fullGate": {
+    "command": "./scripts/verify.sh",
+    "exitCode": 0,
+    "androidTests": 207,
+    "swiftTests": 247,
+    "total": 454,
+    "log": ".a5c/artifacts/iteration11/verification-left-icon.log",
+    "scope": "Historical full gate before final two Mac-only notification ownership/dismissal fixes and before baseline disable."
+  },
+  "runtime": {
+    "macAppInstalled": true,
+    "androidUpdated": true,
+    "ordinarySession": "READY",
+    "nativePresentation": "FAILED: private data icon, all three native comparison variants, plain installed baseline, and modern asset-catalog baseline showed blank primary icons.",
+    "syntheticFixturePosted": true,
+    "sourceAppIconPreview": "Historical Android fixture icon rendered by the now-removed Mac experimental renderer; saved preview is not native acceptance.",
+    "launcherMaskIssue": "Fixed; final installed Android launcher exported and visually inspected",
+    "productionUIDArtwork": {
+      "passed": true,
+      "namePresent": true,
+      "iconPresent": true,
+      "pixels": "96x96",
+      "bounded": true,
+      "log": ".a5c/artifacts/iteration11/android-artwork-device-final.log"
+    },
+    "sourceAppVisibility": "Launcher apps plus packages already visible to Android. Nonlauncher packages can use text-only fallback.",
+    "layoutCorrection": "Not accepted. Right attachment removed; source-app primary icon and phone badge remain unverified.",
+    "fixtureColor": "#007AFF",
+    "primaryIconProbe": "Historical construction/copy/submission passed; native comparison failed. Probe and private bridge removed from current source.",
+    "ordinarySessionScope": "Historical asset-catalog experiment PID 93017 observed READY; not the final cleanup process identity or a fresh status query.",
+    "privateOverrideEnabled": false,
+    "privateMachinery": "Removed from current source: Objective-C target/header/implementation, icon factory injection, failed-icon retries, unused PNG decoding/badge renderer.",
+    "temporaryProbeRuntimeRemoved": true,
+    "nativeComparison": {
+      "dataIcon": "blank template",
+      "ownedPNGPath": "blank template",
+      "ownBundleControl": "blank template",
+      "positiveControl": false,
+      "evidence": "notification-comparison-all-failed.png"
+    },
+    "plainBaseline": {
+      "installedPath": "/Applications/PlinkMac.app",
+      "plainNotification": true,
+      "customIcon": false,
+      "attachments": false,
+      "nativeVisualAcceptance": false,
+      "primaryIcon": "blank template",
+      "evidence": "notification-plain-installed-failed.png",
+      "registration": "Launch Services records for both source-build and /Applications bundles persisted; no unregister performed.",
+      "imageOrigin": "User-provided screenshot, 2:02:14 PM.",
+      "independentCuaObservation": "CUA later independently verified the same blank primary icon after refresh; the saved linked image is user-provided."
+    },
+    "latestImage": "notification-assets-installed-failed.png",
+    "exactCuaReply": {
+      "evidence": "plain-baseline-cua-reply.json",
+      "origin": "Mac Notification Center via CUA",
+      "payload": "testword",
+      "result": {
+        "count": 1,
+        "matched": 1
+      },
+      "scope": "Verified ordinary reply on pre-cleanup baseline only; not rerun after final cleanup."
+    },
+    "latestImageOrigin": "User-provided screenshot 2026-09-21 14:15:27 EDT.",
+    "assetsBaseline": {
+      "compiledAssets": true,
+      "assetBytes": 99816,
+      "iconName": "AppIcon",
+      "plainBaseline": true,
+      "nativeRendering": "failed: blank template primary icon",
+      "packageLog": "package-assets-baseline.log",
+      "swiftTests": 249,
+      "swiftGateExit": 0,
+      "swiftLog": "swift-assets-baseline.log",
+      "nativeReply": {
+        "origin": "CUA Mac Notification Center before asset packaging",
+        "count": 1,
+        "matched": 1
+      },
+      "nativeVisualAcceptance": false,
+      "evidence": "notification-assets-installed-failed.png",
+      "evidenceSource": "User supplied screenshot 2026-09-21 14:15:27 EDT"
+    },
+    "finalCleanupInstall": {
+      "installedPath": "/Applications/PlinkMac.app",
+      "installed": true,
+      "idleCheckBeforeInstallation": true,
+      "source": "Parent report",
+      "nativeIconAcceptance": "unresolved",
+      "replyRerunAfterCleanup": false
+    }
+  },
+  "complete": false,
+  "implementationComplete": false,
+  "nativeVisualAcceptanceComplete": false,
+  "hashes": {
+    "android/build/outputs/apk/debug/android-debug.apk": "1f3fa0ba714150c5c0dbe3e352433edd12209395f69d7acde343ba03bf965fc7",
+    "build/PlinkMac.app/Contents/MacOS/PlinkMac": "f13cd431a9c27adab475857a93271c73c7294cfff0a22f8569c67ce9c9563ce0",
+    "macos/Resources/Plink.icns": "d829a1017ffa6ca137c97e936ebcd70316c938ceb3caa5d3ca9143946a9c06ca",
+    "docs/evidence/iteration-11/plink-android.png": "56c3121d9747b5fb5985fc157444cfc57b8d0670959836c83efea735cfe0c55f",
+    "docs/evidence/iteration-11/notification-phone-badge.png": "fc3b6a274e931ba07e06a9a3472712db85406e7609644fa5f12290c7668a0af1"
+  },
+  "finalMacGate": {
+    "exitCode": 0,
+    "swiftTests": 245,
+    "swiftBreakdown": {
+      "XCTest": 54,
+      "appSwiftTesting": 67,
+      "coreSwiftTesting": 124
+    },
+    "logs": [
+      "docs/evidence/iteration-11/swift-checkpoint-final.log",
+      "docs/evidence/iteration-11/package-checkpoint-final.log"
+    ],
+    "packageExitCode": 0,
+    "strictSignatureVerification": "passed",
+    "scope": "Final source after removal of private-icon code and adaptation of ordinary notification ownership regressions. Android unchanged at 207."
+  },
+  "finalTestTotal": 452,
+  "updatedAt": "2026-09-21T23:07:27.379135+00:00",
+  "finalTestTotalScope": "Final cleanup Swift 245 (54 XCTest + 67 app + 124 core), combined with unchanged Android 207. These bounded tests do not establish native icon acceptance.",
+  "hashesScope": "Historical pre-baseline artifacts, retained for provenance; not current installed baseline or asset-catalog package hashes.",
+  "plainBaselinePackage": {
+    "passed": true,
+    "log": ".a5c/artifacts/iteration11/package-plain-baseline.log",
+    "scope": "Release build and signed package after default private override disabled; no new unit-test result asserted."
+  },
+  "nextPackagingExperiment": {
+    "status": "Build and installation passed; native rendering failed: blank primary icon.",
+    "artifact": "Contents/Resources/Assets.car",
+    "metadata": "CFBundleIconName=AppIcon; CFBundleIconFile=Plink.icns retained",
+    "artwork": "Unchanged existing ICNS; temporary catalog at packaging only",
+    "nativeSuccessClaimed": false,
+    "assetsCarBytes": 99816,
+    "installedPath": "/Applications/PlinkMac.app",
+    "observedPID": 93017,
+    "ordinarySession": "READY",
+    "evidence": "notification-assets-installed-failed.png",
+    "result": "assets-baseline-result.json"
+  },
+  "assetsBaselineSwiftGate": {
+    "exitCode": 0,
+    "log": "docs/evidence/iteration-11/swift-assets-baseline.log",
+    "swiftTests": 249,
+    "swiftBreakdown": {
+      "XCTest": 54,
+      "appSwiftTesting": 71,
+      "coreSwiftTesting": 124
+    },
+    "scope": "Pre-cleanup plain-baseline/asset-catalog source. 249 tests passed; native primary icon rendering failed. Not a verification of the subsequent cleanup.",
+    "logSHA256": "fb235b4eaa1ab0b434467f34fcb22960ca5a9a34bb7ad5dfb38efe60f7b0c47f"
+  },
+  "interpretation": "Source-app icon and phone-badge acceptance unresolved. No positive icon control; an OS defect or unsupported private API is not proven.",
+  "sourceState": "Final cleanup source frozen and parent-verified; standard Assets.car packaging retained without a native-rendering success claim.",
+  "cleanup": {
+    "status": "Final parent Swift gate and strict signed release packaging passed; installed after idle check.",
+    "privateTargetRemoved": true,
+    "unusedMacIconRendererRemoved": true,
+    "rightAttachments": false,
+    "preserved": [
+      "display labels and authenticated phone subtitle",
+      "Android optional metadata",
+      "ordinary reply routing",
+      "shared submission ownership/cancellation/dismissal guards",
+      "Assets.car packaging and original ICNS fallback"
+    ],
+    "experimentalSourceArchive": ".a5c/artifacts/iteration11/private-icon-experimental-source.tar.gz",
+    "tests": "Ordinary submission ownership regressions retained/adapted; final Swift gate 245 passed. No tests executed by documentation author.",
+    "runtimeCleanupEvidence": "cleanup-final.json"
+  },
+  "preCleanupMacGate": {
+    "command": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test; ./scripts/package-macos.sh",
+    "exitCode": 0,
+    "swiftTests": 249,
+    "swiftBreakdown": {
+      "XCTest": 54,
+      "appSwiftTesting": 71,
+      "coreSwiftTesting": 124
+    },
+    "logs": [
+      ".a5c/artifacts/iteration11/swift-left-icon-final.log",
+      ".a5c/artifacts/iteration11/package-left-icon-final.log"
+    ],
+    "scope": "249 Swift tests after the two Mac-only fixes; Android remained at 207. Before the one-line plain-baseline disable and asset-catalog packaging change."
+  },
+  "historicalPreCleanupTestTotal": 456,
+  "finalEvidenceSanitization": {
+    "replacements": {
+      "repository": "<REPO>",
+      "home": "<HOME>"
+    },
+    "copiedFileSHA256": {
+      "swift-checkpoint-final.log": "1567b0641af4077fd6d8fafe595eb6b384f906c3a7e41a2016378484c9ff2ae1",
+      "package-checkpoint-final.log": "ec135623b3f1cc7fc1eab1585c06a22f6df822c5811c4dcde6dcab68915630c2",
+      "cleanup-final.json": "436dedd07c53937bbfa00e77470c2bf7d1d247b6707a73fac4a610d854f73df7"
+    }
+  },
+  "finalInstalledRuntime": {
+    "path": "/Applications/PlinkMac.app",
+    "privateIconCodeRemoved": true,
+    "connection": "Startup remained at Restoring your saved connection after final installation; phone AWAITING_RECONNECT, clipboardConnected false. Startup recovery source was unchanged.",
+    "nativeReplyScope": "CUA reply passed before final removal build; no repeated reply claim for final installed build."
+  }
+}

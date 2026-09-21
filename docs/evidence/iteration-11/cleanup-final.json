@@ -1,0 +1,16 @@
+{
+  "androidFixture": "app.plink.fixture.nativecheck uninstalled after STOP cleanup",
+  "macRemoved": [
+    "/tmp/plink-artwork-fixture",
+    "/tmp/plink-notification-icon-probe",
+    "/tmp/plink-artwork-preview.swift",
+    "/tmp/plink-artwork-preview",
+    "/tmp/plink-icon-before.png",
+    "/tmp/plink-babysitter-instructions.txt",
+    "<HOME>/Library/Containers/com.thekozugroup.plink.mac/Data/tmp/com.thekozugroup.plink.notification-artwork"
+  ],
+  "deviceDisplaySettingsChangedThisContinuation": false,
+  "lastObservedBrightness": 1,
+  "lastObservedWakefulness": "Dozing",
+  "sourceFixtureArchive": "synthetic-fixture-source.tar.gz"
+}

@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-09-21T16:53:18.593181+00:00",
+  "fixtureCallback": {
+    "count": 1,
+    "matched": 1
+  },
+  "macOriginConfirmed": false,
+  "nativeArtworkObserved": false,
+  "note": "Before package-visibility fix. No inference about native artwork or originating UI."
+}

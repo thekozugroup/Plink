@@ -1,0 +1,30 @@
+[
+  {
+    "timestamp": "2026-09-21 13:27:15.141466-0400",
+    "message": "probe retained PNG: <home>/Library/Containers/com.thekozugroup.plink.mac/Data/tmp/com.thekozugroup.plink.notification-icon-probe/notification-phone-badge.png"
+  },
+  {
+    "timestamp": "2026-09-21 13:27:15.141525-0400",
+    "message": "probe data-icon: constructor and copied-icon readback passed; rendering unverified"
+  },
+  {
+    "timestamp": "2026-09-21 13:27:15.141661-0400",
+    "message": "probe owned-png-path: constructor and copied-icon readback passed; rendering unverified"
+  },
+  {
+    "timestamp": "2026-09-21 13:27:15.141711-0400",
+    "message": "probe own-bundle-control: constructor and copied-icon readback passed; rendering unverified"
+  },
+  {
+    "timestamp": "2026-09-21 13:27:15.143890-0400",
+    "message": "probe data-icon: submission accepted; rendering unverified"
+  },
+  {
+    "timestamp": "2026-09-21 13:27:15.144075-0400",
+    "message": "probe owned-png-path: submission accepted; rendering unverified"
+  },
+  {
+    "timestamp": "2026-09-21 13:27:15.144331-0400",
+    "message": "probe own-bundle-control: submission accepted; rendering unverified"
+  }
+]

@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "iteration": 11,
+  "lane": "Sol",
+  "status": "source_frozen_parent_build_and_tests_pending",
+  "authorization": {
+    "plan": ".a5c/artifacts/iteration11-plan.json",
+    "precedence": "Parent/Astra approved the exact metadata contract; iteration11-plan.json revision4 is now aligned. The user requested source application artwork, not these technical size and encoding choices.",
+    "contractConflict": "Resolved by plan revision4: sourceAppName <=80 Unicode scalars; sourceAppIconPng is a96x96 PNG <=16384 bytes /21848 canonical Base64 characters. No source change was needed.",
+    "visibilityFollowup": "Parent relayed Astra approval for MAIN+LAUNCHER query only after live package-visibility failure. No broad query or enumeration."
+  },
+  "wireContract": {
+    "events": [
+      "message.received",
+      "call.ringing"
+    ],
+    "sourceAppName": {
+      "optional": true,
+      "maximumUnicodeScalars": 80,
+      "sanitization": "Remove ISO controls, Unicode format controls, line/paragraph separators and lone surrogates; truncate at a scalar boundary and trim whitespace. Omit empty label."
+    },
+    "sourceAppIconPng": {
+      "optional": true,
+      "encoding": "Canonical standard Base64 with padding and no line breaks",
+      "maximumPngBytes": 16384,
+      "maximumEncodedCharacters": 21848,
+      "renderedWidth": 96,
+      "renderedHeight": 96,
+      "format": "Static PNG from native PackageManager application drawable; no notification images, avatars or network."
+    },
+    "fallback": "Measure whole encoded envelope UTF8 length against existing65536 limit; drop optional icon first, then optional label by returning original envelope. Preserve original text and action fields.",
+    "removals": "No collection or decoration for removed=true,call.ended or outbound commands.",
+    "consumerHandoff": "Parent/Terra must consume exact field sourceAppIconPng with96px/16384byte/21848character bounds and80-scalar label. No extra platform/phone-name field; phone badge and paired phone label remain Mac-owned."
+  },
+  "sourceFiles": [
+    "android/src/main/java/app/plink/android/notifications/NotificationArtwork.kt",
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt",
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt",
+    "android/src/test/java/app/plink/android/notifications/NotificationArtworkTest.kt",
+    "android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt",
+    "android/src/main/AndroidManifest.xml"
+  ],
+  "sourceSHA256": {
+    "android/src/main/java/app/plink/android/notifications/NotificationArtwork.kt": "97c2178ec49906039afd034e128899a42a2b2c6e2b380b02dfe23697e631b449",
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": "da55f9bf024c969419917f3b55c66267f9bcebdae9e9a3462ae89d61224a93f3",
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt": "a613d68ad006db49f71be6d83085fb3e7d5e22f1ee517351083068b449c9a1b8",
+    "android/src/test/java/app/plink/android/notifications/NotificationArtworkTest.kt": "692d2696277b1e886da1f778ac6d76b0f05e5b13ae8bdf7f5fec5d05411c1d1a",
+    "android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt": "4125d48ee34b2355931a5ef7b1cee58f46b465759776355a819ec5951fbb24f8",
+    "android/src/main/AndroidManifest.xml": "96fdb8d7201213a5ec66b79ae9ce095c1827db7dad276ca3b32c49ce7ff5b68f"
+  },
+  "implementation": [
+    "Small NotificationArtwork helper reads only the notification source package through PackageManager.getApplicationInfo/getApplicationLabel/getApplicationIcon; no package enumeration, cross-profile lookup, permissions, cache or network.",
+    "Native rendering uses a fixed96x96 ARGB bitmap, PNG encoding, post-encoding byte cap, restores drawable bounds and recycles bitmap. Lookup/render failures omit optional decoration.",
+    "Listener decorates only after mapper returns and ReplyDispatchLock.serialized has exited, while session status is READY. No new asynchronous suspension, reply capability mutation or authorization branch. Existing queue/session guards remain.",
+    "NotificationMapper remains unchanged: existing package/key/token/flags and tombstones are preserved.",
+    "Durable message sanitization additionally strips sourceAppIconPng; existing replyToken stripping,canReply=false and requiresAck=false remain. Label is retained without persisting bulky icons."
+  ],
+  "redactionReview": {
+    "newLogs": false,
+    "artworkDumped": false,
+    "metadataToString": "Reports presence booleans only, no name or image data.",
+    "existingUtility": "Android PrivacyRedactor.redact and Swift PayloadPolicy.redact omit sourceAppIconPng from their sensitive-key sets. Searches of android/src/main and macos/Sources found their definitions but no production callers. No diagnostic forwarded-payload dump was found in the inspected notification path; no redaction source change was made.",
+    "limit": "The existing redactors would retain the icon if called; they are not called by the inspected production sources."
+  },
+  "testsAuthored": {
+    "initialTestsBeforeProduction": true,
+    "paths": [
+      "android/src/test/java/app/plink/android/notifications/NotificationArtworkTest.kt",
+      "android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt"
+    ],
+    "coverage": [
+      "Control removal and80-scalar truncation including supplementary emoji.",
+      "Independent label/render failure fallback and16384/16385-byte limit,canonical Base64 size/no-newlines.",
+      "Original envelope identity/reply fields preserved; excluded events do not invoke metadata loader.",
+      "Actual serialized whole-envelope boundary drops icon then name without modifying original fields.",
+      "Outbox replay removes icon/reply token,keeps label/package/key and remains non-actionable."
+    ],
+    "executedBySol": false,
+    "limitations": [
+      "JVM helper tests inject source providers; native PackageManager lookup,Drawable/Bitmap rendering and real96x96 PNG output are source-reviewed,not platform-executed. Synthetic byte arrays test encoding bounds,not PNG decoder validity.",
+      "No live NotificationListener lock/thread scheduling or permission-revocation race test added; production wiring is inspected only.",
+      "No native Mac presentation,phone badge or reply roundtrip proof from this lane.",
+      "No build/compile/test pass claimed until parent gate."
+    ]
+  },
+  "excludedEdits": [
+    "Launcher resources",
+    "Mac source",
+    "Protocol/security/transport versions or limits",
+    "NotificationMapper routing",
+    "PrivacyRedactor",
+    "Manifest launcher icon references (only queries added)"
+  ],
+  "execution": {
+    "builds": false,
+    "testsRun": false,
+    "devices": false,
+    "git": false,
+    "newBabysitterRun": false,
+    "sourceFrozen": true
+  },
+  "nextOwner": "Parent runs focused/full Android gates; Terra consumes the parent/Astra contract now recorded in plan revision4. Astra reviews frozen code. Further source edits require notice.",
+  "visibilityFollowup": {
+    "sourceFrozen": true,
+    "changedSourceOnly": "android/src/main/AndroidManifest.xml",
+    "change": "Add one MAIN+LAUNCHER intent query. Existing helper/listener and all permissions/application entries remain unchanged.",
+    "failureEvidence": ".a5c/artifacts/iteration11/android-artwork-device.log",
+    "originalFailure": "Source label unavailable for non-launcher fixture; preserved as coverage limitation.",
+    "limitation": "Non-launcher packages not otherwise visible can still omit optional metadata.",
+    "verification": "Static XML parse confirms exactly one MAIN+LAUNCHER query and no QUERY_ALL_PACKAGES permission. No new JVM test: package visibility needs Android runtime validation; existing provider tests unchanged.",
+    "parentNext": "Add real launcher to fixture and rerun production helper under Plink UID; retain original failure evidence. Parent owns builds/tests/device.",
+    "buildsOrDeviceRunBySol": false
+  }
+}

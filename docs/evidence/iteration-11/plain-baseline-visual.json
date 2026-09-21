@@ -1,0 +1,9 @@
+{
+  "installedPath": "/Applications/PlinkMac.app",
+  "plainNotification": true,
+  "customIcon": false,
+  "attachments": false,
+  "nativeVisualAcceptance": false,
+  "primaryIcon": "blank template",
+  "evidence": "notification-plain-installed-failed.png"
+}

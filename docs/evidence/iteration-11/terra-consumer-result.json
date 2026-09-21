@@ -1,0 +1,39 @@
+{
+  "status": "frozen_for_parent_compile_and_Astra_review",
+  "files": [
+    {
+      "path": "macos/Sources/PlinkMac/NotificationArtwork.swift",
+      "sha256": "730d1bd4f6befd20ce5ef593c5325b781997014f6728d3681fe7568c64f0a315"
+    },
+    {
+      "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+      "sha256": "6306df1e9fd4ffc4c0bc882ce1a7ac3b83a30606999cc6ad87f6e0b09d6768b1"
+    },
+    {
+      "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+      "sha256": "1a8616e6a47d23c0b15262d4bbbda46982a495e3d69fbdf316667251d29f930f"
+    },
+    {
+      "path": "macos/Tests/PlinkMacTests/NotificationArtworkTests.swift",
+      "sha256": "8e526d671b21aeecff465da7c1b144b06a7c93954ccf8a0c46d81664d96eb9b1"
+    },
+    {
+      "path": "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift",
+      "sha256": "ea2ec9e8817767521912ac1d15374191797a84f4b781ca8266f898c3ed3eff93"
+    }
+  ],
+  "testsFirst": true,
+  "redRunCaptured": false,
+  "agentBuildsTestsDevicesGit": false,
+  "previewAPI": "@MainActor NotificationArtwork.renderedPNG(base64: String) -> Data?; helper standalone with AppKit/ImageIO/UserNotifications, no PlinkCore linking needed",
+  "contractUsed": "Latest explicit assignment: sourceAppName 80 Unicode scalars, sourceAppIconPng canonical standard Base64 <=21848 chars/16384 decoded bytes, static PNG positive dimensions <=96 before decode",
+  "coordinationConcern": "On initial read iteration11-plan.json revision2 instead specifies sourceAppIconPngBase64 4096 bytes and 128 UTF8-byte name, parent consumer ownership. Explicit later user scope followed. Producer/consumer must agree before gate; no aliases invented.",
+  "fallback": "Synchronous validation/render/attachment creation failure submits unchanged text/actions without artwork. OS add failure with artwork retries once without artwork only while captured notification ownership token remains current. Tokens revoked on replacement, tombstone, clearContexts/pair switch, dismiss/reply. Remaining staging removed only after callback or injected synchronous submission returns. Astra should review bounded retry semantics.",
+  "limits": [
+    "No live attachment or rendering verification by this lane.",
+    "Tests authored for size/type/animation rejection, scalar/control sanitization, owned staging isolation, malformed optional metadata delivery, callback staging cleanup, guarded fallback and tombstone/pair-switch invalidation.",
+    "Native HFP decoration unchanged; existing HFP regression now asserts no subtitle or attachments.",
+    "Tests and all source await parent compile feedback."
+  ],
+  "icons": "Previously frozen icon sources untouched."
+}

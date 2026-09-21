@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "iteration": 11,
+  "owner": "Astra",
+  "reviewedAtUTC": "2026-09-21T16:36:15.738322+00:00",
+  "status": "source_and_full_gate_approved_native_evidence_pending",
+  "sourceApproved": true,
+  "blockingFindings": [],
+  "sourceHashes": {
+    "macos/Sources/PlinkMac/NotificationArtwork.swift": "730d1bd4f6befd20ce5ef593c5325b781997014f6728d3681fe7568c64f0a315",
+    "macos/Sources/PlinkMac/NotificationBridge.swift": "6306df1e9fd4ffc4c0bc882ce1a7ac3b83a30606999cc6ad87f6e0b09d6768b1",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "1a8616e6a47d23c0b15262d4bbbda46982a495e3d69fbdf316667251d29f930f",
+    "macos/Tests/PlinkMacTests/NotificationArtworkTests.swift": "8e526d671b21aeecff465da7c1b144b06a7c93954ccf8a0c46d81664d96eb9b1",
+    "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": "ea2ec9e8817767521912ac1d15374191797a84f4b781ca8266f898c3ed3eff93",
+    "android/src/main/java/app/plink/android/notifications/NotificationArtwork.kt": "97c2178ec49906039afd034e128899a42a2b2c6e2b380b02dfe23697e631b449",
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": "da55f9bf024c969419917f3b55c66267f9bcebdae9e9a3462ae89d61224a93f3",
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt": "a613d68ad006db49f71be6d83085fb3e7d5e22f1ee517351083068b449c9a1b8",
+    "android/src/test/java/app/plink/android/notifications/NotificationArtworkTest.kt": "692d2696277b1e886da1f778ac6d76b0f05e5b13ae8bdf7f5fec5d05411c1d1a",
+    "android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt": "4125d48ee34b2355931a5ef7b1cee58f46b465759776355a819ec5951fbb24f8",
+    "scripts/generate-macos-icon.swift": "d87f65c39ddaa87432c726c10206d6df7afc822bf0b0ec872ee0bddafa0affeb",
+    "android/src/main/AndroidManifest.xml": "7a57e0abb9575cba806fcab83bb8d2fb1943e2b8aec2c9d03308d120e84b1970",
+    "android/src/main/res/drawable/ic_plink_launcher.xml": "da8751ba440b0a01de4fe27a9763bb1bb4b820a0e94045addf99846be6123e37",
+    "android/src/main/res/mipmap-anydpi-v26/ic_plink.xml": "85f369b8ae1c2b85d1270700af3834f6ae1ff84a7855c79c30b025e02da28739",
+    "android/src/main/res/values/launcher_colors.xml": "1976d588cae6f4dd5cfb4807720af3f4a056e791cb1c01c7cb2cb66a8bb95511"
+  },
+  "laneFreezeHashesMatch": {
+    "macos/Sources/PlinkMac/NotificationArtwork.swift": true,
+    "macos/Sources/PlinkMac/NotificationBridge.swift": true,
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": true,
+    "macos/Tests/PlinkMacTests/NotificationArtworkTests.swift": true,
+    "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": true,
+    "android/src/main/java/app/plink/android/notifications/NotificationArtwork.kt": true,
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": true,
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt": true,
+    "android/src/test/java/app/plink/android/notifications/NotificationArtworkTest.kt": true,
+    "android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt": true
+  },
+  "contract": {
+    "sourceAppName": "80 Unicode scalars, sanitized",
+    "sourceAppIconPng": "canonical standard Base64, <=21848 characters /16384 decoded bytes, static PNG, dimensions 1...96 checked before pixel decode",
+    "launcherColors": [
+      "#007AFF",
+      "#FFFFFF"
+    ],
+    "primaryNotificationIdentity": "Plink retained; attachment/subtitle are decoration only"
+  },
+  "reviewedInvariants": [
+    "Android source-package lookup occurs outside ReplyDispatchLock, adds no permissions or asynchronous capability dispatch, and leaves package/key/token/flags unchanged.",
+    "Actual serialized envelope budget drops icon then label rather than changing original text/actions. Icon bytes are stripped from durable replay and tombstones are not decorated.",
+    "Mac validates Base64 size/canonical encoding, PNG signature/chunks/static frame count/type and dimensions before decoding; raster output and phone badge are bounded.",
+    "Mac phone label comes from current matching active pairing, not the incoming decorative payload. HFP notifications remain undecorated with authoritative call actions unchanged.",
+    "Owned staging uses random directories, a128-pending cap and cleanup after OS submission completion; synchronous staging failure falls back to ordinary delivery.",
+    "An attachment add failure retries once without artwork only under current submission ownership. Replacement, tombstone, pairing context clear, reply and dismiss revoke artwork retry authority.",
+    "Reply validation and one-shot context consumption are unchanged. Source-app decoration cannot authorize a reply or HFP action.",
+    "Mac generator preserves link geometry and switches to fixed blue/white. Android manifest selects an adaptive icon with the same palette and transparent white foreground; launcher masking is platform-owned."
+  ],
+  "closedFindings": [
+    {
+      "id": "I11-ARTWORK-01",
+      "status": "closed_by_source",
+      "evidence": "NotificationBridge didReceive now removes artworkSubmissions[id] on dismissal and after successful takeReply before dispatch. Staging cleanup remains in original submission completion.",
+      "coverageLimit": "The frozen tests do not directly exercise reply/dismiss followed by a held add error. This narrow two-line invalidation is source-reviewed; do not claim that exact regression ran."
+    }
+  ],
+  "verification": {
+    "androidFocused": "Passed per parent report; reviewer did not execute.",
+    "swiftFocused": "10 tests across2 suites passed per parent report; reviewer did not execute.",
+    "fullGate": {
+      "status": "passed",
+      "androidTests": 207,
+      "swiftTests": 245,
+      "totalTests": 452,
+      "basis": "Latest parent report; reviewer did not run tests."
+    },
+    "nativeNotificationPresentationVerified": false,
+    "nativeReplyWithArtworkVerified": false,
+    "launcherInstalledAppearanceVerified": false,
+    "testsLimit": "Injected providers/notification OS boundary verify logic, not PackageManager runtime output, native Notification Center display or user actions. No clean red run claimed.",
+    "deployment": "Parent reports updated apps installed, Mac relaunched after no-active-call check, local fixture installed. This does not itself prove artwork display or native reply."
+  },
+  "nonBlockingLimits": [
+    "Public UserNotifications supports attachment/subtitle; no primary sender-app icon replacement is claimed. macOS controls attachment display by presentation mode.",
+    "Existing generic redaction utilities are not extended for artwork; lane audit found no production callers/logging of these fields. New code logs no metadata content. Do not claim those unused utilities now redact artwork.",
+    "No exhaustive recovery/soak, real carrier-control or audio result inferred from this visual checkpoint.",
+    "Lane notes about old revision2 contract reflect historical coordination; current revision4 and both frozen implementations agree."
+  ],
+  "authorizedRuntime": "After parent full gate passes and no active/ringing call or pending HFP operation is confirmed, parent may install/restart updated apps and use the already-approved separate local fixture. Static exports/helper previews, successful UN submission, actual native visual observation and actual user reply callback must be recorded separately. No agent device access or build.",
+  "checkpointCondition": "Source and reported full gate approved. Record bounded fixture/native observations and cleanup; if native UI/user confirmation remains unavailable, publish checkpoint with those checks explicitly unverified. No further implementation loop required by these findings.",
+  "overallVerified": false,
+  "originalAcceptancePreserved": true,
+  "reviewerActions": "Read-only source/tests/official API/freeze inspection and this requested review artifact. No product builds, tests, devices, git or production edits.",
+  "lateReviewAdjudications": [
+    {
+      "finding": "Staging retained until delayed or missing OS add callback",
+      "disposition": "nonblocking_documented_bound",
+      "reason": "Owned staging is bounded to128 pending items; overflow omits artwork. Completion removes remaining owned files, and stale owned directories older than24h are cleaned on startup. A missing callback can retain files for that process lifetime; no tighter elapsed-time guarantee claimed. Deleting earlier could violate attachment handoff. No new timer/cache subsystem warranted."
+    },
+    {
+      "finding": "Dismiss does not explicitly remove pending notification requests",
+      "disposition": "no_new_regression_demonstrated",
+      "reason": "Existing dismiss path removed message bookkeeping; new code also revokes artwork retry authority. Actual dismissal concerns a delivered notification. No evidence shows a new pending duplicate or resurrection requiring an additional removal operation. Keep source frozen."
+    }
+  ],
+  "sourceStillMatchesReview": {
+    "macos/Sources/PlinkMac/NotificationArtwork.swift": true,
+    "macos/Sources/PlinkMac/NotificationBridge.swift": true,
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": true,
+    "macos/Tests/PlinkMacTests/NotificationArtworkTests.swift": true,
+    "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": true,
+    "android/src/main/java/app/plink/android/notifications/NotificationArtwork.kt": true,
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": true,
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt": true,
+    "android/src/test/java/app/plink/android/notifications/NotificationArtworkTest.kt": true,
+    "android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt": true,
+    "scripts/generate-macos-icon.swift": true,
+    "android/src/main/AndroidManifest.xml": true,
+    "android/src/main/res/drawable/ic_plink_launcher.xml": true,
+    "android/src/main/res/mipmap-anydpi-v26/ic_plink.xml": true,
+    "android/src/main/res/values/launcher_colors.xml": true
+  }
+}

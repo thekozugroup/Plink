@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "iteration": 11,
+  "owner": "Astra",
+  "reviewedAtUTC": "2026-09-21T17:07:37.802184+00:00",
+  "status": "bounded_production_correction_authorized_gate_and_native_rendering_pending",
+  "userCorrection": "Right-side attachment rejected. Android source-app icon must appear left with circular SF Symbols phone badge; no silent right-attachment substitution.",
+  "observed": "Parent reports actual user screenshot confirms right-hand badged fixture artwork and blank generic left app icon. This proves native attachment presentation but not accepted design.",
+  "publicRoute": "Installed SDK supports INSendMessageIntent and UNNotificationContent.updating(from:) on macOS12+. Communication intents model people/conversations and affect system communication semantics. No fake sender/person or restricted communication entitlement proposed for generic application artwork.",
+  "privateCandidate": {
+    "declaration": "WebKit UserNotificationsSPI.h declares UNMutableNotificationContent.icon and UNNotificationIcon.iconForApplicationIdentifier: under HAVE(FULL_FEATURED_USER_NOTIFICATIONS). Current PlatformHave.h enables that feature on Mac/iOS.",
+    "callSite": "WebPushDaemon showNotification sets icon and creates notification center for selected bundle identity.",
+    "limit": "WebKit mac webpushd also holds com.apple.usernotification.notificationschedulerproxy. Its success cannot prove ordinary sandboxed/ad-hoc Plink may submit arbitrary per-notification icons. Header does not establish a data constructor; local reflection must identify exact selectors/signatures.",
+    "sources": [
+      "https://github.com/WebKit/WebKit/blob/main/Source/WebKit/Platform/spi/Cocoa/UserNotificationsSPI.h",
+      "https://github.com/WebKit/WebKit/blob/main/Source/WebKit/webpushd/WebPushDaemon.mm",
+      "https://github.com/WebKit/WebKit/blob/main/Source/WebKit/Scripts/process-entitlements.sh",
+      "https://github.com/WebKit/WebKit/blob/main/Source/WTF/wtf/PlatformHave.h"
+    ]
+  },
+  "approvedNext": {
+    "owner": "Terra; parent already dispatched",
+    "productionCorrection": "Implement validated source-app PNG as private left notification icon with circular SF Symbols phone badge. Remove right-hand attachment path; no silent thumbnail fallback.",
+    "files": [
+      "macos/Package.swift",
+      "macos/Sources/PlinkMac/NotificationArtwork.swift",
+      "macos/Sources/PlinkMac/NotificationBridge.swift",
+      "one small Objective-C bridge target/header under macos/Sources",
+      "focused tests for artwork and notification bridge"
+    ],
+    "android": "Frozen; approved MAIN/LAUNCHER visibility and96px metadata unchanged.",
+    "bridge": "One small Objective-C target only. Guard UNNotificationIcon class, iconWithData: and setIcon: selectors and exact ABI signatures. Catch Objective-C exceptions around construction, icon-bearing copying and request construction. No KVC or generic dynamic dispatch framework.",
+    "cleanFallback": "Apply icon to a copy; retain untouched ordinary content. Construction failure uses ordinary text/actions. Submission error retries once without custom icon only under existing ownership/cancellation guards. No right attachment.",
+    "preserve": [
+      "Actual Plink sender identity and current entitlements",
+      "Request identifier, category and reply capability",
+      "Authenticated paired-phone subtitle source",
+      "Replacement/removal/pair-change/reply/dismiss stale-callback invalidation",
+      "HFP controls and presentation",
+      "Existing PNG decoding/type/dimension/byte bounds"
+    ],
+    "tests": [
+      "Class/selector unavailable and failed icon construction leave usable undecorated notification.",
+      "No right attachment; request identity/category/action routing unchanged.",
+      "Icon submission error retries once using clean original.",
+      "Late error after replacement/removal/pair-change/reply/dismiss cannot resurrect notification."
+    ],
+    "runtime": "After source freeze/review and full gate, parent installs normal Plink build and uses blue owned fixture through existing authenticated notification flow. No new production debug trigger. User/native screenshot must establish left placement and SF Symbols badge.",
+    "forbiddenExpansion": [
+      "No restricted entitlement additions or signing-policy/security bypass.",
+      "No third-party application identity borrowing, arbitrary initWithBundleIdentifier, dynamic per-source helper apps or notification DB edits.",
+      "No communication fake-person workaround.",
+      "No right-hand thumbnail fallback represented as the requested result."
+    ],
+    "privateCompatibility": "Document private API dependence and unsupported OS behavior. Guards/serialization/add completion do not establish rendering. Never claim universal macOS support or repaired blank primary icon without live evidence."
+  },
+  "blankPrimaryIcon": {
+    "sourcePackagingFinding": "Source and packaged Info.plist name Plink.icns. Both resources exist with valid icns header/chunk boundaries and multiple resolutions. No missing source icon or absent CFBundleIconFile proven.",
+    "nextReadOnlyCheck": "Parent compares actual running installed bundle icon/provenance and LaunchServices-resolved icon for that bundle. Do not reset system caches or change identity based on current evidence."
+  },
+  "productionSourceMutationAuthorized": true,
+  "decisionHistory": [
+    {
+      "status": "left_icon_feasibility_probe_approved_production_frozen",
+      "meaning": "Earlier probe-only boundary, superseded after successful serialization and explicit chat authorization."
+    }
+  ],
+  "probeEvidence": {
+    "inventory": ".a5c/artifacts/iteration11/icon-runtime-inventory.log",
+    "serialization": ".a5c/artifacts/iteration11/icon-serialization.json",
+    "serializationResults": {
+      "factory": true,
+      "originalDataEqual": true,
+      "copyDataEqual": true,
+      "secureArchiveDataEqual": true,
+      "error": false
+    },
+    "meaning": "Runtime factories/setter and copy/secure-archive data retention evidenced; daemon acceptance/native left rendering not yet established."
+  },
+  "lifecycleAmendment": {
+    "runId": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+    "effectId": "01M32EE26XXYHC4TMX7CC0YDDJ",
+    "effectLabel": "Connected device verification 11",
+    "state": "pending",
+    "amendment": "Current device verification found user-rejected right attachment. Existing effect now includes bounded implementation correction, focused regressions, source freeze/review, full verification/package gate, installed native rendering/reply checks and cleanup before its result is posted. No new iteration or run.",
+    "completedEvidenceRetained": "Earlier452-test/producer/mask evidence retained but cannot count as the corrected left-icon gate. Pre-visibility-fix callback remains pre-fix with unconfirmed Mac origin.",
+    "completionCriteria": [
+      "Terra freezes authorized production/test changes; Astra reviews actual final diff.",
+      "Parent full verify/build/package exits recorded for corrected source.",
+      "Parent records installed-build correlation and actual native left rendering; if unsupported, record failure/open requirement rather than completed UI.",
+      "Reply action routing and user-origin evidence remain separately qualified.",
+      "Fixture/temporary probe cleanup recorded."
+    ],
+    "parentOwnsLifecyclePosting": true,
+    "reviewerJournalMutation": false,
+    "checkpoint": "Iteration11 remains uncommitted; no completed-checkpoint claim."
+  }
+}

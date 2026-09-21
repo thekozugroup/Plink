@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 5,
+  "iteration": 11,
+  "lane": "Luna",
+  "status": "fresh_live_source_review_complete_async_fixes_closed",
+  "scope": "Independent post-freeze review of current Mac notification attachment bounds, cleanup, fallback, and Android metadata contract.",
+  "sourceBasis": "Fresh absolute filesystem read; prior pre-freeze snapshot finding withdrawn.",
+  "hashes": {
+    "macos/Sources/PlinkMac/NotificationArtwork.swift": "730d1bd4f6befd20ce5ef593c5325b781997014f6728d3681fe7568c64f0a315",
+    "macos/Sources/PlinkMac/NotificationBridge.swift": "6306df1e9fd4ffc4c0bc882ce1a7ac3b83a30606999cc6ad87f6e0b09d6768b1",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "1a8616e6a47d23c0b15262d4bbbda46982a495e3d69fbdf316667251d29f930f",
+    "macos/Tests/PlinkMacTests/NotificationArtworkTests.swift": "8e526d671b21aeecff465da7c1b144b06a7c93954ccf8a0c46d81664d96eb9b1",
+    "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": "ea2ec9e8817767521912ac1d15374191797a84f4b781ca8266f898c3ed3eff93",
+    "android/src/main/java/app/plink/android/notifications/NotificationArtwork.kt": "97c2178ec49906039afd034e128899a42a2b2c6e2b380b02dfe23697e631b449",
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": "da55f9bf024c969419917f3b55c66267f9bcebdae9e9a3462ae89d61224a93f3",
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt": "a613d68ad006db49f71be6d83085fb3e7d5e22f1ee517351083068b449c9a1b8"
+  },
+  "findings": [
+    {
+      "severity": "medium",
+      "area": "Mac staging lifecycle",
+      "finding": "NotificationArtwork owns staging directories, but NotificationBridge tracks only a UUID token per notification ID, not the staged object. clearContexts(), replacement, tombstone removal, and reply/dismiss revoke retry authority but cannot immediately call artwork.cleanup(staged). The directory is removed when the add callback runs; if that callback is delayed or never arrives, cleanup depends on configure() cleanupStale() after 24 hours.",
+      "evidence": [
+        {
+          "path": "macos/Sources/PlinkMac/NotificationArtwork.swift",
+          "lines": "104-125",
+          "detail": "stage records directory ownership and cleanup requires the Staged value."
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "lines": "12,216-243",
+          "detail": "Bridge stores UUID tokens and callback-local staged value; invalidation does not retain staged for immediate cleanup."
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "lines": "92-97,255-260",
+          "detail": "clear/removal revoke tokens and remove OS IDs but do not invoke artwork.cleanup."
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationArtwork.swift",
+          "lines": "128-137",
+          "detail": "Stale cleanup is limited to startup and entries older than 24 hours."
+        }
+      ]
+    },
+    {
+      "severity": "low",
+      "area": "Dismiss cleanup semantics",
+      "finding": "The dismiss response removes artwork retry authority and message bookkeeping, but does not call removeDeliveredAndPending([id]). Successful reply does call direct delivered removal; shared removal is used for tombstones/replacements. A pending same-ID request is therefore not explicitly removed by dismiss handling.",
+      "evidence": [
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "lines": "191-194",
+          "detail": "Dismiss path only removes token and bookkeeping."
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "lines": "199-202",
+          "detail": "Reply path removes token and delivered notification."
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "lines": "255-260",
+          "detail": "Shared helper removes both delivered and pending notifications."
+        }
+      ]
+    },
+    {
+      "severity": "source_verified",
+      "area": "Mac security bounds and fallback",
+      "finding": "The current helper validates canonical Base64, decoded bytes <=16,384, PNG type, exactly one image, dimensions 1...96, and rejects APNG control chunks before rendering. It re-encodes a fixed 96x96 PNG with the phone badge, stages under a 0700 UUID directory, uses a public UNNotificationAttachment, and removes staging after add completion. Attachment add failure retries once with the same text/actions and no attachment, guarded by the current token.",
+      "evidence": [
+        {
+          "path": "macos/Sources/PlinkMac/NotificationArtwork.swift",
+          "lines": "38-101",
+          "detail": "Input and static PNG validation plus bounded compositing."
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationArtwork.swift",
+          "lines": "104-119",
+          "detail": "Bounded owned staging and attachment creation with failure cleanup."
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "lines": "208-247",
+          "detail": "Subtitle decoration, attachment submission, callback cleanup, token guard, and text-only retry."
+        }
+      ]
+    },
+    {
+      "severity": "source_verified",
+      "area": "Identity and native call isolation",
+      "finding": "Mac passes paired phone name only when the envelope source device matches the active pairing. HFP call notifications remain on the existing path without decoration; mirrored call identity remains peer ID plus notification key. Android decoration uses only the source package and runs outside ReplyDispatchLock; durable replay strips icon bytes and replyToken.",
+      "evidence": [
+        {
+          "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+          "lines": "1646-1647",
+          "detail": "Paired phone context is gated by source device identity."
+        },
+        {
+          "path": "macos/Sources/PlinkMac/NotificationBridge.swift",
+          "lines": "111-133,143-177",
+          "detail": "HFP path submits ordinary content; optional decoration is used for mirrored/message paths."
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt",
+          "lines": "60-79",
+          "detail": "Package lookup/rendering is outside the serialized reply lock."
+        },
+        {
+          "path": "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt",
+          "lines": "73-80",
+          "detail": "Replay omits sourceAppIconPng and replyToken."
+        }
+      ]
+    }
+  ],
+  "nativeUIClaims": [],
+  "nativeUIPresentation": "Not assessed as proven by source or static tests; parent owns native presentation evidence.",
+  "parentReportedVerification": "Parent reported 10 focused Swift tests passed; Luna did not run tests/builds/devices.",
+  "priorPreFreezeReport": "Withdrawn: the earlier missing-file finding came from stale indexed context and is not a current defect.",
+  "parentNotified": true,
+  "testsRun": false,
+  "buildRun": false,
+  "devicesUsed": false,
+  "gitUsed": false,
+  "androidManifestReview": {
+    "status": "approved_bounded",
+    "path": "android/src/main/AndroidManifest.xml",
+    "sha256": "96fdb8d7201213a5ec66b79ae9ce095c1827db7dad276ca3b32c49ce7ff5b68f",
+    "finding": "The frozen change adds exactly one package-visibility query for ACTION_MAIN with CATEGORY_LAUNCHER. It does not add QUERY_ALL_PACKAGES, broad package enumeration, permissions, or unrelated intent queries.",
+    "evidence": [
+      {
+        "lines": "13-18",
+        "detail": "The only <queries> entry contains MAIN and LAUNCHER."
+      },
+      {
+        "lines": "6-11",
+        "detail": "Existing permissions are unchanged in the reviewed manifest."
+      },
+      {
+        "lines": "20-85",
+        "detail": "Application, launcher activity, handoff activity, provider, and services remain otherwise unchanged for this review."
+      }
+    ],
+    "securityBounds": "The helper still receives sbn.packageName and performs direct PackageManager lookup; metadata remains optional and failures omit decoration.",
+    "limitation": "The query covers discoverable launcher apps only. Nonlauncher source packages can still omit optional source metadata; no universal icon claim is made."
+  },
+  "launcherEvidence": {
+    "path": "docs/evidence/iteration-11/plink-android.png",
+    "sha256": "56c3121d9747b5fb5985fc157444cfc57b8d0670959836c83efea735cfe0c55f",
+    "format": "256x256 PNG",
+    "claim": "Parent evidence reports the real launcher image is unclipped; this review preserves that claim as launcher evidence only and does not extend it to nonlauncher packages."
+  },
+  "androidSourceHashes": {
+    "android/src/main/java/app/plink/android/notifications/NotificationArtwork.kt": "97c2178ec49906039afd034e128899a42a2b2c6e2b380b02dfe23697e631b449",
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": "da55f9bf024c969419917f3b55c66267f9bcebdae9e9a3462ae89d61224a93f3",
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt": "a613d68ad006db49f71be6d83085fb3e7d5e22f1ee517351083068b449c9a1b8"
+  },
+  "parentStatus": "Parent corrected Swift tests running; package gate follows. Luna performed source-only review.",
+  "terraLeftIconReview": {
+    "status": "reviewed_adversarially",
+    "freezeArtifact": ".a5c/artifacts/iteration11/terra-left-icon-result.json",
+    "sourceHashes": {
+      "macos/Package.swift": "4b9e5b656de8f717cd91b12ca3b98acd16412887b8b9ab6582aeb18f49083503",
+      "macos/Sources/PlinkNotificationIconBridge/include/PlinkNotificationIconBridge.h": "e52142f4eace64ab97af81345b6d72e403635dbbcf362c6c339d40ba0aedce21",
+      "macos/Sources/PlinkNotificationIconBridge/PlinkNotificationIconBridge.m": "2129a041479fc8fb4d3c5e040c130f2b1dc893ca97d8b21ec310afaad00d9628",
+      "macos/Sources/PlinkMac/NotificationArtwork.swift": "aac3c12e81090e75f2ed900b9a641ca2a7f2f7acb6c7860bcafdddcbde4553fe",
+      "macos/Sources/PlinkMac/NotificationBridge.swift": "eb0fa3314e0b5d6416d3fcabdd8d501b0b0e0d4afb461017a7d24ede1cf2942f",
+      "macos/Tests/PlinkMacTests/NotificationArtworkTests.swift": "34bf9d85f7759364cb37b6ddef0e7bc6f26df0a0804f785cd2e87e10b5ca1fb3"
+    },
+    "verified": [
+      {
+        "area": "private ABI guards",
+        "detail": "Objective-C checks class presence, factory/setter/getter selectors, exact argument counts and return/argument encodings before objc_msgSend; absent/mismatched APIs return nil."
+      },
+      {
+        "area": "exception boundary",
+        "detail": "@try/@catch covers icon factory, mutable content copy, setter, request construction/copy, copied-icon read, and center submission; exception details are not logged."
+      },
+      {
+        "area": "identity and fallback",
+        "detail": "Icon is applied to a copied content/request. The untouched public content is retained for ordinary fallback. No KVC, helper bundle, sender substitution, fake person, or entitlement change."
+      },
+      {
+        "area": "badge",
+        "detail": "NotificationArtwork uses public NSImage systemSymbolName iphone and composites the white/blue circular phone badge into the left-icon PNG."
+      },
+      {
+        "area": "cleanup",
+        "detail": "The new path creates no temporary files or attachment staging. Earlier temporary artwork namespace is outside this patch and remains parent-owned cleanup."
+      }
+    ],
+    "findings": [
+      {
+        "severity": "medium",
+        "area": "fallback generation boundary",
+        "detail": "When an icon-bearing request fails, the plain retry calls submit(content,id:) without a generation token. If the same notification ID is replaced before that plain retry fails, the old fallback completion can remove bookkeeping/report an error for the newer replacement. Existing tests cover icon failure followed by plain failure but not replacement during the plain retry.",
+        "evidence": "macos/Sources/PlinkMac/NotificationBridge.swift:239-253; macos/Tests/PlinkMacTests/NotificationArtworkTests.swift:84-129",
+        "status": "closed",
+        "resolution": "All submissions, including the plain fallback, now acquire a per-ID token; completion gates every effect on current ownership. Regression test covers stale plain fallback failure versus same-ID replacement."
+      },
+      {
+        "severity": "low",
+        "area": "dismiss cancellation",
+        "detail": "handleResponse dismissal removes artworkSubmissions and message bookkeeping but does not call removeDeliveredAndPending([id]); a pending same-ID request is not explicitly canceled. Tests assert retry suppression but do not assert pending-store removal.",
+        "evidence": "macos/Sources/PlinkMac/NotificationBridge.swift:198-201; macos/Tests/PlinkMacTests/NotificationArtworkTests.swift:106-108",
+        "status": "closed",
+        "resolution": "Dismiss now calls removeDeliveredAndPending([id]) before removing message bookkeeping. Regression test asserts shared pending/delivered removal and ignores late failure."
+      },
+      {
+        "severity": "info",
+        "area": "native presentation boundary",
+        "detail": "The private ABI path may be ignored or rejected by the OS. Terra source/tests do not prove left placement or native SF Symbols rendering. Parent owns native proof; the user screenshot is recorded as right-side evidence only and is not reused as left-icon proof.",
+        "status": "open_info"
+      }
+    ],
+    "testCoverageAssessment": "Meaningful coverage exists for missing/mismatched ABI, ordinary fallback, malformed artwork, one retry, cancellation before icon callback, identity/token preservation, and bounded outstanding icon submissions. Missing coverage is replacement during plain fallback and explicit pending removal on dismiss.",
+    "nativeProofClaimed": false,
+    "buildsRunByLuna": false,
+    "devicesUsedByLuna": false,
+    "asyncFixVerification": {
+      "status": "both_approved_findings_closed",
+      "bridgeSha256": "eb0fa3314e0b5d6416d3fcabdd8d501b0b0e0d4afb461017a7d24ede1cf2942f",
+      "testsSha256": "34bf9d85f7759364cb37b6ddef0e7bc6f26df0a0804f785cd2e87e10b5ca1fb3",
+      "onlyChangedFilesAfterPriorFreeze": [
+        "macos/Sources/PlinkMac/NotificationBridge.swift",
+        "macos/Tests/PlinkMacTests/NotificationArtworkTests.swift"
+      ],
+      "unchangedScopeHashes": {
+        "macos/Package.swift": "4b9e5b656de8f717cd91b12ca3b98acd16412887b8b9ab6582aeb18f49083503",
+        "macos/Sources/PlinkNotificationIconBridge/include/PlinkNotificationIconBridge.h": "e52142f4eace64ab97af81345b6d72e403635dbbcf362c6c339d40ba0aedce21",
+        "macos/Sources/PlinkNotificationIconBridge/PlinkNotificationIconBridge.m": "2129a041479fc8fb4d3c5e040c130f2b1dc893ca97d8b21ec310afaad00d9628",
+        "macos/Sources/PlinkMac/NotificationArtwork.swift": "aac3c12e81090e75f2ed900b9a641ca2a7f2f7acb6c7860bcafdddcbde4553fe",
+        "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": "ea2ec9e8817767521912ac1d15374191797a84f4b781ca8266f898c3ed3eff93"
+      },
+      "coverage": [
+        "stalePlainFallbackFailureCannotEvictSameIDReplacement",
+        "dismissCancelsPendingPlainFallbackAndIgnoresItsLateFailure"
+      ],
+      "parentVerification": "All corrected Swift tests are running; Luna did not execute tests. Package gate follows parent Swift verification.",
+      "nativeProofClaimed": false
+    }
+  }
+}

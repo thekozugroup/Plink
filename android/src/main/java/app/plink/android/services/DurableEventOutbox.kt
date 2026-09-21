@@ -72,7 +72,7 @@ class DurableEventOutbox(
 
     private fun sanitize(envelope: PlinkEnvelope): PlinkEnvelope? = when (envelope.type) {
         PlinkEventType.MessageReceived -> {
-            val omitted = setOf("replyToken")
+            val omitted = setOf("replyToken", "sourceAppIconPng")
             envelope.copy(
                 requiresAck = false,
                 payload = JsonObject(envelope.payload.filterKeys { it !in omitted } + ("canReply" to JsonPrimitive(false)))

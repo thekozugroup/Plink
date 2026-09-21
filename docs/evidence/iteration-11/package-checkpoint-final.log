@@ -1,0 +1,37 @@
+Another instance of SwiftPM (PID: 38073) is already running using '<REPO>/macos/.build', waiting until that process has finished execution...Building for production...
+[Planning deferred tasks]
+[2 / 10]
+[3 / 11] PlinkCore
+<REPO>/macos/Sources/PlinkCore/ReconnectEndpointStore.swift:80:14: warning: result of call to 'withLock' is unused [#NoUsage]
+ 78 |
+ 79 |     fileprivate func invalidate(candidateID: UUID) {
+ 80 |         lock.withLock { candidates.removeValue(forKey: candidateID) }
+    |              `- warning: result of call to 'withLock' is unused [#NoUsage]
+ 81 |     }
+ 82 |
+
+[#NoUsage]: <https://docs.swift.org/compiler/documentation/diagnostics/no-usage>
+[5 / 12] PlinkCore
+[8 / 9] PlinkMac-product
+[9 / 10] PlinkMac-product
+[13 / 15] PlinkMac-product
+[14 / 15] PlinkMac-product
+Build complete! (12.90 sec)
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.actool.compilation-results</key>
+	<dict>
+		<key>output-files</key>
+		<array>
+			<string><REPO>/build/PlinkMac.app/Contents/Resources/AppIcon.icns</string>
+			<string><REPO>/build/PlinkMac.app/Contents/Resources/Assets.car</string>
+			<string>/var/folders/sm/2ps6061d7b97v8n7pxwpp6l40000gn/T/plink-assets.qcHymi/asset-info.plist</string>
+		</array>
+	</dict>
+</dict>
+</plist>
+<REPO>/build/PlinkMac.app: replacing existing signature
+<REPO>/build/PlinkMac.app
+<REPO>/build/PlinkMac.app.zip

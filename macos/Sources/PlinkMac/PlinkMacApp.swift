@@ -1643,7 +1643,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 if envelope.requiresAck { sendOutcome(for: envelope, executed: executed) }
                 return
             default:
-                notificationBridge.show(envelope: envelope)
+                notificationBridge.show(envelope: envelope,
+                    pairedPhoneName: activePairing?.device.id == envelope.sourceDeviceId ? pairedPhoneName : nil)
             }
             lastDeliveryState = "Received \(envelope.type.rawValue)"
         case .failure(let error):

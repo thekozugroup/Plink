@@ -1,0 +1,4 @@
+INSTRUMENTATION_RESULT: stream=
+NOTIFICATION ARTWORK FAILED: IllegalStateException: Source label unavailable
+
+INSTRUMENTATION_CODE: 1

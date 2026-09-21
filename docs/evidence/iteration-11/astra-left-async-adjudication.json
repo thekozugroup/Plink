@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "owner": "Astra",
+  "reviewedAtUTC": "2026-09-21T17:13:21.260035+00:00",
+  "status": "two_bounded_lifecycle_fixes_authorized",
+  "findings": [
+    {
+      "id": "I11-LEFT-ASYNC-01",
+      "severity": "P2",
+      "disposition": "confirmed",
+      "reason": "Private request failure creates plain fallback without ownership guard. If same ID is replaced before fallback failure, callback removes current bookkeeping and emits stale error. Prior plain path had same weakness; newly introduced fallback must preserve its own generation boundary.",
+      "fix": "Guard all asynchronous submit completions with current per-ID token, including ordinary fallback. Release pendingArtwork token regardless of ownership, then gate effects. Preserve separate128icon cap; cleanup tokens on completion/replacement/cancel and existing bookkeeping lifecycle. Do not add global counter/protocol/cache."
+    },
+    {
+      "id": "I11-LEFT-ASYNC-02",
+      "severity": "P2",
+      "disposition": "confirmed_bounded_cancellation_gap",
+      "reason": "Dismiss can arrive while same-ID plain fallback is pending. Removing bookkeeping/token alone does not cancel pending OS request. Previously hypothetical in ordinary dismiss, now concrete fallback ordering warrants shared removal.",
+      "fix": "Dismiss calls removeDeliveredAndPending([id]) and removes message bookkeeping."
+    }
+  ],
+  "implementationOwner": "Terra",
+  "sourceScope": [
+    "macos/Sources/PlinkMac/NotificationBridge.swift",
+    "focused notification artwork/bridge tests"
+  ],
+  "regressions": [
+    "Hold icon completion, fail it to create plain fallback, replace same ID, fail old plain fallback; new context remains replyable and no stale delivery error.",
+    "Dismiss while plain fallback pending; verify shared removal of pending/delivered ID and suppress late failure effects.",
+    "Keep existing one-retry/stale-icon/pending-cap tests."
+  ],
+  "productionBridgeProbe": {
+    "reference": ".a5c/artifacts/iteration11/production-icon-bridge.json",
+    "result": {
+      "productionBridgeReturnedRequest": true,
+      "routingUnchanged": true,
+      "fieldsUnchanged": true,
+      "noRightAttachment": true,
+      "originalClean": true,
+      "iconDataEqual": true
+    },
+    "meaning": "Actual bridge preserves data/fields/identity/no attachment/clean original; not native rendering proof."
+  },
+  "gate": "Freeze/review corrected source and rerun relevant verification before install proof. Current running gate applies pre-correction snapshot; retain it, do not misattribute.",
+  "deviceEffectRemainsPending": true
+}

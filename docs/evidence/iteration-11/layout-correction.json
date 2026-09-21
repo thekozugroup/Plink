@@ -1,0 +1,10 @@
+{
+  "userRequirement": "Actual Android source app icon on the left with a small circular Apple system phone symbol badge. Replace orange fixture artwork.",
+  "observed": "User screenshot confirms current right attachment rendering and paired phone subtitle; left delivering app icon appears as placeholder.",
+  "accepted": false,
+  "reason": "Right attachment does not satisfy desired left icon placement.",
+  "nativePresentationVerified": "Right attachment only; not desired left icon.",
+  "decision": "astra-left-icon-decision.json",
+  "runtimeProbe": "icon-runtime-inventory.log",
+  "serializationProbe": "icon-serialization.json"
+}

@@ -7,6 +7,9 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     private lazy var center = UNUserNotificationCenter.current()
     private let submitNotification: ((UNNotificationRequest) -> Void)?
     private let removeNotifications: (([String]) -> Void)?
+    private let addNotification: ((UNNotificationRequest, @escaping @MainActor (Error?) -> Void) -> Void)?
+    // Late delivery completions may only affect the current submission for this ID.
+    private var submissions: [String: UUID] = [:]
     private var messages = MacNotificationBookkeeping()
     private var callContext: MacCallContext?
     private var callNotificationID: String?
@@ -32,10 +35,12 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
 
     init(
         submitNotification: ((UNNotificationRequest) -> Void)? = nil,
-        removeNotifications: (([String]) -> Void)? = nil
+        removeNotifications: (([String]) -> Void)? = nil,
+        addNotification: ((UNNotificationRequest, @escaping @MainActor (Error?) -> Void) -> Void)? = nil
     ) {
         self.submitNotification = submitNotification
         self.removeNotifications = removeNotifications
+        self.addNotification = addNotification
         super.init()
     }
 
@@ -82,6 +87,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func clearContexts() {
+        submissions.removeAll()
         removeMessages(messages.removeAll())
         removeDeliveredAndPending(["plink.call.mirrored"])
         mirroredCallIdentity = nil
@@ -124,7 +130,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         submit(content, id: id)
     }
 
-    func show(envelope: PlinkEnvelope) {
+    func show(envelope: PlinkEnvelope, pairedPhoneName: String? = nil) {
         if envelope.type == .callEnded {
             guard let identity = MirroredCallIdentity(envelope), identity == mirroredCallIdentity else { return }
             removeDeliveredAndPending(["plink.call.mirrored"])
@@ -138,7 +144,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
             content.title = "Call notification from phone"
             content.body = envelope.payload["callerName"]?.stringValue ?? "Check your phone"
             content.categoryIdentifier = "plink.call.readonly"
-            submit(content, id: "plink.call.mirrored")
+            submitFromPhone(content, id: "plink.call.mirrored", envelope: envelope, phoneName: pairedPhoneName)
             return
         }
         guard let plan = NotificationPlanner.plan(for: envelope) else { return }
@@ -162,40 +168,65 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         content.subtitle = plan.subtitle
         content.body = plan.body
         content.categoryIdentifier = plan.categoryIdentifier == "plink.message" && context == nil ? "plink.message.readonly" : plan.categoryIdentifier
-        submit(content, id: id)
+        if envelope.type == .messageReceived {
+            submitFromPhone(content, id: id, envelope: envelope, phoneName: pairedPhoneName)
+        } else {
+            submit(content, id: id)
+        }
     }
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         let id = response.notification.request.identifier
         let action = response.actionIdentifier
         let text = (response as? UNTextInputNotificationResponse)?.userText
-        await MainActor.run {
-            if action.hasPrefix("call."), let callAction = MacCallAction(rawValue: String(action.dropFirst(5))) {
-                guard id == self.callNotificationID, let context = self.callContext else { self.onStaleAction?(); return }
-                self.onCallAction?(callAction, context)
-                return
-            }
-            if action == UNNotificationDismissActionIdentifier { _ = self.messages.remove(notificationID: id); return }
-            guard action == "message.reply", let text else { return }
-            do { try ReplyRouter.validateReplyText(text) }
-            catch { self.onInvalidReply?(); return }
-            guard let context = self.messages.takeReply(notificationID: id) else { self.onStaleAction?(); return }
-            self.center.removeDeliveredNotifications(withIdentifiers: [id])
-            self.onTextReply?(context, text)
+        await handleResponse(id: id, action: action, text: text)
+    }
+
+    // Same action path for native responses and held-delivery regression tests.
+    func handleResponse(id: String, action: String, text: String?) {
+        if action.hasPrefix("call."), let callAction = MacCallAction(rawValue: String(action.dropFirst(5))) {
+            guard id == self.callNotificationID, let context = self.callContext else { self.onStaleAction?(); return }
+            self.onCallAction?(callAction, context)
+            return
         }
+        if action == UNNotificationDismissActionIdentifier {
+            self.removeDeliveredAndPending([id])
+            _ = self.messages.remove(notificationID: id)
+            return
+        }
+        guard action == "message.reply", let text else { return }
+        do { try ReplyRouter.validateReplyText(text) }
+        catch { self.onInvalidReply?(); return }
+        guard let context = self.messages.takeReply(notificationID: id) else { self.onStaleAction?(); return }
+        self.removeDeliveredAndPending([id])
+        self.onTextReply?(context, text)
     }
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions { [.banner, .sound] }
 
+    private func submitFromPhone(_ content: UNMutableNotificationContent, id: String,
+                                   envelope: PlinkEnvelope, phoneName: String?) {
+        content.subtitle = NotificationArtwork.subtitle(appName: envelope.payload["sourceAppName"]?.stringValue,
+                                                       phoneName: phoneName)
+        submit(content, id: id)
+    }
+
     private func submit(_ content: UNMutableNotificationContent, id: String) {
+        submissions.removeValue(forKey: id)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
         if let submitNotification { submitNotification(request); return }
-        center.add(request) { [weak self] error in
+        let token = UUID()
+        submissions[id] = token
+        let completion: @MainActor (Error?) -> Void = { [weak self] error in
+            guard let self, self.submissions[id] == token else { return }
+            self.submissions.removeValue(forKey: id)
             guard let error else { return }
-            Task { @MainActor in
-                _ = self?.messages.remove(notificationID: id)
-                self?.onDeliveryError?(id, error)
-            }
+            _ = self.messages.remove(notificationID: id)
+            self.onDeliveryError?(id, error)
+        }
+        if let addNotification { addNotification(request, completion); return }
+        center.add(request) { error in
+            Task { @MainActor in completion(error) }
         }
     }
 
@@ -205,6 +236,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func removeDeliveredAndPending(_ ids: [String]) {
+        for id in ids { submissions.removeValue(forKey: id) }
         if let removeNotifications { removeNotifications(ids); return }
         center.removeDeliveredNotifications(withIdentifiers: ids)
         center.removePendingNotificationRequests(withIdentifiers: ids)

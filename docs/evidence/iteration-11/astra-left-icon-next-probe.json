@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "owner": "Astra",
+  "iteration": 11,
+  "recordedAtUTC": "2026-09-21T17:21:32.122861+00:00",
+  "status": "native_data_icon_failed_bounded_comparison_authorized",
+  "failure": {
+    "basis": "Parent relays user native screenshot17:18.",
+    "leftIcon": "generic template, no SFphone badge",
+    "rightAttachment": "absent",
+    "requestedResultVerified": false,
+    "interpretation": "Construction/serialization and add-call success cannot substitute for daemon rendering. No accepted UI completion."
+  },
+  "ownership": {
+    "Terra": "Prepare bounded diagnostic variants and inspect own-process construction/readback/format handling. No device/build/git by agent.",
+    "Parent": "Build/run temporary diagnostic version of existing Plink app under same actual identity/current entitlements; collect native screenshot and sanitized results.",
+    "Astra": "Adjudicate actual findings before choosing final production implementation."
+  },
+  "approvedProbe": {
+    "maximumInitialNotifications": 3,
+    "oneDiagnosticBuild": true,
+    "variants": [
+      {
+        "name": "data-icon",
+        "behavior": "Existing guarded iconWithData: with validated blue fixture/SFphonebadge PNG; reproduces current failure as same-run control."
+      },
+      {
+        "name": "owned-png-path",
+        "behavior": "Guarded iconAtPath:shouldSuppressMask:true with identical PNG retained in app-owned local storage until observation/cleanup."
+      },
+      {
+        "name": "own-bundle-control",
+        "behavior": "Guarded iconForApplicationURL: using actual Bundle.main.bundleURL. Plink artwork control only, not proof of Android artwork."
+      }
+    ],
+    "invariants": [
+      "Only local synthetic fixture text and own artwork; distinctly label cases.",
+      "Preserve ordinary sender identity/categories/current permissions; no initWithBundleIdentifier proxy or third-party icon borrowing.",
+      "Class/selector/full method encodings including BOOL checked; Objective-C exceptions caught.",
+      "No right attachment, system cache reset, new entitlement, signing-policy change, SIP/permission bypass or helper-app fleet.",
+      "Any test-only entry point must not remain in shipping build. No unbounded file cache or automatic multi-notification retry.",
+      "Record constructor/readback/submission categories and actual visual outcome independently.",
+      "Remove only owned diagnostic notifications/files after observation."
+    ],
+    "formatFollowup": "If own-bundle control renders but PNG path/data do not, permit one additional same-badge ICNS or TIFF variant chosen from native AppKit encoding evidence; do not claim an undocumented required encoding without actual result. Bound decoded dimensions and encoded bytes; no universal codec sweep.",
+    "renderingGate": "User/native screenshot must distinguish variants. Do not infer icon success from getters, serialized bytes or add completion.",
+    "entryPoint": "Temporary DEBUG-only process launch argument in existing Plink application, after normal notification configuration, absent from release behavior. No remote envelope switch, persistent preference, separate sender application or identity substitution.",
+    "observation": "Post3distinctly labeled notifications once with same synthetic content and no attachments; parent collects one native comparison screenshot. No notification authorization/Focus/settings changes. Remove only probe IDs/files.",
+    "removalRequirement": "Remove debug launch-argument/probe wiring before final production source freeze and final package. Keep source of diagnostic/evidence in artifacts if desired, not runtime feature."
+  },
+  "communicationDecision": {
+    "officialSource": "https://developer.apple.com/documentation/intents/insendmessageintent/sender",
+    "finding": "Apple documents sender as person or account. A genuine messaging account is allowed; an arbitrary notification source app/title is not evidence of one.",
+    "decision": "No fake account, restricted ad-hoc entitlement, or automatic communication-intent conversion. Genuine communication notifications remain a separate candidate only if actual sender/conversation semantics and valid signing can be established; not a general source-app icon solution."
+  },
+  "productionDecision": "Temporary diagnostic source/wiring authorized to Terra within current app/bridge ownership; final shipping path still awaits result. No production claim from selector or add success.",
+  "lifecycle": {
+    "runId": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+    "effectId": "01M32EE26XXYHC4TMX7CC0YDDJ",
+    "state": "pending",
+    "newIteration": false
+  }
+}
