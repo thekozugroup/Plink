@@ -1,0 +1,7 @@
+{
+  "verifiedAtUTC": "2026-09-21T14:33:09.838682+00:00",
+  "AndroidInstalledStillMatchesCheckpoint8": true,
+  "MacBundleStillMatchesCheckpoint8": true,
+  "reference": "../iteration-8/installed-builds.json",
+  "scope": "Read-only hashes rechecked after user confirmed native reply and before installing any iteration 9 build."
+}

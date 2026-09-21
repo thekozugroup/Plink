@@ -191,6 +191,7 @@ public enum ReconnectCandidatePolicy {
 
 public struct ReconnectMessage: Equatable, Sendable {
     public let type: EventType
+    public let conditional: Bool
     public let m: String
     public let p: String?
     public let r: String?
@@ -200,6 +201,7 @@ public struct ReconnectMessage: Equatable, Sendable {
     public init(_ envelope: PlinkEnvelope, validation: ReconnectValidationPolicy = .production) throws {
         try ReconnectPayloadPolicy.validate(envelope, validation: validation)
         type = envelope.type
+        conditional = envelope.payload["v"]?.intValue == 2
         m = envelope.payload["m"]!.stringValue!
         p = envelope.payload["p"]?.stringValue
         r = envelope.payload["r"]?.stringValue
@@ -209,8 +211,12 @@ public struct ReconnectMessage: Equatable, Sendable {
 
     public func envelope(source: String, target: String, id: String = UUID().uuidString.lowercased()) -> PlinkEnvelope {
         var payload: [String: PayloadValue] = [
-            "v": .int(1), "m": .string(m), "mac": .string(mac.description), "phone": .string(phone.description)
+            "v": .int(conditional ? 2 : 1), "m": .string(m), "mac": .string(mac.description), "phone": .string(phone.description)
         ]
+        if conditional {
+            payload["domain"] = .string("plink.reconnect.recovery")
+            payload["mode"] = .string("conditional-unadmitted")
+        }
         if let p { payload["p"] = .string(p) }
         if let r { payload["r"] = .string(r) }
         return PlinkEnvelope(id: id, type: type, sentAt: .now, sourceDeviceId: source,
@@ -281,9 +287,16 @@ public enum ReconnectPayloadPolicy {
         try validateEnvelopeID(envelope.id)
         try validateID(envelope.sourceDeviceId, name: "sourceDeviceId")
         try validateID(envelope.targetDeviceId, name: "targetDeviceId")
-        let expected = expectedPayloadKeys(envelope.type)
+        let version = envelope.payload["v"]?.intValue
+        guard version == 1 || version == 2 else { throw ReconnectProtocolError.invalidField("v") }
+        let expected = expectedPayloadKeys(envelope.type, conditional: version == 2)
         guard Set(envelope.payload.keys) == expected else { throw ReconnectProtocolError.invalidField("payload") }
-        guard envelope.payload["v"]?.intValue == 1 else { throw ReconnectProtocolError.invalidField("v") }
+        if version == 2 {
+            guard envelope.payload["domain"]?.stringValue == "plink.reconnect.recovery",
+                  envelope.payload["mode"]?.stringValue == "conditional-unadmitted" else {
+                throw ReconnectProtocolError.invalidField("mode")
+            }
+        }
         for key in ["m", "p", "r"] where expected.contains(key) {
             guard let value = envelope.payload[key]?.stringValue, isCanonicalNonce(value) else {
                 throw ReconnectProtocolError.invalidField(key)
@@ -347,9 +360,16 @@ public enum ReconnectPayloadPolicy {
         type: EventType,
         validation: ReconnectValidationPolicy
     ) throws {
-        try exactKeys(payload, expected: expectedPayloadKeys(type))
-        guard try payload.required("v").numberValue() == "1" else {
+        let version = try payload.required("v").numberValue()
+        guard version == "1" || version == "2" else {
             throw ReconnectProtocolError.invalidField("v")
+        }
+        try exactKeys(payload, expected: expectedPayloadKeys(type, conditional: version == "2"))
+        if version == "2" {
+            guard try payload.required("domain").stringValue() == "plink.reconnect.recovery",
+                  try payload.required("mode").stringValue() == "conditional-unadmitted" else {
+                throw ReconnectProtocolError.invalidField("mode")
+            }
         }
         for key in ["m", "p", "r"] where payload[key] != nil {
             guard isCanonicalNonce(try payload.required(key).stringValue()) else {
@@ -371,12 +391,13 @@ public enum ReconnectPayloadPolicy {
         return type
     }
 
-    private static func expectedPayloadKeys(_ type: EventType) -> Set<String> {
+    private static func expectedPayloadKeys(_ type: EventType, conditional: Bool = false) -> Set<String> {
+        let extensionKeys: Set<String> = conditional ? ["domain", "mode"] : []
         switch type {
-        case .reconnectHello: return ["v", "m", "mac", "phone"]
-        case .reconnectChallenge, .reconnectProof: return ["v", "m", "p", "mac", "phone"]
+        case .reconnectHello: return Set(["v", "m", "mac", "phone"]).union(extensionKeys)
+        case .reconnectChallenge, .reconnectProof: return Set(["v", "m", "p", "mac", "phone"]).union(extensionKeys)
         case .reconnectReverse, .reconnectReverseProof, .reconnectReady, .reconnectCommit, .reconnectDone:
-            return ["v", "m", "p", "r", "mac", "phone"]
+            return Set(["v", "m", "p", "r", "mac", "phone"]).union(extensionKeys)
         default: return []
         }
     }

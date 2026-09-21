@@ -5,6 +5,22 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class DurableFrameStateTest {
+    @Test fun oneConditionalFrameRetainsExistingWindowBoundary() {
+        val within = InMemoryFrameStateStore()
+        within.accept("pair", 4096, "ordinary-highest")
+        within.accept("pair", 1, "delayed-ordinary")
+        val advanced = InMemoryFrameStateStore()
+        advanced.accept("pair", 4096, "ordinary-highest")
+        advanced.accept("pair", 4097, "conditional-hello")
+        assertThrows(IllegalArgumentException::class.java) {
+            advanced.accept("pair", 1, "delayed-ordinary")
+        }
+        advanced.accept("pair", 2, "still-in-window")
+        assertThrows(IllegalArgumentException::class.java) {
+            advanced.accept("pair", 2, "still-in-window")
+        }
+    }
+
     @Test fun survivesRecreationAndAcceptsReordering() {
         val directory = Files.createTempDirectory("plink-state-test").toFile()
         try {

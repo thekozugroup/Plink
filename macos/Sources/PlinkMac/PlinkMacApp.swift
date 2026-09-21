@@ -2,6 +2,7 @@ import AppKit
 import CoreGraphics
 import CryptoKit
 import Network
+import OSLog
 import PlinkCore
 import Security
 import SwiftUI
@@ -97,6 +98,56 @@ struct StartupRecoveryState: Sendable {
     }
 }
 
+/// The app's accepted handoff: actor-atomic checks/retirement, then owned cleanup.
+@MainActor
+final class ConditionalReconnectHandoff {
+    let admission: ConditionalReconnectAdmission
+    let authority: ReconnectCommitAuthority
+    let deadline: ContinuousClock.Instant
+    private let now: () -> ContinuousClock.Instant
+    private let isCurrent: () -> Bool
+    private let retire: () -> Void
+    private let cleanup: () async -> Void
+    private var cleaned = false
+
+    init(admission: ConditionalReconnectAdmission, authority: ReconnectCommitAuthority,
+         deadline: ContinuousClock.Instant, now: @escaping () -> ContinuousClock.Instant = { .now },
+         isCurrent: @escaping () -> Bool, retire: @escaping () -> Void, cleanup: @escaping () async -> Void) {
+        self.admission = admission
+        self.authority = authority
+        self.deadline = deadline
+        self.now = now
+        self.isCurrent = isCurrent
+        self.retire = retire
+        self.cleanup = cleanup
+    }
+
+    func requireCurrent() throws {
+        try ReconnectRecoveryPolicy.requireCurrent(deadline: deadline, now: now(), isCurrent: isCurrent())
+        try admission.requireCurrent()
+    }
+
+    func accept() async throws {
+        try requireCurrent()
+        try admission.retire()
+        retire()
+        await cleanup()
+        try requireCurrent()
+        cleaned = true
+    }
+
+    func publish(binding: VerifiedNetworkBinding) throws -> UUID {
+        try requireCurrent()
+        guard cleaned else { throw ReconnectSessionError.wrongPhase }
+        return try admission.openOrdinaryAdmission(binding: binding)
+    }
+
+    func cancel() {
+        authority.invalidate()
+        admission.cancel()
+    }
+}
+
 @main
 struct PlinkMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
@@ -139,6 +190,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private var reconnectAttempt = UUID()
     private var reconnectDeadline: ContinuousClock.Instant?
     private var reconnectDeadlineTask: Task<Void, Never>?
+    private var conditionalReconnectTask: Task<Void, Never>?
+    private var conditionalHandoff: ConditionalReconnectHandoff?
     private var pendingManualOffer: PairingOffer?
     private var pendingManualConfirmation: PairingConfirmation?
     private var pendingConsent: PairingConsent?
@@ -203,6 +256,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private let reconnectPathMonitor = NWPathMonitor()
     private let reconnectPathQueue = DispatchQueue(label: "com.thekozugroup.plink.reconnect-path")
     private var reconnectPathSignature: ReconnectPathSignature?
+    private let observationLog = Logger(subsystem: "com.thekozugroup.plink.mac", category: "reconnect-observation")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installReconnectLifecycleObservers()
@@ -513,16 +567,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func cancelPendingAutomaticRecovery() {
+        reconnect.stopObservingSelectedPeer()
+        cancelConditionalReconnect()
         recoveryPolicy.invalidate()
     }
 
+    private func cancelConditionalReconnect() {
+        conditionalReconnectTask?.cancel()
+        conditionalHandoff?.cancel()
+        conditionalReconnectTask = nil
+        conditionalHandoff = nil
+    }
+
     private func schedulePendingAutomaticRecovery() {
+        refreshSelectedPeerObservation()
         guard recoveryPolicy.pending,
               pairingRecoveryComplete, !terminationPending, !isPairing, !pairingInFlight,
               reconnectEnvironmentEligible, let lifetime = pairLifetime, lifetime.isCurrent,
               let pairing = activePairing, pairing.device.id == lifetime.peerID,
               pairing.device.sessionId == lifetime.sessionID, reconnectListener != nil,
-              reconnectAuthority == nil, pairedPeerID == nil, lifetime.ordinaryAdmission() == nil else { return }
+              reconnectAuthority == nil, conditionalReconnectTask == nil,
+              pairedPeerID == nil, lifetime.ordinaryAdmission() == nil else { return }
         let attempt = reconnectAttempt
         let pairingToken = pairingAttempt
         recoveryPolicy.schedule(eligible: { [weak self, weak lifetime] in
@@ -543,6 +608,78 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             // beginDiscovery starts the existing 30-second authority before awaiting retirement.
             self?.reconnect.beginDiscovery(automatically: true)
         })
+    }
+
+    // Tests inject only the entry action/clock; production and tests use this same dispatch gate.
+    static func conditionalReturnHandler(isCurrent: @escaping () -> Bool,
+        now: @escaping () -> ContinuousClock.Instant = { .now },
+        start: @escaping (ReconnectCandidate, ContinuousClock.Instant) -> Bool
+    ) -> (ReconnectCandidate, ContinuousClock.Instant) -> Bool {
+        { candidate, deadline in
+            guard !Task.isCancelled, now() < deadline, isCurrent() else { return false }
+            return start(candidate, deadline)
+        }
+    }
+
+    private func refreshSelectedPeerObservation() {
+        guard pairingRecoveryComplete else {
+            observationLog.notice("observer.refresh.blocked.startup"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard !recoveryPolicy.suppressed else {
+            observationLog.notice("observer.refresh.blocked.cancel"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard !terminationPending else {
+            observationLog.notice("observer.refresh.blocked.termination"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard !isPairing, !pairingInFlight else {
+            observationLog.notice("observer.refresh.blocked.pairing"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard reconnectEnvironmentEligible else {
+            observationLog.notice("observer.refresh.blocked.environment"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard reconnectTask == nil, reconnectAuthority == nil, conditionalReconnectTask == nil else {
+            observationLog.notice("observer.refresh.blocked.busy"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard retiringTransport == nil else {
+            observationLog.notice("observer.refresh.blocked.cleanup"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard let lifetime = pairLifetime, lifetime.isCurrent else {
+            observationLog.notice("observer.refresh.blocked.lifetime"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard let listener = reconnectListener else {
+            observationLog.notice("observer.refresh.blocked.listener"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard let pairing = activePairing else {
+            observationLog.notice("observer.refresh.blocked.pair_missing"); reconnect.stopObservingSelectedPeer(); return
+        }
+        guard pairing.device.id == lifetime.peerID, pairing.device.sessionId == lifetime.sessionID else {
+            observationLog.notice("observer.refresh.blocked.pair_mismatch"); reconnect.stopObservingSelectedPeer(); return
+        }
+        let epoch = recoveryPolicy.token
+        let pairingToken = pairingAttempt
+        let attempt = reconnectAttempt
+        let generation = connectionGeneration
+        let path = reconnectPathSignature
+        let current: () -> Bool = { [weak self, weak lifetime] in
+            guard let self, let lifetime else { return false }
+            return self.pairingRecoveryComplete && !self.recoveryPolicy.suppressed &&
+                !self.terminationPending && !self.isPairing && !self.pairingInFlight &&
+                self.reconnectEnvironmentEligible && self.reconnectPathSignature == path &&
+                self.pairLifetime === lifetime && lifetime.isCurrent && self.reconnectListener === listener &&
+                self.activePairing?.device.id == lifetime.peerID &&
+                self.activePairing?.device.sessionId == lifetime.sessionID &&
+                self.pairingAttempt == pairingToken && self.reconnectAttempt == attempt &&
+                self.recoveryPolicy.token == epoch && self.connectionGeneration == generation &&
+                self.reconnectTask == nil && self.reconnectAuthority == nil &&
+                self.conditionalReconnectTask == nil && self.retiringTransport == nil
+        }
+        let saved = try? reconnectEndpointStore.load(localID: localMacDeviceId, peerID: lifetime.peerID,
+            sessionID: lifetime.sessionID, sessionKey: pairing.key)
+        reconnect.observeSelectedPeer(pairKey: "\(lifetime.peerID):\(lifetime.sessionID)", epoch: epoch,
+            preferredEndpoint: saved?.endpoint ?? pairing.device.endpoint, isCurrent: current,
+            onReturn: Self.conditionalReturnHandler(isCurrent: current, start: { [weak self] candidate, deadline in
+                self?.reconnectConditionally(candidate: candidate, deadline: deadline) != nil
+            }))
     }
 
     private func clearTransport() {
@@ -734,6 +871,96 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         return true
     }
 
+    /// One selected-return candidate/Hello with the deadline captured before resolution.
+    @discardableResult
+    func reconnectConditionally(candidate: ReconnectCandidate, deadline: ContinuousClock.Instant) -> Task<Void, Never>? {
+        guard conditionalReconnectTask == nil, reconnectTask == nil, reconnectAuthority == nil,
+              retiringTransport == nil, !recoveryPolicy.suppressed,
+              pairingRecoveryComplete, ContinuousClock.now < deadline,
+              !terminationPending, !isPairing, !pairingInFlight, reconnectEnvironmentEligible,
+              let lifetime = pairLifetime, let listener = reconnectListener,
+              let pairing = activePairing, pairing.device.id == lifetime.peerID,
+              pairing.device.sessionId == lifetime.sessionID else { return nil }
+        let authority = ReconnectCommitAuthority(deadline: deadline)
+        guard let admission = try? lifetime.beginConditionalReconnect(authority: authority) else { return nil }
+        let generation = connectionGeneration
+        let retiredGeneration = UUID()
+        let pairingToken = pairingAttempt
+        let recoveryToken = recoveryPolicy.token
+        let path = reconnectPathSignature
+        let ownedTransport = activeTransport
+        let current: () -> Bool = { [weak self, weak lifetime] in
+            guard let self, let lifetime else { return false }
+            return self.pairLifetime === lifetime && self.reconnectListener === listener &&
+                self.pairingAttempt == pairingToken && self.recoveryPolicy.token == recoveryToken &&
+                self.pairingRecoveryComplete && !self.recoveryPolicy.suppressed && !self.terminationPending &&
+                self.reconnectPathSignature == path &&
+                !self.isPairing && !self.pairingInFlight && self.reconnectEnvironmentEligible &&
+                self.activePairing?.device.id == pairing.device.id &&
+                self.activePairing?.device.sessionId == pairing.device.sessionId &&
+                (self.connectionGeneration == generation || self.connectionGeneration == retiredGeneration)
+        }
+        let handoff = ConditionalReconnectHandoff(admission: admission, authority: authority,
+            deadline: deadline, isCurrent: current, retire: { [weak self] in
+                guard let self else { return }
+                self.connectionGeneration = retiredGeneration
+                self.pairedPeerID = nil
+                self.commands.removeAll()
+                self.notificationBridge.clearContexts()
+                self.deviceStatus = nil
+                self.mediaState = nil
+                self.mediaSessions.removeAll()
+                self.lastPeerActivity = nil
+                ownedTransport?.invalidate()
+                self.activeTransport = nil
+                self.retiringTransport = ownedTransport
+                self.reconnect.setDisconnecting()
+                self.observationLog.notice("Plink conditional reconnect accepted")
+            }, cleanup: { [weak self] in
+                // Before touching the shared file controller, recheck actor-owned state.
+                if let self, current() { await self.files.suspendAndAwait() }
+                await ownedTransport?.shutdown()
+                if let self, self.retiringTransport === ownedTransport { self.retiringTransport = nil }
+            })
+        conditionalHandoff = handoff
+        let task = Task { [weak self] in
+            guard let self else { handoff.cancel(); return }
+            defer {
+                handoff.cancel()
+                if self.conditionalHandoff === handoff {
+                    self.conditionalHandoff = nil
+                    self.conditionalReconnectTask = nil
+                    self.reconnect.stopObservingSelectedPeer()
+                    self.refreshSelectedPeerObservation()
+                }
+            }
+            do {
+                let result = try await ReconnectInitiator(lifetime: lifetime, listener: listener,
+                    commitAuthority: authority, endpointStore: self.reconnectEndpointStore, listenerPort: self.receiverPort)
+                    .attemptConditional(candidate: candidate, deadline: deadline, admission: admission,
+                        authorize: { try await handoff.requireCurrent() }, accepted: { try await handoff.accept() })
+                let nextGeneration = try handoff.publish(binding: result.binding)
+                let sender = SerializedPlinkSender(transport: BoundSecureNetworkPlinkClient(
+                    lifetime: lifetime, binding: result.binding, generation: nextGeneration))
+                self.activeTransport = sender
+                self.connectionGeneration = nextGeneration
+                self.pairedPeerID = pairing.device.id
+                self.files.bind(localID: self.localMacDeviceId, peerID: pairing.device.id, transport: sender)
+                self.reconnect.setConnected()
+                self.lastDeliveryState = "Connected to \(pairing.device.name) on the local network."
+                self.observationLog.notice("Plink conditional reconnect completed")
+            } catch {
+                // A rejected preflight must not clear a healthy connection or publish an error over it.
+                if self.conditionalHandoff === handoff, current(), self.connectionGeneration == retiredGeneration {
+                    self.reconnect.setFailed("The phone could not reconnect. Try Reconnect again.")
+                }
+                NSLog("Plink conditional reconnect ended without publication")
+            }
+        }
+        conditionalReconnectTask = task
+        return task
+    }
+
     private func continueReconnect(candidates: [ReconnectCandidate]) {
         guard let deadline = reconnectDeadline, let authority = reconnectAuthority else { return }
         let token = reconnectAttempt
@@ -806,6 +1033,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 let failure: Error = ContinuousClock.now >= deadline ? ReconnectSessionError.timedOut : error
                 self.reconnect.setFailed(self.reconnectFailureMessage(failure))
                 self.lastDeliveryState = "Reconnect failed. The saved pairing was preserved."
+                self.refreshSelectedPeerObservation()
             }
         }
     }
@@ -845,7 +1073,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 guard self.reconnectAttempt == token else { return }
                 if self.retiringTransport === ownedTransport { self.retiringTransport = nil }
             }
-            if self.reconnectAttempt == token { self.reconnectTask = nil }
+            if self.reconnectAttempt == token {
+                self.reconnectTask = nil
+                self.refreshSelectedPeerObservation()
+            }
         }
     }
 
@@ -897,6 +1128,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 reconnectDeadline = nil
                 reconnectAuthority = nil
                 reconnectTask = nil
+                refreshSelectedPeerObservation()
                 return
             } catch is CancellationError {
                 throw CancellationError()

@@ -1,0 +1,11 @@
+{
+  "atUTC": "2026-09-21T15:16:41.237235+00:00",
+  "hashes": {
+    "android/build/outputs/apk/debug/android-debug.apk": "d5c084136572916ed71542d6811bcd7c88c6691fb4ea2a0c033b7ef8db028dd6",
+    "build/PlinkMac.app/Contents/MacOS/PlinkMac": "0e2a10f0e41bd041a04b929cbced02a0f66240e066826f88cc38e37927481a1c"
+  },
+  "installedAndroidSHA256": "d5c084136572916ed71542d6811bcd7c88c6691fb4ea2a0c033b7ef8db028dd6",
+  "androidMatches": true,
+  "macPID": 91956,
+  "macLaunch": "Final bundle launched through computer use. Authenticated automatic recovery and a subsequent native reply callback verified on this unchanged process."
+}

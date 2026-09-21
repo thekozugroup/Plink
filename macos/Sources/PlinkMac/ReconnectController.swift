@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import OSLog
 import PlinkCore
 
 // One event-driven request per environment change; no retry timer or network authority.
@@ -97,6 +98,7 @@ enum ReconnectUIState: Equatable {
 @MainActor
 final class ReconnectController: NSObject, ObservableObject, @preconcurrency NetServiceBrowserDelegate,
     @preconcurrency NetServiceDelegate {
+    private let observationLog = Logger(subsystem: "com.thekozugroup.plink.mac", category: "reconnect-observation")
     @Published private(set) var state: ReconnectUIState = .idle
     @Published private(set) var pairedName = "Pixel"
     @Published private(set) var currentAddresses: [String] = []
@@ -114,27 +116,52 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     private var candidates: [ReconnectCandidate] = []
     private var discovery = UUID()
     private let search: (NetServiceBrowser) -> Void
-    private let resolve: (NetService) -> Void
+    private let resolve: (NetService, TimeInterval) -> Void
     private let scheduleTimeout: (@escaping @MainActor () -> Void) -> Void
     private let interfaces: () -> [ReconnectInterfaceSnapshot]
+    private let now: () -> ContinuousClock.Instant
+    private let enqueueObservation: (@escaping @MainActor () -> Void) -> Void
+    private struct ObservedService {
+        let service: NetService
+        let returnDeadline: ContinuousClock.Instant?
+        var matched = false
+    }
+    private var observationBrowser: NetServiceBrowser?
+    private var observedServices: [ObjectIdentifier: ObservedService] = [:]
+    private var observationEpoch = UUID()
+    private var observationOwner: UUID?
+    private var observationCurrent: (() -> Bool)?
+    private var selectedReturn: ((ReconnectCandidate, ContinuousClock.Instant) -> Bool)?
+    private var preferredEndpoint: String?
+    private var absent = false
+    private var queuedReturn: UUID?
+    private var cooldownPairKey: String?
+    private var lastInvocation: ContinuousClock.Instant?
 
     init(search: @escaping (NetServiceBrowser) -> Void = { $0.searchForServices(ofType: "_plink._tcp.", inDomain: "local.") },
-         resolve: @escaping (NetService) -> Void = { $0.resolve(withTimeout: 2) },
+         resolve: @escaping (NetService, TimeInterval) -> Void = { $0.resolve(withTimeout: $1) },
          scheduleTimeout: @escaping (@escaping @MainActor () -> Void) -> Void = { finish in
              Task { @MainActor in
                  try? await Task.sleep(for: .seconds(4))
                  finish()
              }
          },
-         interfaces: @escaping () -> [ReconnectInterfaceSnapshot] = { ReconnectCandidatePolicy.currentInterfaces() }) {
+         interfaces: @escaping () -> [ReconnectInterfaceSnapshot] = { ReconnectCandidatePolicy.currentInterfaces() },
+         now: @escaping () -> ContinuousClock.Instant = { .now },
+         enqueueObservation: @escaping (@escaping @MainActor () -> Void) -> Void = { work in
+             Task { @MainActor in work() }
+         }) {
         self.search = search
         self.resolve = resolve
         self.scheduleTimeout = scheduleTimeout
         self.interfaces = interfaces
+        self.now = now
+        self.enqueueObservation = enqueueObservation
         super.init()
     }
 
     func configure(peerID: String, pairedName: String) {
+        stopObservingSelectedPeer()
         stopDiscoveryForLifecycle()
         self.peerID = peerID
         self.pairedName = pairedName
@@ -144,6 +171,7 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     }
 
     func beginDiscovery(automatically: Bool = false) {
+        stopObservingSelectedPeer()
         if !automatically { onManualConnect?() }
         stopDiscovery()
         guard !peerID.isEmpty else { state = .failed("No active paired phone."); return }
@@ -168,6 +196,7 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     }
 
     func reconnectManually() {
+        stopObservingSelectedPeer()
         onManualConnect?()
         stopDiscovery()
         let value = manualIPv4.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -190,6 +219,7 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     }
 
     func cancel() {
+        stopObservingSelectedPeer()
         stopDiscovery()
         discovery = UUID()
         state = .cancelled
@@ -204,30 +234,190 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     func setIdle() { state = .idle }
 
     func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+        if browser === observationBrowser {
+            observationLog.notice("observer.find.owned")
+            guard observationCurrent?() == true else { observationLog.notice("observer.find.reject.stale"); return }
+            guard observedServices.count < 8 else { observationLog.notice("observer.find.reject.capacity"); return }
+            guard service.domain == "local.", service.type == "_plink._tcp." else {
+                observationLog.notice("observer.find.reject.service_type"); return
+            }
+            guard !observedServices.values.contains(where: {
+                      $0.service.name == service.name && $0.service.type == service.type && $0.service.domain == service.domain
+                  }) else { observationLog.notice("observer.find.reject.duplicate"); return }
+            let returnDeadline = absent ? ReconnectRecoveryPolicy.attemptDeadline(from: now()) : nil
+            observedServices[ObjectIdentifier(service)] = ObservedService(service: service, returnDeadline: returnDeadline)
+            service.delegate = self
+            let remaining = returnDeadline.map { now().duration(to: $0) } ?? .seconds(2)
+            guard remaining > .zero else {
+                discardObserved(service)
+                return
+            }
+            let seconds = Double(remaining.components.seconds) + Double(remaining.components.attoseconds) / 1e18
+            resolve(service, min(2, seconds))
+            return
+        }
+        if browser !== self.browser { observationLog.notice("observer.find.reject.stale_browser") }
         guard browser === self.browser, state == .finding, services.count < 8,
               !services.contains(where: { $0 === service }) else { return }
         services.append(service)
         service.delegate = self
-        resolve(service)
+        resolve(service, 2)
     }
 
     func netServiceDidResolveAddress(_ sender: NetService) {
-        guard state == .finding, services.contains(where: { $0 === sender }),
-              let txtData = sender.txtRecordData(), txtData.count <= 512 else { return }
-        let txt = NetService.dictionary(fromTXTRecord: txtData)
-        guard txtString(txt["reconnect"]) == "1", txtString(txt["deviceId"]) == peerID,
-              txtString(txt["platform"]) == "android", sender.port == 45_731 else { return }
-        for addressData in sender.addresses ?? [] {
-            guard let address = ipv4(from: addressData) else { continue }
-            let endpoint = "\(address):45731"
-            for interface in interfaces() {
-                guard let candidate = ReconnectCandidatePolicy.candidate(endpoint: endpoint, interface: interface),
-                      !candidates.contains(candidate), candidates.count < 4 else { continue }
-                candidates.append(candidate)
-            }
+        if observedServices[ObjectIdentifier(sender)] != nil {
+            observationLog.notice("observer.resolve.owned")
+            resolveObserved(sender)
+            return
+        }
+        guard state == .finding, services.contains(where: { $0 === sender }) else {
+            observationLog.notice("observer.resolve.reject.stale"); return
+        }
+        for candidate in validatedCandidates(sender) where !candidates.contains(candidate) && candidates.count < 4 {
+            candidates.append(candidate)
         }
         guard candidates.count == 4 else { return }
         finishDiscovery(token: discovery)
+    }
+
+    private func validatedCandidates(_ sender: NetService) -> [ReconnectCandidate] {
+        guard let txtData = sender.txtRecordData(), txtData.count <= 512 else {
+            observationLog.notice("observer.resolve.reject.txt"); return []
+        }
+        let txt = NetService.dictionary(fromTXTRecord: txtData)
+        guard txtString(txt["reconnect"]) == "1" else { observationLog.notice("observer.resolve.reject.txt"); return [] }
+        guard txtString(txt["deviceId"]) == peerID else { observationLog.notice("observer.resolve.reject.peer"); return [] }
+        guard txtString(txt["platform"]) == "android" else { observationLog.notice("observer.resolve.reject.platform"); return [] }
+        guard sender.port == 45_731 else { observationLog.notice("observer.resolve.reject.port"); return [] }
+        var result: [ReconnectCandidate] = []
+        var hasIPv4 = false
+        for addressData in sender.addresses ?? [] {
+            guard let address = ipv4(from: addressData) else { continue }
+            hasIPv4 = true
+            let endpoint = "\(address):45731"
+            for interface in interfaces() {
+                guard let candidate = ReconnectCandidatePolicy.candidate(endpoint: endpoint, interface: interface),
+                      !result.contains(candidate), result.count < 4 else { continue }
+                result.append(candidate)
+            }
+        }
+        if result.isEmpty {
+            if hasIPv4 { observationLog.notice("observer.resolve.reject.address_ineligible") }
+            else { observationLog.notice("observer.resolve.reject.address_no_ipv4") }
+        }
+        return result
+    }
+
+    // Passive presence is only a hint. This browser never enters the manual discovery state machine.
+    func observeSelectedPeer(pairKey: String, epoch: UUID, preferredEndpoint: String?,
+                             isCurrent: @escaping () -> Bool,
+                             onReturn: @escaping (ReconnectCandidate, ContinuousClock.Instant) -> Bool) {
+        guard !peerID.isEmpty else {
+            observationLog.notice("observer.start.reject.peer_unconfigured")
+            stopObservingSelectedPeer(); return
+        }
+        guard isCurrent() else {
+            observationLog.notice("observer.start.reject.stale")
+            stopObservingSelectedPeer(); return
+        }
+        if observationBrowser != nil, observationOwner == epoch, cooldownPairKey == pairKey { return }
+        stopObservingSelectedPeer()
+        if cooldownPairKey != pairKey { lastInvocation = nil; cooldownPairKey = pairKey }
+        observationOwner = epoch
+        observationCurrent = isCurrent
+        selectedReturn = onReturn
+        self.preferredEndpoint = preferredEndpoint
+        let browser = NetServiceBrowser()
+        browser.delegate = self
+        observationBrowser = browser
+        observationLog.notice("observer.search.start")
+        search(browser)
+    }
+
+    func netServiceBrowserWillSearch(_ browser: NetServiceBrowser) {
+        if browser === observationBrowser { observationLog.notice("observer.search.will_search") }
+    }
+
+    func netServiceBrowser(_ browser: NetServiceBrowser, didNotSearch errorDict: [String: NSNumber]) {
+        if browser === observationBrowser { observationLog.notice("observer.search.did_not_search") }
+    }
+
+    func netServiceBrowserDidStopSearch(_ browser: NetServiceBrowser) {
+        if browser === observationBrowser { observationLog.notice("observer.search.did_stop_search") }
+    }
+
+    func stopObservingSelectedPeer() {
+        observationEpoch = UUID()
+        observationOwner = nil
+        observationCurrent = nil
+        selectedReturn = nil
+        absent = false
+        queuedReturn = nil
+        let browser = observationBrowser
+        observationBrowser = nil
+        let services = observedServices.values.map(\.service)
+        observedServices.removeAll()
+        browser?.delegate = nil
+        browser?.stop()
+        services.forEach { $0.delegate = nil; $0.stop() }
+    }
+
+    func netServiceBrowser(_ browser: NetServiceBrowser, didRemove service: NetService, moreComing: Bool) {
+        guard browser === observationBrowser else { observationLog.notice("observer.remove.reject.stale_browser"); return }
+        observationLog.notice("observer.remove.owned")
+        guard observationCurrent?() == true else { observationLog.notice("observer.remove.reject.stale"); return }
+        guard let removed = observedServices.values.first(where: {
+            $0.service.name == service.name && $0.service.type == service.type && $0.service.domain == service.domain
+        }) else { observationLog.notice("observer.remove.reject.unknown"); return }
+        discardObserved(removed.service)
+        guard removed.matched, !observedServices.values.contains(where: \.matched) else { return }
+        absent = true
+        queuedReturn = nil
+        observationLog.notice("observer.remove.selected_absent")
+    }
+
+    private func discardObserved(_ service: NetService) {
+        observedServices.removeValue(forKey: ObjectIdentifier(service))
+        service.delegate = nil
+        service.stop()
+    }
+
+    private func resolveObserved(_ service: NetService) {
+        let id = ObjectIdentifier(service)
+        guard observationCurrent?() == true else { observationLog.notice("observer.resolve.reject.stale"); return }
+        guard observedServices[id]?.matched == false else { observationLog.notice("observer.resolve.reject.duplicate"); return }
+        let candidates = validatedCandidates(service).sorted {
+            if ($0.endpoint.description == preferredEndpoint) != ($1.endpoint.description == preferredEndpoint) {
+                return $0.endpoint.description == preferredEndpoint
+            }
+            if $0.endpoint.description != $1.endpoint.description { return $0.endpoint.description < $1.endpoint.description }
+            return $0.interface.name < $1.interface.name
+        }
+        guard let candidate = candidates.first else { discardObserved(service); return }
+        observationLog.notice("observer.resolve.accepted")
+        observedServices[id]?.matched = true
+        guard absent else {
+            NSLog("Plink selected peer observation established")
+            return // Initial matching Add is baseline, never a reconnect.
+        }
+        absent = false
+        let deadline = observedServices[id]?.returnDeadline
+        guard let deadline, now() < deadline, queuedReturn == nil,
+              lastInvocation.map({ now() >= $0.advanced(by: .seconds(30)) }) ?? true else { return }
+        let token = UUID()
+        let epoch = observationEpoch
+        queuedReturn = token
+        enqueueObservation { [weak self] in
+            guard let self, self.observationEpoch == epoch, self.queuedReturn == token else { return }
+            self.queuedReturn = nil
+            guard self.observationCurrent?() == true, self.observedServices[id]?.matched == true,
+                  self.now() < deadline, self.interfaces().contains(candidate.interface),
+                  self.lastInvocation.map({ self.now() >= $0.advanced(by: .seconds(30)) }) ?? true else { return }
+            if self.selectedReturn?(candidate, deadline) == true {
+                self.lastInvocation = self.now()
+                observationLog.notice("Plink selected peer return started conditional reconnect")
+            }
+        }
     }
 
     private func finishDiscovery(token: UUID) {
@@ -244,6 +434,10 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     }
 
     func netService(_ sender: NetService, didNotResolve errorDict: [String: NSNumber]) {
+        if observedServices[ObjectIdentifier(sender)] != nil {
+            observationLog.notice("observer.resolve.did_not_resolve")
+            discardObserved(sender); return
+        }
         guard services.contains(where: { $0 === sender }) else { return }
         services.removeAll { $0 === sender }
         sender.delegate = nil
@@ -251,6 +445,7 @@ final class ReconnectController: NSObject, ObservableObject, @preconcurrency Net
     }
 
     func stopDiscoveryForLifecycle() {
+        stopObservingSelectedPeer()
         stopDiscovery()
     }
 

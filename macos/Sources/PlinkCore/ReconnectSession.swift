@@ -208,6 +208,7 @@ public final class PairSessionLifetime: @unchecked Sendable {
     private let lock = NSLock()
     private var valid = true
     private var admission: (generation: UUID, binding: VerifiedNetworkBinding)?
+    private weak var conditionalOwner: ConditionalReconnectAdmission?
 
     public init(
         localID: String,
@@ -229,13 +230,19 @@ public final class PairSessionLifetime: @unchecked Sendable {
     public var isCurrent: Bool { lock.withLock { valid } }
 
     public func closeOrdinaryAdmission() {
-        lock.withLock { admission = nil }
+        lock.withLock {
+            conditionalOwner?.authority?.invalidate()
+            conditionalOwner = nil
+            admission = nil
+        }
     }
 
     @discardableResult
     public func openOrdinaryAdmission(binding: VerifiedNetworkBinding) throws -> UUID {
         try lock.withLock {
             guard valid else { throw ReconnectSessionError.staleLifetime }
+            conditionalOwner?.authority?.invalidate()
+            conditionalOwner = nil
             let generation = UUID()
             admission = (generation, binding)
             return generation
@@ -244,6 +251,50 @@ public final class PairSessionLifetime: @unchecked Sendable {
 
     public func ordinaryAdmission() -> (generation: UUID, binding: VerifiedNetworkBinding)? {
         lock.withLock { valid ? admission : nil }
+    }
+
+    public func beginConditionalReconnect(authority: ReconnectCommitAuthority? = nil) throws -> ConditionalReconnectAdmission {
+        try lock.withLock {
+            guard valid else { throw ReconnectSessionError.staleLifetime }
+            guard conditionalOwner == nil else { throw ReconnectSessionError.busy }
+            let owner = ConditionalReconnectAdmission(lifetime: self, authority: authority)
+            conditionalOwner = owner
+            return owner
+        }
+    }
+
+    fileprivate func withConditionalOwner<T>(_ owner: ConditionalReconnectAdmission, _ body: () throws -> T) throws -> T {
+        try lock.withLock {
+            guard valid, conditionalOwner === owner else { throw ReconnectSessionError.staleLifetime }
+            return try body()
+        }
+    }
+
+    fileprivate func retire(_ owner: ConditionalReconnectAdmission) throws {
+        try withConditionalOwner(owner) {
+            guard !owner.retired else { throw ReconnectSessionError.wrongPhase }
+            admission = nil
+            owner.retired = true
+        }
+    }
+
+    fileprivate func publish(_ owner: ConditionalReconnectAdmission, binding: VerifiedNetworkBinding) throws -> UUID {
+        try withConditionalOwner(owner) {
+            guard owner.retired else { throw ReconnectSessionError.wrongPhase }
+            let generation = UUID()
+            admission = (generation, binding)
+            conditionalOwner = nil
+            return generation
+        }
+    }
+
+    fileprivate func cancel(_ owner: ConditionalReconnectAdmission) {
+        lock.withLock {
+            guard conditionalOwner === owner else { return }
+            owner.authority?.invalidate()
+            conditionalOwner = nil
+            // Before acceptance admission is untouched; after retirement it is already absent.
+        }
     }
 
     func acceptNonblocking(
@@ -284,11 +335,37 @@ public final class PairSessionLifetime: @unchecked Sendable {
         let changed = lock.withLock { () -> Bool in
             guard valid else { return false }
             valid = false
+            conditionalOwner?.authority?.invalidate()
+            conditionalOwner = nil
             admission = nil
             return true
         }
         if changed { writeGate.invalidate() }
     }
+}
+
+/// Local ownership only: no wire token and no admission change until accepted retirement.
+public final class ConditionalReconnectAdmission: @unchecked Sendable {
+    private let lifetime: PairSessionLifetime
+    fileprivate let authority: ReconnectCommitAuthority?
+    fileprivate var retired = false // Access only under lifetime's lock.
+
+    fileprivate init(lifetime: PairSessionLifetime, authority: ReconnectCommitAuthority?) {
+        self.lifetime = lifetime
+        self.authority = authority
+    }
+
+    public func requireCurrent() throws { try lifetime.withConditionalOwner(self) {} }
+    func requireRetired() throws {
+        try lifetime.withConditionalOwner(self) {
+            guard retired else { throw ReconnectSessionError.wrongPhase }
+        }
+    }
+    public func retire() throws { try lifetime.retire(self) }
+    public func openOrdinaryAdmission(binding: VerifiedNetworkBinding) throws -> UUID {
+        try lifetime.publish(self, binding: binding)
+    }
+    public func cancel() { lifetime.cancel(self) }
 }
 
 public final class ReconnectSocket: @unchecked Sendable {
@@ -440,7 +517,8 @@ public final class ReconnectSocket: @unchecked Sendable {
     func receive(
         lifetime: PairSessionLifetime,
         deadline: ContinuousClock.Instant,
-        maxWireBytes: Int = 4_096
+        maxWireBytes: Int = 4_096,
+        completionNow: @escaping @Sendable () -> ContinuousClock.Instant = { .now }
     ) async throws -> PlinkEnvelope {
         try await withOwnedDescriptor { descriptor in
             let header = try readExact(count: 4, descriptor: descriptor, deadline: deadline)
@@ -452,7 +530,7 @@ public final class ReconnectSocket: @unchecked Sendable {
                 expectedTargetDeviceId: lifetime.localID, stateStore: lifetime.stateStore,
                 wireBytes: wire.count, rawFrameData: wire, reconnectValidation: lifetime.validation)
             try Task.checkCancellation()
-            guard ContinuousClock.now < deadline else { throw ReconnectSessionError.timedOut }
+            guard completionNow() < deadline else { throw ReconnectSessionError.timedOut }
             return envelope
         }
     }
@@ -508,9 +586,12 @@ public final class ReconnectListener: @unchecked Sendable {
     public typealias OrdinaryHandler = @Sendable (Result<PlinkEnvelope, any Error>, UUID) -> Void
 
     private final class ReverseExpectation: @unchecked Sendable {
+        let matches: @Sendable (ReconnectMessage) -> Bool
         private let lock = NSLock()
         private var result: Result<(ReconnectSocket, ReconnectMessage), any Error>?
         private var continuation: CheckedContinuation<(ReconnectSocket, ReconnectMessage), any Error>?
+
+        init(matches: @escaping @Sendable (ReconnectMessage) -> Bool) { self.matches = matches }
 
         func wait() async throws -> (ReconnectSocket, ReconnectMessage) {
             try await withTaskCancellationHandler {
@@ -525,15 +606,17 @@ public final class ReconnectListener: @unchecked Sendable {
             } onCancel: { resolve(.failure(ReconnectSessionError.cancelled)) }
         }
 
-        func resolve(_ value: Result<(ReconnectSocket, ReconnectMessage), any Error>) {
-            let continuation: CheckedContinuation<(ReconnectSocket, ReconnectMessage), any Error>? = lock.withLock {
-                guard result == nil else { return nil }
+        @discardableResult
+        func resolve(_ value: Result<(ReconnectSocket, ReconnectMessage), any Error>) -> Bool {
+            let resolution: (Bool, CheckedContinuation<(ReconnectSocket, ReconnectMessage), any Error>?) = lock.withLock {
+                guard result == nil else { return (false, nil) }
                 result = value
                 let continuation = self.continuation
                 self.continuation = nil
-                return continuation
+                return (true, continuation)
             }
-            continuation?.resume(with: value)
+            resolution.1?.resume(with: value)
+            return resolution.0
         }
     }
 
@@ -622,8 +705,14 @@ public final class ReconnectListener: @unchecked Sendable {
         if DispatchQueue.getSpecific(key: queueKey) == nil { queue.sync {} }
     }
 
-    func prepareReverse(m: String, deadline: ContinuousClock.Instant) throws -> @Sendable () async throws -> (ReconnectSocket, ReconnectMessage) {
-        let expectation = ReverseExpectation()
+    struct ReverseRegistration: Sendable {
+        let wait: @Sendable () async throws -> (ReconnectSocket, ReconnectMessage)
+        let cancel: @Sendable () -> Void
+    }
+
+    func prepareReverse(m: String, deadline: ContinuousClock.Instant,
+                        matches: @escaping @Sendable (ReconnectMessage) -> Bool = { !$0.conditional }) throws -> ReverseRegistration {
+        let expectation = ReverseExpectation(matches: matches)
         try lock.withLock {
             guard !stopped, expectations[m] == nil else { throw ReconnectSessionError.busy }
             expectations[m] = expectation
@@ -633,12 +722,9 @@ public final class ReconnectListener: @unchecked Sendable {
             guard let self, let expectation else { return }
             self.cancelReverse(m: m, expectation: expectation, error: ReconnectSessionError.timedOut)
         }
-        return { try await expectation.wait() }
-    }
-
-    func cancelReverse(m: String) {
-        let expectation = lock.withLock { expectations.removeValue(forKey: m) }
-        expectation?.resolve(.failure(ReconnectSessionError.cancelled))
+        return ReverseRegistration(wait: { try await expectation.wait() }, cancel: { [weak self] in
+            self?.cancelReverse(m: m, expectation: expectation, error: ReconnectSessionError.cancelled)
+        })
     }
 
     private func cancelReverse(m: String, expectation: ReverseExpectation, error: any Error) {
@@ -687,10 +773,15 @@ public final class ReconnectListener: @unchecked Sendable {
                     let envelope = try await socket.receive(lifetime: lifetime, maxWireBytes: 128 * 1_024)
                     if envelope.type == .reconnectReverse {
                         let message = try ReconnectMessage(envelope, validation: lifetime.validation)
-                        let expectation = lock.withLock { expectations.removeValue(forKey: message.m) }
+                        let expectation = lock.withLock { () -> ReverseExpectation? in
+                            guard let expected = expectations[message.m], expected.matches(message) else { return nil }
+                            return expectations.removeValue(forKey: message.m)
+                        }
                         guard let expectation else { throw ReconnectSessionError.authenticationFailed }
+                        guard expectation.resolve(.success((socket, message))) else {
+                            throw ReconnectSessionError.cancelled
+                        }
                         transfer.markTransferred()
-                        expectation.resolve(.success((socket, message)))
                     } else if let admission = validatedAdmission(admissionAtAccept, socket: socket) {
                         ordinaryHandler(.success(envelope), admission.generation)
                     }
@@ -798,6 +889,11 @@ public struct ReconnectAttemptResult: Sendable {
 }
 
 public final class ReconnectInitiator: @unchecked Sendable {
+    private struct ConditionalContext: Sendable {
+        let admission: ConditionalReconnectAdmission
+        let authorize: @Sendable () async throws -> Void
+        let accepted: @Sendable () async throws -> Void
+    }
     private let lifetime: PairSessionLifetime
     private let listener: ReconnectListener
     private let endpointCommitter: any ReconnectEndpointCommitting
@@ -805,6 +901,7 @@ public final class ReconnectInitiator: @unchecked Sendable {
     private let listenerPort: UInt16
     private let nonce: @Sendable () throws -> String
     private let onCandidateExpired: @Sendable () -> Void
+    private let connect: @Sendable (ReconnectCandidate, ContinuousClock.Instant) async throws -> ReconnectSocket
 
     public init(
         lifetime: PairSessionLifetime,
@@ -822,6 +919,7 @@ public final class ReconnectInitiator: @unchecked Sendable {
         self.listenerPort = listenerPort
         self.nonce = nonce
         self.onCandidateExpired = onCandidateExpired
+        connect = { try await ReconnectSocket.connect(candidate: $0, deadline: $1) }
     }
 
     init(
@@ -831,7 +929,10 @@ public final class ReconnectInitiator: @unchecked Sendable {
         endpointCommitter: any ReconnectEndpointCommitting,
         listenerPort: UInt16,
         nonce: @escaping @Sendable () throws -> String = ReconnectNonce.generate,
-        onCandidateExpired: @escaping @Sendable () -> Void = {}
+        onCandidateExpired: @escaping @Sendable () -> Void = {},
+        connect: @escaping @Sendable (ReconnectCandidate, ContinuousClock.Instant) async throws -> ReconnectSocket = {
+            try await ReconnectSocket.connect(candidate: $0, deadline: $1)
+        }
     ) {
         self.lifetime = lifetime
         self.listener = listener
@@ -840,6 +941,7 @@ public final class ReconnectInitiator: @unchecked Sendable {
         self.listenerPort = listenerPort
         self.nonce = nonce
         self.onCandidateExpired = onCandidateExpired
+        self.connect = connect
     }
 
     public func attempt(candidate: ReconnectCandidate, timeout: Duration = .seconds(30)) async throws -> ReconnectAttemptResult {
@@ -850,6 +952,25 @@ public final class ReconnectInitiator: @unchecked Sendable {
         candidate: ReconnectCandidate,
         deadline: ContinuousClock.Instant
     ) async throws -> ReconnectAttemptResult {
+        try await runAttempt(candidate: candidate, deadline: deadline, conditional: nil)
+    }
+
+    /// Explicit internal-app invocation only. No discovery, fallback or retry is performed here.
+    public func attemptConditional(candidate: ReconnectCandidate, deadline: ContinuousClock.Instant,
+                                   admission: ConditionalReconnectAdmission,
+                                   authorize: @escaping @Sendable () async throws -> Void,
+                                   accepted: @escaping @Sendable () async throws -> Void) async throws -> ReconnectAttemptResult {
+        do {
+            return try await runAttempt(candidate: candidate, deadline: deadline,
+                conditional: ConditionalContext(admission: admission, authorize: authorize, accepted: accepted))
+        } catch {
+            admission.cancel()
+            throw error
+        }
+    }
+
+    private func runAttempt(candidate: ReconnectCandidate, deadline: ContinuousClock.Instant,
+                            conditional: ConditionalContext?) async throws -> ReconnectAttemptResult {
         guard ContinuousClock.now < deadline else { throw ReconnectSessionError.timedOut }
         let candidateAuthority: ReconnectCandidateCommitAuthority
         do { candidateAuthority = try commitAuthority.makeCandidate(deadline: deadline) }
@@ -857,7 +978,7 @@ public final class ReconnectInitiator: @unchecked Sendable {
         let channels = ReconnectCandidateChannels(commitAuthority: candidateAuthority)
         let processing = Task {
             try await performAttempt(candidate: candidate, deadline: deadline,
-                candidateAuthority: candidateAuthority, channels: channels)
+                candidateAuthority: candidateAuthority, channels: channels, conditional: conditional)
         }
         let onCandidateExpired = self.onCandidateExpired
         let watchdog = Task.detached(priority: .utility) {
@@ -900,7 +1021,8 @@ public final class ReconnectInitiator: @unchecked Sendable {
         candidate: ReconnectCandidate,
         deadline: ContinuousClock.Instant,
         candidateAuthority: ReconnectCandidateCommitAuthority,
-        channels: ReconnectCandidateChannels
+        channels: ReconnectCandidateChannels,
+        conditional: ConditionalContext?
     ) async throws -> ReconnectAttemptResult {
         guard ContinuousClock.now < deadline, lifetime.isCurrent,
               ReconnectCandidatePolicy.candidate(endpoint: candidate.endpoint.description,
@@ -908,38 +1030,84 @@ public final class ReconnectInitiator: @unchecked Sendable {
             if ContinuousClock.now >= deadline { throw ReconnectSessionError.timedOut }
             throw ReconnectSessionError.invalidCandidate
         }
-        lifetime.closeOrdinaryAdmission()
+        if conditional == nil { lifetime.closeOrdinaryAdmission() }
         let m = try nonce()
-        let waitForReverse = try listener.prepareReverse(m: m, deadline: deadline)
-        defer { listener.cancelReverse(m: m) }
-        let outbound = try await ReconnectSocket.connect(candidate: candidate,
-            deadline: min(deadline, ContinuousClock.now.advanced(by: .seconds(2))))
-        try channels.register(outbound)
+        var reverseRegistration: ReconnectListener.ReverseRegistration?
+        defer { reverseRegistration?.cancel() }
+        if conditional == nil { reverseRegistration = try listener.prepareReverse(m: m, deadline: deadline) }
+        let outbound: ReconnectSocket
+        if let conditional {
+            try await conditional.authorize()
+            outbound = try await lifetime.writeGate.withWrite(deadline: deadline) {
+                try self.requireOwned(conditional.admission, deadline: deadline)
+                let socket = try await self.connect(candidate, min(deadline, .now.advanced(by: .seconds(2))))
+                do {
+                    try channels.register(socket)
+                    let mac = try IPv4Endpoint(address: socket.observation.local.address, port: self.listenerPort)
+                    let hello = ReconnectMessage(type: .reconnectHello, m: m, p: nil, r: nil,
+                        mac: mac, phone: candidate.endpoint, conditional: true)
+                        .envelope(source: self.lifetime.localID, target: self.lifetime.peerID)
+                    // Already owns the gate: do not call the gate-acquiring send helper.
+                    try await socket.send(hello, lifetime: self.lifetime,
+                        deadline: min(deadline, .now.advanced(by: .seconds(2)))) {
+                        try self.requireOwned(conditional.admission, deadline: deadline)
+                    }
+                    return socket
+                } catch { socket.close(); throw error }
+            }
+        } else {
+            outbound = try await connect(candidate, min(deadline, .now.advanced(by: .seconds(2))))
+            try channels.register(outbound)
+        }
         let outboundObservation = outbound.observation
         defer { outbound.close() }
         let mac = try IPv4Endpoint(address: outboundObservation.local.address, port: listenerPort)
         let phone = candidate.endpoint
 
-        try await send(ReconnectMessage(type: .reconnectHello, m: m, p: nil, r: nil, mac: mac, phone: phone)
-            .envelope(source: lifetime.localID, target: lifetime.peerID), on: outbound, deadline: deadline)
+        if conditional == nil {
+            try await send(ReconnectMessage(type: .reconnectHello, m: m, p: nil, r: nil, mac: mac, phone: phone)
+                .envelope(source: lifetime.localID, target: lifetime.peerID), on: outbound, deadline: deadline)
+        }
         let challenge = try await receive(on: outbound, deadline: deadline)
-        try require(challenge, type: .reconnectChallenge, m: m, p: nil, r: nil, mac: mac, phone: phone)
+        try require(challenge, type: .reconnectChallenge, m: m, p: nil, r: nil, mac: mac, phone: phone,
+                    conditional: conditional != nil)
         guard let p = challenge.p else { throw ReconnectSessionError.wrongPhase }
-        try await send(ReconnectMessage(type: .reconnectProof, m: m, p: p, r: nil, mac: mac, phone: phone)
-            .envelope(source: lifetime.localID, target: lifetime.peerID), on: outbound, deadline: deadline)
+        if let conditional {
+            try await conditional.authorize()
+            try requireOwned(conditional.admission, deadline: deadline)
+            try await conditional.accepted()
+            try await conditional.authorize()
+            try requireOwned(conditional.admission, deadline: deadline)
+            try conditional.admission.requireRetired()
+            reverseRegistration = try listener.prepareReverse(m: m, deadline: deadline) {
+                $0.conditional && $0.type == .reconnectReverse && $0.m == m && $0.p == p &&
+                    $0.mac == mac && $0.phone == phone
+            }
+        }
+        try await send(ReconnectMessage(type: .reconnectProof, m: m, p: p, r: nil, mac: mac, phone: phone,
+            conditional: conditional != nil).envelope(source: lifetime.localID, target: lifetime.peerID),
+            on: outbound, deadline: deadline, admission: conditional?.admission)
         outbound.close()
 
-        let (reverseSocket, reverse) = try await waitForReverse()
+        guard let reverseRegistration else { throw ReconnectSessionError.wrongPhase }
+        let (reverseSocket, reverse) = try await reverseRegistration.wait()
         try channels.register(reverseSocket)
         defer { reverseSocket.close() }
-        try require(reverse, type: .reconnectReverse, m: m, p: p, r: nil, mac: mac, phone: phone)
+        try require(reverse, type: .reconnectReverse, m: m, p: p, r: nil, mac: mac, phone: phone,
+                    conditional: conditional != nil)
         guard reverseSocket.observation.remote.address == phone.address,
               reverseSocket.observation.local == mac,
               let r = reverse.r else { throw ReconnectSessionError.endpointMismatch }
-        try await send(ReconnectMessage(type: .reconnectReverseProof, m: m, p: p, r: r, mac: mac, phone: phone)
-            .envelope(source: lifetime.localID, target: lifetime.peerID), on: reverseSocket, deadline: deadline)
+        try await send(ReconnectMessage(type: .reconnectReverseProof, m: m, p: p, r: r, mac: mac, phone: phone,
+            conditional: conditional != nil).envelope(source: lifetime.localID, target: lifetime.peerID),
+            on: reverseSocket, deadline: deadline, admission: conditional?.admission)
         let ready = try await receive(on: reverseSocket, deadline: deadline)
-        try require(ready, type: .reconnectReady, m: m, p: p, r: r, mac: mac, phone: phone)
+        try require(ready, type: .reconnectReady, m: m, p: p, r: r, mac: mac, phone: phone,
+                    conditional: conditional != nil)
+        if let conditional {
+            try await conditional.authorize()
+            try requireOwned(conditional.admission, deadline: deadline)
+        }
         try Task.checkCancellation()
         guard ContinuousClock.now < deadline, lifetime.isCurrent else {
             throw ContinuousClock.now >= deadline ? ReconnectSessionError.timedOut : ReconnectSessionError.staleLifetime
@@ -951,10 +1119,16 @@ public final class ReconnectInitiator: @unchecked Sendable {
         } catch where ContinuousClock.now >= deadline {
             throw ReconnectSessionError.timedOut
         }
-        try await send(ReconnectMessage(type: .reconnectCommit, m: m, p: p, r: r, mac: mac, phone: phone)
-            .envelope(source: lifetime.localID, target: lifetime.peerID), on: reverseSocket, deadline: deadline)
+        try await send(ReconnectMessage(type: .reconnectCommit, m: m, p: p, r: r, mac: mac, phone: phone,
+            conditional: conditional != nil).envelope(source: lifetime.localID, target: lifetime.peerID),
+            on: reverseSocket, deadline: deadline, admission: conditional?.admission)
         let done = try await receive(on: reverseSocket, deadline: deadline)
-        try require(done, type: .reconnectDone, m: m, p: p, r: r, mac: mac, phone: phone)
+        try require(done, type: .reconnectDone, m: m, p: p, r: r, mac: mac, phone: phone,
+                    conditional: conditional != nil)
+        if let conditional {
+            try await conditional.authorize()
+            try requireOwned(conditional.admission, deadline: deadline)
+        }
         guard ContinuousClock.now < deadline, lifetime.isCurrent else {
             throw ContinuousClock.now >= deadline ? ReconnectSessionError.timedOut : ReconnectSessionError.staleLifetime
         }
@@ -967,13 +1141,23 @@ public final class ReconnectInitiator: @unchecked Sendable {
     private func send(
         _ envelope: PlinkEnvelope,
         on socket: ReconnectSocket,
-        deadline: ContinuousClock.Instant
+        deadline: ContinuousClock.Instant,
+        admission: ConditionalReconnectAdmission? = nil
     ) async throws {
         try await lifetime.writeGate.withWrite(deadline: deadline) {
             guard self.lifetime.isCurrent else { throw ReconnectSessionError.staleLifetime }
             try await socket.send(envelope, lifetime: self.lifetime,
-                deadline: min(deadline, ContinuousClock.now.advanced(by: .seconds(2))))
+                deadline: min(deadline, ContinuousClock.now.advanced(by: .seconds(2)))) {
+                    if let admission { try self.requireOwned(admission, deadline: deadline) }
+                }
         }
+    }
+
+    private func requireOwned(_ admission: ConditionalReconnectAdmission, deadline: ContinuousClock.Instant) throws {
+        try Task.checkCancellation()
+        guard ContinuousClock.now < deadline else { throw ReconnectSessionError.timedOut }
+        try admission.requireCurrent()
+        try commitAuthority.withCurrent(deadline: deadline) {}
     }
 
     private func receive(on socket: ReconnectSocket, deadline: ContinuousClock.Instant) async throws -> ReconnectMessage {
@@ -983,16 +1167,17 @@ public final class ReconnectInitiator: @unchecked Sendable {
         return try ReconnectMessage(envelope, validation: lifetime.validation)
     }
 
-    private func require(
+    func require(
         _ message: ReconnectMessage,
         type: EventType,
         m: String,
         p: String?,
         r: String?,
         mac: IPv4Endpoint,
-        phone: IPv4Endpoint
+        phone: IPv4Endpoint,
+        conditional: Bool = false
     ) throws {
-        guard message.type == type, message.m == m, message.p == p || p == nil && message.p != nil,
+        guard message.conditional == conditional, message.type == type, message.m == m, message.p == p || p == nil && message.p != nil,
               message.r == r || r == nil && message.r != nil,
               message.mac == mac, message.phone == phone else { throw ReconnectSessionError.wrongPhase }
     }
@@ -1114,8 +1299,10 @@ private func writeAll(_ data: Data, descriptor: Int32, deadline: ContinuousClock
 }
 
 private extension ReconnectMessage {
-    init(type: EventType, m: String, p: String?, r: String?, mac: IPv4Endpoint, phone: IPv4Endpoint) {
+    init(type: EventType, m: String, p: String?, r: String?, mac: IPv4Endpoint, phone: IPv4Endpoint,
+         conditional: Bool = false) {
         self.type = type
+        self.conditional = conditional
         self.m = m
         self.p = p
         self.r = r

@@ -1,0 +1,16 @@
+{
+  "atUTC": "2026-09-21T14:03:04.773340+00:00",
+  "result": {
+    "count": 1,
+    "matchedCount": 1,
+    "lastMatched": true
+  },
+  "status": "Verified synthetic Mac Notification Center reply: user-confirmed native action, exactly one Android callback and exact testword match.",
+  "userConfirmedOrigin": "Mac Notification Center",
+  "originConfirmedAtUTC": "2026-09-21T14:04:09.641341+00:00",
+  "limits": [
+    "Agent did not capture native send action screenshot.",
+    "Separate synthetic recipient; not proof for all messaging apps or external delivery."
+  ],
+  "agentSentReply": false
+}

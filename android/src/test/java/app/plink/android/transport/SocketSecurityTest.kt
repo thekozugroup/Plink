@@ -2,6 +2,9 @@ package app.plink.android.transport
 
 import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
+import app.plink.android.protocol.ReconnectEndpoint
+import app.plink.android.protocol.ReconnectPayload
+import app.plink.android.protocol.ReconnectPayloadPolicy
 import app.plink.android.security.*
 import app.plink.android.services.OrdinaryAdmissionLease
 import java.net.ServerSocket
@@ -20,6 +23,49 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SocketSecurityTest {
+    @Test fun ordinaryAndConditionalExchangesShareDurableReplayInEitherOrder() = runBlocking {
+        val directory = java.nio.file.Files.createTempDirectory("conditional-replay").toFile()
+        try {
+            for (conditionalFirst in listOf(false, true)) {
+                val now = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
+                val codec = EncryptedFrameCodec(key)
+                val store = FileFrameStateStore(java.io.File(directory, conditionalFirst.toString()))
+                val server = SecureSocketPlinkServer(port(), codec, store)
+                server.start()
+                val ordinary = envelope(now)
+                val conditional = ReconnectPayloadPolicy.envelope(PlinkEventType.ReconnectHello, "mac", "pixel",
+                    ReconnectPayload(java.util.Base64.getUrlEncoder().withoutPadding()
+                        .encodeToString(ByteArray(32) { 5 }), ReconnectEndpoint("192.168.50.10", 45731),
+                        ReconnectEndpoint("192.168.50.20", 45731), version = 2), sentAt = now.toString())
+                val firstFrame = codec.seal(ordinary, 1, issuedAt = now)
+                val secondFrame = codec.seal(conditional, 2, issuedAt = now)
+                fun write(socket: Socket, frame: EncryptedPlinkFrame) = LengthPrefixedFrameCodec.write(
+                    DataOutputStream(socket.getOutputStream()), Json { encodeDefaults = true }
+                        .encodeToString(EncryptedPlinkFrame.serializer(), frame).toByteArray())
+                try {
+                    Socket("127.0.0.1", server.localPort).use { one ->
+                        server.acceptExchange().use { ordinaryExchange ->
+                            Socket("127.0.0.1", server.localPort).use { two ->
+                                server.acceptExchange().use { conditionalExchange ->
+                                    write(one, firstFrame)
+                                    write(two, secondFrame)
+                                    val order = if (conditionalFirst) listOf(conditionalExchange, ordinaryExchange)
+                                        else listOf(ordinaryExchange, conditionalExchange)
+                                    val types = order.map {
+                                        (it.read(2_000).result as AuthenticatedFrameResult.Message).envelope.type
+                                    }
+                                    assertEquals(setOf(ordinary.type, conditional.type), types.toSet())
+                                    write(one, firstFrame)
+                                    assertTrue(runCatching { ordinaryExchange.read(2_000) }.isFailure)
+                                }
+                            }
+                        }
+                    }
+                } finally { server.close() }
+            }
+        } finally { directory.deleteRecursively() }
+    }
+
     @Test fun startReportsBindFailureBeforeSessionCanBecomeReady() {
         val port = port()
         val first = SecureSocketPlinkServer(port, EncryptedFrameCodec(key), InMemoryFrameStateStore())

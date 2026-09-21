@@ -3,7 +3,8 @@ package app.plink.android.reconnect
 /** Exact ownership for one reconnect attempt. All commit points use this same lock. */
 internal data class ReconnectAttemptToken(
     val value: Long,
-    val deadlineMillis: Long
+    val deadlineMillis: Long,
+    val conditional: Boolean = false
 )
 
 internal data class ReconnectInvalidation(
@@ -24,6 +25,21 @@ internal class ReconnectLifecycleOwner(
         require(timeoutMillis > 0)
         if (closed || current != null) return@synchronized null
         ReconnectAttemptToken(++nextValue, monotonicMillis() + timeoutMillis).also { current = it }
+    }
+
+    /** Reserve while admission is still locked; a snapshot before begin() is insufficient. */
+    fun beginConditional(
+        timeoutMillis: Long,
+        admissionLock: Any,
+        eligible: () -> Boolean
+    ): ReconnectAttemptToken? = synchronized(lock) {
+        require(timeoutMillis > 0)
+        if (closed || current != null) return@synchronized null
+        synchronized(admissionLock) claim@{
+            if (!eligible()) return@claim null
+            ReconnectAttemptToken(++nextValue, monotonicMillis() + timeoutMillis, conditional = true)
+                .also { current = it }
+        }
     }
 
     fun isCurrent(token: ReconnectAttemptToken, pairIsCurrent: () -> Boolean): Boolean = synchronized(lock) {

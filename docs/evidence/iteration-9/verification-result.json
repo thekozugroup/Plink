@@ -1,0 +1,21 @@
+{
+  "exitCode": 0,
+  "command": "./scripts/verify.sh",
+  "stdoutRef": "verification-final.log",
+  "androidTests": 202,
+  "swiftTests": 227,
+  "swiftBreakdown": {
+    "XCTest": 54,
+    "appSwiftTesting": 49,
+    "coreSwiftTesting": 124
+  },
+  "androidLint": {
+    "errors": 0,
+    "warnings": 39
+  },
+  "debugReleaseInstrumentationBuilds": true,
+  "signedMacBundlePackaged": true,
+  "scope": "Final native removal fix, diagnostics and Bonjour declaration included. Runtime results separate.",
+  "sourceStdoutSHA256": "b397e046df8e80c85aa2d54fa8469b751584e3ee75dd80c726402790073ca878",
+  "stdoutSHA256": "cb2f5bdb48a1ab75085ea9fa89775a13a524a819d270d00d18bc19e78e5ddb84"
+}

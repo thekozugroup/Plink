@@ -1,0 +1,16 @@
+{
+  "atUTC": "2026-09-21T15:15:10.417662+00:00",
+  "fixtureResult": {
+    "count": 1,
+    "matchedCount": 0,
+    "lastMatched": false
+  },
+  "userConfirmedOrigin": "Mac Notification Center",
+  "agentSentReply": false,
+  "macPID": 91956,
+  "scope": "Fresh synthetic native notification reply through ordinary production transport after authenticated automatic conditional recovery. No external recipient.",
+  "userReportedSentText": "Plink reply check",
+  "matchExplanation": "The user intentionally sent text different from the fixture expected lowercase testword.",
+  "nativeReplyDeliveryVerified": true,
+  "exactExpectedTextVerified": false
+}

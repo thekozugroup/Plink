@@ -45,13 +45,16 @@ data class ReconnectPayload(
     val mac: ReconnectEndpoint,
     val phone: ReconnectEndpoint,
     val proof: String? = null,
-    val reverseProof: String? = null
+    val reverseProof: String? = null,
+    val version: Int = 1
 )
 
 object ReconnectPayloadPolicy {
     const val maxPlaintextBytes = 2_048
     const val maxEncryptedJsonBytes = 4_096
     const val reconnectPort = 45_731
+    const val conditionalDomain = "plink.reconnect.recovery"
+    const val conditionalMode = "conditional-unadmitted"
 
     val eventTypes = linkedSetOf(
         PlinkEventType.ReconnectHello,
@@ -80,8 +83,12 @@ object ReconnectPayloadPolicy {
         requireCanonicalTimestamp(envelope.sentAt)
         requireDeviceId(envelope.sourceDeviceId)
         requireDeviceId(envelope.targetDeviceId)
-        requireFields(envelope.type, envelope.payload.keys)
-        require(integer(envelope.payload, "v") == 1) { "Reconnect version must be 1." }
+        val version = integer(envelope.payload, "v")
+        requireFields(envelope.type, envelope.payload.keys, version)
+        if (version == 2) {
+            require(text(envelope.payload, "domain") == conditionalDomain)
+            require(text(envelope.payload, "mode") == conditionalMode)
+        }
         nonce(envelope.payload, "m")
         if ("p" in envelope.payload) nonce(envelope.payload, "p")
         if ("r" in envelope.payload) nonce(envelope.payload, "r")
@@ -105,7 +112,8 @@ object ReconnectPayloadPolicy {
             mac = parseWireEndpoint(text(envelope.payload, "mac")),
             phone = parseWireEndpoint(text(envelope.payload, "phone")),
             proof = envelope.payload["p"]?.let { text(envelope.payload, "p") },
-            reverseProof = envelope.payload["r"]?.let { text(envelope.payload, "r") }
+            reverseProof = envelope.payload["r"]?.let { text(envelope.payload, "r") },
+            version = integer(envelope.payload, "v")
         )
     }
 
@@ -126,7 +134,11 @@ object ReconnectPayloadPolicy {
             targetDeviceId = targetDeviceId,
             requiresAck = false,
             payload = buildJsonObject {
-                put("v", 1)
+                put("v", payload.version)
+                if (payload.version == 2) {
+                    put("domain", conditionalDomain)
+                    put("mode", conditionalMode)
+                }
                 put("m", payload.messageId)
                 put("mac", payload.mac.toString())
                 put("phone", payload.phone.toString())
@@ -168,9 +180,17 @@ object ReconnectPayloadPolicy {
 
         val payload = members(values.getValue("payload"))
         require(payload.map { it.first }.toSet().size == payload.size) { "Duplicate reconnect payload key." }
-        requireFields(type, payload.map { it.first }.toSet())
         val fields = payload.toMap()
-        require(fields.getValue("v") == listOf("1")) { "Reconnect v must be integer token 1." }
+        val version = when (fields["v"]) {
+            listOf("1") -> 1
+            listOf("2") -> 2
+            else -> error("Reconnect v must be integer token 1 or 2.")
+        }
+        requireFields(type, fields.keys, version)
+        if (version == 2) {
+            require(stringToken(fields.getValue("domain")) == conditionalDomain)
+            require(stringToken(fields.getValue("mode")) == conditionalMode)
+        }
         for (field in nonceFields.intersect(fields.keys)) {
             requireCanonicalNonce(requireNotNull(stringToken(fields.getValue(field))))
         }
@@ -178,12 +198,14 @@ object ReconnectPayloadPolicy {
         parseWireEndpoint(requireNotNull(stringToken(fields.getValue("phone"))))
     }
 
-    private fun requireFields(type: String, actual: Set<String>) {
-        val expected = when (type) {
+    private fun requireFields(type: String, actual: Set<String>, version: Int) {
+        require(version == 1 || version == 2) { "Unsupported reconnect payload version." }
+        val legacy = when (type) {
             PlinkEventType.ReconnectHello -> setOf("v", "m", "mac", "phone")
             PlinkEventType.ReconnectChallenge, PlinkEventType.ReconnectProof -> setOf("v", "m", "p", "mac", "phone")
             else -> setOf("v", "m", "p", "r", "mac", "phone")
         }
+        val expected = if (version == 2) legacy + setOf("domain", "mode") else legacy
         require(actual == expected) { "Invalid $type payload fields." }
     }
 

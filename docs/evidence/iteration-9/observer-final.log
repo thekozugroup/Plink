@@ -1,0 +1,25 @@
+2026-09-21 11:12:12.245 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.refresh.blocked.startup
+2026-09-21 11:12:37.401 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.refresh.blocked.busy
+2026-09-21 11:12:38.246 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.search.start
+2026-09-21 11:12:38.256 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.search.will_search
+2026-09-21 11:12:38.311 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.owned
+2026-09-21 11:12:38.316 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.owned
+2026-09-21 11:12:38.482 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.owned
+2026-09-21 11:12:38.485 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.accepted
+2026-09-21 11:12:40.317 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.did_not_resolve
+2026-09-21 11:13:38.527 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.remove.owned
+2026-09-21 11:13:38.528 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.remove.selected_absent
+2026-09-21 11:13:40.398 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.owned
+2026-09-21 11:13:40.444 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.owned
+2026-09-21 11:13:40.446 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.accepted
+2026-09-21 11:13:40.452 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] Plink selected peer return started conditional reconnect
+2026-09-21 11:13:40.784 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] Plink conditional reconnect accepted
+2026-09-21 11:13:41.369 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] Plink conditional reconnect completed
+2026-09-21 11:13:41.372 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.search.start
+2026-09-21 11:13:41.377 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.search.will_search
+2026-09-21 11:13:41.412 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.owned
+2026-09-21 11:13:41.419 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.owned
+2026-09-21 11:13:41.461 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.owned
+2026-09-21 11:13:41.462 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.accepted
+2026-09-21 11:13:41.664 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.owned
+2026-09-21 11:13:41.668 Df PlinkMac[91956:af0976] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.reject.peer

@@ -88,6 +88,8 @@ private class PairSessionLifetime(
     var suspendedAttemptToken: ReconnectAttemptToken? = null,
     var publishedAttemptToken: ReconnectAttemptToken? = null,
     var liveBinding: ReconnectLiveBinding? = null,
+    var ordinaryActivationPending: Boolean = true,
+    var stopping: Boolean = false,
     var addressesJob: Job? = null,
     var stateJob: Job? = null
 )
@@ -243,10 +245,21 @@ class PlinkSessionController(
                 suspendOrdinaryAndAwait = { attempt -> suspendOrdinaryAndAwait(lifetime, attempt) },
                 prepareReplacement = { attempt, binding -> prepareReplacement(lifetime, attempt, binding) },
                 publishReplacement = { attempt, binding -> publishReplacement(lifetime, attempt, binding) },
-                revokeAttempt = { attempt, published -> revokeReconnectAttempt(lifetime, attempt, published) },
+                revokeAttempt = { attempt, _ -> revokeReconnectAttempt(lifetime, attempt) },
                 awaitRevokedResources = { awaitOrdinaryQuiescence(lifetime) },
                 ordinaryAdmissionOpen = { activeSession != null },
-                isCurrentPair = { pairLifetime === lifetime }
+                isCurrentPair = { pairLifetime === lifetime },
+                claimConditional = { timeout, binding ->
+                    lifecycleOwner.beginConditional(timeout, lifetime.admissionLock) {
+                        conditionalAdmissionEligible(lifetime) &&
+                            runCatching { binding.validateCurrent() }.isSuccess
+                    }
+                },
+                conditionalClaimCurrent = { attempt ->
+                    synchronized(lifetime.admissionLock) {
+                        conditionalAdmissionEligible(lifetime, attempt, allowPrepared = true)
+                    }
+                }
             )
             lifetime = PairSessionLifetime(
                 generation = pairGeneration.incrementAndGet(),
@@ -278,7 +291,10 @@ class PlinkSessionController(
                     )
                 }
             if (admitOrdinary) activateOrdinary(lifetime, binding = null)
-            else _status.value = SessionStatus.AWAITING_RECONNECT
+            else synchronized(lifetime.admissionLock) {
+                _status.value = SessionStatus.AWAITING_RECONNECT
+                lifetime.ordinaryActivationPending = false
+            }
         } catch (failure: Exception) {
             ownedKey.fill(0)
             stop()
@@ -289,7 +305,10 @@ class PlinkSessionController(
     @Synchronized
     fun stop() {
         pairLifetime?.let { lifetime ->
-            synchronized(lifetime.admissionLock) { deactivateOrdinaryLocked(lifetime, SessionStatus.DISCONNECTED) }
+            synchronized(lifetime.admissionLock) {
+                lifetime.stopping = true
+                deactivateOrdinaryLocked(lifetime, SessionStatus.DISCONNECTED)
+            }
         } ?: run {
             val generation = sessionGeneration.incrementAndGet()
             activeSession = null
@@ -339,11 +358,31 @@ class PlinkSessionController(
         }
     }
 
+    /** Called with admissionLock held, inside the lifecycle owner at claim/commit points. */
+    private fun conditionalAdmissionEligible(
+        lifetime: PairSessionLifetime,
+        attempt: ReconnectAttemptToken? = null,
+        allowPrepared: Boolean = false
+    ): Boolean = pairLifetime === lifetime && !lifetime.stopping && !lifetime.ordinaryActivationPending &&
+        (attempt == null || lifetime.lifecycleOwner.isCurrent(attempt) { pairLifetime === lifetime }) &&
+        activeSession == null && lifetime.admission == null && lifetime.retiringDispatch == null &&
+        lifetime.retiringPrepared == null && lifetime.suspendedAttemptToken == null &&
+        (if (!allowPrepared || attempt == null || lifetime.preparedResources == null) {
+            lifetime.preparedResources == null && lifetime.preparedAttemptToken == null && lifetime.preparedBinding == null
+        } else lifetime.preparedAttemptToken == attempt)
+
     private suspend fun suspendOrdinaryAndAwait(
         lifetime: PairSessionLifetime,
         attemptToken: ReconnectAttemptToken
     ): Boolean =
         replacementMutex.withLock {
+            if (attemptToken.conditional) {
+                // The claimed session has nothing to retire. Never route a stale conditional Proof
+                // through legacy deactivation, which could revoke an intervening ordinary session.
+                return@withLock lifetime.lifecycleOwner.commit(attemptToken, { pairLifetime === lifetime }) {
+                    synchronized(lifetime.admissionLock) { conditionalAdmissionEligible(lifetime, attemptToken) }
+                } == true
+            }
             val suspended = lifetime.lifecycleOwner.commit(attemptToken, { pairLifetime === lifetime }) {
                 synchronized(lifetime.admissionLock) {
                     lifetime.preparedBinding = null
@@ -368,6 +407,9 @@ class PlinkSessionController(
         binding: ReconnectLiveBinding
     ): Boolean = replacementMutex.withLock {
         if (!lifetime.lifecycleOwner.isCurrent(attemptToken) { pairLifetime === lifetime }) return@withLock false
+        if (attemptToken.conditional && lifetime.lifecycleOwner.commit(attemptToken, { pairLifetime === lifetime }) {
+            synchronized(lifetime.admissionLock) { conditionalAdmissionEligible(lifetime, attemptToken) }
+        } != true) return@withLock false
         binding.validateCurrent()
         // All disk work happens while ordinary admission remains closed and cancellation is unblocked.
         val prepared = prepareOrdinary(lifetime, binding, attemptToken)
@@ -376,6 +418,7 @@ class PlinkSessionController(
             binding.validateCurrent()
             retained = lifetime.lifecycleOwner.commit(attemptToken, { pairLifetime === lifetime }) {
                 synchronized(lifetime.admissionLock) {
+                    if (attemptToken.conditional && !conditionalAdmissionEligible(lifetime, attemptToken)) return@synchronized false
                     if (activeSession != null || lifetime.admission != null || lifetime.retiringDispatch != null ||
                         lifetime.preparedResources != null || lifetime.retiringPrepared != null
                     ) return@synchronized false
@@ -405,6 +448,7 @@ class PlinkSessionController(
             lifetime.lifecycleOwner, attemptToken, { pairLifetime === lifetime }, lifetime.admissionLock
         ) {
             synchronized(lifetime.admissionLock) {
+                if (attemptToken.conditional && !conditionalAdmissionEligible(lifetime, attemptToken, allowPrepared = true)) return@synchronized false
                 if (lifetime.preparedAttemptToken != attemptToken || lifetime.preparedBinding !== binding ||
                     lifetime.preparedResources !== prepared || activeSession != null || lifetime.admission != null ||
                     lifetime.retiringDispatch != null || lifetime.retiringPrepared != null
@@ -429,6 +473,7 @@ class PlinkSessionController(
             lifetime.preparedResources = prepared
             check(installOrdinaryLocked(lifetime, prepared))
             lifetime.preparedResources = null
+            lifetime.ordinaryActivationPending = false
         }
         startOrdinaryWork(lifetime, prepared)
     }
@@ -552,23 +597,21 @@ class PlinkSessionController(
 
     private fun revokeReconnectAttempt(
         lifetime: PairSessionLifetime,
-        attemptToken: ReconnectAttemptToken,
-        wasPublished: Boolean
+        attemptToken: ReconnectAttemptToken
     ): Boolean = synchronized(lifetime.admissionLock) {
         var cleanupRequired = lifetime.suspendedAttemptToken == attemptToken
         if (lifetime.preparedAttemptToken == attemptToken) {
             retirePreparedLocked(lifetime)
             cleanupRequired = true
         }
-        lifetime.suspendedAttemptToken = null
-        val publishedHere = lifetime.publishedAttemptToken == attemptToken ||
-            lifetime.admission?.attemptToken == attemptToken
-        if (wasPublished || publishedHere) {
+        if (lifetime.suspendedAttemptToken == attemptToken) lifetime.suspendedAttemptToken = null
+        val publishedHere = lifetime.admission?.attemptToken == attemptToken
+        if (publishedHere && pairLifetime === lifetime) {
             deactivateOrdinaryLocked(lifetime, SessionStatus.AWAITING_RECONNECT)
             lifetime.liveBinding = null
             cleanupRequired = true
         }
-        lifetime.publishedAttemptToken = null
+        if (lifetime.publishedAttemptToken == attemptToken) lifetime.publishedAttemptToken = null
         cleanupRequired
     }
 

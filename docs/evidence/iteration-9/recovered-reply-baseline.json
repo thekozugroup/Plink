@@ -1,0 +1,10 @@
+{
+  "atUTC": "2026-09-21T15:14:25.477345+00:00",
+  "fixtureResult": {
+    "count": 0,
+    "matchedCount": 0,
+    "lastMatched": false
+  },
+  "purpose": "Fresh native notification reply after verified automatic conditional recovery",
+  "macPID": 91956
+}

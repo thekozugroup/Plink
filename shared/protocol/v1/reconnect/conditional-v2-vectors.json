@@ -1,0 +1,696 @@
+{
+  "contractRevision": 2,
+  "status": "synthetic_proposed_v2_vectors_not_production_results",
+  "syntheticContext": {
+    "now": "2026-09-21T00:00:00Z",
+    "mac": "192.168.200.10:45731",
+    "phone": "192.168.200.20:45731",
+    "note": "Public synthetic identities/endpoints/nonces; isolated replay store per case. Raw plaintext vectors enter existing encrypted codec in future production tests."
+  },
+  "vectors": [
+    {
+      "id": "positive_hello",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": true,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "valid expected conditional phase",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "positive_challenge",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000002\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.challenge\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": true,
+      "context": {
+        "phase": "challenge",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "valid expected conditional phase",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "positive_proof",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000003\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.proof\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": true,
+      "context": {
+        "phase": "proof",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "valid expected conditional phase",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "positive_reverse",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000004\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"r\":\"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.reverse\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": true,
+      "context": {
+        "phase": "reverse",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "valid expected conditional phase",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "positive_reverse_proof",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000005\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"r\":\"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.reverse_proof\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": true,
+      "context": {
+        "phase": "reverse_proof",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "valid expected conditional phase",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "positive_ready",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000006\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"r\":\"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.ready\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": true,
+      "context": {
+        "phase": "ready",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "valid expected conditional phase",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "positive_commit",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000007\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"r\":\"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.commit\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": true,
+      "context": {
+        "phase": "commit",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "valid expected conditional phase",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "positive_done",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000008\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"r\":\"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.done\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": true,
+      "context": {
+        "phase": "done",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "valid expected conditional phase",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "version_legacy",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":1},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "version_unknown",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":3},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "version_string",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":\"2\"},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "version_bool",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":true},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "invalid_domain",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"other\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "invalid_mode",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"manual\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "invalid_extra",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"extra\":true,\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "invalid_token",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"token\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "invalid_q",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"q\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "missing_domain",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "missing_mode",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "missing_m",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "challenge_missing_p",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000002\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.challenge\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "challenge",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "reverse_missing_r",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000004\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.reverse\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "reverse",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "hello_extra_p",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "padded_nonce",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "short_nonce",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "wrong_port",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45732\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "requires_ack",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":true,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "strict schema rejection",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "transcript_m",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000008\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"Y2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2M\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"r\":\"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.done\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": false,
+      "context": {
+        "phase": "done",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "wire valid; recorded transcript mismatch after authenticated replay accounting",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "transcript_p",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000008\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"Y2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2M\",\"phone\":\"192.168.200.20:45731\",\"r\":\"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.done\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": false,
+      "context": {
+        "phase": "done",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "wire valid; recorded transcript mismatch after authenticated replay accounting",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "transcript_r",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000008\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"r\":\"Y2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2M\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.done\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": false,
+      "context": {
+        "phase": "done",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "wire valid; recorded transcript mismatch after authenticated replay accounting",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "transcript_endpoint",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.21:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": false,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "wire valid; actual binding mismatch",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "wrong_direction",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000002\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.challenge\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": false,
+      "context": {
+        "phase": "challenge",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "wire syntax valid; expected paired direction rejects",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "wrong_expected_phase",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000006\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"p\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\",\"phone\":\"192.168.200.20:45731\",\"r\":\"AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-phone\",\"targetDeviceId\":\"test-mac\",\"type\":\"reconnect.ready\",\"version\":1}",
+      "expectedV2WirePolicy": true,
+      "expectedTranscript": false,
+      "context": {
+        "phase": "challenge",
+        "source": "test-phone",
+        "target": "test-mac",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "wire valid Ready while expecting Challenge",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "duplicate_v",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2,\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "raw JSON rejection before normalization",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "escaped_duplicate_v",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2,\"\\u0076\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "raw JSON rejection before normalization",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "float_v",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2.0},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "raw JSON rejection before normalization",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "exponent_v",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2e0},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "raw JSON rejection before normalization",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    },
+    {
+      "id": "float_envelope_version",
+      "rawEnvelope": "{\"id\":\"00000000-0000-4000-8000-000000000001\",\"payload\":{\"domain\":\"plink.reconnect.recovery\",\"m\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"mac\":\"192.168.200.10:45731\",\"mode\":\"conditional-unadmitted\",\"phone\":\"192.168.200.20:45731\",\"v\":2},\"requiresAck\":false,\"sentAt\":\"2026-09-21T00:00:00Z\",\"sourceDeviceId\":\"test-mac\",\"targetDeviceId\":\"test-phone\",\"type\":\"reconnect.hello\",\"version\":1.0}",
+      "expectedV2WirePolicy": false,
+      "expectedTranscript": null,
+      "context": {
+        "phase": "hello",
+        "source": "test-mac",
+        "target": "test-phone",
+        "m": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+        "p": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI",
+        "r": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM",
+        "mac": "192.168.200.10:45731",
+        "phone": "192.168.200.20:45731"
+      },
+      "reason": "raw JSON rejection before normalization",
+      "legacyExpectation": "reject_v2_payload_before_replay_and_dispatch"
+    }
+  ]
+}

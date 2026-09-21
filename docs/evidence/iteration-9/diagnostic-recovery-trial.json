@@ -1,0 +1,22 @@
+{
+  "startedAtUTC": "2026-09-21T15:07:37.305345+00:00",
+  "phoneOldPID": 29277,
+  "macPID": 88302,
+  "stimulus": "App-UID SIGKILL after actual selected-peer resolve.accepted baseline. Mac and network unchanged; phone display remains asleep.",
+  "observations": [
+    {
+      "sessionStatus": "AWAITING_RECONNECT",
+      "reconnectState": "Idle(currentAddresses=[[address]])",
+      "clipboardConnected": false,
+      "clipboardSyncEnabled": true,
+      "clipboardState": "Clipboard sync is waiting for your Mac.",
+      "elapsedSeconds": 16.47
+    }
+  ],
+  "serviceRecovered": true,
+  "phoneNewPID": "29952",
+  "recoveryElapsedSeconds": 2.0,
+  "macPIDUnchanged": true,
+  "observerLog": "observer-diagnostic-trial.log",
+  "returnObservation": "Owned Find at11:07:40.561 was rejected as duplicate at11:07:40.565; no conditional attempt stages recorded."
+}

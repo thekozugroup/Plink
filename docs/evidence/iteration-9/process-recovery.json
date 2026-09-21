@@ -1,0 +1,30 @@
+{
+  "startedAtUTC": "2026-09-21T14:58:50.286169+00:00",
+  "phoneOldPID": 28929,
+  "macPID": 82520,
+  "stimulus": "App-UID SIGKILL of confirmed Plink PID. Mac and network unchanged; phone display remains asleep.",
+  "observations": [
+    {
+      "sessionStatus": "AWAITING_RECONNECT",
+      "reconnectState": "Idle(currentAddresses=[[address]])",
+      "clipboardConnected": false,
+      "clipboardSyncEnabled": true,
+      "clipboardState": "Clipboard sync is waiting for your Mac.",
+      "elapsedSeconds": 19.46,
+      "atUTC": "2026-09-21T14:59:09.742759+00:00"
+    },
+    {
+      "sessionStatus": "AWAITING_RECONNECT",
+      "reconnectState": "Idle(currentAddresses=[[address]])",
+      "clipboardConnected": false,
+      "clipboardSyncEnabled": true,
+      "clipboardState": "Clipboard sync is waiting for your Mac.",
+      "elapsedSeconds": 121.57
+    }
+  ],
+  "serviceRecovered": true,
+  "phoneNewPID": "29277",
+  "recoveryElapsedSeconds": 1.44,
+  "automaticRecoveryVerified": false,
+  "macPIDUnchanged": true
+}

@@ -60,6 +60,35 @@ interface ReconnectBindingResolver {
     fun resolveInbound(tuple: app.plink.android.transport.ObservedSocketTuple, macListenerPort: Int): ReconnectLiveBinding?
 }
 
+/** The same comparisons serve production receive paths and immutable context fixtures. */
+internal fun requireReconnectControl(
+    envelope: PlinkEnvelope,
+    type: String,
+    expected: ReconnectPayload,
+    peerDeviceId: String,
+    localDeviceId: String
+) {
+    require(envelope.type == type && envelope.sourceDeviceId == peerDeviceId && envelope.targetDeviceId == localDeviceId)
+    require(ReconnectPayloadPolicy.payload(envelope) == expected)
+}
+
+internal fun requireReconnectHelloTuple(
+    hello: PlinkEnvelope,
+    payload: ReconnectPayload,
+    tuple: ObservedSocketTuple,
+    peerDeviceId: String,
+    localDeviceId: String
+) {
+    require(hello.sourceDeviceId == peerDeviceId && hello.targetDeviceId == localDeviceId)
+    require(payload.phone.address == tuple.localAddress && payload.phone.port == tuple.localPort)
+    require(payload.mac.address == tuple.remoteAddress)
+}
+
+internal fun requireReconnectHelloBinding(payload: ReconnectPayload, binding: ReconnectLiveBinding) {
+    require(binding.peer == payload.mac && binding.listenerPort == payload.phone.port)
+    binding.validateCurrent()
+}
+
 class ReconnectCoordinator internal constructor(
     private val localDeviceId: String,
     private val peerDeviceId: String,
@@ -79,7 +108,9 @@ class ReconnectCoordinator internal constructor(
     private val awaitRevokedResources: suspend () -> Unit,
     private val ordinaryAdmissionOpen: () -> Boolean,
     private val isCurrentPair: () -> Boolean,
-    private val monotonicMillis: () -> Long = SystemClock::elapsedRealtime
+    private val monotonicMillis: () -> Long = SystemClock::elapsedRealtime,
+    private val claimConditional: (Long, ReconnectLiveBinding) -> ReconnectAttemptToken? = { _, _ -> null },
+    private val conditionalClaimCurrent: (ReconnectAttemptToken) -> Boolean = { !ordinaryAdmissionOpen() }
 ) : Closeable {
     private val ownedSessionKey = sessionKey.copyOf()
     private val ownerMutex = Mutex()
@@ -119,14 +150,24 @@ class ReconnectCoordinator internal constructor(
     /** Called only after the listener authenticated and replay-accepted the first frame. */
     fun receiveHello(exchange: SecureSocketPlinkExchange, envelope: PlinkEnvelope): Boolean {
         if (closed || envelope.type != PlinkEventType.ReconnectHello) return false
+        val payload = ReconnectPayloadPolicy.payload(envelope)
+        // Conditional acceptance must follow authentication, binding and an atomic admission claim.
+        // Ineligible requests return normally: no attempt, response, UI change or listener error delay.
+        val conditionalBinding = if (payload.version == 2) {
+            runCatching { resolveHelloBinding(exchange, envelope, payload) }.getOrNull() ?: return false
+        } else null
         val now = monotonicMillis()
         synchronized(this) {
-            if (activeJob?.isActive == true ||
+            if (closed || activeJob?.isActive == true ||
                 lastHelloAt != Long.MIN_VALUE && now - lastHelloAt < HELLO_RATE_LIMIT_MILLIS
             ) return false
+            val attemptToken = if (conditionalBinding != null) {
+                claimConditional(PHONE_ATTEMPT_MILLIS, conditionalBinding)
+            } else lifecycleOwner.begin(PHONE_ATTEMPT_MILLIS)
+            if (attemptToken == null) return false
             lastHelloAt = now
-            val attemptToken = lifecycleOwner.begin(PHONE_ATTEMPT_MILLIS) ?: return false
             val handshake = ActiveHandshake(attemptToken)
+            handshake.binding = conditionalBinding
             activeHandshake = handshake
             activeInbound = exchange
             activeJob = scope.launch {
@@ -218,13 +259,8 @@ class ReconnectCoordinator internal constructor(
                 requireCurrent(attemptToken)
                 _state.value = ReconnectState.Reconnecting("verifying", addresses)
                 val helloPayload = ReconnectPayloadPolicy.payload(hello)
-                require(hello.sourceDeviceId == peerDeviceId && hello.targetDeviceId == localDeviceId)
                 val tuple = c1.tuple
-                require(helloPayload.phone.address == tuple.localAddress && helloPayload.phone.port == tuple.localPort)
-                require(helloPayload.mac.address == tuple.remoteAddress)
-                val binding = bindingResolver.resolveInbound(tuple, helloPayload.mac.port)
-                    ?: fail(ReconnectFailureReason.UNAVAILABLE_NETWORK_OR_PERMISSION)
-                require(binding.peer == helloPayload.mac && binding.listenerPort == helloPayload.phone.port)
+                val binding = handshake.binding ?: resolveHelloBinding(c1, hello, helloPayload)
                 synchronized(this@ReconnectCoordinator) {
                     requireCurrent(attemptToken)
                     check(activeHandshake === handshake)
@@ -286,7 +322,7 @@ class ReconnectCoordinator internal constructor(
                             sessionKey = ownedSessionKey,
                             attemptToken = attemptToken,
                             lifecycleOwner = lifecycleOwner,
-                            pairIsCurrent = { !closed && isCurrentPair() }
+                            pairIsCurrent = { current(attemptToken) }
                         )
                     } catch (_: Exception) {
                         fail(ReconnectFailureReason.STORAGE_ERROR)
@@ -360,6 +396,19 @@ class ReconnectCoordinator internal constructor(
         payload = payload
     )
 
+    private fun resolveHelloBinding(
+        exchange: SecureSocketPlinkExchange,
+        hello: PlinkEnvelope,
+        payload: ReconnectPayload
+    ): ReconnectLiveBinding {
+        val tuple = exchange.tuple
+        requireReconnectHelloTuple(hello, payload, tuple, peerDeviceId, localDeviceId)
+        val binding = bindingResolver.resolveInbound(tuple, payload.mac.port)
+            ?: fail(ReconnectFailureReason.UNAVAILABLE_NETWORK_OR_PERMISSION)
+        requireReconnectHelloBinding(payload, binding)
+        return binding
+    }
+
     private fun message(received: app.plink.android.transport.ReceivedPlinkMessage): PlinkEnvelope =
         when (val result = received.result) {
             is AuthenticatedFrameResult.Message -> result.envelope
@@ -367,8 +416,7 @@ class ReconnectCoordinator internal constructor(
         }
 
     private fun requireControl(envelope: PlinkEnvelope, type: String, expected: ReconnectPayload) {
-        require(envelope.type == type && envelope.sourceDeviceId == peerDeviceId && envelope.targetDeviceId == localDeviceId)
-        require(ReconnectPayloadPolicy.payload(envelope) == expected)
+        requireReconnectControl(envelope, type, expected, peerDeviceId, localDeviceId)
     }
 
     private fun nonce(): String = ByteArray(32).also(SecureRandom()::nextBytes).let {
@@ -378,7 +426,9 @@ class ReconnectCoordinator internal constructor(
     @Volatile private var lastReverseTuple: ObservedSocketTuple? = null
 
     private fun current(attemptToken: ReconnectAttemptToken): Boolean =
-        !closed && lifecycleOwner.isCurrent(attemptToken) { isCurrentPair() }
+        !closed && lifecycleOwner.isCurrent(attemptToken) {
+            isCurrentPair() && (!attemptToken.conditional || conditionalClaimCurrent(attemptToken))
+        }
 
     private fun requireCurrent(attemptToken: ReconnectAttemptToken) {
         check(current(attemptToken)) { "Reconnect attempt is stale." }

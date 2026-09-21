@@ -1,0 +1,11 @@
+2026-09-21 11:06:22.819 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.refresh.blocked.startup
+2026-09-21 11:06:29.664 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.refresh.blocked.busy
+2026-09-21 11:06:30.497 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.search.start
+2026-09-21 11:06:30.507 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.search.will_search
+2026-09-21 11:06:30.557 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.owned
+2026-09-21 11:06:30.561 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.owned
+2026-09-21 11:06:30.643 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.owned
+2026-09-21 11:06:30.644 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.accepted
+2026-09-21 11:06:32.563 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.resolve.did_not_resolve
+2026-09-21 11:07:40.561 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.owned
+2026-09-21 11:07:40.565 Df PlinkMac[88302:aeda47] [com.thekozugroup.plink.mac:reconnect-observation] observer.find.reject.duplicate

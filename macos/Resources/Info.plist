@@ -30,6 +30,10 @@
     <string>Plink uses your Mac microphone when you choose laptop audio for a phone call.</string>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Plink connects to your paired Pixel on your local network.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_plink._tcp</string>
+    </array>
     <key>NSUserNotificationAlertStyle</key>
     <string>alert</string>
 </dict>

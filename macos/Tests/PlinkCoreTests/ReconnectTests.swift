@@ -3,6 +3,316 @@ import Foundation
 import Testing
 @testable import PlinkCore
 
+@Test func conditionalReconnectConnectWaitsForHeldOrdinaryGateAndDoesNotRetry() async throws {
+    let lifetime = reconnectTestLifetime()
+    let candidate = ReconnectCandidate(endpoint: try IPv4Endpoint("127.0.0.1:45731"),
+        interface: ReconnectInterfaceSnapshot(name: "lo0", index: 1, localIPv4: "127.0.0.1",
+            prefixLength: 8, up: true, loopback: true, pointToPoint: false, broadcast: true, vpn: false))
+    let binding = VerifiedNetworkBinding(interface: candidate.interface, localIPv4: "127.0.0.1",
+        peer: candidate.endpoint, localListenerPort: 45731, peerListenerPort: 45731)
+    let generation = try lifetime.openOrdinaryAdmission(binding: binding)
+    let listener = ReconnectListener(lifetime: lifetime) { _, _ in }
+    let deadline = ContinuousClock.now.advanced(by: .seconds(10))
+    let authority = ReconnectCommitAuthority(deadline: deadline)
+    let admission = try lifetime.beginConditionalReconnect(authority: authority)
+    let entered = AsyncTestSignal(), release = AsyncTestSignal(), authorized = AsyncTestSignal()
+    let connects = ConditionalConnectCount()
+    let writer = Task {
+        try await lifetime.writeGate.withWrite(deadline: deadline) {
+            await entered.signal()
+            await release.wait()
+        }
+    }
+    await entered.wait()
+    let initiator = ReconnectInitiator(lifetime: lifetime, listener: listener,
+        commitAuthority: authority, endpointCommitter: BlockingEndpointCommitter(), listenerPort: 45731,
+        connect: { _, _ in connects.increment(); throw ReconnectSessionError.socketFailure(ECONNREFUSED) })
+    let attempt = Task {
+        try await initiator.attemptConditional(candidate: candidate, deadline: deadline, admission: admission,
+            authorize: { await authorized.signal() }, accepted: { throw ReconnectTestError.unexpectedPhase })
+    }
+    await authorized.wait()
+    #expect(connects.value == 0)
+    #expect(lifetime.ordinaryAdmission()?.generation == generation)
+    await release.signal()
+    try await writer.value
+    await #expect(throws: ReconnectSessionError.self) { try await attempt.value }
+    #expect(connects.value == 1)
+    #expect(lifetime.ordinaryAdmission()?.generation == generation)
+}
+
+@Test(arguments: ["conditional", "legacy", "close"])
+func conditionalReconnectHandshakePreservesUntilAcceptanceAndBindsAllPhases(reply: String) async throws {
+    let phoneListener = try nonblockingLoopbackListener()
+    defer { Darwin.close(phoneListener.descriptor) }
+    let macPort = try unusedLoopbackPort()
+    let interface = ReconnectInterfaceSnapshot(name: "lo0", index: "lo0".withCString { if_nametoindex($0) },
+        localIPv4: "127.0.0.1", prefixLength: 8, up: true, loopback: true,
+        pointToPoint: false, broadcast: true, vpn: false)
+    let validation = ReconnectValidationPolicy(allowedPorts: [macPort, phoneListener.port], allowsLoopback: true)
+    let key = Data(repeating: 19, count: 32)
+    let mac = PairSessionLifetime(localID: "mac", peerID: "phone", sessionID: "conditional",
+        sessionKey: key, stateStore: InMemoryFrameStateStore(), validation: validation)
+    let phone = PairSessionLifetime(localID: "phone", peerID: "mac", sessionID: "conditional",
+        sessionKey: key, stateStore: InMemoryFrameStateStore(), validation: validation)
+    let candidate = ReconnectCandidate(endpoint: try IPv4Endpoint(address: "127.0.0.1", port: phoneListener.port), interface: interface)
+    let binding = VerifiedNetworkBinding(interface: interface, localIPv4: "127.0.0.1", peer: candidate.endpoint,
+        localListenerPort: macPort, peerListenerPort: phoneListener.port)
+    let original = try mac.openOrdinaryAdmission(binding: binding)
+    let listener = ReconnectListener(port: macPort, bindAddress: "127.0.0.1", lifetime: mac) { _, _ in }
+    try listener.start()
+    defer { listener.stop(); mac.invalidate(); phone.invalidate() }
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = ReconnectEndpointStore(directory: directory)
+    let deadline = ContinuousClock.now.advanced(by: .seconds(10))
+    let authority = ReconnectCommitAuthority(deadline: deadline)
+    let admission = try mac.beginConditionalReconnect(authority: authority)
+    let helloSeen = AsyncTestSignal(), releaseChallenge = AsyncTestSignal()
+    let accepted = LockedTestFlag()
+    let connects = ConditionalConnectCount()
+    let initiator = ReconnectInitiator(lifetime: mac, listener: listener, commitAuthority: authority,
+        endpointCommitter: store, listenerPort: macPort, connect: { candidate, deadline in
+            connects.increment()
+            return try await ReconnectSocket.connect(candidate: candidate, deadline: deadline)
+        })
+    let peer = Task.detached {
+        let c1 = try acceptReconnectSocket(listenerDescriptor: phoneListener.descriptor)
+        defer { c1.close() }
+        let hello = try ReconnectMessage(try await c1.receive(lifetime: phone, deadline: deadline), validation: validation)
+        #expect(hello.conditional && hello.type == .reconnectHello)
+        await helloSeen.signal()
+        await releaseChallenge.wait()
+        if reply == "close" { return }
+        let p = canonicalTestNonce(byte: 21), r = canonicalTestNonce(byte: 22)
+        try await sendReconnectControl(type: .reconnectChallenge, m: hello.m, p: p, r: nil,
+            mac: hello.mac, phone: hello.phone, source: "phone", target: "mac", socket: c1,
+            lifetime: phone, deadline: deadline, conditional: reply == "conditional")
+        if reply == "legacy" { return }
+        let proof = try ReconnectMessage(try await c1.receive(lifetime: phone, deadline: deadline), validation: validation)
+        #expect(proof.conditional && proof.type == .reconnectProof && proof.m == hello.m && proof.p == p)
+        c1.close()
+        let reverseCandidate = ReconnectCandidate(endpoint: hello.mac, interface: interface)
+        // Wrong-mode Reverse must not consume the conditional registration.
+        let wrong = try await ReconnectSocket.connect(candidate: reverseCandidate, deadline: deadline)
+        try await sendReconnectControl(type: .reconnectReverse, m: hello.m, p: p, r: r,
+            mac: hello.mac, phone: hello.phone, source: "phone", target: "mac", socket: wrong,
+            lifetime: phone, deadline: deadline)
+        do {
+            _ = try await wrong.receive(lifetime: phone, deadline: deadline)
+            Issue.record("Wrong-mode reverse unexpectedly received a response")
+        } catch { /* Listener rejects and closes only this exchange. */ }
+        wrong.close()
+        let c2 = try await ReconnectSocket.connect(candidate: reverseCandidate, deadline: deadline)
+        defer { c2.close() }
+        try await sendReconnectControl(type: .reconnectReverse, m: hello.m, p: p, r: r,
+            mac: hello.mac, phone: hello.phone, source: "phone", target: "mac", socket: c2,
+            lifetime: phone, deadline: deadline, conditional: true)
+        let reverseProof = try ReconnectMessage(try await c2.receive(lifetime: phone, deadline: deadline), validation: validation)
+        #expect(reverseProof.conditional && reverseProof.type == .reconnectReverseProof && reverseProof.r == r)
+        try await sendReconnectControl(type: .reconnectReady, m: hello.m, p: p, r: r,
+            mac: hello.mac, phone: hello.phone, source: "phone", target: "mac", socket: c2,
+            lifetime: phone, deadline: deadline, conditional: true)
+        let commit = try ReconnectMessage(try await c2.receive(lifetime: phone, deadline: deadline), validation: validation)
+        #expect(commit.conditional && commit.type == .reconnectCommit && commit.r == r)
+        try await sendReconnectControl(type: .reconnectDone, m: hello.m, p: p, r: r,
+            mac: hello.mac, phone: hello.phone, source: "phone", target: "mac", socket: c2,
+            lifetime: phone, deadline: deadline, conditional: true)
+    }
+    let attempt = Task {
+        try await initiator.attemptConditional(candidate: candidate, deadline: deadline, admission: admission,
+            authorize: {}, accepted: {
+                accepted.set()
+                try admission.retire()
+                // Cleanup can acquire the gate: the initiator released its Hello lease.
+                try await mac.writeGate.withWrite(deadline: deadline) {}
+            })
+    }
+    await helloSeen.wait()
+    #expect(!accepted.value)
+    #expect(mac.ordinaryAdmission()?.generation == original)
+    // Gate is available while the peer is deliberately withholding Challenge.
+    try await mac.writeGate.withWrite(deadline: deadline) {}
+    await releaseChallenge.signal()
+    if reply == "conditional" {
+        let result = try await attempt.value
+        try await peer.value
+        let generation = try admission.openOrdinaryAdmission(binding: result.binding)
+        #expect(generation != original)
+        #expect(accepted.value)
+    } else {
+        await #expect(throws: (any Error).self) { try await attempt.value }
+        try await peer.value
+        #expect(!accepted.value)
+        #expect(mac.ordinaryAdmission()?.generation == original)
+    }
+    #expect(connects.value == 1)
+}
+
+@Test(arguments: ["ordinary-first", "hello-first", "boundary-accept", "boundary-expire"])
+func conditionalReconnectExchangesShareDurableReplayWindow(order: String) async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let key = Data(repeating: 23, count: 32)
+    let state = FileFrameStateStore(directory: directory)
+    let validation = ReconnectValidationPolicy(allowedPorts: [45731], allowsLoopback: true)
+    let lifetime = PairSessionLifetime(localID: "phone", peerID: "mac", sessionID: "shared",
+        sessionKey: key, stateStore: state, validation: validation)
+    let sender = EncryptedFrameCodec(sessionKey: key)
+    let now = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down))
+    let ordinary = PlinkEnvelope(id: UUID().uuidString.lowercased(), type: .ack, sentAt: now,
+        sourceDeviceId: "mac", targetDeviceId: "phone", payload: [:])
+    let hello = PlinkEnvelope(id: UUID().uuidString.lowercased(), type: .reconnectHello, sentAt: now,
+        sourceDeviceId: "mac", targetDeviceId: "phone", payload: [
+            "v": .int(2), "domain": .string("plink.reconnect.recovery"),
+            "mode": .string("conditional-unadmitted"), "m": .string(canonicalTestNonce(byte: 31)),
+            "mac": .string("127.0.0.1:45731"), "phone": .string("127.0.0.1:45731")
+        ])
+    func wire(_ envelope: PlinkEnvelope, sequence: Int64) throws -> Data {
+        try LengthPrefixedFrameCodec.encode(PlinkJSON.encoder().encode(
+            sender.seal(envelope, sequence: sequence, issuedAt: now)))
+    }
+    let ordinaryWire = try wire(ordinary, sequence: 1)
+    let helloSequence: Int64 = order == "boundary-expire" ? 4097 : order == "boundary-accept" ? 4096 : 2
+    let helloWire = try wire(hello, sequence: helloSequence)
+    let (ordinarySocket, ordinaryPeer) = try reconnectSocketPair()
+    let (helloSocket, helloPeer) = try reconnectSocketPair()
+    defer {
+        ordinarySocket.close(); helloSocket.close()
+        Darwin.close(ordinaryPeer); Darwin.close(helloPeer)
+    }
+    // The complete ordinary frame is buffered on its own exchange but not yet decoded.
+    try sendTestBytes(ordinaryWire, descriptor: ordinaryPeer)
+    if order == "boundary-expire" {
+        _ = try await receiveReconnectTestFrame(wire(ordinary, sequence: 4096), lifetime: lifetime)
+    }
+    try sendTestBytes(helloWire, descriptor: helloPeer)
+    if order == "ordinary-first" {
+        let received = try await ordinarySocket.receive(lifetime: lifetime)
+        #expect(received == ordinary)
+    }
+    let conditional = try await helloSocket.receive(lifetime: lifetime)
+    #expect(conditional == hello)
+    if order == "boundary-expire" {
+        await #expect(throws: PayloadPolicyError.replayDetected) {
+            try await ordinarySocket.receive(lifetime: lifetime)
+        }
+    } else if order != "ordinary-first" {
+        let received = try await ordinarySocket.receive(lifetime: lifetime)
+        #expect(received == ordinary)
+    }
+    // Reopening durable state cannot make the conditional frame fresh again.
+    let reopened = PairSessionLifetime(localID: "phone", peerID: "mac", sessionID: "shared",
+        sessionKey: key, stateStore: FileFrameStateStore(directory: directory), validation: validation)
+    await #expect(throws: PayloadPolicyError.replayDetected) {
+        try await receiveReconnectTestFrame(helloWire, lifetime: reopened)
+    }
+    await #expect(throws: PayloadPolicyError.replayDetected) {
+        try await receiveReconnectTestFrame(ordinaryWire, lifetime: reopened)
+    }
+}
+
+@Test func conditionalReconnectStaleReverseCancellationPreservesReplacement() async throws {
+    let port = try unusedLoopbackPort()
+    let validation = ReconnectValidationPolicy(allowedPorts: [port, 45731], allowsLoopback: true)
+    let key = Data(repeating: 29, count: 32)
+    let lifetime = PairSessionLifetime(localID: "mac", peerID: "phone", sessionID: "reverse",
+        sessionKey: key, stateStore: InMemoryFrameStateStore(), validation: validation)
+    let listener = ReconnectListener(port: port, bindAddress: "127.0.0.1", lifetime: lifetime) { _, _ in }
+    try listener.start()
+    defer { listener.stop(); lifetime.invalidate() }
+    let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+    let m = canonicalTestNonce(byte: 41), oldP = canonicalTestNonce(byte: 42), newP = canonicalTestNonce(byte: 43)
+    let mac = try IPv4Endpoint(address: "127.0.0.1", port: port)
+    let phone = try IPv4Endpoint("127.0.0.1:45731")
+    let old = try listener.prepareReverse(m: m, deadline: deadline) { $0.conditional && $0.p == oldP }
+    old.cancel()
+    let replacement = try listener.prepareReverse(m: m, deadline: deadline) {
+        $0.conditional && $0.p == newP && $0.mac == mac && $0.phone == phone
+    }
+    defer { replacement.cancel() }
+    // This is the same identity-checked cancellation primitive used by the timeout callback.
+    old.cancel()
+    await #expect(throws: ReconnectSessionError.cancelled) { try await old.wait() }
+    let codec = EncryptedFrameCodec(sessionKey: key)
+    let now = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down))
+    func reverse(_ p: String, sequence: Int64) throws -> Data {
+        let envelope = PlinkEnvelope(id: UUID().uuidString.lowercased(), type: .reconnectReverse, sentAt: now,
+            sourceDeviceId: "phone", targetDeviceId: "mac", payload: [
+                "v": .int(2), "domain": .string("plink.reconnect.recovery"),
+                "mode": .string("conditional-unadmitted"), "m": .string(m), "p": .string(p),
+                "r": .string(canonicalTestNonce(byte: 44)), "mac": .string(mac.description),
+                "phone": .string(phone.description)
+            ])
+        return try LengthPrefixedFrameCodec.encode(PlinkJSON.encoder().encode(
+            codec.seal(envelope, sequence: sequence, issuedAt: now)))
+    }
+    let stalePeer = try connectLoopback(port: port)
+    defer { Darwin.close(stalePeer) }
+    try sendTestBytes(reverse(oldP, sequence: 1), descriptor: stalePeer)
+    var closed = pollfd(fd: stalePeer, events: Int16(POLLIN | POLLHUP), revents: 0)
+    try #require(Darwin.poll(&closed, 1, 1_000) > 0)
+    var byte: UInt8 = 0
+    #expect(Darwin.recv(stalePeer, &byte, 1, MSG_DONTWAIT) == 0)
+    let currentPeer = try connectLoopback(port: port)
+    defer { Darwin.close(currentPeer) }
+    try sendTestBytes(reverse(newP, sequence: 2), descriptor: currentPeer)
+    let (socket, message) = try await replacement.wait()
+    defer { socket.close() }
+    #expect(message.p == newP)
+    old.cancel()
+    #expect(message.conditional)
+}
+
+private func receiveReconnectTestFrame(_ wire: Data, lifetime: PairSessionLifetime) async throws -> PlinkEnvelope {
+    let (socket, peer) = try reconnectSocketPair()
+    defer { socket.close(); Darwin.close(peer) }
+    try sendTestBytes(wire, descriptor: peer)
+    return try await socket.receive(lifetime: lifetime)
+}
+
+private final class ConditionalConnectCount: @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+    var value: Int { lock.withLock { count } }
+    func increment() { lock.withLock { count += 1 } }
+}
+
+@Test func conditionalReconnectAdmissionPreservesUntilRetirementAndFencesReplacement() throws {
+    let lifetime = reconnectTestLifetime()
+    let interface = ReconnectInterfaceSnapshot(name: "lo0", index: 1, localIPv4: "127.0.0.1",
+        prefixLength: 8, up: true, loopback: true, pointToPoint: false, broadcast: true, vpn: false)
+    let binding = VerifiedNetworkBinding(interface: interface, localIPv4: "127.0.0.1",
+        peer: try IPv4Endpoint("127.0.0.1:45731"), localListenerPort: 45731, peerListenerPort: 45731)
+    let original = try lifetime.openOrdinaryAdmission(binding: binding)
+    let rejected = try lifetime.beginConditionalReconnect()
+    #expect(lifetime.ordinaryAdmission()?.generation == original)
+    rejected.cancel()
+    #expect(lifetime.ordinaryAdmission()?.generation == original)
+
+    let accepted = try lifetime.beginConditionalReconnect()
+    try accepted.retire()
+    #expect(lifetime.ordinaryAdmission() == nil)
+    let replacement = try lifetime.openOrdinaryAdmission(binding: binding)
+    #expect(throws: ReconnectSessionError.self) { try accepted.requireCurrent() }
+    #expect(throws: ReconnectSessionError.self) { try accepted.openOrdinaryAdmission(binding: binding) }
+    accepted.cancel()
+    #expect(lifetime.ordinaryAdmission()?.generation == replacement)
+}
+
+@Test func conditionalReconnectAdmissionRejectsCompetingAndStaleUnadmittedCapture() throws {
+    let lifetime = reconnectTestLifetime()
+    let first = try lifetime.beginConditionalReconnect()
+    #expect(throws: ReconnectSessionError.self) { try lifetime.beginConditionalReconnect() }
+    lifetime.closeOrdinaryAdmission()
+    let second = try lifetime.beginConditionalReconnect()
+    first.cancel()
+    try second.requireCurrent()
+    #expect(throws: ReconnectSessionError.self) { try first.retire() }
+    lifetime.invalidate()
+    #expect(throws: ReconnectSessionError.self) { try second.retire() }
+}
+
 @Test func reconnectNetworkFixturesUseProductionCandidatePolicy() throws {
     let data = try Data(contentsOf: reconnectSupplementalFixture("network-cases.json"))
     let fixture = try PlinkJSON.decoder().decode(NetworkFixture.self, from: data)
@@ -256,33 +566,54 @@ import Testing
     #expect(started.duration(to: ContinuousClock.now) < .milliseconds(360))
 }
 
-@Test func reconnectReceiveRejectsCompletionAfterReplayPersistenceDeadline() async throws {
+@Test(arguments: [false, true])
+func reconnectReceiveRejectsCompletionAfterReplayPersistenceDeadline(expiresAtCompletion: Bool) async throws {
     let (socket, peer) = try reconnectSocketPair()
     defer { socket.close(); Darwin.close(peer) }
     let state = BlockingAcceptStore()
+    defer { state.release() }
     let lifetime = PairSessionLifetime(localID: "mac", peerID: "pixel", sessionID: "session",
         sessionKey: Data(repeating: 9, count: 32), stateStore: state,
         validation: ReconnectValidationPolicy(allowedPorts: [45_731], allowsLoopback: true))
-    let envelope = PlinkEnvelope(id: UUID().uuidString.lowercased(), type: .deviceStatus, sentAt: .now,
+    let envelope = PlinkEnvelope(id: UUID().uuidString.lowercased(), type: .deviceStatus,
+        sentAt: Date(timeIntervalSince1970: Date.now.timeIntervalSince1970.rounded(.down)),
         sourceDeviceId: "pixel", targetDeviceId: "mac", payload: ["batteryLevel": .int(53)])
     let frame = try lifetime.codec.seal(envelope, sequence: 1)
     let framed = try LengthPrefixedFrameCodec.encode(PlinkJSON.encoder().encode(frame))
-    let receive = Task {
-        try await socket.receive(lifetime: lifetime,
-            deadline: ContinuousClock.now.advanced(by: .milliseconds(50)), maxWireBytes: 4_096)
-    }
     try sendTestBytes(framed, descriptor: peer)
-    let startDeadline = ContinuousClock.now.advanced(by: .seconds(1))
-    while !state.acceptStarted, ContinuousClock.now < startDeadline { await Task.yield() }
-    guard state.acceptStarted else {
+    // Real I/O retains a watchdog; the assertion is about the injected completion boundary.
+    let deadline = ContinuousClock.now.advanced(by: .seconds(10))
+    let clock = ReceiveCompletionClock(deadline.advanced(by: .nanoseconds(-1)))
+    let receive = Task {
+        defer { state.receiveCompleted() }
+        return try await socket.receive(lifetime: lifetime, deadline: deadline, maxWireBytes: 4_096,
+                                        completionNow: { clock.now })
+    }
+    await withTaskCancellationHandler {
+        let entered = await state.waitForAcceptOrCompletion()
+        guard entered else {
+            switch await receive.result {
+            case .failure(let error): Issue.record(error, "Receive ended before replay persistence")
+            case .success: Issue.record("Receive returned without reaching replay persistence")
+            }
+            return
+        }
+        #expect(!state.receiveHasCompleted)
+        if expiresAtCompletion { clock.set(deadline) }
+        state.release()
+        if expiresAtCompletion {
+            await #expect(throws: ReconnectSessionError.timedOut) { try await receive.value }
+        } else {
+            do {
+                let received = try await receive.value
+                #expect(received == envelope)
+            } catch { Issue.record(error, "Completion before the deadline must succeed") }
+        }
+    } onCancel: {
         receive.cancel()
         state.release()
-        Issue.record("Replay persistence was not reached")
-        return
     }
-    try await Task.sleep(for: .milliseconds(80))
-    state.release()
-    await #expect(throws: ReconnectSessionError.timedOut) { try await receive.value }
+    _ = await receive.result // Join owned I/O on every path, including early failure/cancellation.
 }
 
 @Test func reconnectListenerStopJoinsAuthenticatedReplayPersistence() async throws {
@@ -579,12 +910,17 @@ private func sendReconnectControl(
     target: String,
     socket: ReconnectSocket,
     lifetime: PairSessionLifetime,
-    deadline: ContinuousClock.Instant
+    deadline: ContinuousClock.Instant,
+    conditional: Bool = false
 ) async throws {
     var payload: [String: PayloadValue] = [
-        "v": .int(1), "m": .string(m), "mac": .string(mac.description),
+        "v": .int(conditional ? 2 : 1), "m": .string(m), "mac": .string(mac.description),
         "phone": .string(phone.description)
     ]
+    if conditional {
+        payload["domain"] = .string("plink.reconnect.recovery")
+        payload["mode"] = .string("conditional-unadmitted")
+    }
     if let p { payload["p"] = .string(p) }
     if let r { payload["r"] = .string(r) }
     let envelope = PlinkEnvelope(id: UUID().uuidString.lowercased(), type: type, sentAt: .now,
@@ -638,21 +974,62 @@ private final class SlowReservationStore: FrameStateStoring, @unchecked Sendable
     var reservations: Int64 { lock.withLock { count } }
 }
 
+private final class ReceiveCompletionClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private var instant: ContinuousClock.Instant
+    init(_ instant: ContinuousClock.Instant) { self.instant = instant }
+    var now: ContinuousClock.Instant { lock.withLock { instant } }
+    func set(_ instant: ContinuousClock.Instant) { lock.withLock { self.instant = instant } }
+}
+
 private final class BlockingAcceptStore: FrameStateStoring, @unchecked Sendable {
     private let condition = NSCondition()
     private var started = false
     private var released = false
     private var cancelled = false
+    private var completed = false
+    private var entryWaiter: CheckedContinuation<Bool, Never>?
 
     func reserveSequence(scope: String) throws -> Int64 { 1 }
 
     func accept(scope: String, sequence: Int64, nonce: String) throws {
         condition.lock()
         started = true
+        let waiter = entryWaiter
+        entryWaiter = nil
         condition.broadcast()
+        condition.unlock()
+        waiter?.resume(returning: true)
+        condition.lock()
         while !released { condition.wait() }
         cancelled = Task.isCancelled
         condition.unlock()
+    }
+
+    func waitForAcceptOrCompletion() async -> Bool {
+        await withCheckedContinuation { continuation in
+            condition.lock()
+            let immediate: Bool? = started ? true : completed ? false : nil
+            if immediate == nil { entryWaiter = continuation }
+            condition.unlock()
+            if let immediate { continuation.resume(returning: immediate) }
+        }
+    }
+
+    func receiveCompleted() {
+        condition.lock()
+        completed = true
+        let waiter = entryWaiter
+        entryWaiter = nil
+        let entered = started
+        condition.unlock()
+        waiter?.resume(returning: entered)
+    }
+
+    var receiveHasCompleted: Bool {
+        condition.lock()
+        defer { condition.unlock() }
+        return completed
     }
 
     var acceptStarted: Bool {

@@ -88,7 +88,10 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         center.removeDeliveredNotifications(withIdentifiers: ["plink.call.mirrored"])
         center.removePendingNotificationRequests(withIdentifiers: ["plink.call.mirrored"])
         guard callNotificationID != id || callNumber != call.number else { return }
-        if let old = callNotificationID { center.removeDeliveredNotifications(withIdentifiers: [old]) }
+        if let old = callNotificationID {
+            center.removeDeliveredNotifications(withIdentifiers: [old])
+            center.removePendingNotificationRequests(withIdentifiers: [old])
+        }
         callContext = context; callNotificationID = id
         callNumber = call.number
         let content = UNMutableNotificationContent()

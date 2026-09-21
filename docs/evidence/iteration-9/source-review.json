@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "iteration": 9,
+  "reviewer": "Astra",
+  "reviewedAtUTC": "2026-09-21T15:22:56.198773+00:00",
+  "sourceApproved": true,
+  "checkpointCommitAllowed": true,
+  "fullScopeComplete": false,
+  "blockingFindings": [],
+  "closedFindings": [
+    "I9-TEST-01: fixture context validation",
+    "I9-TRIGGER-01: per-candidate return deadline",
+    "I9-TRIGGER-02: native service removal identity"
+  ],
+  "reviewedScope": [
+    "Authenticated conditional reconnect and ownership/cancellation/deadline guards on both platforms.",
+    "Selected-peer native Bonjour trigger, consistent removal matching, fixed diagnostic logs and Bonjour declaration.",
+    "Bounded call-notification cleanup; no real call/audio verification inferred."
+  ],
+  "verification": {
+    "reference": "verification-result.json",
+    "androidTests": 202,
+    "swiftTests": 227,
+    "lintErrors": 0,
+    "lintWarnings": 39,
+    "signedMacPackage": true,
+    "binaryReference": "installed-builds.json"
+  },
+  "boundedHardwareResults": {
+    "automaticRecovery": {
+      "verified": true,
+      "reference": "recovery-final.json",
+      "scope": "One phone-only app process death; Mac process/network unchanged. Authenticated conditional completion about 4.364 seconds, Android READY observed at 4.82 seconds."
+    },
+    "nativeReplyAfterRecovery": {
+      "verified": true,
+      "reference": "recovered-reply-result.json",
+      "scope": "User-confirmed Mac Notification Center reply reached the owned synthetic Android callback once.",
+      "exactExpectedTextVerified": false,
+      "mismatchExplained": true
+    },
+    "cleanup": {
+      "reference": "cleanup-final.json",
+      "fixturesAndMonitorsRemoved": true,
+      "phoneDozing": true,
+      "settingsNote": "No display settings written this iteration. Observed brightness differed from an earlier value; current setting preserved."
+    }
+  },
+  "originalAcceptance": {
+    "metricsValid": false,
+    "verified": false,
+    "overallScore": null,
+    "checkerExitCode": 2,
+    "reason": "Historical device-addendum hash drift; original spec and matrix still match. No historical files rewritten. This does not block authorized checkpoint publication."
+  },
+  "remainingChecks": [
+    "Real carrier call control and two-way laptop audio; user phone association and consented test participants.",
+    "Broader native UI/accessibility, messaging-app/recipient coverage and complete original lifecycle/soak cases.",
+    "Exact received-text preservation was not established by the post-recovery callback fixture."
+  ],
+  "limits": [
+    "Native computer-use helper crash limits app UI inspection; no bypass performed.",
+    "No generic silent-failure, arbitrary reboot or missed-Bonjour-event recovery guarantee.",
+    "Removed screen sharing/webcam and deferred features receive no completion credit. No overall or full-parity claim."
+  ]
+}

@@ -36,6 +36,8 @@ For the bounded Android service check, enable Background connection, force-stop 
 
 For Mac recovery, lock or sleep the Mac, then unlock or wake it on the same local network. Also test an actual network change. Confirm a fresh authenticated connection and ordinary feature delivery without clicking Connect. Cancel during recovery, repeat the environment change, and verify that automatic recovery stays suppressed until explicit Connect. Unit tests with injected lifecycle events do not replace these native checks.
 
+For phone-process recovery, first establish READY, ordinary admission and the selected phone's Bonjour presence on matching builds. Keep the Mac process and network unchanged, put the phone display to sleep, then kill only Plink's Android process. Observe spontaneous process and foreground-service recovery before any diagnostic broadcast or activity launch. Record the selected service's disappearance/return, authenticated reconnection and an actual ordinary operation afterward. Do not count a Mac restart, manual Connect, service presence alone or a simulated discovery callback as automatic recovery. A synthetic notification fixture is sufficient for a bounded delivery check when the actual Mac notification is observed; remove the fixture afterward.
+
 All rows remain pending until actual observations exist. The test operator records evidence; the independent reviewer decides whether every criterion of the corresponding frozen case is satisfied.
 
 | Case | Prerequisite and owner action | Expected observation and evidence |

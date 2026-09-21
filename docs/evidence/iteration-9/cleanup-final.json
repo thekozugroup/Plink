@@ -1,0 +1,20 @@
+{
+  "atUTC": "2026-09-21T15:16:41.233542+00:00",
+  "fixtureStopSucceeded": true,
+  "fixtureFilesEmptyBeforeUninstall": true,
+  "fixtureAbsent": true,
+  "hostFixtureAbsent": true,
+  "displaySettings": {
+    "screen_brightness": "1",
+    "screen_brightness_mode": "0",
+    "screen_off_timeout": "120000",
+    "stay_on_while_plugged_in": "0"
+  },
+  "displaySettingsUnchanged": false,
+  "wakefulness": "Dozing",
+  "monitorsStopped": true,
+  "pairingAndUserDataPreserved": true,
+  "shizukuChangedThisIteration": false,
+  "displaySettingsWrittenThisIteration": false,
+  "brightnessObservation": "Current brightness is1; earlier checkpoint baseline was56. This iteration made no brightness writes. Current setting was preserved to avoid overwriting a concurrent change."
+}
