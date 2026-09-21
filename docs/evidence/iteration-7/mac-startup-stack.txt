@@ -23,4 +23,3 @@ One-second sample of the running packaged Mac app during Starting Plink. Selecte
       866 start_wqthread  (in libsystem_pthread.dylib) + 8  [address omitted]
         866 _pthread_wqthread  (in libsystem_pthread.dylib) + 368  [address omitted]
           866 __workq_kernreturn  (in libsystem_kernel.dylib) + 8  [address omitted]
-
