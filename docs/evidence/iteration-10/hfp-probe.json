@@ -1,0 +1,39 @@
+{
+  "atUTC": "2026-09-21T15:35:07.312474+00:00",
+  "target": "Exact Bluetooth address of USB-connected OnePlus, privately matched against Mac bond inventory",
+  "exitCode": 0,
+  "events": [
+    {
+      "elapsedSeconds": 0.0008870363235473633,
+      "stage": "connect_requested"
+    },
+    {
+      "elapsedSeconds": 0.0038399696350097656,
+      "stage": "connect_returned"
+    },
+    {
+      "elapsedSeconds": 1.1896569728851318,
+      "stage": "connected_callback",
+      "status": 0
+    },
+    {
+      "elapsedSeconds": 12.003790020942688,
+      "stage": "service_connected_at_end"
+    },
+    {
+      "elapsedSeconds": 12.003916025161743,
+      "stage": "disconnect_requested"
+    },
+    {
+      "elapsedSeconds": 12.6350679397583,
+      "stage": "disconnected_callback",
+      "status": 0
+    },
+    {
+      "elapsedSeconds": 12.653800010681152,
+      "stage": "cleanup_service_disconnected"
+    }
+  ],
+  "stderr": "",
+  "scope": "Service-level diagnostic only; no call/audio actions, pairing or preference writes."
+}

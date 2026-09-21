@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "iteration": 10,
+  "owner": "Astra",
+  "status": "source_approved_parent_gate_pending",
+  "sourceApproved": true,
+  "files": [
+    {
+      "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+      "sha256": "42a69f3efad439a12164483e6d6e6f23e586c4c49480a6c032dc4f374eb5d610",
+      "matchesFreeze": true
+    },
+    {
+      "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+      "sha256": "b723df4f5db62c4d0e806644576cf5d45bef8d708c61a6819aee28d4e44ae28f",
+      "matchesFreeze": true
+    },
+    {
+      "path": "macos/Tests/PlinkMacTests/BluetoothCallControllerTests.swift",
+      "sha256": "6ebae0e3e0bd0bf9100acf5c659e39b8e7eb4d1f81a5fb4d99c1f048da442cc3",
+      "matchesFreeze": true
+    }
+  ],
+  "findings": [],
+  "reviewedInvariants": [
+    "Fresh-pair setup is scheduled only after pairing commit; the predicate captures the post-clear pairingAttempt and current lifetime, and rejects termination, active/in-flight pairing, superseded lifetime, changed device/session or changed phone name. Restoration only configures the saved association.",
+    "Saved dictionary reads canonicalize addresses; discovery deduplicates bonded HFP devices and the saved lookup uses the same canonical representation. Saved lookup does not depend on display name. Invalid stored addresses fall back to setup without connecting a different device.",
+    "Explicit setup is single-flight. Catalogue completion waits for both gate confirmation and worker return: finish marks confirmed if still executing; invocationReturned releases the worker only when confirmed. If return comes first, later finish releases it. finishUI then invokes the captured setup completion after clearing busy and operation state.",
+    "Catalogue/chooser results recheck controller peer, generation, mismatch, busy/worker/operation, pending attachment and current call state before persistence. Unique exact-name selection and chooser share the validated commit path. Cancellation/timeouts/shutdown invalidate setup tokens.",
+    "Prior pending peer, attachment, callback-generation and native timeout/quarantine guards remain. No native call/action behavior changed apart from fixed stage and numeric-status logging.",
+    "Logs contain fixed stage/category strings and numeric native callback status after object ownership checks; invocation returned does not imply connected."
+  ],
+  "testAssessment": {
+    "authoredChecks": "Production setup orchestration is exercised with injected catalogue, chooser, validation and commit boundaries; canonical lookup and explicit first-pair continuation are covered.",
+    "limitations": [
+      "Parameterized stale-state tests vary one injected boolean; they do not independently drive every controller state transition.",
+      "Fresh-pair helper tests do not instantiate actual AppDelegate pairing state; its predicate was reviewed directly in source.",
+      "Native worker completion ordering was traced against existing MacBluetoothOperationGate semantics, not exercised with a real HFP device by this reviewer.",
+      "No clean preimplementation red test was captured; no red run claimed."
+    ],
+    "execution": "No tests/builds/devices/git run by reviewer. Parent must run coherent frozen gate before package/install."
+  },
+  "runtimeLimits": [
+    "Standalone parent HFP diagnostic passed; production saved-association worker connection remains pending.",
+    "Explicit selector, current-device name mismatch behavior, real carrier controls and two-way laptop audio remain unverified.",
+    "CLI-assisted association must not count as chooser or first-pair setup proof."
+  ],
+  "checkpointCondition": "Terra source has no blocking finding. Sol clearContexts correction still needs frozen closure; then parent full gate and scoped production verification."
+}

@@ -1,0 +1,8 @@
+{
+  "macApp": "build/PlinkMac.app",
+  "macExecutableSHA256": "2caee63e20862aa7101e7f4ada77eedd4b6f640a781a8f532bb1b9b2bd624fb4",
+  "macRunningPID": 17933,
+  "androidAPKBuildSHA256": "b88a8f9fb772be8bdaef9cfbf7f44e7ccc5cc87911f9c9305f291781ebdcea06",
+  "androidUpdateInstalledThisIteration": false,
+  "androidNote": "Existing checkpoint 9 app remains installed; the only Android source change in this iteration is the generic Phone call fallback text. Avoided interrupting the live call test for this wording-only update."
+}

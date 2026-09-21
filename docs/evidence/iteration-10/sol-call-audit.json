@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "iteration": 10,
+  "lane": "Sol",
+  "status": "frozen_I10_SOL_03_corrected_parent_verification_pending",
+  "authorization": ".a5c/artifacts/iteration10-plan.json",
+  "sourceChange": {
+    "path": "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt",
+    "line": 38,
+    "before": "Pixel call",
+    "after": "Phone call",
+    "scope": "Blank callerHandle fallback only; no routing, permissions or capability changes.",
+    "sha256": "b21e9310f8d03449dfca47d78c91289fad7f322bdc5a20dcd4da367639165f69",
+    "testChanges": "None: search found no existing assertion for this literal. No new test for this wording-only change."
+  },
+  "androidPath": [
+    {
+      "source": "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt:47",
+      "finding": "Posted and removed notifications share one forward path. Own-package notifications ignored; Calls toggle gates category-call forwarding. Notification identity replacement clears old reply capabilities. Sending requires active ordinary admission in PlinkSessionController.sendEnvelope."
+    },
+    {
+      "source": "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt:24",
+      "finding": "Incoming category-call notification maps to call.ringing. android.callType=1 is treated as incoming; absent callType uses ongoing/full-screen-intent heuristic. Other call updates/removals produce call.ended tombstones with packageName and notificationKey. This is notification presentation state, not authoritative carrier/HFP call state."
+    },
+    {
+      "source": "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt:54",
+      "finding": "Call notifications never register a RemoteInput reply action. Live mapper passes canDecline=false; CallRingingEvent defaults canAnswer=false. Thus this producer claims no actionable call controls."
+    },
+    {
+      "source": "android/src/main/java/app/plink/android/services/InboundCommandHandler.kt:31",
+      "finding": "Ordinary commands support message replies, media and handoff, not answer/hang-up/audio routing. No Android TelecomManager/InCallService/Bluetooth HFP implementation was found in main source."
+    },
+    {
+      "source": "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt:73",
+      "finding": "Durable replay sanitization admits message/device/media events only; call events are not persisted for later replay."
+    },
+    {
+      "source": "android/src/main/java/app/plink/android/pairing/PairingModels.kt:8",
+      "finding": "Pairing offer/confirmation and stored paired record carry Plink identity, key/session/endpoint data; no Bluetooth address or HFP capability exchange."
+    }
+  ],
+  "permissionsAndSetup": [
+    "Android notification access and enabled Calls feature are required for mirrored call notifications. FeaturePolicy checks notificationListener; AndroidPermissionReader reports phoneState=false. POST_NOTIFICATIONS is a separate permission for Plink notifications, not HFP pairing/control.",
+    "Android main manifest declares no Bluetooth/Telecom call-control permissions or call service. Adding such permissions alone would not repair this existing path; Plink does not invoke those APIs.",
+    "Mac system Bluetooth bond, correct selected phone association, HFP service connection, actual carrier call state and SCO/two-way audio are separate prerequisites/evidence levels. Mac worker invokes public IOBluetoothHandsFreeDevice acceptCall/endCall/transferAudio calls; Android OS phone/HFP integration supplies the remote gateway, not Plink notification mapping.",
+    "Mac native setup explicitly selects an HFP gateway and maps its Bluetooth address to selected Plink peerID. Plan records no saved association at baseline despite an existing bond. This is concrete setup coordination; no identity auto-selection or pairing-protocol extension is justified by this Android audit.",
+    "Only the parent accesses the current OnePlus CPH2749. Pixel unavailable. No Bluetooth addresses, serials, private notifications or phone numbers are included here."
+  ],
+  "parentEvidence": {
+    "path": ".a5c/artifacts/iteration10/hfp-probe.json",
+    "sha256": "6a0697d08de41300d398567a52557e72e14388bcf560abdc857615c0046e913f",
+    "observed": "Native connect returned at0.00384s; successful connected callback at1.18966s; service connected at12.00379s; successful disconnected callback at12.63507s and cleanup recorded.",
+    "conclusion": "Existing bonded target can establish HFP service through parent diagnostic. Idle service is not evidence of a broken Android HFP implementation.",
+    "limits": "Service-only diagnostic, not Plink association persistence, app production call actions, carrier answer/hang-up, SCO routing or two-way audio proof. Raw HeadsetService dumps were not supplied in this lane; no device inspection performed."
+  },
+  "duplicateAndLockReview": [
+    "Android call notifications do not authorize HFP actions. Mac NotificationBridge suppresses mirrored ringing while an HFP call context exists and gives mirrored calls a read-only category. Native actions require the currently owned HFP notification/context.",
+    "The Android call notification path has no explicit keyguard-unlocked predicate. It forwards notification data the OS supplies; this does not bypass Android Telecom or grant answer/decline capability. Lock-screen data disclosure and carrier action behavior remain runtime/OS-dependent and unverified here.",
+    "Mac Bluetooth perform checks current call context, busy/blocked state and operation authority. Its blocked flag is not by itself evidence of an OS-lock gate. Existing Mac screen-lock observer invalidates reconnect; this audit does not claim a verified call-action lock policy or change it.",
+    "Source permits repeated posted call notifications to replace the same mirrored Mac notification; they do not create duplicate answer/reply capabilities. No current-device duplicate ringing or audio issue reproduced."
+  ],
+  "findingsForAstra": [
+    {
+      "id": "I10-SOL-01",
+      "kind": "fixed_copy_defect",
+      "finding": "Pixel-specific blank call fallback on non-Pixel phone. Replaced with Phone call within approved scope."
+    },
+    {
+      "id": "I10-SOL-02",
+      "kind": "concrete_source_identity_gap_not_device_reproduced",
+      "source": [
+        "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt:102",
+        "macos/Sources/PlinkMac/NotificationBridge.swift:106"
+      ],
+      "finding": "Android tombstone carries notificationKey, but Mac removes one global plink.call.mirrored notification for every call.ended without checking that key. Sequence: ringing A, ringing B replaces global mirrored card, delayed ended A removes B.",
+      "impact": "Read-only mirrored notification can disappear incorrectly. Does not retire/control HFP call context and does not explain the HFP setup problem.",
+      "action": "Astra approval relayed by user; implemented peer/key matching in NotificationBridge with production-path regression. No broader call feature changes.",
+      "status": "authorized_narrow_fix_implemented_frozen_parent_verification_pending"
+    }
+  ],
+  "verification": {
+    "buildsRun": false,
+    "testsRun": false,
+    "devicesAccessed": false,
+    "gitOperations": false,
+    "sourceReviewOnlyExceptApprovedLiteral": false,
+    "runtimeCallingPass": false,
+    "sourceFrozen": true,
+    "authorizedEdits": "Android fallback literal plus explicitly authorized Swift mirrored-call identity fix and test-delivery seam."
+  },
+  "handoff": "I10-SOL-03 corrected and same two Swift files frozen. Parent full gate may proceed; no builds/tests/devices/git by Sol and no further code edits.",
+  "swiftFollowup": {
+    "authorization": "User relayed Astra confirmation authorizing I10-SOL-02 narrow NotificationBridge fix and regression.",
+    "sourceFiles": [
+      "macos/Sources/PlinkMac/NotificationBridge.swift",
+      "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift"
+    ],
+    "sourceSHA256": {
+      "macos/Sources/PlinkMac/NotificationBridge.swift": "4f868237b6951b4ccc22e0f54c9064849deb67017791f5277050d067cfbf73f4",
+      "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": "5ded30ffddf3f506d88846aa37acf7af5f618ae93dfa426802740e6cfd34b5ba"
+    },
+    "implementation": "Retain current mirrored identity as source peerID plus Android notificationKey. call.ended removes the mirrored card only for that exact identity. HFP takeover and shutdown clear mirrored identity. HFP call context/action routing remain separate and unchanged. clearContexts now also clears keyed/unkeyed mirrored presentation and identity without touching HFP.",
+    "testSeam": "Optional submit/removal callbacks replace only Notification Center side effects; production defaults use the original center operations and remove both delivered and pending requests. Lazy center access keeps tests from contacting OS Notification Center.",
+    "testFileNote": "No existing NotificationBridge test file was present. Added NotificationBridgeTests.swift to existing PlinkMacTests target, with no package/target/framework changes.",
+    "testsAuthoredFirst": true,
+    "redWindow": "Parent was notified after test authoring and again after delivery-seam extraction while identity bug remained. No red result was received before implementation; no red execution/pass claimed.",
+    "regressions": [
+      "A ringing, B ringing, old ended A preserves B delivered/pending; ended B removes B.",
+      "Same notification key from another peer and missing-key tombstone cannot clear current mirrored call.",
+      "HFP takeover removes mirror; old mirror tombstone and new mirror ringing cannot replace/remove HFP notification; normal HFP ringing-to-active replacement remains exercised."
+    ],
+    "compatibility": "Unkeyed ringing remains displayable but does not establish a removable peer/key identity; an unkeyed tombstone cannot clear a current card. Current Android producer supplies notificationKey.",
+    "limits": "Tests authored, not executed by Sol. Injected OS delivery boundary is not native Notification Center runtime proof. No carrier control, Bluetooth connection, SCO or audio claim.",
+    "clearContextsCorrection": {
+      "authorization": ".a5c/artifacts/iteration10/astra-sol-review.json",
+      "finding": "I10-SOL-03",
+      "implementation": "clearContexts unconditionally removes delivered and pending plink.call.mirrored and resets mirroredCallIdentity; HFP context, notification ID and native notification remain unchanged.",
+      "tests": [
+        "clearContextsRemovesKeyedAndUnkeyedMirrorsAndRevokesIdentity",
+        "clearContextsPreservesHFPNotificationAndContext"
+      ],
+      "testOrder": "Tests added before the two-line production correction. No build/test execution by Sol.",
+      "status": "source_frozen_parent_full_gate_pending"
+    }
+  }
+}

@@ -1,0 +1,497 @@
+{
+  "schemaVersion": 1,
+  "iteration": 10,
+  "title": "Bounded Bluetooth checkpoint review against original frozen acceptance",
+  "owner": "Astra",
+  "reviewedAtUTC": "2026-09-21T16:00:58.386563+00:00",
+  "runId": "01M2Y9TWMMWJD1CGEHGZVW2JRY",
+  "status": "checkpoint_approved_live_call_acceptance_pending",
+  "verified": false,
+  "overallVerified": false,
+  "metricsValid": false,
+  "overallScore": null,
+  "allMetricsAt100": false,
+  "decision": {
+    "checkpointCommitAllowed": true,
+    "sourceApproved": true,
+    "blockingSourceFindings": [],
+    "fullScopeComplete": false,
+    "liveCallAcceptancePending": true,
+    "integrityFailureBlocksAuthorizedEngineering": false,
+    "reason": "Source approved, full gates passed, production saved-association HFP connected and remained connected at the 270.6-second observation. The exact lifecycle acceptance capture was read and matched to original files. Checkpoint publication is approved; native chooser, carrier controls and two-way audio remain explicitly unverified."
+  },
+  "comparison": {
+    "specPath": ".a5c/spec.md",
+    "specReadVerbatim": true,
+    "acceptanceReadDirectly": true,
+    "matrixPath": ".a5c/artifacts/acceptance/matrix.json",
+    "metricCount": 9,
+    "caseCount": 27,
+    "criterionCount": 81,
+    "artifactsRead": [
+      ".a5c/artifacts/acceptance/README.md",
+      ".a5c/artifacts/acceptance/matrix.json",
+      ".a5c/artifacts/acceptance/freeze.json",
+      ".a5c/artifacts/acceptance/verification.json",
+      ".a5c/artifacts/acceptance/evaluate.py"
+    ],
+    "iteration10LifecycleCapture": "Read acceptance-current.txt directly; every current acceptance file occurs once verbatim. Capture ordering follows the recorded shell output, not Python lexicographic ordering.",
+    "method": "Compare original spec and every matrix criterion with actual verification-result and production-service artifacts. Preserve source-test, native service, chooser, carrier and audio evidence levels separately.",
+    "capturePath": ".a5c/artifacts/iteration10/acceptance-current.txt",
+    "captureSHA256": "35e04ba36b0aa09ab4644758d7edf2ed9644159cbdeee01c9221ba219da8a21b",
+    "captureReadDirectly": true,
+    "capturedFiles": [
+      {
+        "path": ".a5c/artifacts/acceptance/baseline.json",
+        "sha256": "eb17389f239128deb57ba6fdfa66cd6d1cd1540c8cc822637c2905deae6719a1",
+        "verbatimOccurrencesInCapture": 1,
+        "byteOffset": 320
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/evaluate.py",
+        "sha256": "73af5bd851e503eba2834b540637d7d135b700a889d2456e121bb82c90f33d78",
+        "verbatimOccurrencesInCapture": 1,
+        "byteOffset": 5851
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/freeze.json",
+        "sha256": "1bca89b7246baa5eca82b740309738fadc4a0be366865e7a1b45f4fcdd9194fb",
+        "verbatimOccurrencesInCapture": 1,
+        "byteOffset": 16009
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/matrix.json",
+        "sha256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+        "verbatimOccurrencesInCapture": 1,
+        "byteOffset": 16430
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/README.md",
+        "sha256": "38c8cb613ccab0585d801cf900d1da2fee8d021340c054d8763ef0425a2c5bc6",
+        "verbatimOccurrencesInCapture": 1,
+        "byteOffset": 56556
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/verification.json",
+        "sha256": "c5c5a92b0102f99799019b32fb46a6fac51c04fac68998a987100f1cc406b766",
+        "verbatimOccurrencesInCapture": 1,
+        "byteOffset": 62287
+      }
+    ],
+    "verbatimConcatenationInRecordedOrderMatches": true,
+    "captureMeaning": "Recorded diff summary followed by the six historical acceptance files. The embedded baseline zero and old checker self-test exits are file contents, not a newly executed current evaluator score. No capture process exit code inferred from this text file."
+  },
+  "originalIntegrity": {
+    "valid": false,
+    "hashChecks": [
+      {
+        "path": ".a5c/spec.md",
+        "expectedSHA256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+        "actualSHA256": "2c1fc58b8e5e86849e6d5de9818dfbc11858dcd61526e07f6ea9ac94f370afdd",
+        "matches": true
+      },
+      {
+        "path": ".a5c/device-constraints.md",
+        "expectedSHA256": "c3be51adce89b8234fc3bb6001dcc88c78418582a953cbb7d13994e65c0da313",
+        "actualSHA256": "9f0a4086d97729c3eb893918e7fcec67c16ac0f7a394285fedca388a76f1c59b",
+        "matches": false
+      },
+      {
+        "path": ".a5c/artifacts/acceptance/matrix.json",
+        "expectedSHA256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+        "actualSHA256": "37c6b6a3731aada5d30a29a64477c2a2bd594bba2bbe04ccb0800638d5ef8274",
+        "matches": true
+      }
+    ],
+    "checkerExecution": {
+      "rerunThisReview": false,
+      "priorResultReference": ".a5c/artifacts/iteration9/metric-review.json",
+      "priorExitCode": 2,
+      "priorError": "Device addendum changed; refresh acceptance explicitly",
+      "currentCorroboration": "Same device-addendum mismatch remains; evaluator checks it before scoring. No fresh checker run or product test claimed."
+    },
+    "historicalVerification": "acceptance/verification.json records old self-test success and empty-evidence exit1; neither overrides current drift.",
+    "exactDriftEditProven": false,
+    "originalsModified": false
+  },
+  "metrics": [
+    {
+      "id": "cellularCalls",
+      "weight": 25,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "CALL-01",
+        "CALL-02",
+        "CALL-03",
+        "CALL-04"
+      ],
+      "remainingEvidence": "Saved-association production HFP service is verified; native chooser, incoming carrier notification/Answer, Decline/End/remote hangup, mute/routes and two-minute two-way laptop audio remain unverified. No user call-test result has arrived."
+    },
+    {
+      "id": "notificationReplies",
+      "weight": 15,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "MSG-01",
+        "MSG-02",
+        "MSG-03"
+      ],
+      "remainingEvidence": "Prior bounded synthetic native reply evidence remains tied to its own builds. No new real conversation/controlled recipient, Unicode/multiple-route or recovery acceptance is claimed here."
+    },
+    {
+      "id": "nativeMac",
+      "weight": 8,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "MAC-01",
+        "MAC-02"
+      ],
+      "remainingEvidence": "Native source/package and HFP worker are evidenced. Native chooser/first-pair setup, full call UI, keyboard/VoiceOver, appearance and permission recovery remain unverified. CUA helper failure is not a Plink crash."
+    },
+    {
+      "id": "tomatoAndroid",
+      "weight": 15,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "TOM-01",
+        "TOM-02",
+        "TOM-03"
+      ],
+      "remainingEvidence": "No new complete pinned-reference visual, typography, motion or accessibility comparison. This call-focused checkpoint cannot close original Tomato cases."
+    },
+    {
+      "id": "continuity",
+      "weight": 12,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "CON-01",
+        "CON-02",
+        "CON-03"
+      ],
+      "remainingEvidence": "Earlier bounded clipboard/file/recovery results remain separate. No new all-feature continuity pass. Screen sharing/webcam remain removed and missing features deferred under later instructions, without historical completion credit."
+    },
+    {
+      "id": "security",
+      "weight": 8,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "SEC-01",
+        "SEC-02",
+        "SEC-03"
+      ],
+      "remainingEvidence": "Changed identity selection, stale mirrored notification and lifecycle guards reviewed; fixed non-sensitive stage logs. No full cross-feature confidentiality/revocation/storage security acceptance newly established."
+    },
+    {
+      "id": "stability",
+      "weight": 7,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "STAB-01",
+        "STAB-02",
+        "STAB-03"
+      ],
+      "remainingEvidence": "Full gate passed; no repeated carrier/audio recovery or two-hour/100-notification soak proof. Unit tests and one successful HFP connection do not prove long-run stability."
+    },
+    {
+      "id": "deviceEndToEnd",
+      "weight": 7,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "E2E-01",
+        "E2E-02",
+        "E2E-03",
+        "E2E-04"
+      ],
+      "remainingEvidence": "Actual replacement OnePlus and Mac service connection evidenced; full original Pixel journey and replacement-device carrier/audio journey remain incomplete. Parent retains cleanup/settings and human-action evidence responsibilities."
+    },
+    {
+      "id": "processIntegrity",
+      "weight": 3,
+      "score": null,
+      "verified": false,
+      "status": "invalid_original_integrity_gate",
+      "caseIds": [
+        "PROC-01",
+        "PROC-02"
+      ],
+      "remainingEvidence": "Astra decisions, Sol/Terra implementations and Luna review recorded. Alleged worker race disproved with mutating-confirm source and existing regression. Parent lifecycle/checkpoint publication remains a parent action. Original integrity failure remains explicit."
+    }
+  ],
+  "directCriterionComparisons": [
+    {
+      "caseId": "CALL-01",
+      "title": "Real incoming carrier call and native answer",
+      "originalCriteria": [
+        {
+          "id": "CALL-01.1",
+          "text": "One native notification identifies the real caller or accurately labels an unknown caller."
+        },
+        {
+          "id": "CALL-01.2",
+          "text": "Answer picks up that same cellular call on the Pixel without another phone interaction."
+        },
+        {
+          "id": "CALL-01.3",
+          "text": "Both devices show confirmed call state; stale notifications cannot answer an ended or different call."
+        }
+      ],
+      "assessment": "Saved-association production HFP service is verified; native chooser, incoming carrier notification/Answer, Decline/End/remote hangup, mute/routes and two-minute two-way laptop audio remain unverified. No user call-test result has arrived.",
+      "wholeOriginalCaseVerified": false
+    },
+    {
+      "caseId": "CALL-02",
+      "title": "Cellular audio on laptop",
+      "originalCriteria": [
+        {
+          "id": "CALL-02.1",
+          "text": "The remote participant hears laptop microphone speech and the laptop plays remote cellular speech."
+        },
+        {
+          "id": "CALL-02.2",
+          "text": "Device audio-route evidence and peer observation exclude phone speaker leakage, demo playback and a separate VoIP call."
+        },
+        {
+          "id": "CALL-02.3",
+          "text": "Conversation remains intelligible in both directions without persistent silence, one-way audio or disruptive echo."
+        }
+      ],
+      "assessment": "Saved-association production HFP service is verified; native chooser, incoming carrier notification/Answer, Decline/End/remote hangup, mute/routes and two-minute two-way laptop audio remain unverified. No user call-test result has arrived.",
+      "wholeOriginalCaseVerified": false
+    },
+    {
+      "caseId": "CALL-03",
+      "title": "Native call lifecycle controls",
+      "originalCriteria": [
+        {
+          "id": "CALL-03.1",
+          "text": "Native decline/end acts on the correct real call exactly once and clears state on both devices."
+        },
+        {
+          "id": "CALL-03.2",
+          "text": "Remote hang-up and cancellation clear stale state; repeated actions cannot affect another call."
+        },
+        {
+          "id": "CALL-03.3",
+          "text": "Any exposed mute/route control affects real media; all controls necessary for laptop conversation work."
+        }
+      ],
+      "assessment": "Saved-association production HFP service is verified; native chooser, incoming carrier notification/Answer, Decline/End/remote hangup, mute/routes and two-minute two-way laptop audio remain unverified. No user call-test result has arrived.",
+      "wholeOriginalCaseVerified": false
+    },
+    {
+      "caseId": "CALL-04",
+      "title": "Call recovery and capability truthfulness",
+      "originalCriteria": [
+        {
+          "id": "CALL-04.1",
+          "text": "Unavailable permissions/audio produce accurate state and actionable recovery, never false answered or audio-ready status."
+        },
+        {
+          "id": "CALL-04.2",
+          "text": "Connection loss does not trigger an unintended call action or leave a phantom active Mac call."
+        },
+        {
+          "id": "CALL-04.3",
+          "text": "A fresh real cellular call after recovery has working laptop audio; a hardware restriction stays blocked."
+        }
+      ],
+      "assessment": "Saved-association production HFP service is verified; native chooser, incoming carrier notification/Answer, Decline/End/remote hangup, mute/routes and two-minute two-way laptop audio remain unverified. No user call-test result has arrived.",
+      "wholeOriginalCaseVerified": false
+    },
+    {
+      "caseId": "STAB-01",
+      "title": "Build and regression evidence",
+      "originalCriteria": [
+        {
+          "id": "STAB-01.1",
+          "text": "Both platform builds and relevant regression checks pass; exact commands, exit codes and tool versions are retained."
+        },
+        {
+          "id": "STAB-01.2",
+          "text": "Tests address acceptance risks and failures; compilation or test counts alone never establish device behavior."
+        },
+        {
+          "id": "STAB-01.3",
+          "text": "Output binary hashes match the binaries used for device acceptance."
+        }
+      ],
+      "assessment": "Full gate passed; no repeated carrier/audio recovery or two-hour/100-notification soak proof. Unit tests and one successful HFP connection do not prove long-run stability.",
+      "wholeOriginalCaseVerified": false
+    },
+    {
+      "caseId": "E2E-02",
+      "title": "Other Android support",
+      "originalCriteria": [
+        {
+          "id": "E2E-02.1",
+          "text": "The additional Android device demonstrates claimed core calls/audio and native Mac reply behavior with peer-confirmed evidence."
+        },
+        {
+          "id": "E2E-02.2",
+          "text": "Each claimed configuration identifies models, OS versions, permissions and linked tests; untested configurations are marked unverified."
+        },
+        {
+          "id": "E2E-02.3",
+          "text": "OEM/OS restrictions remain open acceptance items rather than being silently removed to obtain 100."
+        }
+      ],
+      "assessment": "Actual replacement OnePlus and Mac service connection evidenced; full original Pixel journey and replacement-device carrier/audio journey remain incomplete. Parent retains cleanup/settings and human-action evidence responsibilities.",
+      "wholeOriginalCaseVerified": false
+    },
+    {
+      "caseId": "E2E-03",
+      "title": "Human-assisted completion ledger",
+      "originalCriteria": [
+        {
+          "id": "E2E-03.1",
+          "text": "Each pending case names the exact action, prerequisite, expected observation, owner and evidence collector."
+        },
+        {
+          "id": "E2E-03.2",
+          "text": "No unauthorized calls/messages to other people or destructive device reset occur during autonomous work."
+        },
+        {
+          "id": "E2E-03.3",
+          "text": "Every human-dependent case has actual reviewed evidence before full completion; waiting earns no completion credit."
+        }
+      ],
+      "assessment": "Actual replacement OnePlus and Mac service connection evidenced; full original Pixel journey and replacement-device carrier/audio journey remain incomplete. Parent retains cleanup/settings and human-action evidence responsibilities.",
+      "wholeOriginalCaseVerified": false
+    },
+    {
+      "caseId": "PROC-02",
+      "title": "Checkpoints and honest completion",
+      "originalCriteria": [
+        {
+          "id": "PROC-02.1",
+          "text": "This delegated worker makes no commits/pushes; any outstanding original publication duty remains for an authorized parent action."
+        },
+        {
+          "id": "PROC-02.2",
+          "text": "Checkpoint and final report claims link to actual matching-build evidence."
+        },
+        {
+          "id": "PROC-02.3",
+          "text": "Full completion is reported only when every metric is 100; otherwise remaining functionality and human input are explicit."
+        }
+      ],
+      "assessment": "Astra decisions, Sol/Terra implementations and Luna review recorded. Alleged worker race disproved with mutating-confirm source and existing regression. Parent lifecycle/checkpoint publication remains a parent action. Original integrity failure remains explicit.",
+      "wholeOriginalCaseVerified": false
+    }
+  ],
+  "currentScopeEvidence": {
+    "sourceReview": ".a5c/artifacts/iteration10/astra-review.json",
+    "workerRaceAdjudication": ".a5c/artifacts/iteration10/astra-worker-completion-adjudication.json",
+    "verificationResult": ".a5c/artifacts/iteration10/verification-result.json",
+    "fullGate": {
+      "command": "./scripts/verify.sh",
+      "exitCode": 0,
+      "log": ".a5c/artifacts/iteration10/verification-final.log",
+      "androidTests": 202,
+      "swiftTests": 240,
+      "swiftBreakdown": {
+        "XCTest": 54,
+        "appSwiftTesting": 62,
+        "coreSwiftTesting": 124
+      },
+      "debugReleaseInstrumentationBuilds": true,
+      "macReleasePackaged": true
+    },
+    "fullGateLogSHA256": "e8891c056b14dcccf2c48cd951c5b703da7b2490881321d0ef760a0aec42c77d",
+    "sourceHashesMatch": {
+      "macos/Sources/PlinkMac/BluetoothCallController.swift": true,
+      "macos/Sources/PlinkMac/NotificationBridge.swift": true,
+      "macos/Sources/PlinkMac/PlinkMacApp.swift": true,
+      "macos/Tests/PlinkMacTests/BluetoothCallControllerTests.swift": true,
+      "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": true,
+      "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt": true
+    },
+    "packagedRuntimeBinaryCorrelation": {
+      "path": "build/PlinkMac.app/Contents/MacOS/PlinkMac",
+      "runtimeRecordedSHA256": "2caee63e20862aa7101e7f4ada77eedd4b6f640a781a8f532bb1b9b2bd624fb4",
+      "currentPackagedSHA256": "2caee63e20862aa7101e7f4ada77eedd4b6f640a781a8f532bb1b9b2bd624fb4",
+      "matches": true
+    },
+    "productionServiceEvidence": ".a5c/artifacts/iteration10/production-service.json",
+    "productionAssociationEvidence": ".a5c/artifacts/iteration10/production-association.json",
+    "diagnosticServiceEvidence": ".a5c/artifacts/iteration10/hfp-probe.json",
+    "productionSavedAssociationHFP": {
+      "passed": true,
+      "actualAppWorkerStages": [
+        "connect_requested",
+        "connect_invocation_returned",
+        "connected_callback status=0"
+      ],
+      "connectedCallbackElapsedMilliseconds": 305.59,
+      "androidConnected": true,
+      "androidHasActiveHeadset": true,
+      "noCallDuringObservation": true,
+      "scope": "Real production saved-association service path after authorized exact-identity preference configuration. Not a native chooser or carrier/audio test."
+    },
+    "nativeChooserVerified": false,
+    "firstPairingUserFlowVerified": false,
+    "carrierControlsVerified": false,
+    "twoWayAudioVerified": false,
+    "initialGateFailure": {
+      "log": ".a5c/artifacts/iteration10/verification.log",
+      "cause": "Detached Context Mode child inherited a temporary TMPDIR removed when tool returned. Relaunched gate with exec_command; passed."
+    },
+    "productionServiceSHA256": "57f0cd961924686f296f3f296c00ab05bbb46effef657a30f8da2f328a034d39",
+    "latestServiceObservation": {
+      "timestamp": "2026-09-21T15:59:28.978809+00:00",
+      "androidHeadsetStates": [
+        "Connected"
+      ],
+      "activeHeadsetPresent": true,
+      "inCall": false,
+      "ringing": false,
+      "disconnectCallbacks": 0,
+      "secondsSinceSuccessfulConnection": 270.632324
+    },
+    "ordinarySession": {
+      "sessionStatus": "READY",
+      "clipboardConnected": true,
+      "clipboardSyncEnabled": true
+    },
+    "observationLimit": "Connected at the 270.632324-second observation with no recorded disconnect callback; no carrier call or ringing. READY/clipboard attachment and toggle do not prove a new clipboard transfer. This bounded observation is not a long-duration soak or call/audio acceptance."
+  },
+  "livePending": {
+    "owner": "parent and user",
+    "requestedAction": "User arranges a consented incoming call to the OnePlus, answers via native Mac notification and checks laptop audio.",
+    "requiredEvidence": "Actual current carrier state and native action for control; bidirectional speech with acoustically isolated phone for audio. Decline/end, remote hangup and exposed mute/route controls require their own observations.",
+    "currentStatus": "No user call-test response or new reply-test outcome supplied. Carrier/audio and any new reply verification remain pending; silence earns no pass.",
+    "preserveRuntime": "No reviewer builds, restarts or device actions; user may initiate a call."
+  },
+  "authorizedCurrentScope": {
+    "replacementDevice": "OnePlus CPH2749",
+    "removed": [
+      "screen sharing",
+      "USB webcam"
+    ],
+    "missingFeatures": "Deferred per later user instruction; existing feature fixes remain authorized.",
+    "historicalTreatment": "No original spec/freeze/matrix rewrite and no completion credit for removed/deferred features."
+  },
+  "lunaArtifactCorrection": {
+    "ownership": "Luna; reviewer did not edit its artifact.",
+    "currentObservation": "Current luna-call-audit.json already references macos/Sources/PlinkCore/MacContinuity.swift.",
+    "requestToParentForOwner": "Ask Luna to confirm this correction is in its final frozen artifact; no source change requested.",
+    "blocking": false
+  },
+  "reviewerActions": "Read-only local source/evidence/hash inspection and requested metric-review artifact write. No builds, test/checker execution, devices, git, lifecycle journal or immutable acceptance edits."
+}

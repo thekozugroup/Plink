@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "iteration": 10,
+  "lane": "Luna",
+  "status": "independent_review_complete_no_source_blocker_found",
+  "scope": "Recheck Terra setup, pending-worker completion, and current-call state review. Mirrored notification cleanup excluded.",
+  "sourceFrozen": true,
+  "frozenFiles": [
+    {
+      "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+      "sha256": "42a69f3efad439a12164483e6d6e6f23e586c4c49480a6c032dc4f374eb5d610"
+    },
+    {
+      "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+      "sha256": "b723df4f5db62c4d0e806644576cf5d45bef8d708c61a6819aee28d4e44ae28f"
+    },
+    {
+      "path": "macos/Sources/PlinkCore/MacContinuity.swift",
+      "sha256": "fe28aea24a0c811c9e8076cd6f2ff796ccb8f8566a872804c320db10eb38b7d3"
+    },
+    {
+      "path": "macos/Tests/PlinkMacTests/BluetoothCallControllerTests.swift",
+      "sha256": "6ebae0e3e0bd0bf9100acf5c659e39b8e7eb4d1f81a5fb4d99c1f048da442cc3"
+    }
+  ],
+  "correction": {
+    "supersedes": ["I10-TERRA-01", "I10-TERRA-02"],
+    "status": "false_positive_withdrawn",
+    "evidence": [
+      "MacContinuity.swift:100-105 sets confirmed = true before the invocation == returned guard.",
+      "If finish observes executing, confirm returns false but leaves confirmed true.",
+      "BluetoothCallController.swift:610-619 then marks the worker returned and calls invocationReturned; MacContinuity.swift:107-111 accepts confirmed and clears the operation.",
+      "If finish observes returned, confirm clears the operation directly."
+    ],
+    "conclusion": "The worker-return ordering does not leave setup busy by itself. The prior Terra audit treated the intermediate false return from confirm as terminal and was incorrect."
+  },
+  "reviewedPaths": [
+    {
+      "path": "macos/Sources/PlinkMac/BluetoothCallController.swift:194-237",
+      "finding": "Explicit setup blocks stale, busy, blocked, mismatched-peer, and active-call state; catalog results use canonical address deduplication, unique exact-name selection, chooser fallback, native HFP validation, one association commit, and connect."
+    },
+    {
+      "path": "macos/Sources/PlinkMac/BluetoothCallController.swift:252-262",
+      "finding": "Catalog completion is retained until operation completion; the corrected gate sequence permits finish before or after worker return."
+    },
+    {
+      "path": "macos/Sources/PlinkMac/BluetoothCallController.swift:767-882",
+      "finding": "Pending call actions require matching generation/context and documented native observations; call, SCO, and disconnect callbacks update current state through the owned HFP device check."
+    },
+    {
+      "path": "macos/Sources/PlinkCore/MacContinuity.swift:177-266",
+      "finding": "Current-call state keeps HFP context separate from mirrored notifications, rejects uncertain or waiting-call actions, and records SCO as connected-but-unverified."
+    },
+    {
+      "path": "macos/Sources/PlinkMac/PlinkMacApp.swift:1311-1326",
+      "finding": "Fresh pairing commits the ordinary association before guarded deferred call setup; the continuation checks current pairing, lifetime, device, session, and name."
+    }
+  ],
+  "resolvedPreconditions": [
+    {
+      "id": "I10-HARDWARE-03",
+      "status": "resolved_precondition",
+      "evidence": "Current production report: saved peer-to-Bluetooth association exists; native HFP connected callback returned status 0 approximately 306 ms after request; Android HeadsetService reported Connected.",
+      "conclusion": "Association and HFP service connection are established for current verification. This is not a current source or HFP defect."
+    }
+  ],
+  "concreteBlockers": [],
+  "remainingEvidence": [
+    "Parent must capture native worker logs for production call actions.",
+    "Real carrier answer, hang-up, SCO route, microphone, speaker, and two-way audio remain unverified; this audit makes no pass claim."
+  ],
+  "reportedVerification": {
+    "terraFocusedTests": "8 tests passed, per current report; not run in this lane.",
+    "fullGate": "PASS: Android 202; Swift 240, per parent report.",
+    "buildsRunInThisLane": false,
+    "testsRunInThisLane": false,
+    "devicesAccessedInThisLane": false,
+    "gitOperationsInThisLane": false,
+    "cua": "Retry unavailable because app pipe remained closed."
+  },
+  "evidencePaths": [
+    ".a5c/artifacts/iteration10/terra-call-result.json",
+    ".a5c/artifacts/iteration10/terra-call-audit.json",
+    ".a5c/artifacts/iteration10/hfp-probe.json",
+    ".a5c/artifacts/iteration10/luna-audio-api-research.json"
+  ],
+  "handoff": "Astra: withdraw I10-TERRA-01/02. Keep source freeze coherent. Parent owns production native worker logs and remaining call/audio acceptance checks."
+}

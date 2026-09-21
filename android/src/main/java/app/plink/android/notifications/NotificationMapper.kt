@@ -35,7 +35,7 @@ class NotificationMapper(
             ContinuityEnvelopeFactory.create(
                 CallRingingEvent(
                     callerName = title.ifBlank { sbn.packageName },
-                    callerHandle = text.ifBlank { "Pixel call" },
+                    callerHandle = text.ifBlank { "Phone call" },
                     canDecline = false
                 ),
                 sourceDeviceId = localDeviceId,

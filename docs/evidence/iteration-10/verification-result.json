@@ -1,0 +1,38 @@
+{
+  "iteration": 10,
+  "fullGate": {
+    "command": "./scripts/verify.sh",
+    "exitCode": 0,
+    "log": ".a5c/artifacts/iteration10/verification-final.log",
+    "androidTests": 202,
+    "swiftTests": 240,
+    "swiftBreakdown": {
+      "XCTest": 54,
+      "appSwiftTesting": 62,
+      "coreSwiftTesting": 124
+    },
+    "debugReleaseInstrumentationBuilds": true,
+    "macReleasePackaged": true
+  },
+  "initialGateFailure": {
+    "log": ".a5c/artifacts/iteration10/verification.log",
+    "cause": "Detached Context Mode child inherited a temporary TMPDIR removed when tool returned. Relaunched gate with exec_command; passed."
+  },
+  "sourceHashes": {
+    "macos/Sources/PlinkMac/BluetoothCallController.swift": "42a69f3efad439a12164483e6d6e6f23e586c4c49480a6c032dc4f374eb5d610",
+    "macos/Sources/PlinkMac/NotificationBridge.swift": "4f868237b6951b4ccc22e0f54c9064849deb67017791f5277050d067cfbf73f4",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "b723df4f5db62c4d0e806644576cf5d45bef8d708c61a6819aee28d4e44ae28f",
+    "macos/Tests/PlinkMacTests/BluetoothCallControllerTests.swift": "6ebae0e3e0bd0bf9100acf5c659e39b8e7eb4d1f81a5fb4d99c1f048da442cc3",
+    "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": "5ded30ffddf3f506d88846aa37acf7af5f618ae93dfa426802740e6cfd34b5ba",
+    "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt": "b21e9310f8d03449dfca47d78c91289fad7f322bdc5a20dcd4da367639165f69"
+  },
+  "hardware": {
+    "diagnosticHFP": "passed",
+    "productionSavedAssociationHFP": "passed",
+    "associationSetup": "scoped development preference configuration; native chooser not verified",
+    "carrierCalls": "awaiting user trial",
+    "twoWayAudio": "unverified",
+    "UI": "CUA native pipe closed before response"
+  },
+  "overallVerified": false
+}

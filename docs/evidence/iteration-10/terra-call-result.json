@@ -1,0 +1,34 @@
+{
+  "status": "source_frozen_for_parent_compile_and_review",
+  "files": [
+    {
+      "path": "macos/Sources/PlinkMac/BluetoothCallController.swift",
+      "sha256": "42a69f3efad439a12164483e6d6e6f23e586c4c49480a6c032dc4f374eb5d610"
+    },
+    {
+      "path": "macos/Sources/PlinkMac/PlinkMacApp.swift",
+      "sha256": "b723df4f5db62c4d0e806644576cf5d45bef8d708c61a6819aee28d4e44ae28f"
+    },
+    {
+      "path": "macos/Tests/PlinkMacTests/BluetoothCallControllerTests.swift",
+      "sha256": "6ebae0e3e0bd0bf9100acf5c659e39b8e7eb4d1f81a5fb4d99c1f048da442cc3"
+    }
+  ],
+  "implemented": [
+    "Canonical-address candidate deduplication and saved-address lookup.",
+    "Explicit setup catalog read, unique exact-name shortcut, chooser fallback, shared validated commit, single-flight and stale-completion guards.",
+    "Deferred fresh-pair setup guarded by current pairing attempt, lifetime, expected device/session/name and termination state.",
+    "Approved fixed Logger.notice setup and worker stages; numeric callback status after native ownership check."
+  ],
+  "verification": {
+    "agentRanBuildsTestsDevicesGit": false,
+    "cleanBaselineRedCaptured": false,
+    "note": "Production already contained implementation when the final red-check request was inspected. Do not label a subsequent run as baseline red. Parent compiles and executes tests on this freeze."
+  },
+  "limits": [
+    "Tests inject catalog, chooser, current-state predicate, validation and commit callbacks; no native chooser, Keychain, Bluetooth hardware, real call or audio exercised.",
+    "Stale-state cases exercise the production orchestration through an injected current-state predicate; they do not independently execute each controller state transition.",
+    "Fresh-pair continuation test exercises the production deferred callback helper; AppDelegate lifetime predicate requires source review and parent integration verification."
+  ],
+  "scope": "No source edits made during final freeze inspection. No extra helper framework, dependencies, device access, build or git commands."
+}

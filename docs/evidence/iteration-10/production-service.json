@@ -1,0 +1,47 @@
+{
+  "observedAt": 1790006177.0078862,
+  "appPID": 17933,
+  "events": [
+    {
+      "timestamp": "2026-09-21 11:54:58.041173-0400",
+      "eventMessage": "calls.worker.connect_requested",
+      "processID": 17933
+    },
+    {
+      "timestamp": "2026-09-21 11:54:58.041411-0400",
+      "eventMessage": "calls.worker.connect_invocation_returned",
+      "processID": 17933
+    },
+    {
+      "timestamp": "2026-09-21 11:54:58.346763-0400",
+      "eventMessage": "calls.worker.connected_callback status=0",
+      "processID": 17933
+    }
+  ],
+  "androidHeadsetStates": [
+    "Connected"
+  ],
+  "androidHasActiveHeadset": true,
+  "inCall": false,
+  "ringing": false,
+  "serviceOnly": true,
+  "carrierControlsVerified": false,
+  "twoWayAudioVerified": false,
+  "macExecutableSHA256": "2caee63e20862aa7101e7f4ada77eedd4b6f640a781a8f532bb1b9b2bd624fb4",
+  "latestObservation": {
+    "timestamp": "2026-09-21T15:59:28.978809+00:00",
+    "androidHeadsetStates": [
+      "Connected"
+    ],
+    "activeHeadsetPresent": true,
+    "inCall": false,
+    "ringing": false,
+    "disconnectCallbacks": 0,
+    "secondsSinceSuccessfulConnection": 270.632324
+  },
+  "ordinarySession": {
+    "sessionStatus": "READY",
+    "clipboardConnected": true,
+    "clipboardSyncEnabled": true
+  }
+}

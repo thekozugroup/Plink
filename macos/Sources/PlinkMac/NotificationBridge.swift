@@ -4,11 +4,24 @@ import UserNotifications
 
 @MainActor
 final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
-    private let center = UNUserNotificationCenter.current()
+    private lazy var center = UNUserNotificationCenter.current()
+    private let submitNotification: ((UNNotificationRequest) -> Void)?
+    private let removeNotifications: (([String]) -> Void)?
     private var messages = MacNotificationBookkeeping()
     private var callContext: MacCallContext?
     private var callNotificationID: String?
     private var callNumber: String?
+    private struct MirroredCallIdentity: Equatable {
+        let peerID: String
+        let notificationKey: String
+
+        init?(_ envelope: PlinkEnvelope) {
+            guard let key = envelope.payload["notificationKey"]?.stringValue, !key.isEmpty else { return nil }
+            peerID = envelope.sourceDeviceId
+            notificationKey = key
+        }
+    }
+    private var mirroredCallIdentity: MirroredCallIdentity?
     private var authorizationRefresh = UUID()
     var onTextReply: ((ReplyContext, String) -> Void)?
     var onCallAction: ((MacCallAction, MacCallContext) -> Void)?
@@ -16,6 +29,15 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     var onDeliveryError: ((String, Error) -> Void)?
     var onStaleAction: (() -> Void)?
     var onInvalidReply: (() -> Void)?
+
+    init(
+        submitNotification: ((UNNotificationRequest) -> Void)? = nil,
+        removeNotifications: (([String]) -> Void)? = nil
+    ) {
+        self.submitNotification = submitNotification
+        self.removeNotifications = removeNotifications
+        super.init()
+    }
 
     func configure() {
         center.delegate = self
@@ -61,14 +83,16 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
 
     func clearContexts() {
         removeMessages(messages.removeAll())
+        removeDeliveredAndPending(["plink.call.mirrored"])
+        mirroredCallIdentity = nil
     }
 
     func shutdown() {
         clearContexts()
         let ids = [callNotificationID, "plink.call.mirrored"].compactMap { $0 }
-        center.removeDeliveredNotifications(withIdentifiers: ids)
-        center.removePendingNotificationRequests(withIdentifiers: ids)
+        removeDeliveredAndPending(ids)
         callContext = nil; callNotificationID = nil; callNumber = nil
+        mirroredCallIdentity = nil
     }
 
     func expireContexts() {
@@ -78,19 +102,17 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     func updateCall(_ call: MacCallSession) {
         guard call.stateIsCertain, let context = call.context, [.ringing, .active].contains(call.phase), !call.hasWaitingCall else {
             if let id = callNotificationID {
-                center.removeDeliveredNotifications(withIdentifiers: [id])
-                center.removePendingNotificationRequests(withIdentifiers: [id])
+                removeDeliveredAndPending([id])
             }
             callContext = nil; callNotificationID = nil; callNumber = nil
             return
         }
         let id = "plink.hfp.\(context.callID).\(call.phase.rawValue)"
-        center.removeDeliveredNotifications(withIdentifiers: ["plink.call.mirrored"])
-        center.removePendingNotificationRequests(withIdentifiers: ["plink.call.mirrored"])
+        removeDeliveredAndPending(["plink.call.mirrored"])
+        mirroredCallIdentity = nil
         guard callNotificationID != id || callNumber != call.number else { return }
         if let old = callNotificationID {
-            center.removeDeliveredNotifications(withIdentifiers: [old])
-            center.removePendingNotificationRequests(withIdentifiers: [old])
+            removeDeliveredAndPending([old])
         }
         callContext = context; callNotificationID = id
         callNumber = call.number
@@ -104,12 +126,14 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
 
     func show(envelope: PlinkEnvelope) {
         if envelope.type == .callEnded {
-            center.removeDeliveredNotifications(withIdentifiers: ["plink.call.mirrored"])
-            center.removePendingNotificationRequests(withIdentifiers: ["plink.call.mirrored"])
+            guard let identity = MirroredCallIdentity(envelope), identity == mirroredCallIdentity else { return }
+            removeDeliveredAndPending(["plink.call.mirrored"])
+            mirroredCallIdentity = nil
             return // Only HFP identities may drive controls.
         }
         if envelope.type == .callRinging {
             if callContext != nil { return }
+            mirroredCallIdentity = MirroredCallIdentity(envelope)
             let content = UNMutableNotificationContent()
             content.title = "Call notification from phone"
             content.body = envelope.payload["callerName"]?.stringValue ?? "Check your phone"
@@ -164,7 +188,9 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions { [.banner, .sound] }
 
     private func submit(_ content: UNMutableNotificationContent, id: String) {
-        center.add(UNNotificationRequest(identifier: id, content: content, trigger: nil)) { [weak self] error in
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
+        if let submitNotification { submitNotification(request); return }
+        center.add(request) { [weak self] error in
             guard let error else { return }
             Task { @MainActor in
                 _ = self?.messages.remove(notificationID: id)
@@ -175,6 +201,11 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
 
     private func removeMessages(_ ids: [String]) {
         guard !ids.isEmpty else { return }
+        removeDeliveredAndPending(ids)
+    }
+
+    private func removeDeliveredAndPending(_ ids: [String]) {
+        if let removeNotifications { removeNotifications(ids); return }
         center.removeDeliveredNotifications(withIdentifiers: ids)
         center.removePendingNotificationRequests(withIdentifiers: ids)
     }

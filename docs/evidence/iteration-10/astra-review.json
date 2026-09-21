@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "iteration": 10,
+  "owner": "Astra",
+  "status": "source_approved_production_saved_association_hfp_passed",
+  "sourceApproved": true,
+  "blockingFindings": [],
+  "closedFindings": [
+    "I10-SOL-02",
+    "I10-SOL-03"
+  ],
+  "reviews": [
+    ".a5c/artifacts/iteration10/astra-terra-review.json",
+    ".a5c/artifacts/iteration10/astra-sol-review.json"
+  ],
+  "sourceHashes": {
+    "macos/Sources/PlinkMac/BluetoothCallController.swift": "42a69f3efad439a12164483e6d6e6f23e586c4c49480a6c032dc4f374eb5d610",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "b723df4f5db62c4d0e806644576cf5d45bef8d708c61a6819aee28d4e44ae28f",
+    "macos/Tests/PlinkMacTests/BluetoothCallControllerTests.swift": "6ebae0e3e0bd0bf9100acf5c659e39b8e7eb4d1f81a5fb4d99c1f048da442cc3",
+    "macos/Sources/PlinkMac/NotificationBridge.swift": "4f868237b6951b4ccc22e0f54c9064849deb67017791f5277050d067cfbf73f4",
+    "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": "5ded30ffddf3f506d88846aa37acf7af5f618ae93dfa426802740e6cfd34b5ba",
+    "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt": "b21e9310f8d03449dfca47d78c91289fad7f322bdc5a20dcd4da367639165f69"
+  },
+  "verification": {
+    "terraFocusedTests": {
+      "passed": 8,
+      "basis": "Parent report; not executed by reviewer"
+    },
+    "fullGate": {
+      "status": "passed_parent_report",
+      "android": 202,
+      "xctest": 54,
+      "swiftTesting": 186
+    },
+    "productionSavedAssociationHFP": {
+      "status": "passed_bounded",
+      "associationEvidence": ".a5c/artifacts/iteration10/production-association.json",
+      "workerEvidence": ".a5c/artifacts/iteration10/production-hfp.log",
+      "trustedActivePeerMatched": true,
+      "physicalBondMatched": true,
+      "priorAssociationCount": 0,
+      "associationCount": 1,
+      "workerStages": [
+        "connect_requested",
+        "connect_invocation_returned",
+        "connected_callback status=0"
+      ],
+      "connectedCallbackElapsedMillisecondsApprox": 306,
+      "androidObservation": "Parent reports HeadsetService Connected and activeDevice nonnull; no current call at observation.",
+      "limits": "Association provisioned by authorized scoped preferences operation while app stopped. This verifies production saved-association HFP connection, not native chooser, user first-pair setup, carrier call control or audio."
+    },
+    "nativeChooserVerified": false,
+    "carrierCallVerified": false,
+    "twoWayLaptopAudioVerified": false
+  },
+  "authorizedNextStep": "After successful coherent parent full gate, perform the previously approved exact-identity scoped preference association and controlled app relaunch; classify as saved-association production verification, not chooser verification.",
+  "overallVerified": false,
+  "historicalAcceptanceFreezeUnchanged": true,
+  "workerCompletionAdjudication": ".a5c/artifacts/iteration10/astra-worker-completion-adjudication.json",
+  "disprovedFindings": [
+    "I10-TERRA-01",
+    "I10-TERRA-02"
+  ],
+  "currentSourceHashesMatch": true,
+  "runtimeProtection": "User may now start a call. No agent builds, restarts or device actions; preserve current runtime while waiting for user call/audio result."
+}

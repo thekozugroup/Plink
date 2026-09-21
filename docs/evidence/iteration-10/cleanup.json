@@ -1,0 +1,18 @@
+{
+  "temporaryFilesRemoved": [
+    "/tmp/plink-hfp-diagnostic.swift",
+    "/tmp/plink-hfp-diagnostic",
+    "/tmp/plink-bond-check.swift",
+    "/tmp/plink-bond-check",
+    "/tmp/plink-babysitter-instructions.txt"
+  ],
+  "temporaryFilesAbsent": true,
+  "ownedLogMonitorsStopped": [
+    17701
+  ],
+  "deviceTemporaryFilesCreated": false,
+  "deviceDisplaySettingsWritten": false,
+  "pairingPreserved": true,
+  "productionAssociationRetained": true,
+  "productionAppLeftRunning": true
+}

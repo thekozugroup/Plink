@@ -1313,7 +1313,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             clearPairingAttempt()
             scheduleAutomaticReconnect(device: device, sessionKey: sessionKey)
             pairingStatusText = "Paired with \(device.name)."
-            Task { @MainActor [weak self] in self?.setUpCalls() }
+            let setupAttempt = pairingAttempt
+            let setupLifetime = pairLifetime
+            BluetoothCallSetup.afterPairingCommit(isCurrent: { [weak self, weak setupLifetime] in
+                guard let self, let setupLifetime else { return false }
+                return !self.terminationPending && !self.isPairing && !self.pairingInFlight &&
+                    self.pairingCompleted && self.pairingAttempt == setupAttempt &&
+                    self.pairLifetime === setupLifetime && setupLifetime.isCurrent &&
+                    self.activePairing?.device.id == device.id &&
+                    self.activePairing?.device.sessionId == device.sessionId &&
+                    self.pairedPhoneName == device.name
+            }, setup: { [weak self] in self?.setUpCalls() })
         } catch {
             // Cancel/restart may have already restored the old session. Never roll
             // back a subsequent attempt from this suspended send's completion.
