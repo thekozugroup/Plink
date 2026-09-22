@@ -1,0 +1,15 @@
+{
+  "hostExited": true,
+  "ownedInstalledFixtureRemoved": true,
+  "ownedScratchRemoved": true,
+  "settingsRestored": {
+    "allowNotifications": false,
+    "alertStyle": "Temporary"
+  },
+  "apiOwnedNotificationCount": 0,
+  "apiQueryTime": "2026-09-22T10:10:36-04:00",
+  "visualDismissalVerified": false,
+  "lateUserScreenshotShowsRetainedCards": true,
+  "productionPreferencesChanged": false,
+  "phoneTouched": false
+}

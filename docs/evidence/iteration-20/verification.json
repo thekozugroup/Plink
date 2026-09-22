@@ -1,0 +1,10 @@
+{
+  "command": "./scripts/verify.sh",
+  "exitCode": 0,
+  "swiftTests": 299,
+  "androidTests": 207,
+  "androidFailures": 0,
+  "buildsLintSignedPackaging": "passed",
+  "productionInstalled": false,
+  "fixtureChangesValidatedSeparately": true
+}

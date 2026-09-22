@@ -1,0 +1,11 @@
+{
+  "screenshotTime": "2026-09-22T10:37:41-04:00",
+  "blueIconVisible": true,
+  "sourceArtworkVisible": false,
+  "replyInputEmpty": true,
+  "replyButtonOverlapsBody": true,
+  "correctedExtensionObserved": false,
+  "correctedRunCleanupTime": "2026-09-22T10:10:36-04:00",
+  "cleanupCount": 0,
+  "limitation": "Screenshot captured after cleanup; cannot establish which run produced retained visible presentation or verify corrected attachment read."
+}
