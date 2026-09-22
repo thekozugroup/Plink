@@ -266,13 +266,35 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
 
     // Same action path for native responses and held-delivery regression tests.
     func handleResponse(id: String, action: String, text: String?, category: String? = nil) {
+        if action.hasPrefix("call.") {
+            callLog.notice("calls.notification.response.call")
+        } else if action.hasPrefix("notification.action.") {
+            callLog.notice("calls.notification.response.generic")
+        } else if action == "message.reply" {
+            callLog.notice("calls.notification.response.reply")
+        } else if action == UNNotificationDefaultActionIdentifier {
+            callLog.notice("calls.notification.response.default")
+        } else if action == UNNotificationDismissActionIdentifier {
+            callLog.notice("calls.notification.response.dismiss")
+        } else {
+            callLog.notice("calls.notification.response.other")
+        }
         if action.hasPrefix("call."), let callAction = MacCallAction(rawValue: String(action.dropFirst(5))) {
             guard [.answer, .decline, .hangUp].contains(callAction),
                   callPresentationAllowed, !callActionConsumed, id == callNotificationID,
-                  let context = callContext, currentCall.permits(callAction, context: context),
-                  callActionsAllowed?() ?? true else { onStaleAction?(); return }
+                  let context = callContext, currentCall.permits(callAction, context: context) else {
+                callLog.notice("calls.notification.response.call.rejected_context")
+                onStaleAction?(); return
+            }
+            let allowed = callActionsAllowed?() ?? true
+            callLog.notice("calls.notification.response.call.eligibility allowed=\(allowed, privacy: .public)")
+            guard allowed else {
+                callLog.notice("calls.notification.response.call.rejected_eligibility")
+                onStaleAction?(); return
+            }
             callActionConsumed = true
             removeDeliveredAndPending([id])
+            callLog.notice("calls.notification.response.call.accepted")
             onCallAction?(callAction, context)
             return
         }
@@ -280,6 +302,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
             if id == callNotificationID { callActionConsumed = true }
             self.removeDeliveredAndPending([id])
             _ = self.messages.remove(notificationID: id)
+            callLog.notice("calls.notification.response.dismiss.handled")
             return
         }
         if action.hasPrefix("notification.action.") {
@@ -288,14 +311,28 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         }
         if action == UNNotificationDefaultActionIdentifier, messages.containsID(id) {
             if let presentation = actionPresentations[id] { onActionInfo?(Self.explanation(for: presentation.offer)) }
+            callLog.notice("calls.notification.response.default.accepted")
             onOpenNotification?()
             return
         }
-        guard action == "message.reply", let text else { return }
+        if action == UNNotificationDefaultActionIdentifier {
+            callLog.notice("calls.notification.response.default.ignored")
+        }
+        guard action == "message.reply", let text else {
+            if action == "message.reply" { callLog.notice("calls.notification.response.reply.rejected_input") }
+            return
+        }
         do { try ReplyRouter.validateReplyText(text) }
-        catch { self.onInvalidReply?(); return }
-        guard let context = self.messages.takeReply(notificationID: id) else { self.onStaleAction?(); return }
+        catch {
+            callLog.notice("calls.notification.response.reply.rejected_input")
+            self.onInvalidReply?(); return
+        }
+        guard let context = self.messages.takeReply(notificationID: id) else {
+            callLog.notice("calls.notification.response.reply.rejected_authority")
+            self.onStaleAction?(); return
+        }
         self.removeDeliveredAndPending([id])
+        callLog.notice("calls.notification.response.reply.accepted")
         self.onTextReply?(context, text)
     }
 
@@ -314,6 +351,17 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     private func submit(_ content: UNMutableNotificationContent, id: String) {
         submissions.removeValue(forKey: id)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
+        // Submission attempts identify the route, not successful delivery or display.
+        if content.categoryIdentifier == "plink.call.ringing" || content.categoryIdentifier == "plink.call.active" {
+            callLog.notice("calls.notification.submit.hfp")
+        } else if content.categoryIdentifier == "plink.call.readonly" {
+            callLog.notice("calls.notification.submit.mirrored")
+        } else if content.categoryIdentifier.hasPrefix("plink.actions.") ||
+                    content.categoryIdentifier == "plink.message" || content.categoryIdentifier == "plink.message.readonly" {
+            callLog.notice("calls.notification.submit.generic")
+        } else {
+            callLog.notice("calls.notification.submit.other")
+        }
         if let submitNotification {
             submitNotification(request)
             return
@@ -416,20 +464,32 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
               !presentation.consumed.contains(index),
               let generation = actionSession?.admission.generation,
               notificationActionsAllowed?(generation) ?? true,
-              actionSession?.permits(presentation.offer, now: now()) == true else { onStaleAction?(); return }
+              actionSession?.permits(presentation.offer, now: now()) == true else {
+            callLog.notice("calls.notification.response.generic.rejected_authority")
+            onStaleAction?(); return
+        }
         let slot = presentation.offer.slots[index]
-        if slot.kind == .phone { onActionInfo?(Self.phoneExplanation(slot.reason)); return }
+        if slot.kind == .phone {
+            callLog.notice("calls.notification.response.generic.phone_only")
+            onActionInfo?(Self.phoneExplanation(slot.reason)); return
+        }
         let command: PlinkEnvelope
         do { command = try presentation.offer.invocation(index: index, text: text, now: now()) }
-        catch { onInvalidReply?(); return }
+        catch {
+            callLog.notice("calls.notification.response.generic.rejected_input")
+            onInvalidReply?(); return
+        }
         guard actionSession?.track(command, presentationID: id, now: now()) == true else {
+            callLog.notice("calls.notification.response.generic.rejected_capacity")
             onActionInfo?("Wait for the current actions to finish."); return
         }
         latestActionCommandID = command.id
         presentation.consumed.insert(index)
         actionPresentations[id] = presentation
         onActionInfo?("Waiting for your phone…")
+        callLog.notice("calls.notification.response.generic.accepted")
         onNotificationAction?(command, generation)
+        callLog.notice("calls.notification.response.generic.handoff_returned")
     }
 
     private func retireActionPresentations(where predicate: (NotificationActionOffer) -> Bool = { _ in true }) {

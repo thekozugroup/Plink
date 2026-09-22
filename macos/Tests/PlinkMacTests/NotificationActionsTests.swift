@@ -46,6 +46,13 @@ private let actionTestSession = "12345678-1234-4123-8123-123456789abc"
 private let actionTestToken = "87654321-4321-4321-8321-cba987654321"
 private let actionTestNow = Date(timeIntervalSince1970: 1_800_000_000)
 
+private func callTransition(_ type: EventType) -> PlinkEnvelope {
+    PlinkEnvelope(id: "synthetic-call-transition", type: type, sentAt: actionTestNow,
+        sourceDeviceId: "phone", targetDeviceId: "mac", payload: [
+            "packageName": .string("test.chat"), "notificationKey": .string("key"),
+            "callerName": .string("Synthetic caller"), "canDecline": .bool(false)])
+}
+
 private func actionOffer(revision: Int, key: String = "key", epoch: Int = 1,
                          count: Int = 1, kind: String = "invoke", label: String = "Archive",
                          now: Date = actionTestNow, removed: Bool = false) -> PlinkEnvelope {
@@ -118,6 +125,100 @@ private final class ActionHarness {
 }
 
 extension NotificationActionsTests {
+    @Test(arguments: [EventType.callRinging, .callEnded])
+    func versionedCallRetirementRemovesGenericCardWhileHFPKeepsAuthority(type: EventType) throws {
+        let h = ActionHarness(); try h.negotiate()
+        h.bridge.show(envelope: actionOffer(revision: 2))
+        let generic = try #require(h.requests.last)
+        #expect(generic.content.categoryIdentifier.hasPrefix("plink.actions."))
+        h.bridge.show(envelope: actionOffer(revision: 3, key: "unrelated"))
+        let unrelated = try #require(h.requests.last)
+        var call = MacCallSession()
+        call.connected(phoneID: "fixture"); call.ringing(number: nil)
+        var nativeActions = 0
+        h.bridge.onCallAction = { _, _ in nativeActions += 1 }
+        h.bridge.updateCall(call)
+        let native = try #require(h.requests.last)
+        #expect(native.content.categoryIdentifier == "plink.call.ringing")
+        let requestCount = h.requests.count
+
+        // Baseline: an unversioned call frame cannot safely retire a generic card.
+        h.bridge.show(envelope: callTransition(type))
+        #expect(!h.removed.contains(generic.identifier))
+        #expect(h.requests.count == requestCount) // HFP suppresses the mirrored ring.
+
+        h.bridge.show(envelope: actionOffer(revision: 4, count: 0, removed: true))
+        h.bridge.show(envelope: callTransition(type))
+        #expect(h.removed.contains(generic.identifier))
+        #expect(!h.removed.contains(native.identifier))
+        #expect(!h.removed.contains(unrelated.identifier))
+        #expect(h.requests.count == requestCount) // Retirement never presents a new card.
+        h.click(generic)
+        #expect(h.commands.count == 1) // Only negotiation; the old generic action is gone.
+        h.bridge.handleResponse(id: native.identifier, action: "call.answer", text: nil)
+        #expect(nativeActions == 1)
+        h.click(unrelated)
+        #expect(h.commands.count == 2)
+    }
+
+    @Test(arguments: [EventType.callRinging, .callEnded])
+    func staleCallRetirementCannotRemoveNewerOrdinaryCard(type: EventType) throws {
+        let h = ActionHarness(); try h.negotiate()
+        h.bridge.show(envelope: actionOffer(revision: 2))
+        let old = try #require(h.requests.last)
+        h.bridge.show(envelope: actionOffer(revision: 4))
+        let current = try #require(h.requests.last)
+        h.bridge.show(envelope: actionOffer(revision: 3, count: 0, removed: true))
+        h.bridge.show(envelope: callTransition(type))
+        #expect(h.removed.contains(old.identifier))
+        #expect(!h.removed.contains(current.identifier))
+        h.click(old)
+        #expect(h.commands.count == 1)
+        h.click(current)
+        #expect(h.commands.count == 2)
+        #expect(h.commands.last?.payload["sourceEnvelopeId"] == .string("offer-4-key"))
+    }
+
+    @Test(arguments: [EventType.callRinging, .callEnded])
+    func callRetirementRejectsDelayedGenericOffer(type: EventType) throws {
+        let h = ActionHarness(); try h.negotiate()
+        h.bridge.show(envelope: actionOffer(revision: 3, count: 0, removed: true))
+        h.bridge.show(envelope: callTransition(type))
+        let requestCount = h.requests.count
+        let removalCount = h.removed.count
+        h.bridge.show(envelope: actionOffer(revision: 2))
+        #expect(h.requests.count == requestCount)
+        #expect(h.removed.count == removalCount)
+        #expect(h.commands.count == 1)
+        h.bridge.show(envelope: actionOffer(revision: 4))
+        let current = try #require(h.requests.last)
+        h.click(current)
+        #expect(h.commands.count == 2) // A genuinely newer ordinary update still works.
+    }
+
+    @Test(arguments: [EventType.callRinging, .callEnded])
+    func heldGenericAddAfterCallRetirementCleansOnlyRetiredCard(type: EventType) throws {
+        let h = ActionHarness(); try h.negotiate()
+        h.bridge.show(envelope: actionOffer(revision: 2))
+        let old = try #require(h.requests.last)
+        let heldAdd = try #require(h.completions.last)
+        h.bridge.show(envelope: actionOffer(revision: 3, count: 0, removed: true))
+        h.bridge.show(envelope: callTransition(type))
+        h.bridge.show(envelope: actionOffer(revision: 4))
+        let current = try #require(h.requests.last)
+        let currentAdd = try #require(h.completions.last)
+        currentAdd(nil)
+        let removalsBeforeLateAdd = h.removed.count
+        heldAdd(nil) // The OS finishes adding A only after retirement and B's successful add.
+        #expect(Array(h.removed.dropFirst(removalsBeforeLateAdd)) == [old.identifier])
+        #expect(!h.removed.contains(current.identifier))
+        h.click(old)
+        #expect(h.commands.count == 1)
+        h.click(current)
+        #expect(h.commands.count == 2)
+        #expect(h.commands.last?.payload["sourceEnvelopeId"] == .string("offer-4-key"))
+    }
+
     @Test func offerNegotiationIsOnceAndRequiresExactAcknowledgment() throws {
         let h = ActionHarness()
         h.bridge.show(envelope: actionOffer(revision: 1))

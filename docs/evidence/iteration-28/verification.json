@@ -1,0 +1,103 @@
+{
+  "iteration": 28,
+  "status": "source_and_isolated_verification_passed_physical_install_not_performed_audio_unresolved",
+  "freeze": {
+    "artifact": ".a5c/artifacts/iteration28/final-combined-freeze.json",
+    "atUTC": "2026-09-22T19:18:17.856956+00:00",
+    "sourceHashes": {
+      "android/src/androidTest/java/app/plink/android/NotificationActionDeviceCheck.kt": "29f76e33689a9e75155f1dd20173f30464fe5525dea219c1de2ee011eca85af2",
+      "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt": "5a6acd2df6fd530f0039b973bdfcc9e217710ed11a6db5a60989ace447601f80",
+      "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": "ffe6e6eebb33dff1714ab66357c3ae8215aa3d70dc84b5490592e82341114ec5",
+      "macos/Sources/PlinkMac/NotificationBridge.swift": "53487e6b1d1df265ac79c92254e5cebadfeee11e6177ad8d16ff209c97a6d7bf",
+      "macos/Tests/PlinkMacTests/NotificationActionsTests.swift": "fb44f706c3b1ecfdbf19e43be4306a5cdcdcd25eb50a7e10788d92c8e8aaf75f",
+      "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": "f40fb1bbb0835740e1b169f1ec61276d3712f675443200913a6f9542a0264476",
+      "android/src/main/java/app/plink/android/notifications/NotificationCallClassifier.kt": "6aa50d701af9172893c1eb6cbe870aa992f1fea16e85e38ac13374e42bb85e64",
+      "android/src/test/java/app/plink/android/notifications/NotificationCallClassifierTest.kt": "8f113bdd6a88936349d4df518b0e7e400700c0107188274483a72599f348c9b6",
+      "android/src/test/java/app/plink/android/services/NotificationHandoffPublicationTest.kt": "57cbc06ea38ebe35178eef17de61913bd0c8cbe9307af7aaee31d255c85a7fe5"
+    },
+    "sourceUnchangedDuringFinalGate": true
+  },
+  "finalGate": {
+    "artifact": ".a5c/artifacts/iteration28/final-gate.json",
+    "log": ".a5c/artifacts/iteration28/final-gate.log",
+    "command": "./scripts/verify.sh",
+    "exitCode": 0,
+    "startedAtUTC": "2026-09-22T19:18:17.954744+00:00",
+    "finishedAtUTC": "2026-09-22T19:19:29.514614+00:00",
+    "summary": ".a5c/artifacts/iteration28/final-verification-summary.json",
+    "tests": {
+      "total": 582,
+      "android": 255,
+      "swift": 327,
+      "swiftXCTest": 66,
+      "swiftTesting": 261
+    },
+    "androidFailures": 0,
+    "androidErrors": 0,
+    "androidSkipped": 0
+  },
+  "framework": {
+    "artifact": ".a5c/artifacts/iteration28/final-framework-green.json",
+    "log": ".a5c/artifacts/iteration28/final-framework-green.log",
+    "platform": "Isolated Android API 36 emulator",
+    "passedGroups": 15,
+    "exitCode": 0,
+    "passedMarker": true,
+    "failedMarker": false,
+    "physicalDevice": false
+  },
+  "regressions": {
+    "classifierBaselineRed": ".a5c/artifacts/iteration28/baseline-red.json",
+    "classifierBaselineLog": ".a5c/artifacts/iteration28/baseline-red.log",
+    "reentrantPublicationRed": ".a5c/artifacts/iteration28/reentrant-red.log",
+    "macFocusedGreen": ".a5c/artifacts/iteration28/mac-retirement-focused-xcode.log",
+    "macFocusedTests": 23,
+    "macRetirementParameterizedCases": 8,
+    "wrongToolchainAttempt": "Earlier default-toolchain invocation could not find Testing. Recorded separately; not a source failure.",
+    "coverage": [
+      "Call classification and ordinary-message negative controls",
+      "Versioned zero-action retirement before call publication",
+      "HFP-suppressed generic-to-call retirement",
+      "Stale retirement preserves newer ordinary offer; delayed older offer rejected",
+      "Late successful OS add cleans retired card without removing newer card",
+      "Reentrant authority revocation prevents following call-frame publication"
+    ]
+  },
+  "deployment": {
+    "iteration28PhysicalInstall": false,
+    "pixelUSBAvailable": false,
+    "computerUse": "Native pipe closed before response.",
+    "nativeIteration28PresentationVerified": false
+  },
+  "independentLiveCall": {
+    "artifact": ".a5c/artifacts/iteration28/new-screenshot-call-events.json",
+    "installedIteration": 27,
+    "processID": 60479,
+    "userOperated": true,
+    "eventAtUTC": "2026-09-22T19:19:14Z",
+    "nativeHFPAnswerAccepted": true,
+    "acceptCallRequestedAndReturned": true,
+    "transferAudioRequested": true,
+    "ownedSCOOpenCallback": true,
+    "scoStatusDecimal": -536870201,
+    "scoStatusHex": "0xe00002c7",
+    "sdkMeaning": "kIOReturnUnsupported",
+    "sdkDefinition": "IOKit.framework/Headers/IOReturn.h:109",
+    "scoSuccess": false,
+    "audibleAudioSuccess": false,
+    "interpretation": "This call reached native HFP Answer and audio transfer, then failed at the owned SCO-open callback. Generic action routing is not an explanation for this particular failure. The underlying cause of the unsupported result is unproven."
+  },
+  "remaining": [
+    "Live stale source-card retirement is unverified until iteration 28 installation and user-operated observation.",
+    "Primary notification icon remains unresolved.",
+    "Native audio failure is independently evidenced; routing changes alone do not establish an audio fix."
+  ],
+  "cleanup": {
+    "artifact": ".a5c/artifacts/iteration28/cleanup.json",
+    "completedAtUTC": "2026-09-22T19:21:35.906815+00:00",
+    "ownedEmulatorExited": true,
+    "ownedScratchRemoved": true,
+    "physicalPhoneTouched": false
+  },
+  "privacy": "No private screenshots, names, phone numbers, device serials, message contents, or action tokens included."
+}

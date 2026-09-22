@@ -264,22 +264,31 @@ struct NotificationBridgeTests {
         let notifications = Notifications()
         let bridge = notifications.bridge()
         var eligible = true
+        var eligibilityChecks = 0
         var actions = 0
-        bridge.callActionsAllowed = { eligible }
+        bridge.callActionsAllowed = { eligibilityChecks += 1; return eligible }
         bridge.onCallAction = { _, _ in actions += 1 }
         var hfp = MacCallSession()
         hfp.connected(phoneID: "fixture")
         hfp.ringing(number: nil)
         bridge.updateCall(hfp)
         let id = try #require(notifications.delivered.keys.first)
+        bridge.handleResponse(id: "retired-fixture", action: "call.answer", text: nil)
+        #expect(eligibilityChecks == 0)
         eligible = false // Lock/busy/peer authority changed before its observation arrived.
         bridge.handleResponse(id: id, action: "call.answer", text: nil)
+        #expect(eligibilityChecks == 1)
         eligible = true
         bridge.handleResponse(id: id, action: "call.hangUp", text: nil)
         bridge.handleResponse(id: id, action: "call.computerAudio", text: nil)
         #expect(actions == 0)
+        #expect(eligibilityChecks == 1)
         bridge.handleResponse(id: id, action: "call.decline", text: nil)
         #expect(actions == 1)
+        #expect(eligibilityChecks == 2)
+        bridge.handleResponse(id: id, action: "call.decline", text: nil)
+        #expect(actions == 1)
+        #expect(eligibilityChecks == 2)
     }
 
     @Test(arguments: ["answering", "uncertain", "waiting", "disconnected", "shutdown", "replacement"])

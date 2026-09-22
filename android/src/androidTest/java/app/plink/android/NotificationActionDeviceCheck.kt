@@ -124,6 +124,147 @@ internal fun checkNotificationActions(context: Context, instrumentation: Instrum
             registry.setListenerAvailable(true); registry.setFeatureEnabled(true)
         }
         val textInput = RemoteInput.Builder("reply-field").setLabel("Message").build()
+        val callMarkers: List<Triple<String, String, (Notification) -> Unit>> = listOf(
+            Triple("category", PlinkEventType.CallRinging, { n -> n.category = Notification.CATEGORY_CALL }),
+            Triple("template", PlinkEventType.CallRinging, { n ->
+                n.category = null; n.extras.putString("android.template", "android.app.Notification\$CallStyle")
+            }),
+            Triple("incoming-type", PlinkEventType.CallRinging, { n ->
+                n.category = null; n.extras.putInt("android.callType", 1)
+            }),
+            Triple("ongoing-type", PlinkEventType.CallEnded, { n ->
+                n.category = null; n.extras.putInt("android.callType", 2)
+            }),
+            Triple("screening-type", PlinkEventType.CallEnded, { n ->
+                n.category = null; n.extras.putInt("android.callType", 3)
+            }),
+            Triple("category-wrong-type", PlinkEventType.CallRinging, { n ->
+                n.category = Notification.CATEGORY_CALL; n.extras.putString("android.callType", "1")
+            }),
+            Triple("template-wrong-type", PlinkEventType.CallRinging, { n ->
+                n.category = null; n.extras.putString("android.template", "android.app.Notification\$CallStyle")
+                n.extras.putLong("android.callType", 1L)
+            })
+        )
+        fun retirement(handoff: NotificationHandoff, sbn: StatusBarNotification): PlinkEnvelope {
+            val retired = requireNotNull(handoff.retirement) { "Call handoff lacks versioned retirement" }
+            check(retired.type == PlinkEventType.MessageReceived && NotificationActionsPolicy.hasValidOffer(retired))
+            check(retired.payload["removed"] == JsonPrimitive(true))
+            check(retired.payload["actionsCount"] == JsonPrimitive(0))
+            check(retired.payload["actionsOverflowCount"] == JsonPrimitive(0))
+            check(retired.payload["notificationKey"] == JsonPrimitive(sbn.key))
+            check(retired.payload["packageName"] == JsonPrimitive(sbn.packageName))
+            check(retired.id != handoff.envelope.id)
+            check(retired.payload.keys.none { it == "replyToken" || it.matches(Regex("action[0-9]+Token")) })
+            producedOffer(retired.encode())
+            return retired
+        }
+        for ((name, expectedType, mark) in callMarkers) {
+            val sbn = notification(listOf(action("Synthetic answer", "never-call-$name", mutable = false)))
+            mark(sbn.notification)
+            val handoff = main { requireNotNull(mapper.map(sbn)) }
+            val mapped = handoff.envelope
+            check(mapped.type == expectedType) { "Call marker $name escaped expected call lifecycle" }
+            check("actionsVersion" !in mapped.payload && "replyToken" !in mapped.payload) {
+                "Call marker $name exposed generic/reply capability"
+            }
+            val postedRetirement = retirement(handoff, sbn)
+            val removedHandoff = main { mapper.removed(sbn) }
+            val removed = removedHandoff.envelope
+            check(removed.type == PlinkEventType.CallEnded && "actionsVersion" !in removed.payload) {
+                "Call marker $name removal disagrees with posting"
+            }
+            check(retirement(removedHandoff, sbn).payload.getValue("actionsRevision").jsonPrimitive.long >
+                postedRetirement.payload.getValue("actionsRevision").jsonPrimitive.long)
+        }
+        noDelivery()
+        checks += "Category, exact CallStyle and integer call types exclude generic actions on post and removal"
+
+        // A call transition must retire both aliases even when no incoming event is emitted.
+        for ((name, _, mark) in callMarkers) {
+            for (removeDirectly in listOf(false, true)) {
+                val sbn = notification(listOf(action("Synthetic reply", "never-old-$name", listOf(textInput))))
+                val old = map(sbn)
+                status(dispatch(enable(old)), "enabled")
+                val token = old.payload.getValue("replyToken").jsonPrimitive.content
+                val snapshot = main { requireNotNull(registry.captureSnapshot()) }
+                mark(sbn.notification)
+                val callHandoff = main { requireNotNull(if (removeDirectly) mapper.removed(sbn) else mapper.map(sbn)) }
+                val retired = retirement(callHandoff, sbn)
+                check(retired.payload.getValue("actionsRevision").jsonPrimitive.long > old.payload.getValue("actionsRevision").jsonPrimitive.long)
+                status(dispatch(invoke(old, text = "Synthetic stale reply")), "stale_action")
+                check(main { routes.peek(token) } == null)
+                check(runCatching { main { legacyExecutor.execute(legacy(old, "Synthetic stale reply"), "synthetic-phone") } }.isFailure)
+                check(!main { registry.canApplySnapshot(snapshot, sbn.key) }) {
+                    "Call transition $name failed to invalidate old snapshot"
+                }
+                val newer = map(notification(listOf(action("New ordinary", "new-after-$name", mutable = false)), sbn.id))
+                check(newer.payload.getValue("actionsRevision").jsonPrimitive.long > retired.payload.getValue("actionsRevision").jsonPrimitive.long)
+                status(dispatch(invoke(newer)), "dispatched"); delivery("new-after-$name")
+            }
+        }
+        noDelivery()
+        checks += "Same-key call update/removal revokes v1 and legacy aliases and invalidates captured snapshot"
+
+        val ordinaryMarkers: List<Pair<String, (Notification) -> Unit>> = listOf(
+            "voicemail" to { n -> n.category = "voicemail" },
+            "ongoing-only" to { n -> n.category = null; n.flags = n.flags or Notification.FLAG_ONGOING_EVENT },
+            "unknown-type" to { n -> n.category = null; n.extras.putInt("android.callType", 99) },
+            "zero-type" to { n -> n.category = null; n.extras.putInt("android.callType", 0) },
+            "string-type" to { n -> n.category = null; n.extras.putString("android.callType", "1") },
+            "long-type" to { n -> n.category = null; n.extras.putLong("android.callType", 1L) },
+            "boolean-type" to { n -> n.category = null; n.extras.putBoolean("android.callType", true) },
+            "wrong-template-type" to { n -> n.category = null; n.extras.putInt("android.template", 1) },
+            "near-template" to { n -> n.category = null; n.extras.putString("android.template", "android.app.Notification\$CallStyleExtra") }
+        )
+        for ((name, mark) in ordinaryMarkers) {
+            // An English call-like label is deliberately not classification authority.
+            val sbn = notification(listOf(action("Answer", "ordinary-$name", mutable = false)))
+            mark(sbn.notification)
+            val ordinaryHandoff = main { requireNotNull(mapper.map(sbn)) }
+            check(ordinaryHandoff.retirement == null)
+            val ordinary = ordinaryHandoff.envelope.also { producedOffer(it.encode()) }
+            check(ordinary.type == PlinkEventType.MessageReceived && ordinary.payload["actionsCount"] == JsonPrimitive(1)) {
+                "Ordinary control $name lost its action"
+            }
+            status(dispatch(enable(ordinary)), "enabled")
+            status(dispatch(invoke(ordinary)), "dispatched"); delivery("ordinary-$name")
+        }
+        noDelivery()
+        checks += "Voicemail, ordinary actions and malformed/unknown metadata remain generic; labels and ongoing flag are not authority"
+        main { registry.beginSession("synthetic-phone", "synthetic-mac", generation.sessionGeneration) }
+        val cleanupSource = notification(listOf(action("Synthetic prior reply", "never-cleaned", listOf(textInput))))
+        val priorCleanupOffer = map(cleanupSource)
+        val unrelated = map(notification(listOf(action("Unrelated", "unrelated", mutable = false))))
+        cleanupSource.notification.category = Notification.CATEGORY_CALL
+        // This is the mapper branch NLS selects with Calls Off / Messages On, before invalidation.
+        val cleanup = main { requireNotNull(mapper.retireCallIfPreviouslyOffered(cleanupSource)) }
+        check(cleanup.retirementOnly && cleanup.retirement == null)
+        check(cleanup.envelope.type == PlinkEventType.MessageReceived)
+        check(NotificationActionsPolicy.hasValidOffer(cleanup.envelope))
+        check(cleanup.envelope.payload["removed"] == JsonPrimitive(true))
+        check(cleanup.envelope.payload["actionsCount"] == JsonPrimitive(0))
+        check(cleanup.envelope.payload["sender"] == JsonPrimitive("Phone"))
+        check(cleanup.envelope.payload["preview"] == JsonPrimitive("Notification removed."))
+        check(cleanup.envelope.payload.keys == setOf("sender", "preview", "packageName", "notificationKey", "removed",
+            "actionsVersion", "actionsSession", "actionsEpoch", "actionsRevision", "actionsExpiresAtMs", "actionsCount", "actionsOverflowCount"))
+        check(main { registry.state() } == null) // Cleanup did not enable action execution.
+        producedOffer(cleanup.envelope.encode())
+        status(dispatch(enable(unrelated)), "enabled")
+        status(dispatch(invoke(priorCleanupOffer, text = "Synthetic stale reply")), "stale_action")
+        status(dispatch(invoke(unrelated)), "dispatched"); delivery("unrelated")
+        check(main { mapper.retireCallIfPreviouslyOffered(cleanupSource) } == null)
+        val neverOffered = notification(emptyList()).also { it.notification.category = Notification.CATEGORY_CALL }
+        check(main { mapper.retireCallIfPreviouslyOffered(neverOffered) } == null)
+        val disabled = notification(listOf(action("Prior disabled", "never-disabled", mutable = false)))
+        map(disabled)
+        disabled.notification.category = Notification.CATEGORY_CALL
+        main { registry.setFeatureEnabled(false) }
+        check(main { mapper.retireCallIfPreviouslyOffered(disabled) } == null)
+        main { registry.setFeatureEnabled(true) }
+        noDelivery()
+        checks += "Calls Off cleanup requires current prior offer and Messages; fixed zero-action retirement does not enable actions or affect other keys"
+        main { registry.beginSession("synthetic-phone", "synthetic-mac", generation.sessionGeneration) }
         val exact = "\t  Exact synthetic reply ✓\nCafe\u0301 👩‍💻\n  "
         val offer = map(notification(listOf(action("Archive", "archive", mutable = false),
             action("Mark as read", "read"), action("Reply", "text", listOf(textInput)))))

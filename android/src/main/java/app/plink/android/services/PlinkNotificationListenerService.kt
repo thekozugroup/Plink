@@ -6,6 +6,8 @@ import android.service.notification.StatusBarNotification
 import app.plink.android.PlinkApplication
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.notifications.NotificationMapper
+import app.plink.android.notifications.NotificationHandoff
+import app.plink.android.notifications.NotificationCallClassifier
 import app.plink.android.notifications.NotificationArtwork
 import app.plink.android.notifications.RemoteInputReplyRegistry
 import app.plink.android.notifications.ReplyCapabilityGeneration
@@ -55,18 +57,16 @@ class PlinkNotificationListenerService : NotificationListenerService() {
         val app = applicationContext as PlinkApplication
         val session = app.sessionController.snapshot() ?: return
         try {
-            val handoff = ReplyDispatchLock.serialized {
+            val transition = ReplyDispatchLock.serialized {
                 if (!SharedReplyDispatchAuthority.isListenerOwner(this)) return@serialized null
                 if (snapshot != null && !SharedNotificationActions.registry.canApplySnapshot(snapshot, sbn.key)) return@serialized null
                 replyRoutes.replaceForNotification(sbn.key)
                 replyActions.replaceForNotification(sbn.key)
-                val feature = if (sbn.notification?.category == android.app.Notification.CATEGORY_CALL) {
+                val feature = if (NotificationCallClassifier.isCall(sbn.notification)) {
                     ContinuityFeature.Calls
                 } else {
                     ContinuityFeature.Messages
                 }
-                if (feature == ContinuityFeature.Calls) SharedNotificationActions.registry.invalidateKey(sbn.key)
-                if (!app.featureSettings.isEnabled(feature)) return@serialized null
                 val mapper = NotificationMapper(
                     localDeviceId = session.localDeviceId,
                     pairedMacDeviceId = session.pairedDevice.id,
@@ -75,20 +75,34 @@ class PlinkNotificationListenerService : NotificationListenerService() {
                     notificationActions = SharedNotificationActions.registry,
                     actionContext = this
                 )
-                if (removed) mapper.removed(sbn) else mapper.map(sbn)
+                val handoff = if (!app.featureSettings.isEnabled(feature)) {
+                    if (feature != ContinuityFeature.Calls) return@serialized null
+                    if (app.featureSettings.isEnabled(ContinuityFeature.Messages)) {
+                        // Query prior ownership before invalidation; never inspect call content here.
+                        mapper.retireCallIfPreviouslyOffered(sbn)
+                    } else {
+                        SharedNotificationActions.registry.invalidateKey(sbn.key)
+                        null
+                    }
+                } else {
+                    if (feature == ContinuityFeature.Calls) SharedNotificationActions.registry.invalidateKey(sbn.key)
+                    if (removed) mapper.removed(sbn) else mapper.map(sbn)
+                }
+                handoff?.let { Triple(it, SharedReplyDispatchAuthority.capture(),
+                    if (it.retirementOnly) ContinuityFeature.Messages else feature) }
             }
-            handoff ?: return
+            val (handoff, authority, feature) = transition ?: return
             // Package lookup and drawable rendering must never hold the reply authority lock.
-            val envelope = if (app.sessionController.status.value == SessionStatus.READY) {
+            val envelope = if (!handoff.retirementOnly && app.sessionController.status.value == SessionStatus.READY) {
                 NotificationArtwork.decorate(handoff.envelope) {
                     NotificationArtwork.read(packageManager, sbn.packageName)
                 }
             } else handoff.envelope
-            ReplyDispatchLock.serialized {
-                if (SharedReplyDispatchAuthority.isListenerOwner(this)) {
-                    SharedNotificationEvents.trySend(envelope)
-                    app.sessionController.sendEnvelope(envelope)
-                }
+            SharedReplyDispatchAuthority.publishHandoff(this, authority, handoff.copy(envelope = envelope),
+                allowed = { app.featureSettings.isEnabled(feature) },
+                retirementAllowed = { app.featureSettings.isEnabled(ContinuityFeature.Messages) }) { outgoing ->
+                SharedNotificationEvents.trySend(outgoing)
+                app.sessionController.sendEnvelope(outgoing)
             }
         } finally {
             session.sessionKey.fill(0)
@@ -106,7 +120,7 @@ class PlinkNotificationListenerService : NotificationListenerService() {
         val actual = runCatching { activeNotifications?.toList() }.getOrNull() ?: return
         if (registry.currentSession() != snapshot.session) return
         lastRefreshScope = identity
-        val eligible = actual.filter { it.packageName != packageName && it.notification?.category != android.app.Notification.CATEGORY_CALL }
+        val eligible = actual.filter { it.packageName != packageName && !NotificationCallClassifier.isCall(it.notification) }
         eligible.take(128).forEach { forward(it, removed = false, snapshot = snapshot) }
         ReplyDispatchLock.serialized {
             if (!SharedReplyDispatchAuthority.isListenerOwner(this)) return@serialized
@@ -170,6 +184,28 @@ internal object SharedReplyDispatchAuthority {
             sessionActive &&
             generation.listenerEpoch == listenerEpoch &&
             generation.sessionGeneration == sessionGeneration
+
+    /** Keep retirement and its call together under the existing reply -> admission publication order. */
+    fun publishHandoff(owner: Any, generation: ReplyCapabilityGeneration?, handoff: NotificationHandoff,
+                       allowed: () -> Boolean, retirementAllowed: () -> Boolean = allowed,
+                       send: (app.plink.android.protocol.PlinkEnvelope) -> Unit): Boolean =
+        ReplyDispatchLock.serialized {
+            if (!isListenerOwner(owner) || !allowed()) return@serialized false
+            // Unversioned ordinary previews retain existing offline/durable behavior.
+            if ((handoff.retirement != null || handoff.retirementOnly) &&
+                (generation == null || !isCurrent(generation))) return@serialized false
+            val canRetire = (handoff.retirement != null || handoff.retirementOnly) && retirementAllowed()
+            if (handoff.retirementOnly && !canRetire) return@serialized false
+            if (canRetire && handoff.retirement != null) {
+                send(handoff.retirement)
+                // The sink can reenter this monitor and revoke authority during retirement.
+                if (!isListenerOwner(owner) || generation == null || !isCurrent(generation) || !allowed()) {
+                    return@serialized false
+                }
+            }
+            send(handoff.envelope)
+            true
+        }
 }
 
 object SharedReplyRoutes {

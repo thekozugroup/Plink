@@ -12,7 +12,9 @@ import kotlinx.serialization.json.JsonPrimitive
 
 data class NotificationHandoff(
     val envelope: PlinkEnvelope,
-    val replyRoute: ReplyRoute?
+    val replyRoute: ReplyRoute?,
+    val retirement: PlinkEnvelope? = null,
+    val retirementOnly: Boolean = false
 )
 
 class NotificationMapper(
@@ -28,12 +30,12 @@ class NotificationMapper(
         replyRoutes.replaceForNotification(sbn.key)
         replyActions?.replaceForNotification(sbn.key)
         val notification = sbn.notification ?: return null
+        val isCall = NotificationCallClassifier.isCall(notification)
+        if (isCall) notificationActions?.invalidateKey(sbn.key)
         val title = notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
         val text = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
         if (title.isBlank() && text.isBlank()) return removed(sbn)
 
-        val isCall = notification.category == Notification.CATEGORY_CALL
-        if (isCall) notificationActions?.invalidateKey(sbn.key)
         if (isCall && !isIncomingCall(notification)) return removed(sbn)
         val envelope = if (isCall) {
             ContinuityEnvelopeFactory.create(
@@ -95,27 +97,60 @@ class NotificationMapper(
         val offeredEnvelope = offer?.envelope ?: envelope
         val routedEnvelope = offeredEnvelope.copy(payload = JsonObject(offeredEnvelope.payload + identity + capability))
 
-        return NotificationHandoff(envelope = routedEnvelope, replyRoute = route)
+        return NotificationHandoff(envelope = routedEnvelope, replyRoute = route,
+            retirement = if (isCall) retireGeneric(sbn) else null)
     }
 
     /** A tombstone retains notification identity after its reply capability is revoked. */
     fun removed(sbn: StatusBarNotification): NotificationHandoff {
         replyRoutes.removeByNotificationKey(sbn.key)
         replyActions?.removeByNotificationKey(sbn.key)
+        val isCall = NotificationCallClassifier.isCall(sbn.notification)
+        if (isCall) notificationActions?.invalidateKey(sbn.key)
         val envelope = ContinuityEnvelopeFactory.create(
             MessageReceivedEvent(sbn.notification.shortcutId ?: sbn.key, sbn.packageName, "Notification removed.", false),
             localDeviceId, pairedMacDeviceId
         )
         val tombstone = envelope.copy(
-            type = if (sbn.notification.category == Notification.CATEGORY_CALL) PlinkEventType.CallEnded else envelope.type,
+            type = if (isCall) PlinkEventType.CallEnded else envelope.type,
             payload = JsonObject(envelope.payload + mapOf(
                 "packageName" to JsonPrimitive(sbn.packageName),
                 "notificationKey" to JsonPrimitive(sbn.key),
                 "removed" to JsonPrimitive(true)
             ))
         )
-        val offered = notificationActions?.offer(tombstone, emptyList(), removed = true)?.envelope ?: tombstone
-        return NotificationHandoff(offered, null)
+        val offered = if (isCall) tombstone else
+            notificationActions?.offer(tombstone, emptyList(), removed = true)?.envelope ?: tombstone
+        return NotificationHandoff(offered, null, retirement = if (isCall) retireGeneric(sbn) else null)
+    }
+
+    /** Assign retirement ordering now, while the caller holds the source transition authority. */
+    fun retireCallIfPreviouslyOffered(sbn: StatusBarNotification): NotificationHandoff? {
+        if (!NotificationCallClassifier.isCall(sbn.notification)) return null
+        val previouslyOffered = notificationActions?.captureSnapshot()?.keys?.contains(sbn.key) == true
+        replyRoutes.removeByNotificationKey(sbn.key)
+        replyActions?.removeByNotificationKey(sbn.key)
+        notificationActions?.invalidateKey(sbn.key)
+        if (!previouslyOffered) return null
+        return retireGeneric(sbn)?.let { NotificationHandoff(it, null, retirementOnly = true) }
+    }
+
+    private fun retireGeneric(sbn: StatusBarNotification): PlinkEnvelope? {
+        val registry = notificationActions ?: return null
+        if (registry.captureSnapshot() == null) return null
+        val message = ContinuityEnvelopeFactory.create(
+            MessageReceivedEvent(sbn.key, "Phone", "Notification removed.", false),
+            localDeviceId, pairedMacDeviceId
+        )
+        // sender/preview are required by the existing message policy; neither comes from the call.
+        val tombstone = message.copy(payload = JsonObject(mapOf(
+            "sender" to JsonPrimitive("Phone"),
+            "preview" to JsonPrimitive("Notification removed."),
+            "packageName" to JsonPrimitive(sbn.packageName),
+            "notificationKey" to JsonPrimitive(sbn.key),
+            "removed" to JsonPrimitive(true)
+        )))
+        return registry.offer(tombstone, emptyList(), removed = true)?.envelope
     }
 
     private fun isEligibleReplyAction(action: Notification.Action): Boolean {
@@ -127,7 +162,7 @@ class NotificationMapper(
     }
 
     private fun isIncomingCall(notification: Notification): Boolean {
-        val callType = notification.extras.getInt("android.callType", 0)
+        val callType = NotificationCallClassifier.callType(notification) ?: 0
         if (callType != 0) return callType == 1
         return notification.flags and Notification.FLAG_ONGOING_EVENT == 0 || notification.fullScreenIntent != null
     }
