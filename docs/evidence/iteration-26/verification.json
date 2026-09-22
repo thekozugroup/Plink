@@ -1,0 +1,37 @@
+{
+  "iteration": 26,
+  "productionChanges": false,
+  "iconFixed": false,
+  "causeEstablished": false,
+  "overallVerified": false,
+  "freshGate": {
+    "command": "./scripts/verify.sh",
+    "cwd": "/Users/michaelwong/Developer/Plink",
+    "startedAtUTC": "2026-09-22T18:20:08.235542+00:00",
+    "endedAtUTC": "2026-09-22T18:21:18.358977+00:00",
+    "exitCode": 0,
+    "logPath": ".a5c/artifacts/iteration26/full-gate.log",
+    "freshExecution": true,
+    "installedAppsModified": false
+  },
+  "testCounts": {
+    "android": 242,
+    "swift": 323,
+    "total": 565,
+    "failures": 0
+  },
+  "cleanup": {
+    "atUTC": "2026-09-22T18:22:42.581910+00:00",
+    "installedAppModified": false,
+    "expandedBuildBundleRemoved": true,
+    "targetedUnregisterExitCode": 0
+  },
+  "evidenceSHA256": {
+    ".a5c/artifacts/iteration26/current-own-bundle.json": "15550e2217b41d730dd7e314634c04e7c378e024f40f4fcf3734cf9bd45b2b11",
+    ".a5c/artifacts/iteration26/terra-result.json": "44617c9236a71540fa9fec2586506a993daf617c463c8884ab83e35210c2bdb8",
+    ".a5c/artifacts/iteration26/luna-result.json": "071fe340b344fa6a7113725bb3f8531fb7475168f4c8716dbe1fa8b4c1b94c1e",
+    ".a5c/artifacts/iteration26/astra-stop-decision.json": "f370665638a6faec0b20ee774a575a2b27b51d8da1cc0f94e88dcd067125d3a9",
+    ".a5c/artifacts/iteration26/full-gate.json": "d2168b64d7a4ccc092407d28b2c25689ce2e543ce62a56cc8a05d7cc5882d03d",
+    ".a5c/artifacts/iteration26/cleanup.json": "0a1116e8a768f6d2013dcde6feb02aaee9312dd521d791212faab6f4f0916744"
+  }
+}
