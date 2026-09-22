@@ -41,7 +41,7 @@ struct NotificationArtworkTests {
             addNotification: { request, callback in requests.append(request); completions.append(callback) })
         bridge.onDeliveryError = { _, _ in errors += 1 }
         bridge.onTextReply = { context, _ in replies.append(context) }
-        let envelope = message(icon: "ignored", canReply: true)
+        let envelope = message(icon: try png().base64EncodedString(), canReply: true)
         bridge.show(envelope: envelope, pairedPhoneName: "Trusted phone")
         let request = try #require(requests.first)
         #expect(request.content.attachments.isEmpty)
@@ -53,7 +53,7 @@ struct NotificationArtworkTests {
                 sourceDeviceId: "phone", targetDeviceId: "mac", payload: [
                     "notificationKey": .string("fixture-key"), "removed": .bool(true)]))
         }
-        if outcome == "replacement" { bridge.show(envelope: message(icon: "ignored", canReply: true)) }
+        if outcome == "replacement" { bridge.show(envelope: message(icon: try png().base64EncodedString(), canReply: true)) }
         if outcome == "dismiss" {
             bridge.handleResponse(id: id, action: UNNotificationDismissActionIdentifier, text: nil)
         }
@@ -90,7 +90,7 @@ struct NotificationArtworkTests {
             addNotification: { request, callback in requests.append(request); completions.append(callback) })
         bridge.onDeliveryError = { _, _ in errors += 1 }
         bridge.onTextReply = { context, _ in replies.append(context) }
-        let envelope = message(icon: "ignored", canReply: true)
+        let envelope = message(icon: try png().base64EncodedString(), canReply: true)
         bridge.show(envelope: envelope)
         let replacement = PlinkEnvelope(id: envelope.id, type: .messageReceived, sentAt: Date(),
             sourceDeviceId: "phone", targetDeviceId: "mac", payload: envelope.payload.merging([
@@ -119,7 +119,7 @@ struct NotificationArtworkTests {
             addNotification: { request, callback in requests.append(request); completions.append(callback) })
         bridge.onDeliveryError = { _, _ in errors += 1 }
         bridge.onTextReply = { _, _ in replies += 1 }
-        bridge.show(envelope: message(icon: "ignored", canReply: true))
+        bridge.show(envelope: message(icon: try png().base64EncodedString(), canReply: true))
         let id = try #require(requests.first).identifier
         bridge.handleResponse(id: id, action: UNNotificationDismissActionIdentifier, text: nil)
         #expect(removals == [[id]]) // Shared pending-and-delivered removal boundary.
@@ -132,15 +132,12 @@ struct NotificationArtworkTests {
     }
 
 
-    @Test func validArtworkPreservesTextAndReplyUntilHandoffFinishes() throws {
-        let root = temporaryRoot()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let artwork = NotificationArtwork.Staging(directory: root)
+    @Test func validArtworkRemainsPlainAndPreservesTextAndReply() throws {
         var requests: [UNNotificationRequest] = []
         var completions: [@MainActor (Error?) -> Void] = []
         var replies: [ReplyContext] = []
         let bridge = NotificationBridge(removeNotifications: { _ in },
-            addNotification: { requests.append($0); completions.append($1) }, artwork: artwork)
+            addNotification: { requests.append($0); completions.append($1) })
         bridge.onTextReply = { context, _ in replies.append(context) }
         let envelope = message(icon: try png().base64EncodedString(), canReply: true)
         bridge.show(envelope: envelope, pairedPhoneName: "Trusted phone")
@@ -150,12 +147,8 @@ struct NotificationArtworkTests {
         #expect(request.content.subtitle == "Chat · Trusted phone")
         #expect(request.content.body == "Preview")
         #expect(request.content.categoryIdentifier == "plink.message")
-        #expect(request.content.attachments.count == 1)
-        #expect(artwork.pendingCount == 1)
-        #expect(try FileManager.default.contentsOfDirectory(atPath: root.path).count == 1)
+        #expect(request.content.attachments.isEmpty)
         completions[0](nil)
-        #expect(artwork.pendingCount == 0)
-        #expect(try FileManager.default.contentsOfDirectory(atPath: root.path).isEmpty)
         bridge.handleResponse(id: request.identifier, action: "message.reply", text: "Fixture reply")
         #expect(replies.first?.pairedDeviceId == "phone")
         #expect(replies.first?.packageName == "test.chat")
@@ -183,10 +176,7 @@ struct NotificationArtworkTests {
         #expect(lightPixels > 100 && lightPixels < 700)
     }
 
-    @Test func malformedAndOversizedArtworkFallsBackBeforeStaging() throws {
-        let root = temporaryRoot()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let artwork = NotificationArtwork.Staging(directory: root)
+    @Test func malformedAndOversizedArtworkDoesNotAffectPlainDelivery() throws {
         let valid = try png()
         // A syntactically complete APNG control chunk, inserted before image data.
         var animated = valid
@@ -199,160 +189,12 @@ struct NotificationArtworkTests {
                        Data(valid.prefix(valid.count / 2)).base64EncodedString()]
         var requests: [UNNotificationRequest] = []
         let bridge = NotificationBridge(submitNotification: { requests.append($0) },
-                                        removeNotifications: { _ in }, artwork: artwork)
+                                        removeNotifications: { _ in })
         for icon in invalid { bridge.show(envelope: message(icon: icon, canReply: true)) }
         #expect(requests.count == invalid.count)
         #expect(requests.allSatisfy { $0.content.attachments.isEmpty && $0.content.categoryIdentifier == "plink.message" })
-        #expect(artwork.pendingCount == 0)
         #expect(NotificationArtwork.subtitle(appName: "\n", phoneName: "My\tPhone") == "MyPhone")
         #expect(NotificationArtwork.subtitle(appName: nil, phoneName: nil) == "Phone")
-    }
-
-    @Test(arguments: ["failure", "tombstone", "pair-switch", "replacement", "dismiss", "reply", "shutdown"])
-    func decoratedFailureRetriesOnlyCurrentOwner(outcome: String) throws {
-        let root = temporaryRoot()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let artwork = NotificationArtwork.Staging(directory: root)
-        var requests: [UNNotificationRequest] = []
-        var completions: [@MainActor (Error?) -> Void] = []
-        var errors = 0
-        var replies: [ReplyContext] = []
-        let bridge = NotificationBridge(removeNotifications: { _ in },
-            addNotification: { requests.append($0); completions.append($1) }, artwork: artwork)
-        bridge.onDeliveryError = { _, _ in errors += 1 }
-        bridge.onTextReply = { context, _ in replies.append(context) }
-        let envelope = message(icon: try png().base64EncodedString(), canReply: true)
-        bridge.show(envelope: envelope)
-        let id = try #require(requests.first).identifier
-        if outcome == "pair-switch" { bridge.clearContexts() }
-        if outcome == "shutdown" { bridge.shutdown() }
-        if outcome == "tombstone" {
-            bridge.show(envelope: PlinkEnvelope(id: UUID().uuidString, type: .messageReceived, sentAt: Date(),
-                sourceDeviceId: "phone", targetDeviceId: "mac", payload: [
-                    "notificationKey": .string("fixture-key"), "removed": .bool(true)]))
-        }
-        if outcome == "replacement" {
-            bridge.show(envelope: PlinkEnvelope(id: envelope.id, type: .messageReceived, sentAt: Date(),
-                sourceDeviceId: "phone", targetDeviceId: "mac", payload: envelope.payload.merging([
-                    "replyToken": .string("replacement-token")]) { _, new in new }))
-        }
-        if outcome == "dismiss" { bridge.handleResponse(id: id, action: UNNotificationDismissActionIdentifier, text: nil) }
-        if outcome == "reply" { bridge.handleResponse(id: id, action: "message.reply", text: "Fixture reply") }
-        #expect(artwork.pendingCount == (outcome == "replacement" ? 2 : 1))
-        completions[0](CocoaError(.fileReadCorruptFile))
-        #expect(artwork.pendingCount == (outcome == "replacement" ? 1 : 0))
-        #expect(errors == 0)
-        if outcome == "failure" {
-            #expect(requests.count == 2)
-            #expect(requests[1].content.attachments.isEmpty)
-            #expect(requests[1].identifier == id)
-            #expect(requests[1].content.title == requests[0].content.title)
-            #expect(requests[1].content.subtitle == requests[0].content.subtitle)
-            completions[1](CocoaError(.fileReadCorruptFile))
-            #expect(errors == 1)
-            #expect(requests.count == 2) // Only one fallback, never a loop.
-        } else {
-            #expect(requests.count == (outcome == "replacement" ? 2 : 1))
-        }
-        if outcome == "replacement" {
-            completions[1](nil)
-            bridge.handleResponse(id: id, action: "message.reply", text: "Fixture reply")
-            #expect(replies.first?.replyToken == "replacement-token")
-        }
-        #expect(artwork.pendingCount == 0)
-    }
-
-    @Test func successfulPlainFallbackPreservesReplyAndStagingFailureStillDelivers() throws {
-        let root = temporaryRoot()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let artwork = NotificationArtwork.Staging(directory: root)
-        var requests: [UNNotificationRequest] = []
-        var completions: [@MainActor (Error?) -> Void] = []
-        var replies: [ReplyContext] = []
-        let bridge = NotificationBridge(removeNotifications: { _ in },
-            addNotification: { requests.append($0); completions.append($1) }, artwork: artwork)
-        bridge.onTextReply = { context, _ in replies.append(context) }
-        let envelope = message(icon: try png().base64EncodedString(), canReply: true)
-        bridge.show(envelope: envelope)
-        try #require(completions.count == 1)
-        completions[0](CocoaError(.fileReadCorruptFile))
-        try #require(completions.count == 2)
-        #expect(requests[1].content.attachments.isEmpty)
-        completions[1](nil)
-        bridge.handleResponse(id: requests[1].identifier, action: "message.reply", text: "Fixture reply")
-        #expect(replies.first?.replyToken == "synthetic-token")
-        #expect(artwork.pendingCount == 0)
-        // An unusable staging directory must not prevent ordinary delivery.
-        try FileManager.default.removeItem(at: root)
-        try Data("not a directory".utf8).write(to: root)
-        bridge.show(envelope: message(icon: try png().base64EncodedString(), canReply: true))
-        #expect(requests.count == 3)
-        #expect(requests[2].content.attachments.isEmpty)
-        completions[2](nil)
-        #expect(artwork.pendingCount == 0)
-    }
-
-    @Test(arguments: ["replacement", "dismiss", "reply", "clear"])
-    func stalePlainFallbackCannotRemoveOrResurrectMessages(outcome: String) throws {
-        let root = temporaryRoot()
-        defer { try? FileManager.default.removeItem(at: root) }
-        var requests: [UNNotificationRequest] = []
-        var completions: [@MainActor (Error?) -> Void] = []
-        var errors = 0
-        var replies: [ReplyContext] = []
-        let bridge = NotificationBridge(removeNotifications: { _ in },
-            addNotification: { requests.append($0); completions.append($1) },
-            artwork: NotificationArtwork.Staging(directory: root))
-        bridge.onDeliveryError = { _, _ in errors += 1 }
-        bridge.onTextReply = { context, _ in replies.append(context) }
-        let envelope = message(icon: try png().base64EncodedString(), canReply: true)
-        bridge.show(envelope: envelope)
-        let id = try #require(requests.first).identifier
-        completions[0](CocoaError(.fileReadCorruptFile))
-        try #require(requests.count == 2)
-        #expect(requests[1].content.attachments.isEmpty)
-        if outcome == "replacement" {
-            bridge.show(envelope: PlinkEnvelope(id: envelope.id, type: .messageReceived, sentAt: Date(),
-                sourceDeviceId: "phone", targetDeviceId: "mac", payload: envelope.payload.merging([
-                    "replyToken": .string("replacement-token")]) { _, new in new }))
-        }
-        if outcome == "dismiss" { bridge.handleResponse(id: id, action: UNNotificationDismissActionIdentifier, text: nil) }
-        if outcome == "reply" { bridge.handleResponse(id: id, action: "message.reply", text: "Fixture reply") }
-        if outcome == "clear" { bridge.clearContexts() }
-        let count = requests.count
-        completions[1](CocoaError(.fileReadCorruptFile))
-        completions[0](CocoaError(.fileReadCorruptFile))
-        #expect(requests.count == count)
-        #expect(errors == 0)
-        if outcome == "replacement" {
-            completions[2](nil)
-            bridge.handleResponse(id: id, action: "message.reply", text: "Fixture reply")
-            #expect(replies.first?.replyToken == "replacement-token")
-        }
-    }
-
-    @Test func outstandingCapIncludesSupersededSubmissionsUntilTheirCallbacks() throws {
-        let root = temporaryRoot()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let artwork = NotificationArtwork.Staging(directory: root)
-        var requests: [UNNotificationRequest] = []
-        var completions: [@MainActor (Error?) -> Void] = []
-        let bridge = NotificationBridge(removeNotifications: { _ in },
-            addNotification: { requests.append($0); completions.append($1) }, artwork: artwork)
-        let envelope = message(icon: try png().base64EncodedString())
-        for _ in 0..<129 { bridge.show(envelope: envelope) }
-        #expect(artwork.pendingCount == 128)
-        #expect(requests.prefix(128).allSatisfy { $0.content.attachments.count == 1 })
-        #expect(requests[128].content.attachments.isEmpty)
-        bridge.clearContexts()
-        #expect(artwork.pendingCount == 128)
-        completions[0](nil)
-        #expect(artwork.pendingCount == 127)
-        bridge.show(envelope: envelope)
-        #expect(requests.last?.content.attachments.count == 1)
-        for completion in completions.dropFirst() { completion(nil) }
-        #expect(artwork.pendingCount == 0)
-        #expect(try FileManager.default.contentsOfDirectory(atPath: root.path).isEmpty)
     }
 
     @Test func startupCleanupOnlyRemovesOwnedOrphansAndCompletionLeavesMovedFileAlone() throws {

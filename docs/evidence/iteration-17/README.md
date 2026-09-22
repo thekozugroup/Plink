@@ -26,5 +26,7 @@ and the signed Mac package. The update was installed after a fresh Pixel idle
 check. Native computer-use screenshots showed the continuous title-bar material,
 thicker ring, and Settings switches. Settings navigation worked without changing
 preferences. The window was inactive while macOS waited for Keychain access to
-the saved pairing. Connected-state appearance and reconnection remain pending;
-these observations do not establish call audio or notification-icon correctness.
+the saved pairing. After the user approved Keychain access, native computer use showed the selected
+Pixel connected over Wi-Fi and Bluetooth call control, current battery telemetry,
+and the full accent ring. These observations establish restored connection and
+connected-state appearance, not working call audio or notification-icon correctness.

@@ -10,7 +10,6 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     private let submitNotification: ((UNNotificationRequest) -> Void)?
     private let removeNotifications: (([String]) -> Void)?
     private let addNotification: ((UNNotificationRequest, @escaping @MainActor (Error?) -> Void) -> Void)?
-    private let artwork: NotificationArtwork.Staging
     // Late delivery completions may only affect the current submission for this ID.
     private var submissions: [String: UUID] = [:]
     private var messages = MacNotificationBookkeeping()
@@ -45,13 +44,11 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     init(
         submitNotification: ((UNNotificationRequest) -> Void)? = nil,
         removeNotifications: (([String]) -> Void)? = nil,
-        addNotification: ((UNNotificationRequest, @escaping @MainActor (Error?) -> Void) -> Void)? = nil,
-        artwork: NotificationArtwork.Staging? = nil
+        addNotification: ((UNNotificationRequest, @escaping @MainActor (Error?) -> Void) -> Void)? = nil
     ) {
         self.submitNotification = submitNotification
         self.removeNotifications = removeNotifications
         self.addNotification = addNotification
-        self.artwork = artwork ?? NotificationArtwork.Staging()
         super.init()
     }
 
@@ -254,34 +251,22 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
                                    envelope: PlinkEnvelope, phoneName: String?) {
         content.subtitle = NotificationArtwork.subtitle(appName: envelope.payload["sourceAppName"]?.stringValue,
                                                        phoneName: phoneName)
-        let stage = envelope.type == .messageReceived
-            ? artwork.stage(envelope.payload["sourceAppIconPng"]?.stringValue) : nil
         if envelope.type == .messageReceived {
-            if stage != nil {
-                callLog.notice("calls.notification.messageReceived.attachment.staged")
-            } else {
-                callLog.notice("calls.notification.messageReceived.attachment.none")
-            }
+            callLog.notice("calls.notification.messageReceived.attachment.none")
         }
-        if let stage { content.attachments = [stage.attachment] }
-        submit(content, id: id, stage: stage)
+        submit(content, id: id)
     }
 
-    private func submit(_ content: UNMutableNotificationContent, id: String,
-                        stage: NotificationArtwork.Stage? = nil) {
+    private func submit(_ content: UNMutableNotificationContent, id: String) {
         submissions.removeValue(forKey: id)
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
         if let submitNotification {
             submitNotification(request)
-            if let stage { artwork.finish(stage) }
             return
         }
         let token = UUID()
         submissions[id] = token
-        let completion: @MainActor (Error?) -> Void = { [weak self, artwork] error in
-            // Cleanup belongs to this handoff, even if its message owner was revoked.
-            // Never use attachment.url: macOS may have moved it into daemon storage.
-            if let stage { artwork.finish(stage) }
+        let completion: @MainActor (Error?) -> Void = { [weak self] error in
             guard let self else { return }
             guard self.submissions[id] == token else {
                 // An add can finish after privacy/ownership cleanup. HFP presentation IDs
@@ -296,11 +281,6 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
             }
             self.submissions.removeValue(forKey: id)
             guard let error else { return }
-            if stage != nil, let plain = content.mutableCopy() as? UNMutableNotificationContent {
-                plain.attachments = []
-                self.submit(plain, id: id) // One fallback; its own generation guards completion.
-                return
-            }
             _ = self.messages.remove(notificationID: id)
             self.onDeliveryError?(id, error)
         }
