@@ -362,7 +362,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         }
         ProcessInfo.processInfo.disableAutomaticTermination("Plink keeps the paired Pixel receiver and menu bar companion active.")
         ProcessInfo.processInfo.disableSuddenTermination()
-        NSApplication.shared.setActivationPolicy(.regular)
+        NSApplication.shared.setActivationPolicy(.accessory)
         notificationBridge.onAuthorizationChanged = { [weak self] granted, error in
             Task { @MainActor in
                 self?.notificationsEnabled = granted
@@ -417,7 +417,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 }
             }
         }
-        showDashboardWindow()
         restoreSavedPairingAsync()
     }
 
@@ -544,19 +543,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func setUpCalls() {
-        guard !phoneManagementBusy, !startupOperation.isRunning, !terminationPending,
-              let pairing = activePairing, let pairedPhoneName,
-              let selected = try? pairingFinalization.selectedDevice(localDeviceID: localMacDeviceId),
-              selected.id == pairing.device.id, selected.sessionId == pairing.device.sessionId else { return }
+        let log = Logger(subsystem: "com.thekozugroup.plink.mac", category: "bluetooth-calling")
+        log.notice("calls.setup.app_delegate.enter")
+        guard !phoneManagementBusy else { log.notice("calls.setup.app_delegate.rejected.management_busy"); return }
+        guard !startupOperation.isRunning else { log.notice("calls.setup.app_delegate.rejected.startup_running"); return }
+        guard !terminationPending else { log.notice("calls.setup.app_delegate.rejected.terminating"); return }
+        guard let pairing = activePairing else { log.notice("calls.setup.app_delegate.rejected.no_active_pairing"); return }
+        guard let pairedPhoneName else { log.notice("calls.setup.app_delegate.rejected.no_phone_name"); return }
+        let selected: PairedDevice?
+        do { selected = try pairingFinalization.selectedDevice(localDeviceID: localMacDeviceId) }
+        catch { log.notice("calls.setup.app_delegate.rejected.selection_read_failed"); return }
+        guard let selected else { log.notice("calls.setup.app_delegate.rejected.no_selected_device"); return }
+        guard selected.id == pairing.device.id else { log.notice("calls.setup.app_delegate.rejected.peer_mismatch"); return }
+        guard selected.sessionId == pairing.device.sessionId else { log.notice("calls.setup.app_delegate.rejected.session_mismatch"); return }
+        log.notice("calls.setup.app_delegate.accepted")
         calling.cancelInitialSetup()
         calling.beginSetup(phoneName: pairedPhoneName)
     }
 
     private func refreshCallPanel() {
-        let allowed = !terminationPending && !(phoneManagementBusy && phoneManagementAffectsCurrentPeer) &&
-            reconnectSystemAwake && reconnectScreenAwake && reconnectSessionActive && reconnectSessionUnlocked &&
-            ClipboardSyncController.systemIsUnlocked() &&
-            (CGSessionCopyCurrentDictionary() as? [String: Any])?[kCGSessionOnConsoleKey as String] as? Bool == true
+        let log = Logger(subsystem: "com.thekozugroup.plink.mac", category: "bluetooth-calling")
+        let allowed: Bool = {
+            guard !terminationPending else { log.notice("calls.panel.ineligible.terminating"); return false }
+            guard !(phoneManagementBusy && phoneManagementAffectsCurrentPeer) else { log.notice("calls.panel.ineligible.phone_management"); return false }
+            guard reconnectSystemAwake else { log.notice("calls.panel.ineligible.system_asleep"); return false }
+            guard reconnectScreenAwake else { log.notice("calls.panel.ineligible.screen_asleep"); return false }
+            guard reconnectSessionActive else { log.notice("calls.panel.ineligible.session_inactive"); return false }
+            guard reconnectSessionUnlocked else { log.notice("calls.panel.ineligible.session_locked"); return false }
+            guard ClipboardSyncController.systemIsUnlocked() else { log.notice("calls.panel.ineligible.system_locked"); return false }
+            guard (CGSessionCopyCurrentDictionary() as? [String: Any])?[kCGSessionOnConsoleKey as String] as? Bool == true else {
+                log.notice("calls.panel.ineligible.not_on_console"); return false
+            }
+            log.notice("calls.panel.eligible")
+            return true
+        }()
         callPanel.update(call: calling.call, phoneName: pairedPhoneName, presentationAllowed: allowed)
     }
 
@@ -1680,6 +1700,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     @discardableResult
     private func publishStartupRecovery(_ phase: StartupRecoveryState.Phase, attempt: UUID) -> Bool {
+        let wasRestoring = startupRecovery.isRestoring
         var next = startupRecovery
         guard next.publish(phase, expectedAttempt: attempt, currentAttempt: pairingAttempt,
                            terminating: terminationPending) else { return false }
@@ -1689,6 +1710,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         pairingRecoveryError = startupRecovery.error
         // A restored pairing may already be reconnecting; keep its connection feedback.
         if phase != .ready { lastDeliveryState = startupRecovery.detail }
+        if wasRestoring && (phase == .unpaired || phase == .needsPairing) { showDashboardWindow() }
         return true
     }
 

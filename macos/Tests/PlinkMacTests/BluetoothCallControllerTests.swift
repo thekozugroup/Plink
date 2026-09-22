@@ -80,7 +80,7 @@ struct BluetoothCallControllerTests {
         var commits: [BluetoothPhone] = []
         func begin() {
             setup.begin(phoneName: "Phone", readCatalog: { reads += 1; complete = $0 },
-                choose: { selections += 1; return BluetoothPhone(id: address, name: "Chosen phone") }, isCurrent: { true }, validate: { _ in true },
+                choose: { _ in selections += 1; return BluetoothPhone(id: address, name: "Chosen phone") }, isCurrent: { true }, validate: { _ in true },
                 commit: { commits.append($0) })
         }
         begin()
@@ -109,7 +109,7 @@ struct BluetoothCallControllerTests {
         var choices = 0
         var commits = 0
         setup.begin(phoneName: phoneName, readCatalog: { $0(candidates) },
-            choose: { choices += 1; return nil }, isCurrent: { true }, validate: { _ in true },
+            choose: { _ in choices += 1; return nil }, isCurrent: { true }, validate: { _ in true },
             commit: { _ in commits += 1 })
         #expect(choices == 1)
         #expect(commits == 0)
@@ -121,10 +121,45 @@ struct BluetoothCallControllerTests {
         var validations = 0
         var commits: [BluetoothPhone] = []
         setup.begin(phoneName: "CPH2749", readCatalog: { $0([BluetoothPhone(id: address, name: "OnePlus 15")]) },
-            choose: { BluetoothPhone(id: "aa-bb-cc-dd-ee-01", name: "OnePlus 15") }, isCurrent: { true },
+            choose: { _ in BluetoothPhone(id: "aa-bb-cc-dd-ee-01", name: "OnePlus 15") }, isCurrent: { true },
             validate: { _ in validations += 1; return true }, commit: { commits.append($0) })
         #expect(validations == 1)
         #expect(commits.map(\.id) == [address])
+    }
+
+    @Test func bondedPopupRequiresChoiceAndBindsExactSnapshotRecord() {
+        let snapshot = BluetoothCallSetup.candidates([
+            BluetoothPhone(id: address, name: "Phone"),
+            BluetoothPhone(id: "aa-bb-cc-dd-ee-01", name: "Phone"),
+            BluetoothPhone(id: "AA:BB:CC:DD:EE:02", name: "Phone")
+        ])
+        #expect(snapshot.count == 2)
+        for index in [-1, 0, 3, Int.max] {
+            #expect(BluetoothCallSetup.bondedChoice(in: snapshot, popupIndex: index) == nil)
+        }
+        #expect(BluetoothCallSetup.bondedChoice(in: [], popupIndex: 1) == nil)
+        let setup = BluetoothCallSetup()
+        var commits: [String] = []
+        setup.begin(phoneName: "Phone", readCatalog: { $0(snapshot) },
+            choose: { _ in BluetoothCallSetup.bondedChoice(in: snapshot, popupIndex: 2) },
+            isCurrent: { true }, validate: { _ in true }, commit: { commits.append($0.id) })
+        #expect(commits == ["AA:BB:CC:DD:EE:02"])
+    }
+
+    @Test(arguments: ["cancel", "no-choice", "stale", "token", "bond", "capability"])
+    func bondedConfirmationRejectsCancelledOrInvalidatedChoice(reason: String) {
+        let setup = BluetoothCallSetup()
+        let snapshot = BluetoothCallSetup.candidates([BluetoothPhone(id: address, name: "Phone")])
+        var current = true
+        var commits = 0
+        setup.begin(phoneName: "Phone", readCatalog: { $0(snapshot) }, choose: { _ in
+            if reason == "cancel" { return nil }
+            if reason == "stale" { current = false }
+            if reason == "token" { setup.cancel() }
+            return BluetoothCallSetup.bondedChoice(in: snapshot, popupIndex: reason == "no-choice" ? 0 : 1)
+        }, isCurrent: { current }, validate: { _ in reason != "bond" && reason != "capability" },
+        commit: { _ in commits += 1 })
+        #expect(commits == 0)
     }
 
     @Test(arguments: ["peer", "generation", "call", "busy", "quarantine", "cancel"])
@@ -135,7 +170,7 @@ struct BluetoothCallControllerTests {
         var choices = 0
         var commits = 0
         setup.begin(phoneName: "Phone", readCatalog: { complete = $0 },
-            choose: { choices += 1; return nil }, isCurrent: { current }, validate: { _ in true },
+            choose: { _ in choices += 1; return nil }, isCurrent: { current }, validate: { _ in true },
             commit: { _ in commits += 1 })
         let completion = try #require(complete)
         if reason == "cancel" { setup.cancel() } else { current = false }
@@ -150,12 +185,29 @@ struct BluetoothCallControllerTests {
             let setup = BluetoothCallSetup()
             var current = true
             var commits = 0
-            setup.begin(phoneName: "Phone", readCatalog: { $0([]) }, choose: {
+            setup.begin(phoneName: "Phone", readCatalog: { $0([]) }, choose: { _ in
                 if staleDuringSelection { current = false }
                 return BluetoothPhone(id: address, name: "Selected")
             }, isCurrent: { current }, validate: { _ in false }, commit: { _ in commits += 1 })
             #expect(commits == 0)
         }
+    }
+
+    @Test(arguments: ["current", "cancelled", "superseded"])
+    func pairingRouteRechecksOwnerAfterBondedModal(outcome: String) {
+        let setup = BluetoothCallSetup()
+        var current = true
+        var canOpenPairing = false
+        setup.begin(phoneName: "Phone", readCatalog: { $0([]) }, choose: { isCurrent in
+            #expect(isCurrent())
+            if outcome == "cancelled" { setup.cancel() }
+            if outcome == "superseded" { current = false }
+            canOpenPairing = isCurrent()
+            return nil
+        }, isCurrent: { current }, validate: { _ in true }, commit: { _ in
+            Issue.record("Choosing the pairing route must not commit a bonded phone.")
+        })
+        #expect(canOpenPairing == (outcome == "current"))
     }
 
     @Test func backgroundCatalogAndSavedLookupDoNotInvokeSetup() {

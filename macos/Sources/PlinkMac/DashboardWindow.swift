@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import OSLog
 
 struct DashboardPresentation {
     enum Action: Equatable {
@@ -39,7 +40,18 @@ struct DashboardPresentation {
         return hasPhone ? "Phone disconnected" : "Connect your phone"
     }
     var callsStatus: String {
-        callsConnected ? "Calls connected" : (bluetoothPaired ? "Calls disconnected" : "Calls need setup")
+        Self.callsStatus(connected: callsConnected, paired: bluetoothPaired, blocked: false)
+    }
+    static func callsStatus(connected: Bool, paired: Bool, blocked: Bool,
+                            pairedLabel: String = "Calls disconnected") -> String {
+        if blocked { return "Calls unavailable" }
+        return connected ? "Calls connected" : (paired ? pairedLabel : "Calls need setup")
+    }
+    static func callsRecoveryDetail(blocked: Bool) -> String? {
+        blocked ? "Restart Plink to use calls again." : nil
+    }
+    static func callsSetupDisabled(busy: Bool, blocked: Bool) -> Bool {
+        busy || blocked
     }
     var showsProgress: Bool { (!recovered && !delayed && !recoveryError) || (recovered && (reconnecting || disconnecting)) }
     var primary: Action? {
@@ -177,7 +189,8 @@ struct ConnectionHeader: View {
                 HStack(spacing: 10) {
                     statusChip(!appDelegate.pairingRecoveryComplete ? "Wi-Fi · Waiting" : (connected ? "Wi-Fi connected" : "Wi-Fi disconnected"),
                                icon: connected ? .wifi : .wifiOff, active: connected)
-                    statusChip(!appDelegate.pairingRecoveryComplete ? "Calls · Waiting" : (calling.serviceConnected ? "Calls connected" : (calling.bluetoothPaired ? "Bluetooth paired" : "Calls need setup")),
+                    statusChip(!appDelegate.pairingRecoveryComplete ? "Calls · Waiting" : DashboardPresentation.callsStatus(
+                        connected: calling.serviceConnected, paired: calling.bluetoothPaired, blocked: calling.blocked, pairedLabel: "Bluetooth paired"),
                                icon: .bluetooth, active: calling.serviceConnected)
                 }.padding(.top, 3)
                 if let battery = appDelegate.deviceStatus, connected {
@@ -207,7 +220,9 @@ struct ConnectionHeader: View {
     }
 
     private func primaryBlocked(_ action: DashboardPresentation.Action) -> Bool {
-        if action == .setUpCalls || action == .connectCalls { return calling.busy || calling.blocked }
+        if action == .setUpCalls || action == .connectCalls {
+            return DashboardPresentation.callsSetupDisabled(busy: calling.busy, blocked: calling.blocked)
+        }
         if action == .disconnect { return calling.call.context != nil || !calling.call.stateIsCertain || calling.busy || calling.blocked }
         return false
     }
@@ -216,7 +231,9 @@ struct ConnectionHeader: View {
         case .pair, .continuePairing: appDelegate.showPairingWindow()
         case .connect: reconnect.beginDiscovery()
         case .cancel: reconnect.cancel()
-        case .setUpCalls, .connectCalls: appDelegate.setUpCalls()
+        case .setUpCalls, .connectCalls:
+            Logger(subsystem: "com.thekozugroup.plink.mac", category: "bluetooth-calling").notice("calls.setup.dashboard.enter")
+            appDelegate.setUpCalls()
         case .disconnect: appDelegate.disconnectSelectedPhone()
         }
     }
@@ -340,13 +357,18 @@ struct MenuBarPanel: View {
         } else {
             Text(appDelegate.pairedPhoneName ?? appDelegate.startupRecovery.menuStatus)
             Text(appDelegate.pairedPeerID == nil ? "Wi-Fi disconnected" : "Wi-Fi connected")
-            Text(calling.serviceConnected ? "Calls connected" : (calling.bluetoothPaired ? "Calls disconnected" : "Calls need setup"))
+            Text(DashboardPresentation.callsStatus(connected: calling.serviceConnected,
+                paired: calling.bluetoothPaired, blocked: calling.blocked))
+            if let detail = DashboardPresentation.callsRecoveryDetail(blocked: calling.blocked) { Text(detail) }
         }
         Divider()
         if appDelegate.pairedPeerID != nil {
             if !calling.serviceConnected {
-                Button(calling.bluetoothPaired ? "Connect Calls" : "Set Up Calls") { appDelegate.setUpCalls() }
-                    .disabled(calling.busy || calling.blocked || appDelegate.phoneManagementBusy)
+                Button(calling.bluetoothPaired ? "Connect Calls" : "Set Up Calls") {
+                    Logger(subsystem: "com.thekozugroup.plink.mac", category: "bluetooth-calling").notice("calls.setup.menu.enter")
+                    appDelegate.setUpCalls()
+                }
+                    .disabled(DashboardPresentation.callsSetupDisabled(busy: calling.busy, blocked: calling.blocked) || appDelegate.phoneManagementBusy)
             }
             FileTransferMenu(controller: appDelegate.files, openDashboard: { appDelegate.showDashboardWindow() })
         } else if appDelegate.isPairing {

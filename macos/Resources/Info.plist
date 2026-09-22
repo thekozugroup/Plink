@@ -19,13 +19,15 @@
     <key>CFBundleShortVersionString</key>
     <string>0.1.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>CFBundleIconFile</key>
     <string>Plink.icns</string>
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>Plink connects to the Bluetooth phone you select to manage calls and route call audio.</string>
     <key>NSMicrophoneUsageDescription</key>

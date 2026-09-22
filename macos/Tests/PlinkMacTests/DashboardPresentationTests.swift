@@ -3,6 +3,26 @@ import Testing
 @testable import PlinkMac
 
 struct DashboardPresentationTests {
+    @Test(arguments: [false, true])
+    func blockedCallsExplainRecoveryRegardlessOfSavedAssociation(paired: Bool) {
+        #expect(DashboardPresentation.callsStatus(connected: false, paired: paired, blocked: true) == "Calls unavailable")
+        #expect(DashboardPresentation.callsStatus(connected: false, paired: paired, blocked: true,
+            pairedLabel: "Bluetooth paired") == "Calls unavailable")
+        #expect(DashboardPresentation.callsRecoveryDetail(blocked: true) == "Restart Plink to use calls again.")
+        #expect(DashboardPresentation.callsSetupDisabled(busy: false, blocked: true))
+    }
+
+    @Test func ordinaryCallPresentationAndSetupGatesRemainUnchanged() {
+        #expect(DashboardPresentation.callsStatus(connected: true, paired: true, blocked: false) == "Calls connected")
+        #expect(DashboardPresentation.callsStatus(connected: false, paired: true, blocked: false) == "Calls disconnected")
+        #expect(DashboardPresentation.callsStatus(connected: false, paired: true, blocked: false,
+            pairedLabel: "Bluetooth paired") == "Bluetooth paired")
+        #expect(DashboardPresentation.callsStatus(connected: false, paired: false, blocked: false) == "Calls need setup")
+        #expect(DashboardPresentation.callsRecoveryDetail(blocked: false) == nil)
+        #expect(DashboardPresentation.callsSetupDisabled(busy: true, blocked: false))
+        #expect(!DashboardPresentation.callsSetupDisabled(busy: false, blocked: false))
+    }
+
     @Test func wifiConnectionDoesNotClaimCallsReady() {
         let state = DashboardPresentation(recovered: true, delayed: false, recoveryError: false,
             pairing: false, connected: true, reconnecting: false, disconnecting: false,

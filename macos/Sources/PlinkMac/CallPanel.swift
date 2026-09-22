@@ -1,4 +1,5 @@
 import AppKit
+import OSLog
 import PlinkCore
 import SwiftUI
 
@@ -42,8 +43,13 @@ struct CallPanelPresentation {
             activeSince = now
         }
         if !serviceConnected || call.context == nil { activeSince = nil }
-        guard allowed, serviceConnected, call.stateIsCertain, !call.hasWaitingCall,
-              let context = call.context, hiddenContext != context else { visible = false; return }
+        let log = Logger(subsystem: "com.thekozugroup.plink.mac", category: "bluetooth-calling")
+        guard allowed else { log.notice("calls.panel.hidden.environment"); visible = false; return }
+        guard serviceConnected else { log.notice("calls.panel.hidden.service_disconnected"); visible = false; return }
+        guard call.stateIsCertain else { log.notice("calls.panel.hidden.uncertain"); visible = false; return }
+        guard !call.hasWaitingCall else { log.notice("calls.panel.hidden.multiple_calls"); visible = false; return }
+        guard let context = call.context else { log.notice("calls.panel.hidden.no_context"); visible = false; return }
+        guard hiddenContext != context else { log.notice("calls.panel.hidden.dismissed"); visible = false; return }
         switch call.phase {
         case .ringing, .active: visible = true
         case .answering, .ending: visible = visible && previous == context
@@ -73,6 +79,7 @@ final class CallPanelController: NSObject, ObservableObject, NSWindowDelegate {
     func update(call: MacCallSession, phoneName: String?, presentationAllowed: Bool) {
         self.phoneName = phoneName
         presentation.update(call: call, serviceConnected: calling.serviceConnected, allowed: presentationAllowed)
+        Logger(subsystem: "com.thekozugroup.plink.mac", category: "bluetooth-calling").notice("calls.panel.state visible=\(self.presentation.visible, privacy: .public) ringing=\(call.phase == .ringing, privacy: .public) active=\(call.phase == .active, privacy: .public) busy=\(self.calling.busy, privacy: .public) blocked=\(self.calling.blocked, privacy: .public) audioConnected=\(self.presentation.audioConnected, privacy: .public)")
         guard presentation.visible else { panel?.orderOut(nil); return }
         if panel == nil {
             let window = CallWindow(contentRect: NSRect(x: 0, y: 0, width: 363, height: 142),
