@@ -22,4 +22,9 @@ audio retain the unresolved limits recorded in checkpoints 15 and 16.
 ## Verification
 
 The full gate passed 303 Swift tests, 207 Android tests, Android builds/lint,
-and the signed Mac package. Native visual verification remains pending.
+and the signed Mac package. The update was installed after a fresh Pixel idle
+check. Native computer-use screenshots showed the continuous title-bar material,
+thicker ring, and Settings switches. Settings navigation worked without changing
+preferences. The window was inactive while macOS waited for Keychain access to
+the saved pairing. Connected-state appearance and reconnection remain pending;
+these observations do not establish call audio or notification-icon correctness.
