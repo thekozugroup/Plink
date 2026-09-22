@@ -1,0 +1,33 @@
+{
+  "iteration": 29,
+  "status": "offline_verified_runtime_unverified",
+  "productionSourceChanged": false,
+  "productionCheckpoint": "6a5fc4a",
+  "helperTests": {
+    "original": 43,
+    "mode3": 22,
+    "failures": 0
+  },
+  "productTests": {
+    "android": 255,
+    "swift": 327,
+    "total": 582
+  },
+  "sourceArchiveSHA256": "41d3f063dff4876b2ba4dc90b615102a09047b5a660797e0f1592445fe809f16",
+  "compiledJarSHA256": "4b6d6a0a574967e052ca92e88413e73f4a62a2744d554c719303a456771cfca9",
+  "liveAllocations": 0,
+  "audioSuccess": false,
+  "runtimeBlockers": [
+    "Pixel unavailable",
+    "Hidden partial-allocation cleanup and probe ownership observation unresolved"
+  ],
+  "sourceReview": ".a5c/artifacts/iteration29/astra-final-review.json",
+  "independentReview": ".a5c/artifacts/iteration29/luna-result.json",
+  "sourceContract": ".a5c/artifacts/iteration29/sol-source-contract.json",
+  "verificationArtifacts": [
+    ".a5c/artifacts/iteration29/offline-verification.json",
+    ".a5c/artifacts/iteration29/full-gate.json",
+    ".a5c/artifacts/iteration29/provenance.json"
+  ],
+  "cleanup": ".a5c/artifacts/iteration29/cleanup.json"
+}
