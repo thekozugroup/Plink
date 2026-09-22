@@ -81,6 +81,108 @@ struct NotificationArtworkTests {
         }
     }
 
+    @Test(arguments: ["replacement", "tombstone", "clear", "dismiss", "reply", "shutdown"])
+    func retiredMessageLateSuccessCannotResurrect(outcome: String) throws {
+        var requests: [UNNotificationRequest] = []
+        var completions: [@MainActor (Error?) -> Void] = []
+        var delivered: Set<String> = []
+        var replies: [ReplyContext] = []
+        let bridge = NotificationBridge(removeNotifications: { delivered.subtract($0) },
+            addNotification: { requests.append($0); completions.append($1) })
+        bridge.onTextReply = { context, _ in replies.append(context) }
+        bridge.show(envelope: message(icon: "", canReply: true))
+        let old = try #require(requests.first).identifier
+        var expected: Set<String> = []
+        if outcome == "replacement" {
+            bridge.show(envelope: message(icon: "", canReply: true))
+            try #require(requests.count == 2 && completions.count == 2)
+            let current = requests[1].identifier
+            #expect(current != old)
+            delivered.insert(current)
+            completions[1](nil)
+            expected.insert(current)
+        }
+        if outcome == "tombstone" {
+            bridge.show(envelope: PlinkEnvelope(id: UUID().uuidString, type: .messageReceived, sentAt: Date(),
+                sourceDeviceId: "phone", targetDeviceId: "mac", payload: [
+                    "notificationKey": .string("fixture-key"), "removed": .bool(true)]))
+        }
+        if outcome == "clear" { bridge.clearContexts() }
+        if outcome == "shutdown" { bridge.shutdown() }
+        if outcome == "dismiss" {
+            bridge.handleResponse(id: old, action: UNNotificationDismissActionIdentifier, text: nil)
+        }
+        if outcome == "reply" {
+            bridge.handleResponse(id: old, action: "message.reply", text: "Synthetic reply")
+        }
+        // Model the OS add landing after retirement, then invoking its held completion.
+        delivered.insert(old)
+        completions[0](nil)
+        #expect(delivered == expected)
+        let priorReplies = replies.count
+        bridge.handleResponse(id: old, action: "message.reply", text: "Stale synthetic reply")
+        #expect(replies.count == priorReplies)
+        if let current = expected.first {
+            bridge.handleResponse(id: current, action: "message.reply", text: "Current synthetic reply")
+            #expect(replies.count == priorReplies + 1)
+        }
+    }
+
+    @Test(arguments: [false, true], ["reply", "readonly", "unkeyed"])
+    func sameIDMessageLateCompletionPreservesCurrent(oldCompletesLast: Bool, kind: String) throws {
+        var requests: [UNNotificationRequest] = []
+        var completions: [@MainActor (Error?) -> Void] = []
+        var delivered: Set<String> = []
+        var replies: [ReplyContext] = []
+        let bridge = NotificationBridge(removeNotifications: { delivered.subtract($0) },
+            addNotification: { requests.append($0); completions.append($1) })
+        bridge.onTextReply = { context, _ in replies.append(context) }
+        let template = message(icon: "", canReply: kind == "reply")
+        let original = PlinkEnvelope(id: template.id, type: template.type, sentAt: template.sentAt,
+            sourceDeviceId: template.sourceDeviceId, targetDeviceId: template.targetDeviceId,
+            payload: template.payload.filter { kind != "unkeyed" || $0.key != "notificationKey" })
+        bridge.show(envelope: original)
+        let replacement = PlinkEnvelope(id: original.id, type: .messageReceived, sentAt: Date(),
+            sourceDeviceId: "phone", targetDeviceId: "mac", payload: original.payload.merging([
+                "replyToken": .string("replacement-token")]) { _, new in new })
+        bridge.show(envelope: replacement)
+        try #require(requests.count == 2 && completions.count == 2)
+        let current = requests[1].identifier
+        #expect(current == requests[0].identifier)
+        delivered.insert(current)
+        if oldCompletesLast { completions[1](nil) }
+        completions[0](nil)
+        #expect(delivered == [current])
+        if !oldCompletesLast { completions[1](nil) }
+        completions[1](nil) // Duplicate current completion must also preserve ownership.
+        #expect(delivered == [current])
+        bridge.handleResponse(id: current, action: "message.reply", text: "Synthetic reply")
+        #expect(replies.count == (kind == "reply" ? 1 : 0))
+        if kind == "reply" { #expect(replies.first?.replyToken == "replacement-token") }
+    }
+
+    @Test(arguments: [false, true])
+    func equalTextMessagesKeepDistinctKeyOrPeerOwnership(otherPeer: Bool) throws {
+        var requests: [UNNotificationRequest] = []
+        var completions: [@MainActor (Error?) -> Void] = []
+        var delivered: Set<String> = []
+        let bridge = NotificationBridge(removeNotifications: { delivered.subtract($0) },
+            addNotification: { requests.append($0); completions.append($1) })
+        let original = message(icon: "")
+        bridge.show(envelope: original)
+        bridge.show(envelope: PlinkEnvelope(id: UUID().uuidString, type: original.type, sentAt: original.sentAt,
+            sourceDeviceId: otherPeer ? "other-phone" : original.sourceDeviceId,
+            targetDeviceId: original.targetDeviceId, payload: original.payload.merging([
+                "notificationKey": .string(otherPeer ? "fixture-key" : "other-key")]) { _, new in new }))
+        try #require(requests.count == 2 && completions.count == 2)
+        delivered.formUnion(requests.map(\.identifier))
+        completions[0](nil)
+        completions[1](nil)
+        completions[0](nil)
+        completions[1](nil)
+        #expect(delivered.count == 2)
+    }
+
     @Test func staleDeliveryFailureCannotEvictSameIDReplacement() throws {
         var requests: [UNNotificationRequest] = []
         var completions: [@MainActor (Error?) -> Void] = []

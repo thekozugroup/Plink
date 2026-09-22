@@ -25,6 +25,10 @@ public struct MacNotificationBookkeeping: Sendable {
 
     public var count: Int { entries.count }
 
+    public func containsID(_ notificationID: String) -> Bool {
+        entries[notificationID] != nil
+    }
+
     @discardableResult
     public mutating func store(
         notificationID: String,

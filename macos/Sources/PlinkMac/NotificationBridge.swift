@@ -265,6 +265,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
             return
         }
         let token = UUID()
+        let trackedMessage = messages.containsID(id)
         submissions[id] = token
         let completion: @MainActor (Error?) -> Void = { [weak self] error in
             guard let self else { return }
@@ -275,6 +276,9 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
                    self.callNotificationID != id || self.callActionConsumed || !self.callPresentationAllowed {
                     self.removeDeliveredAndPending([id])
                 } else if id.hasPrefix("plink.call.mirrored."), self.mirroredCallNotificationID != id {
+                    self.removeDeliveredAndPending([id])
+                } else if trackedMessage, !self.messages.containsID(id) {
+                    // A retired add may land after removal; a current same-ID replacement stays owned.
                     self.removeDeliveredAndPending([id])
                 }
                 return

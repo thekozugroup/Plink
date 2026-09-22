@@ -1,0 +1,14 @@
+{
+  "command": "./scripts/verify.sh",
+  "exitCode": 0,
+  "swiftTests": 302,
+  "androidTests": 207,
+  "totalTests": 509,
+  "build": "4",
+  "executableSHA256": "2856bc58605568dc88099ba3869ee09dd2e44bdbb4c92eaa2c171fe7debcbd87",
+  "bundleIdentifier": "com.thekozugroup.plink.mac",
+  "strictSignatureVerified": true,
+  "installedProcessVerified": true,
+  "nativeInteractionVerified": false,
+  "syntheticNativeNotificationsPosted": false
+}
