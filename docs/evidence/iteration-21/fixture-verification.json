@@ -1,0 +1,72 @@
+{
+  "productCodeChanged": false,
+  "sourceArchiveSHA256": "c36ebba60c877121adfd6871cd5c70d868c726c9613c128ba8c59b99ab3b03b1",
+  "sourceSHA256": {
+    "Artwork.swift": "27eb66b9079c927e0c6bc250a9d1e89debbbb3ad44e7063a2bc6f6deb4232e4d",
+    "Contract.swift": "a41d60e831f2d7dca3d856927478f48599e1993f62b58d3cf92d1d65bf6d2a8d",
+    "Events.swift": "6342e3b447f6100806b22b36eda61673bda2289a2eea34fb08a0921a73911ea8",
+    "Extension-Info.plist": "351eb565fbf83a76bf74bd2fd03611bb1225e339e6f3740dfb3ce8f7318b9f93",
+    "Extension.swift": "76b59f46983c5c45f221e08bcc4b841f866457b244954ebc5c50dddfee5d9cfb",
+    "FixtureTests.swift": "df6c079100c390295f5010eee719bf689b46fba491fccb78ef8d0f7622faeea4",
+    "Host-Info.plist": "2be6586f6dde8f5332c5c68d1a5f160faa30ff49fcb63b85773ba857c9de33f6",
+    "Host.swift": "d6d2657481be42c7de9af96865cfdc32f263f8bdfd3e5fd855d558f6b704e5ef",
+    "Plink.icns": "d829a1017ffa6ca137c97e936ebcd70316c938ceb3caa5d3ca9143946a9c06ca",
+    "README.md": "682c45b0c61f74ad3f49f93968e8b418ff8a1b531cefd08fff731280801d0723",
+    "Sandbox.entitlements": "b746c74b201e6af4e0864fbd1f4f629f96156a7ec4b7208bc995d0a5089bb592",
+    "SourceIcon.png": "fc3b6a274e931ba07e06a9a3472712db85406e7609644fa5f12290c7668a0af1",
+    "build.sh": "0fb560c84240d0878aca112897150135ab9b39d213334a58c9d47684f0d5af4b"
+  },
+  "validation": {
+    "command": [
+      "/bin/bash",
+      "build.sh"
+    ],
+    "cwd": "/tmp/plink-notification21-offline-v2-qutygb28",
+    "exitCode": 0,
+    "log": ".a5c/artifacts/iteration21/terra-fixture-offline-build-v2.log",
+    "regressions": "Six idle durations (0,550,600,601,86400,1000000s) each prove no pre-click deadlines/submissions, full +300/+600 deadlines, finishing rejection before start, exact-expiry submission rejection and no renewal after late callbacks/second click. Existing lifecycle/Reply/artwork checks also passed.",
+    "hostSchedulingReview": "Reviewed actual Host source and V1-to-V2 diff: main and applicationDidFinishLaunching arm no observation or hard-exit timers; both sole scheduling sites are in showTestNotifications after successful one-shot admission and before add calls. Authorization callbacks/button availability have no launch-age checks. Idle Quit/close cleanup remains unchanged.",
+    "hostSchedulingSourceSites": [
+      {
+        "line": 19,
+        "source": "static func main() {"
+      },
+      {
+        "line": 26,
+        "source": "func applicationDidFinishLaunching(_ notification: Notification) {"
+      },
+      {
+        "line": 90,
+        "source": "@objc private func showTestNotifications() {"
+      },
+      {
+        "line": 91,
+        "source": "guard let expires = observation.beginFromUserAction(finishing: finishing, now: Date()),"
+      },
+      {
+        "line": 95,
+        "source": "DispatchQueue.global().asyncAfter(deadline: .now() + max(0, hardDeadline.timeIntervalSinceNow)) { _exit(124) }"
+      },
+      {
+        "line": 99,
+        "source": "deadline = Timer.scheduledTimer(withTimeInterval: max(0.001, expires.timeIntervalSinceNow), repeats: false) { [weak self] _ in"
+      },
+      {
+        "line": 172,
+        "source": "private func finish() {"
+      }
+    ],
+    "buildAndSignature": "Host and extension compiled; plists linted; codesign --verify --deep --strict passed; sandbox-only entitlements retained.",
+    "testOrder": "Timing tests updated first, then implementation; no red run claimed.",
+    "limits": "Only the standalone offline test executable ran. Native host/extension lifecycle and UI were not executed; no freeze-causation or rendering success claim."
+  },
+  "scratchRemoved": true,
+  "runtimeActions": {
+    "hostLaunch": false,
+    "extensionLaunch": false,
+    "install": false,
+    "register": false,
+    "notificationPost": false
+  },
+  "verificationLimit": "Offline fixture checks only; permanent freeze repair and native panel usability not verified."
+}

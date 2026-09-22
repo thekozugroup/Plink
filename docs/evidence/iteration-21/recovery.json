@@ -1,0 +1,18 @@
+{
+  "iteration": 21,
+  "scope": "User-requested Notification Center recovery",
+  "recovery": "notification-center-recovery.json",
+  "observations": [
+    "The exact user-owned Notification Center process PID 1074 received SIGTERM and macOS launched PID 38370.",
+    "PID 38370 was sleeping at 0.0% CPU more than eight minutes after launch.",
+    "Computer use initially read the Date widget. After an intermittent native-pipe error, one computer-use session reset restored the Date accessibility response in 0.871 seconds.",
+    "Date widget accessibility is not proof of notification panel usability. The user's confirmation remains pending.",
+    "System Settings Notifications loaded after navigating away and back. Production Plink's icon remained generic.",
+    "Production notification preferences and paired devices were not changed. No phone operations or new notifications were performed."
+  ],
+  "notificationPanelUsabilityVerified": false,
+  "productionIconFixed": false,
+  "rootCauseEstablished": false,
+  "fullProductGateRunThisIteration": false,
+  "previousBaseline": "Iteration 20: 299 Swift and 207 Android tests, builds/lint and signed Mac packaging passed."
+}

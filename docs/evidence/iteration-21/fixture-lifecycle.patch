@@ -1,0 +1,272 @@
+--- iteration20/Contract.swift
++++ iteration21/Contract.swift
+@@ -13,0 +14,17 @@
++
++    // Clear the previous presentation before validating a replacement delivery.
++    static func admitSource(id: String, category: String, run: String?, expires: Double?, now: Date,
++                            invalidate: () -> Void, clear: () -> Void, dismiss: () -> Void) -> Bool {
++        invalidate()
++        clear()
++        guard validSource(id: id, category: category, run: run, expires: expires, now: now) else {
++            dismiss()
++            return false
++        }
++        return true
++    }
++
++    static func completeResponse(_ completion: () -> Void, handling: () -> Void) {
++        defer { completion() }
++        handling()
++    }
+@@ -35 +52 @@
+-// One authorization-gated observation epoch; callbacks and view actions never renew it.
++// One explicitly started observation epoch; authorization callbacks never start or renew it.
+@@ -37 +54 @@
+-    let hardDeadline: Date
++    private(set) var hardDeadline: Date?
+@@ -38,0 +56 @@
++    private var authorized = false
+@@ -40,2 +58,2 @@
+-    init(launchedAt: Date) {
+-        hardDeadline = launchedAt.addingTimeInterval(Contract.hardLifetime)
++    mutating func recordAuthorization(_ allowed: Bool) {
++        authorized = allowed
+@@ -44,3 +62,4 @@
+-    mutating func begin(authorized: Bool, finishing: Bool, now: Date) -> Date? {
+-        guard authorized, !finishing, expires == nil, now < hardDeadline else { return nil }
+-        let deadline = min(now.addingTimeInterval(Contract.lifetime), hardDeadline)
++    mutating func beginFromUserAction(finishing: Bool, now: Date) -> Date? {
++        guard authorized, !finishing, expires == nil else { return nil }
++        let deadline = now.addingTimeInterval(Contract.lifetime)
++        hardDeadline = now.addingTimeInterval(Contract.hardLifetime)
+@@ -52 +71 @@
+-        guard !finishing, let expires else { return false }
++        guard !finishing, let expires, let hardDeadline else { return false }
+--- iteration20/Extension.swift
++++ iteration21/Extension.swift
+@@ -48,2 +47,0 @@
+-        expiry?.invalidate()
+-        clear()
+@@ -52 +50 @@
+-        guard Contract.validSource(id: request.identifier, category: content.categoryIdentifier,
++        guard Contract.admitSource(id: request.identifier, category: content.categoryIdentifier,
+@@ -54 +52,4 @@
+-            expires: content.userInfo["fixtureExpires"] as? Double, now: Date()),
++            expires: content.userInfo["fixtureExpires"] as? Double, now: Date(),
++            invalidate: { self.expiry?.invalidate(); self.expiry = nil },
++            clear: { self.clear() },
++            dismiss: { self.extensionContext?.dismissNotificationContentExtension() }),
+--- iteration20/FixtureTests.swift
++++ iteration21/FixtureTests.swift
+@@ -7 +7 @@
+-        var observation = ObservationWindow(launchedAt: now)
++        var observation = ObservationWindow()
+@@ -9,2 +9,5 @@
+-        assert(observation.begin(authorized: false, finishing: false, now: now) == nil)
+-        assert(observation.expires == nil)
++        assert(observation.beginFromUserAction(finishing: false, now: now) == nil)
++        assert(observation.expires == nil && observation.hardDeadline == nil)
++        observation.recordAuthorization(true)
++        assert(!observation.permitsSubmission(finishing: false, now: now))
++        assert(observation.expires == nil && observation.hardDeadline == nil) // Authorization alone cannot start a session.
+@@ -12 +15 @@
+-        let observationEnd = observation.begin(authorized: true, finishing: false, now: authorization)
++        let observationEnd = observation.beginFromUserAction(finishing: false, now: authorization)
+@@ -13,0 +17 @@
++        assert(observation.hardDeadline == authorization.addingTimeInterval(600))
+@@ -15 +19 @@
+-        assert(observation.begin(authorized: true, finishing: false, now: authorization.addingTimeInterval(10)) == nil)
++        assert(observation.beginFromUserAction(finishing: false, now: authorization.addingTimeInterval(10)) == nil)
+@@ -20,10 +24,23 @@
+-        var delayed = ObservationWindow(launchedAt: now)
+-        let delayedEnd = delayed.begin(authorized: true, finishing: false, now: now.addingTimeInterval(550))
+-        assert(delayedEnd == now.addingTimeInterval(600))
+-        assert(delayed.permitsSubmission(finishing: false, now: now.addingTimeInterval(599)))
+-        assert(!delayed.permitsSubmission(finishing: false, now: now.addingTimeInterval(600)))
+-        var late = ObservationWindow(launchedAt: now)
+-        assert(late.begin(authorized: true, finishing: false, now: now.addingTimeInterval(600)) == nil)
+-        assert(late.begin(authorized: true, finishing: false, now: now.addingTimeInterval(601)) == nil)
+-        assert(late.begin(authorized: true, finishing: true, now: authorization) == nil)
+-        assert(late.expires == nil)
++        for idleSeconds: TimeInterval in [0, 550, 600, 601, 86_400, 1_000_000] {
++            var delayed = ObservationWindow()
++            let click = now.addingTimeInterval(idleSeconds)
++            assert(delayed.expires == nil && delayed.hardDeadline == nil)
++            assert(!delayed.permitsSubmission(finishing: false, now: click))
++            delayed.recordAuthorization(true)
++            assert(delayed.expires == nil && delayed.hardDeadline == nil)
++            assert(!delayed.permitsSubmission(finishing: false, now: click))
++            assert(delayed.beginFromUserAction(finishing: true, now: click) == nil)
++            assert(delayed.expires == nil && delayed.hardDeadline == nil)
++            let delayedEnd = delayed.beginFromUserAction(finishing: false, now: click)
++            assert(delayedEnd == click.addingTimeInterval(300))
++            assert(delayed.hardDeadline == click.addingTimeInterval(600))
++            assert(delayed.permitsSubmission(finishing: false, now: click.addingTimeInterval(299)))
++            assert(!delayed.permitsSubmission(finishing: false, now: click.addingTimeInterval(300)))
++            assert(!delayed.permitsSubmission(finishing: false, now: click.addingTimeInterval(600)))
++            delayed.recordAuthorization(false)
++            delayed.recordAuthorization(true) // Late callbacks cannot renew either deadline.
++            assert(delayed.beginFromUserAction(finishing: false, now: click.addingTimeInterval(700)) == nil)
++            assert(delayed.expires == delayedEnd)
++            assert(delayed.hardDeadline == click.addingTimeInterval(600))
++        }
++        print("fixture.click_relative_timing_cases_passed:6")
+@@ -48,0 +66,52 @@
++        // Execute the same admission effects used by the extension, in order.
++        for (id, category, candidateRun, expiry, accepted) in [
++            (Contract.sourceID, Contract.category, run, end.timeIntervalSince1970, true),
++            (Contract.sourceID, Contract.category, run, now.timeIntervalSince1970, false),
++            (Contract.plainID, Contract.category, run, end.timeIntervalSince1970, false),
++            (Contract.sourceID, "other", run, end.timeIntervalSince1970, false),
++            (Contract.sourceID, Contract.category, "invalid", end.timeIntervalSince1970, false)
++        ] {
++            var effects: [String] = []
++            var previousTimerActive = true
++            var previousContentVisible = true
++            let admitted = Contract.admitSource(id: id, category: category, run: candidateRun,
++                expires: expiry, now: now,
++                invalidate: { previousTimerActive = false; effects.append("invalidate") },
++                clear: { previousContentVisible = false; effects.append("clear") },
++                dismiss: { effects.append("dismiss") })
++            assert(admitted == accepted)
++            assert(!previousTimerActive && !previousContentVisible)
++            assert(effects == (accepted ? ["invalidate", "clear"] : ["invalidate", "clear", "dismiss"]))
++        }
++        // A fresh launch and authorization callback do not permit any submissions.
++        var explicitStart = ObservationWindow()
++        var submitted: [String] = []
++        func trySubmissions(_ state: ObservationWindow) {
++            for id in Contract.ids where state.permitsSubmission(finishing: false, now: now) {
++                submitted.append(id)
++            }
++        }
++        trySubmissions(explicitStart)
++        explicitStart.recordAuthorization(true)
++        trySubmissions(explicitStart)
++        var freshReply = ReplyGate(run: UUID().uuidString, expires: .distantPast)
++        var completions = 0
++        Contract.completeResponse({ completions += 1 }) {
++            assert(!freshReply.consume(id: Contract.sourceID, category: Contract.category,
++                action: Contract.reply, run: run, now: now))
++            trySubmissions(explicitStart)
++        }
++        assert(completions == 1 && submitted.isEmpty && explicitStart.expires == nil && explicitStart.hardDeadline == nil)
++        // The same host start gate admits exactly one explicit two-request session.
++        let explicitDeadline = explicitStart.beginFromUserAction(finishing: false, now: now)
++        assert(explicitDeadline == end)
++        trySubmissions(explicitStart)
++        assert(submitted == Contract.ids)
++        explicitStart.recordAuthorization(true)
++        assert(explicitStart.beginFromUserAction(finishing: false, now: now) == nil)
++        var deniedStart = ObservationWindow()
++        deniedStart.recordAuthorization(false)
++        assert(deniedStart.beginFromUserAction(finishing: false, now: now) == nil)
++        assert(!deniedStart.permitsSubmission(finishing: false, now: now))
++        assert(deniedStart.expires == nil && deniedStart.hardDeadline == nil)
++        print("fixture.lifecycle_transition_checks_passed")
+--- iteration20/Host.swift
++++ iteration21/Host.swift
+@@ -15,2 +15,3 @@
+-    private var observation = ObservationWindow(launchedAt: Date())
+-    private let statusLabel = NSTextField(wrappingLabelWithString: "Waiting for notification permission. Nothing is posted yet. This test ends within ten minutes of launch.")
++    private var observation = ObservationWindow()
++    private let showButton = NSButton(title: "Show test notifications", target: nil, action: nil)
++    private let statusLabel = NSTextField(wrappingLabelWithString: "Waiting for notification permission. Nothing is posted yet. The five-minute test window starts when you choose Show test notifications.")
+@@ -19 +19,0 @@
+-        let launchedAt = Date()
+@@ -22 +21,0 @@
+-        delegate.observation = ObservationWindow(launchedAt: launchedAt)
+@@ -24,2 +22,0 @@
+-        // Independent hard bound; if main-thread cleanup stalls parent must run --cleanup.
+-        DispatchQueue.global().asyncAfter(deadline: .now() + max(0, delegate.observation.hardDeadline.timeIntervalSinceNow)) { _exit(124) }
+@@ -33,4 +29,0 @@
+-        deadline = Timer.scheduledTimer(withTimeInterval: max(0.001, observation.hardDeadline.timeIntervalSinceNow), repeats: false) { [weak self] _ in
+-            Events.record("host.expired_observation_not_inferred")
+-            self?.finish()
+-        }
+@@ -46 +39 @@
+-                guard let self, !self.finishing, Date() < self.observation.hardDeadline else { return }
++                guard let self, !self.finishing else { return }
+@@ -48 +41 @@
+-                    self.post(authorized: true)
++                    self.updateAuthorization(true)
+@@ -53 +46 @@
+-                            guard !self.finishing, Date() < self.observation.hardDeadline else { return }
++                            guard !self.finishing else { return }
+@@ -55 +48,2 @@
+-                            if allowed { self.post(authorized: true) } else { Events.record("host.authorization_denied_no_posts") }
++                            self.updateAuthorization(allowed)
++                            if !allowed { Events.record("host.authorization_denied_no_posts") }
+@@ -58 +52,4 @@
+-                } else { Events.record("host.authorization_denied_no_posts") }
++                } else {
++                    self.updateAuthorization(false)
++                    Events.record("host.authorization_denied_no_posts")
++                }
+@@ -68,0 +66,4 @@
++        showButton.target = self
++        showButton.action = #selector(showTestNotifications)
++        showButton.isEnabled = false
++        view.addArrangedSubview(showButton)
+@@ -81,2 +82,15 @@
+-    private func post(authorized: Bool) {
+-        guard let expires = observation.begin(authorized: authorized, finishing: finishing, now: Date()) else { return }
++    private func updateAuthorization(_ allowed: Bool) {
++        observation.recordAuthorization(allowed)
++        showButton.isEnabled = allowed && !finishing && observation.expires == nil
++        statusLabel.stringValue = allowed
++            ? "Ready. Choose Show test notifications to begin. Nothing is posted automatically."
++            : "Notification permission is unavailable. Nothing was posted."
++    }
++
++    @objc private func showTestNotifications() {
++        guard let expires = observation.beginFromUserAction(finishing: finishing, now: Date()),
++              let hardDeadline = observation.hardDeadline else { return }
++        // Arm only after the first accepted click; idle time consumes no trial budget.
++        // Independent hard bound; if main-thread cleanup stalls parent must run --cleanup.
++        DispatchQueue.global().asyncAfter(deadline: .now() + max(0, hardDeadline.timeIntervalSinceNow)) { _exit(124) }
++        showButton.isEnabled = false
+@@ -89 +103 @@
+-        statusLabel.stringValue = "Open Notification Center and expand the source-artwork notification. Native Reply records only a local count. Cleanup at \(expires.formatted(date: .omitted, time: .standard)); up to five minutes, limited by the ten-minute launch deadline."
++        statusLabel.stringValue = "Open Notification Center and expand the source-artwork notification. Native Reply records only a local count. Cleanup at \(expires.formatted(date: .omitted, time: .standard)); five minutes from your start, with a ten-minute failsafe from the same start."
+@@ -137,10 +151,11 @@
+-            defer { completionHandler() }
+-            let request = response.notification.request
+-            if response is UNTextInputNotificationResponse,
+-               self.gate.consume(id: request.identifier, category: request.content.categoryIdentifier,
+-                   action: response.actionIdentifier, run: request.content.userInfo["fixtureRun"] as? String, now: Date()) {
+-                self.replies += 1
+-                Events.record("host.native_reply_local_only", count: self.replies)
+-                center.removePendingNotificationRequests(withIdentifiers: [Contract.sourceID])
+-                center.removeDeliveredNotifications(withIdentifiers: [Contract.sourceID])
+-            } else { Events.record("host.action_ignored") }
++            Contract.completeResponse(completionHandler) {
++                let request = response.notification.request
++                if response is UNTextInputNotificationResponse,
++                   self.gate.consume(id: request.identifier, category: request.content.categoryIdentifier,
++                       action: response.actionIdentifier, run: request.content.userInfo["fixtureRun"] as? String, now: Date()) {
++                    self.replies += 1
++                    Events.record("host.native_reply_local_only", count: self.replies)
++                    center.removePendingNotificationRequests(withIdentifiers: [Contract.sourceID])
++                    center.removeDeliveredNotifications(withIdentifiers: [Contract.sourceID])
++                } else { Events.record("host.action_ignored") }
++            }
+@@ -159,0 +175 @@
++        showButton.isEnabled = false
+--- iteration20/README.md
++++ iteration21/README.md
+@@ -1 +1 @@
+-# Isolated native notification fixture 19
++# Isolated native notification fixture 19 — offline hardening 21 v2
+@@ -7 +7 @@
+-Run `bash /tmp/plink-native-notification19/build.sh`. This compiles/runs the standalone Contract/Artwork checks, builds both executables, embeds the extension, signs inner then outer with sandbox-only entitlements, verifies the complete bundle, and creates an owned zip. It does not install, register or launch the app. Default signing is ad hoc; `FIXTURE_SIGNING_IDENTITY` can select an already authorized identity. A restricted entitlement or modified identity is not a fallback for failure.
++From this extracted source directory, run `bash ./build.sh`. This compiles/runs the standalone Contract/Artwork checks, builds both executables, embeds the extension, signs inner then outer with sandbox-only entitlements, verifies the complete bundle, and creates an owned zip. It does not install, register or launch the app. Default signing is ad hoc; `FIXTURE_SIGNING_IDENTITY` can select an already authorized identity. A restricted entitlement or modified identity is not a fallback for failure.
+@@ -13 +13 @@
+-Parent alone may launch after review: `open /tmp/plink-native-notification19/out/PlinkNotification19.app`. Do not launch both bundle and executable or use `open -n`. The app requests ordinary alert authorization only if undetermined. Denied/pending authorization never causes posting. It posts at most two dedicated requests: a plain icon control and one category-matched source-artwork notification. The source attachment is copied by UserNotifications from the bundle; only the delivered security-scoped URL is accessed by the extension, with a 16KiB read cap and static PNG validation before decoding. No arbitrary runtime file argument.
++No launch/install/register/post is authorized by iteration21. The following historical runtime instructions require separate future approval. Parent alone may launch after review: `open /tmp/plink-native-notification19/out/PlinkNotification19.app`. Do not launch both bundle and executable or use `open -n`. The app requests ordinary alert authorization only if undetermined. Denied/pending authorization never causes posting. Authorization only enables the explicit Show test notifications button. Launch, authorization completion, and Reply callbacks never submit. One authorized button press starts at most two dedicated requests: a plain icon control and one category-matched source-artwork notification. The source attachment is copied by UserNotifications from the bundle; only the delivered security-scoped URL is accessed by the extension, with a 16KiB read cap and static PNG validation before decoding. No arbitrary runtime file argument.
+@@ -19 +19 @@
+-Observation expiration is established once immediately before posting after authorization: five minutes, clamped to ten minutes from host main entry. The same absolute expiry drives Reply, payload/extension, host timer and visible cleanup time. No full five minutes are promised after delayed authorization. Before authorization the launch deadline remains active; late authorization after cleanup or the hard deadline cannot post. Cleanup button, normal Quit or closing the host requests removal of only the two fixture IDs; completion waits for in-flight adds, removes late adds, and queries pending/delivered counts. Main-queue failure is bounded by a 600-second hard exit from main, exit124. Hard exit is NOT verified cleanup. The extension clears content and requests dismissal on its own payload deadline. Its process is system-owned; no extension daemon/process kill is used.
++Observation expiration is established once by the explicit button press after authorization: five minutes of observation and a ten-minute hard failsafe, both measured from that accepted click. The same absolute expiry drives Reply, payload/extension, host timer and visible cleanup time. No trial timer or hard-exit watchdog is armed while idle or merely authorized. Idle time does not shorten the window. Later clicks and authorization callbacks cannot renew it; authorization after cleanup cannot post. Cleanup button, normal Quit or closing the host requests removal of only the two fixture IDs; completion waits for in-flight adds, removes late adds, and queries pending/delivered counts. Main-queue failure is bounded by a 600-second hard exit from the first accepted click, exit124. Hard exit is NOT verified cleanup. The extension cancels any previous timer and clears on each delivery; rejected invalid/expired admission requests dismissal once and returns. Valid admission retains its one-shot payload-deadline dismissal. Its process is system-owned; no extension daemon/process kill is used.
+@@ -29 +29 @@
+-After the bounded trial: verify fixture notification count zero, archive source/logs, remove the owned host registration/app and exact fixture temporary/build products. Any fixture containers/authorization cleanup requires parent-owned exact-ID handling; never remove production Plink or another app's records. Owned source/build root is exactly /tmp/plink-native-notification19. No install or runtime executed by Terra.
++After the bounded trial: verify fixture notification count zero, archive source/logs, remove the owned host registration/app and exact fixture temporary/build products. Any fixture containers/authorization cleanup requires parent-owned exact-ID handling; never remove production Plink or another app's records. Iteration21 uses an owned /tmp/plink-notification21-offline-* scratch directory, recorded in terra-result-v2.json and removed after archive/hash validation. Only standalone offline tests and builds execute; neither fixture host nor extension is launched.
