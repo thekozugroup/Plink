@@ -1,0 +1,52 @@
+{
+  "iteration": 27,
+  "atUTC": "2026-09-22T18:37:38.227936+00:00",
+  "audioFixed": false,
+  "liveDiagnosticTrialCompleted": false,
+  "productionChange": "Fixed Answer/audio-transfer stage diagnostics only; no routing behavior change",
+  "sourceSHA256": "6e4974e42aa28194410b9a393955acbe88b8820e123e7cf7c8d8671a9f2a363d",
+  "freshGate": {
+    "command": "./scripts/verify.sh",
+    "cwd": "/Users/michaelwong/Developer/Plink",
+    "startedAtUTC": "2026-09-22T18:30:35.907569+00:00",
+    "endedAtUTC": "2026-09-22T18:31:56.483764+00:00",
+    "exitCode": 0,
+    "logPath": ".a5c/artifacts/iteration27/full-gate.log",
+    "freshExecution": true,
+    "sourceSHA256": "6e4974e42aa28194410b9a393955acbe88b8820e123e7cf7c8d8671a9f2a363d",
+    "sourceUnchangedDuringGate": true,
+    "installedAppsModified": false
+  },
+  "testCounts": {
+    "android": 242,
+    "swift": 323,
+    "total": 565,
+    "failures": 0
+  },
+  "installedBinarySHA256": "aab831cab58d5a50e90eb9a4d6e4ad5b0414fed158aa39ff0b63650f790e4186",
+  "previousInstalledBinarySHA256": "713b3d3ce153cc7ca23836c1e8cf8dfd9ab6d4be8587021b755bfadd8c48129a",
+  "installedSignatureVerified": true,
+  "appDataReset": false,
+  "G2": {
+    "archiveSHA256": "9a86637fe69b11df3b550dd0fd229d2ab9066c26a00285c1e51b95de13b9e8d3",
+    "jarSHA256": "d1edfdea11230ff76544705e8df11d3c8573a0fbc8cfab53251a40b72a944c13",
+    "offlineTests": 43,
+    "sourceUnchanged": true,
+    "invocations": 0,
+    "preflightRejected": true,
+    "callTypeUnresolved": true,
+    "audioEndpointsConstructed": false,
+    "remoteJarRemoved": true
+  },
+  "overallVerified": false,
+  "evidenceSHA256": {
+    ".a5c/artifacts/iteration27/full-gate.json": "63d2a8dfe90979a4ea37bd527982b93c59e82dd889c52b5db8bb61b9100c1ce6",
+    ".a5c/artifacts/iteration27/helper-build.json": "82494b497054134c34b1ed224f8e694a63d255ac0717a46d11c19b05f8e0bf49",
+    ".a5c/artifacts/iteration27/helper-freeze.json": "680a1bdd64fcee90c937d72013a422fa133eb8f129ef02c1a6542bc27611b168",
+    ".a5c/artifacts/iteration27/g2-live.json": "85d39b57803a9f80e7dca0372a68ae1ad18dab23a77f391bb5a585ef327ca8e6",
+    ".a5c/artifacts/iteration27/luna-g2-review.json": "015d22da2984b46bc1cbd3611272f72057d160788c6e7f77ec664c32160b57af",
+    ".a5c/artifacts/iteration27/luna-answer-diagnostics-review.json": "43d92be62785fa1fa937747c9f36d5a11f62cb3fe0aa3efa22694b07e7afa31b",
+    ".a5c/artifacts/iteration27/terra-answer-reentrancy-review.json": "d871af45f46c9b6ba746a121e39dcd286a94c8abc2de7b7829e6f2f0218c8f47",
+    ".a5c/artifacts/iteration27/astra-result.json": "517046d23a8a3fa170f9e19a55fe1e9bfa93b742e83ab79514d85ac8ca4c9276"
+  }
+}

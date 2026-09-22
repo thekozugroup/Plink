@@ -603,24 +603,38 @@ final class BluetoothCallController: ObservableObject {
     }
 
     func perform(_ action: MacCallAction, context: MacCallContext) {
+        let traceAudio = action == .answer || action == .computerAudio
+        if traceAudio { setupLog.notice("calls.audio.controller.enter action=\(action.rawValue, privacy: .public)") }
         guard !servicePeerMismatch || action == .hangUp else {
+            if traceAudio { setupLog.notice("calls.audio.controller.rejected_peer_mismatch") }
             status = "Finish the current call before switching phones."
             return
         }
         guard !gate.requiresReconnect else {
+            if traceAudio { setupLog.notice("calls.audio.controller.rejected_requires_reconnect") }
             status = "Disconnect and reconnect Bluetooth calling before retrying."
             return
         }
         if action == .computerAudio, let reason = computerAudioUnavailableReason {
+            if traceAudio { setupLog.notice("calls.audio.controller.rejected_unsupported") }
             status = reason
             return
         }
         guard !busy && !blocked, call.permits(action, context: context) else {
+            if traceAudio { setupLog.notice("calls.audio.controller.rejected_call_gate") }
             status = "That call action is no longer available."
             return
         }
-        guard let operation = start("Requesting \(action.rawValue)…", action: action, context: context) else { return }
-        guard worker.submit(operation: operation, { $0.perform(action, context: context, operation: operation) }) else { cancelStart(operation); return }
+        guard let operation = start("Requesting \(action.rawValue)…", action: action, context: context) else {
+            if traceAudio { setupLog.notice("calls.audio.controller.rejected_start") }
+            return
+        }
+        guard worker.submit(operation: operation, { $0.perform(action, context: context, operation: operation) }) else {
+            cancelStart(operation)
+            if traceAudio { setupLog.notice("calls.audio.controller.rejected_submission") }
+            return
+        }
+        if traceAudio { setupLog.notice("calls.audio.controller.submitted action=\(action.rawValue, privacy: .public)") }
     }
 
     private func start(
@@ -949,25 +963,50 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     }
 
     func perform(_ action: MacCallAction, context: MacCallContext, operation: Operation) {
+        let traceAudio = action == .answer || action == .computerAudio
+        if traceAudio { callLog.notice("calls.audio.worker.enter action=\(action.rawValue, privacy: .public)") }
         guard let phone, phone.isConnected, session.begin(action, context: context) else {
+            if traceAudio { callLog.notice("calls.audio.worker.rejected_native_gate") }
             let message = action == .computerAudio && session.computerAudioUnsupported
                 ? "Mac call audio is unavailable for this connection. Use your phone for audio."
                 : "Call changed; action ignored."
             emit(message, completion: operation); return
         }
+        if traceAudio { callLog.notice("calls.audio.worker.accepted_native_gate") }
         lock.lock()
-        guard !stopping, work.permitsNextStep(operation) else { lock.unlock(); return }
+        guard !stopping, work.permitsNextStep(operation) else {
+            lock.unlock()
+            if traceAudio { callLog.notice("calls.audio.worker.rejected_work_gate") }
+            return
+        }
         pendingOperation = operation
         lock.unlock()
         emit("Waiting for phone confirmation…")
         switch action {
         case .answer:
+            callLog.notice("calls.audio.answer.accept_requested")
             phone.acceptCall()
-            guard permitsNextStep(operation), session.context == context else { return }
-            if !session.computerAudioUnsupported { phone.transferAudioToComputer() }
+            callLog.notice("calls.audio.answer.accept_invocation_returned")
+            guard permitsNextStep(operation) else {
+                callLog.notice("calls.audio.answer.rejected_work")
+                return
+            }
+            guard session.context == context else {
+                callLog.notice("calls.audio.answer.rejected_context")
+                return
+            }
+            if !session.computerAudioUnsupported {
+                callLog.notice("calls.audio.answer.transfer_requested")
+                phone.transferAudioToComputer()
+                callLog.notice("calls.audio.answer.transfer_invocation_returned")
+            } else {
+                callLog.notice("calls.audio.answer.transfer_skipped_unsupported")
+            }
         case .decline, .hangUp: phone.endCall()
         case .computerAudio:
+            callLog.notice("calls.audio.computer.transfer_requested")
             phone.transferAudioToComputer()
+            callLog.notice("calls.audio.computer.transfer_invocation_returned")
             if phone.isSCOConnected() {
                 session.setSCO(true)
                 session.setMuted(phone.isInputMuted)
