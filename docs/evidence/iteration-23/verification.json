@@ -1,0 +1,15 @@
+{
+  "command": "./scripts/verify.sh",
+  "exitCode": 0,
+  "swiftTests": 302,
+  "androidTests": 214,
+  "totalTests": 516,
+  "postGateChange": "test assertion only",
+  "focusedFinalTests": 40,
+  "focusedFinalFailures": 0,
+  "refreshSignalMutationExpectedFailures": 1,
+  "productionSHA256": "9c9103348f8877e29d7bfaf008b66c9211cacca2f388e80d03cfbd2c1108ec69",
+  "finalTestSHA256": "d27f081fdb6846d53669f972e296af945b6d12b32ac8ac162356d4c5bcfb92f1",
+  "physicalDeviceInstalled": false,
+  "nativeInteractionVerified": false
+}

@@ -27,6 +27,8 @@ import org.junit.Test
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import java.time.Instant
+import java.time.Clock
+import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -34,6 +36,270 @@ import java.util.concurrent.atomic.AtomicBoolean
 @OptIn(ExperimentalCoroutinesApi::class)
 class SerializedOutboundQueueTest {
     @get:Rule val temporaryFolder = TemporaryFolder()
+
+    @Test
+    fun retryWhileLiveSenderHeldDoesNotDuplicateOrStripReplyCapability() = runTest {
+        val now = Instant.parse("2026-09-22T16:00:00Z")
+        val outbox = DurableEventOutbox(temporaryFolder.newFolder(), byteArrayOf(1, 2, 3), "mac",
+            clock = Clock.fixed(now, ZoneOffset.UTC))
+        val entered = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val release = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val sent = mutableListOf<PlinkEnvelope>()
+        val original = replayableMessage("held-live", now)
+        val queue = SerializedOutboundQueue(object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) {
+                sent += envelope
+                entered.complete(Unit)
+                release.await()
+            }
+        }, this, outbox = outbox)
+        try {
+            assertTrue(queue.trySend(original))
+            runCurrent()
+            assertTrue(entered.isCompleted)
+            assertEquals(listOf(original), sent)
+            assertFalse(outbox.pending().single().payload.containsKey("replyToken"))
+            queue.retryPending()
+            queue.retryPending()
+            release.complete(Unit)
+            runCurrent()
+            assertEquals(listOf(original), sent)
+            assertTrue(outbox.pending().isEmpty())
+        } finally {
+            release.complete(Unit)
+            queue.stop()
+            queue.awaitStopped()
+        }
+    }
+
+    @Test
+    fun stalePendingSnapshotCannotResurrectCompletedIDAndRetainedWorkProgresses() = snapshotAcrossCompletion(false)
+
+    @Test
+    fun staleSnapshotSchedulesFreshReadForOtherwiseUnscheduledRetainedWork() = snapshotAcrossCompletion(true)
+
+    private fun snapshotAcrossCompletion(storeRetainedAfterTerminal: Boolean) = runTest {
+        val now = Instant.parse("2026-09-22T16:00:00Z")
+        val durable = DurableEventOutbox(temporaryFolder.newFolder(), byteArrayOf(1, 2, 3), "mac",
+            clock = Clock.fixed(now, ZoneOffset.UTC))
+        val snapshotEntered = CountDownLatch(1)
+        val releaseSnapshot = CountDownLatch(1)
+        val holdNextSnapshot = AtomicBoolean(false)
+        val pendingReads = java.util.concurrent.atomic.AtomicInteger()
+        val retainedEntryRead = AtomicBoolean(false)
+        val outbox = object : EventOutbox by durable {
+            override fun pending(): List<PlinkEnvelope> {
+                val snapshot = durable.pending()
+                pendingReads.incrementAndGet()
+                if (snapshot.any { it.id == "retained-other" }) retainedEntryRead.set(true)
+                if (holdNextSnapshot.compareAndSet(true, false)) {
+                    snapshotEntered.countDown()
+                    check(releaseSnapshot.await(5, TimeUnit.SECONDS))
+                }
+                return snapshot
+            }
+        }
+        val liveEntered = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val releaseLive = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val terminalSentinel = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val releaseSentinel = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val sent = mutableListOf<String>()
+        val queue = SerializedOutboundQueue(object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) {
+                sent += envelope.id
+                when (envelope.id) {
+                    "snapshot-live" -> { liveEntered.complete(Unit); releaseLive.await() }
+                    "terminal-sentinel" -> { terminalSentinel.complete(Unit); releaseSentinel.await() }
+                }
+            }
+        }, this, outbox = outbox)
+        var retry: Thread? = null
+        val retryFailure = java.util.concurrent.atomic.AtomicReference<Throwable?>(null)
+        try {
+            assertTrue(queue.trySend(replayableMessage("snapshot-live", now)))
+            runCurrent()
+            assertTrue(liveEntered.isCompleted)
+            if (!storeRetainedAfterTerminal) assertTrue(durable.store(replayableMessage("retained-other", now)))
+            holdNextSnapshot.set(true)
+            retry = Thread {
+                try { queue.retryPending() } catch (failure: Throwable) { retryFailure.set(failure) }
+            }.apply { start() }
+            assertTrue(snapshotEntered.await(5, TimeUnit.SECONDS))
+            assertTrue(queue.trySend(envelope("terminal-sentinel")))
+            releaseLive.complete(Unit)
+            runCurrent()
+            // This worker reached the next sender only after original removal AND termination.
+            assertTrue(terminalSentinel.isCompleted)
+            if (storeRetainedAfterTerminal) {
+                // Automatic success retry has already drained. Only stale-snapshot refresh can
+                // discover this new retained entry; no trySend or external retry signals it.
+                assertTrue(durable.pending().isEmpty())
+                assertTrue(durable.store(replayableMessage("retained-other", now)))
+            } else assertEquals(listOf("retained-other"), durable.pending().map { it.id })
+            val readsBeforeRefresh = pendingReads.get()
+            releaseSnapshot.countDown()
+            retry.join(5_000)
+            assertFalse(retry.isAlive)
+            assertEquals(null, retryFailure.get())
+            runCurrent()
+            if (storeRetainedAfterTerminal) {
+                // The sentinel is still suspended: its success cannot supply the retry signal.
+                assertFalse(releaseSentinel.isCompleted)
+                assertTrue("Stale snapshot must trigger a fresh pending read before sentinel success",
+                    pendingReads.get() > readsBeforeRefresh && retainedEntryRead.get())
+                assertEquals(0, sent.count { it == "retained-other" })
+            }
+            releaseSentinel.complete(Unit)
+            runCurrent()
+            assertEquals(1, sent.count { it == "snapshot-live" })
+            assertEquals(1, sent.count { it == "retained-other" })
+            assertTrue(durable.pending().isEmpty())
+        } finally {
+            releaseSnapshot.countDown()
+            releaseLive.complete(Unit)
+            releaseSentinel.complete(Unit)
+            retry?.join(5_000)
+            queue.stop()
+            queue.awaitStopped()
+        }
+    }
+
+    @Test
+    fun genuineFailureRetriesSanitizedDurableMessageOnceAndOtherTrafficProgresses() = runTest {
+        val now = Instant.parse("2026-09-22T16:00:00Z")
+        val outbox = DurableEventOutbox(temporaryFolder.newFolder(), byteArrayOf(1, 2, 3), "mac",
+            clock = Clock.fixed(now, ZoneOffset.UTC))
+        val attempted = mutableListOf<PlinkEnvelope>()
+        val original = replayableMessage("failed-live", now)
+        val queue = SerializedOutboundQueue(object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) {
+                attempted += envelope
+                if (attempted.size == 1) error("controlled failure")
+            }
+        }, this, outbox = outbox)
+        try {
+            assertTrue(queue.trySend(original))
+            runCurrent()
+            assertEquals(listOf(original), attempted)
+            val replay = outbox.pending().single()
+            assertFalse(replay.requiresAck)
+            assertFalse(replay.payload.containsKey("replyToken"))
+            assertFalse(replay.payload.containsKey("sourceAppIconPng"))
+            assertEquals(kotlinx.serialization.json.JsonPrimitive(false), replay.payload["canReply"])
+            assertTrue(queue.trySend(envelope("other-traffic")))
+            runCurrent()
+            advanceTimeBy(5_000)
+            runCurrent()
+            assertEquals(listOf(original, replay), attempted.filter { it.id == original.id })
+            assertEquals(1, attempted.count { it.id == "other-traffic" })
+            assertTrue(outbox.pending().isEmpty())
+        } finally {
+            queue.stop()
+            queue.awaitStopped()
+        }
+    }
+
+    @Test
+    fun cancelledOldSameIDCannotReleaseReplacementOwnership() = retiredSameIDCannotReleaseReplacement(false)
+
+    @Test
+    fun purgedOldSameIDCannotReleaseReplacementOwnership() = retiredSameIDCannotReleaseReplacement(true)
+
+    private fun retiredSameIDCannotReleaseReplacement(purge: Boolean) = runTest {
+        val now = Instant.parse("2026-09-22T16:00:00Z")
+        val outbox = DurableEventOutbox(temporaryFolder.newFolder(), byteArrayOf(1, 2, 3), "mac",
+            clock = Clock.fixed(now, ZoneOffset.UTC))
+        val releaseBlocker = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val replacementEntered = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val releaseReplacement = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val sent = mutableListOf<PlinkEnvelope>()
+        val replacement = replayableMessage("same-id", now)
+        val queue = SerializedOutboundQueue(object : OutboundPlinkSender {
+            override suspend fun send(envelope: PlinkEnvelope) {
+                sent += envelope
+                if (envelope.id == "blocker") releaseBlocker.await()
+                else { replacementEntered.complete(Unit); releaseReplacement.await() }
+            }
+        }, this, outbox = outbox)
+        var old: kotlinx.coroutines.Deferred<Result<Unit>>? = null
+        try {
+            assertTrue(queue.trySend(envelope("blocker")))
+            runCurrent()
+            old = async { runCatching { queue.sendAwaitable(replacement) } }
+            runCurrent()
+            if (purge) {
+                queue.purge(setOf(PlinkEventType.MessageReceived))
+                runCurrent()
+                assertTrue(old.await().isFailure)
+            } else old.cancelAndJoin()
+            assertTrue(queue.trySend(replacement))
+            releaseBlocker.complete(Unit)
+            runCurrent() // Retired A drains first; B then enters the held sender.
+            assertTrue(replacementEntered.isCompleted)
+            queue.retryPending()
+            releaseReplacement.complete(Unit)
+            runCurrent()
+            assertEquals(listOf(replacement), sent.filter { it.id == "same-id" })
+            assertTrue(outbox.pending().isEmpty())
+        } finally {
+            releaseBlocker.complete(Unit)
+            releaseReplacement.complete(Unit)
+            old?.cancelAndJoin()
+            queue.stop()
+            queue.awaitStopped()
+        }
+    }
+
+    private fun replayableMessage(id: String, now: Instant) = envelope(id, PlinkEventType.MessageReceived,
+        now.toString()).copy(requiresAck = true, payload = buildJsonObject {
+        put("notificationKey", id)
+        put("canReply", true)
+        put("replyToken", "synthetic-reply-token")
+        put("sourceAppIconPng", "synthetic-artwork")
+    })
+
+    @Test
+    fun pendingSnapshotKeepsOldGenerationAfterPurgeAndReenable() = runTest {
+        val captured = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val allowed = AtomicBoolean(true)
+        val old = envelope("old-generation", PlinkEventType.MessageReceived)
+        val outbox = object : EventOutbox {
+            override fun store(envelope: PlinkEnvelope) = true
+            override fun pending(): List<PlinkEnvelope> {
+                val snapshot = listOf(old)
+                captured.countDown()
+                check(release.await(5, TimeUnit.SECONDS))
+                return snapshot
+            }
+            override fun remove(id: String) = Unit
+            override fun removeTypes(types: Set<String>) = Unit
+        }
+        val sender = RecordingSender()
+        val queue = SerializedOutboundQueue(sender, this, outbox = outbox, isAllowed = { allowed.get() })
+        val failure = java.util.concurrent.atomic.AtomicReference<Throwable?>(null)
+        val retry = Thread {
+            try { queue.retryPending() } catch (error: Throwable) { failure.set(error) }
+        }
+        try {
+            retry.start()
+            assertTrue(captured.await(5, TimeUnit.SECONDS))
+            allowed.set(false)
+            queue.purge(setOf(PlinkEventType.MessageReceived))
+            allowed.set(true)
+            release.countDown()
+            retry.join(5_000)
+            assertFalse(retry.isAlive)
+            assertEquals(null, failure.get())
+            runCurrent()
+            assertTrue(sender.sent.isEmpty())
+        } finally {
+            release.countDown()
+            retry.join(5_000)
+            queue.stop()
+            queue.awaitStopped()
+        }
+    }
 
     @Test
     fun cancellingQueuedScreenControlDoesNotCancelOrdinaryWorker() = runTest {

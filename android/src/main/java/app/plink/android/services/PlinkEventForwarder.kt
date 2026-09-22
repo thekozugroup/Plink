@@ -89,7 +89,8 @@ class SerializedOutboundQueue(
     private val queue = Channel<QueuedEnvelope>(capacity)
     private val stateLock = Any()
     private val generations = mutableMapOf<String, Long>()
-    private val queuedIds = mutableSetOf<String>()
+    private val ordinaryOwners = mutableMapOf<String, QueuedEnvelope>()
+    private var retrySnapshotRevision = 0L
     private val awaitable = mutableListOf<QueuedEnvelope>()
     private val screenControls = ArrayDeque<QueuedEnvelope>()
     private var screenData: QueuedEnvelope? = null
@@ -137,7 +138,7 @@ class SerializedOutboundQueue(
         if (!initiallyAllowed) throw OutboundRequestRejectedException("Outbound request was rejected.")
         val request = synchronized(stateLock) {
             if (stopped) return@synchronized null
-            if (envelope.id in queuedIds) return@synchronized null
+            if (envelope.id in ordinaryOwners) return@synchronized null
             QueuedEnvelope(
                 envelope = envelope,
                 generation = generationForLocked(envelope.type),
@@ -165,7 +166,7 @@ class SerializedOutboundQueue(
                     request.awaitableState == AwaitableState.ADMITTING
                 ) {
                     request.awaitableState = AwaitableState.CANCELLED
-                    queuedIds.remove(request.envelopeId)
+                    releaseOrdinaryOwnerLocked(request)
                 }
             }
             throw cancellation
@@ -257,16 +258,25 @@ class SerializedOutboundQueue(
     }
 
     fun retryPending() {
-        val generationSnapshot = synchronized(stateLock) { generations.toMap() }
+        val (generationSnapshot, revision) = synchronized(stateLock) {
+            if (stopped) return
+            generations.toMap() to retrySnapshotRevision
+        }
+        var staleSnapshot = false
         runCatching { outbox?.pending().orEmpty() }.getOrDefault(emptyList()).forEach { envelope ->
             if (envelope.type.startsWith("screen.")) {
                 runCatching { outbox?.remove(envelope.id) }
                 return@forEach
             }
             if (runCatching { isAllowed(envelope) }.getOrDefault(false)) synchronized(stateLock) {
-                if (!stopped) enqueueLocked(envelope, generationSnapshot[envelope.type] ?: 0)
+                val generation = generationSnapshot[envelope.type] ?: 0
+                if (!stopped && generation == generationForLocked(envelope.type)) {
+                    if (revision != retrySnapshotRevision) staleSnapshot = true
+                    else enqueueLocked(envelope, generation)
+                }
             }
         }
+        if (staleSnapshot) retrySignals.trySend(0)
     }
 
     fun purge(types: Set<String>) {
@@ -280,7 +290,7 @@ class SerializedOutboundQueue(
             }
                 .forEach {
                     it.awaitableState = AwaitableState.CANCELLED
-                    queuedIds.remove(it.envelopeId)
+                    releaseOrdinaryOwnerLocked(it)
                     it.completion?.let(completions::add)
                 }
             awaitable.filter { it.callerOwnsDispatch && it.envelopeType in types }
@@ -297,15 +307,24 @@ class SerializedOutboundQueue(
 
     private fun enqueueLocked(request: QueuedEnvelope): Boolean {
         if (stopped) return false
-        if (!queuedIds.add(request.envelopeId)) return true
+        if (request.envelopeId in ordinaryOwners) return true
+        ordinaryOwners[request.envelopeId] = request
         val accepted = queue.trySend(request).isSuccess
-        if (!accepted) queuedIds.remove(request.envelopeId)
+        if (!accepted) releaseOrdinaryOwnerLocked(request)
         if (accepted) signal.trySend(Unit)
         return accepted
     }
 
-    private fun completeAwaitable(request: QueuedEnvelope, failure: Throwable? = null) {
-        val completion = synchronized(stateLock) { terminateLocked(request) } ?: return
+    private fun completeAwaitable(
+        request: QueuedEnvelope,
+        failure: Throwable? = null,
+        successfulOrdinarySend: Boolean = false
+    ) {
+        val completion = synchronized(stateLock) {
+            // Advance before releasing ownership, including sends with no completion Deferred.
+            if (successfulOrdinarySend) retrySnapshotRevision += 1
+            terminateLocked(request)
+        } ?: return
         if (failure == null) completion.complete(Unit) else completion.completeExceptionally(failure)
     }
 
@@ -357,6 +376,7 @@ class SerializedOutboundQueue(
                 it.completion?.let(completions::add)
             }
             awaitable.clear()
+            ordinaryOwners.clear()
             ephemeralEntries.clear()
             screenControls.clear()
             screenData = null
@@ -385,7 +405,6 @@ class SerializedOutboundQueue(
     private fun nextRequest(): QueuedEnvelope? {
         queue.tryReceive().getOrNull()?.let { request ->
             synchronized(stateLock) {
-                queuedIds.remove(request.envelopeId)
                 if (request.awaitableState == AwaitableState.QUEUED) {
                     request.awaitableState = AwaitableState.ADMITTING
                 }
@@ -449,14 +468,14 @@ class SerializedOutboundQueue(
         try {
             sender.send(envelope)
             runCatching { outbox?.remove(envelope.id) }
+            completeAwaitable(request, successfulOrdinarySend = true)
             retrySignals.trySend(0)
-            completeAwaitable(request)
         } catch (cancellation: CancellationException) {
             completeAwaitable(request, cancellation)
             throw cancellation
         } catch (failure: Exception) {
-            if (request.completion == null) retrySignals.trySend(RETRY_DELAY_MILLIS)
             completeAwaitable(request, failure)
+            if (request.completion == null) retrySignals.trySend(RETRY_DELAY_MILLIS)
         }
     }
 
@@ -485,7 +504,7 @@ class SerializedOutboundQueue(
     private fun terminateLocked(request: QueuedEnvelope): CompletableDeferred<Unit>? {
         if (request.awaitableState == AwaitableState.COMPLETE) return null
         request.awaitableState = AwaitableState.COMPLETE
-        queuedIds.remove(request.envelopeId)
+        releaseOrdinaryOwnerLocked(request)
         awaitable.remove(request)
         screenControls.remove(request)
         if (screenData === request) screenData = null
@@ -501,6 +520,10 @@ class SerializedOutboundQueue(
     private fun trackOwnedJobLocked(job: Job) {
         trackedOwnedJobs += job
         job.invokeOnCompletion { synchronized(stateLock) { trackedOwnedJobs -= job } }
+    }
+
+    private fun releaseOrdinaryOwnerLocked(request: QueuedEnvelope) {
+        if (ordinaryOwners[request.envelopeId] === request) ordinaryOwners.remove(request.envelopeId)
     }
 
     private fun rejected(message: String) = OutboundRequestRejectedException(message)
