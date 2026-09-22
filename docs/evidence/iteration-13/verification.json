@@ -1,0 +1,25 @@
+{
+  "installed": true,
+  "location": "/Applications/PlinkMac.app",
+  "idleCallStates": [
+    "0",
+    "0"
+  ],
+  "signatureVerified": true,
+  "binarySHA256": "8c630e2df0a5f709f4e2c4d904450c32b4678ab9166a5f9dde5f1774168f59e3",
+  "testCounts": {
+    "Android": 207,
+    "Swift": 271,
+    "total": 478
+  },
+  "nativeAppearanceVerified": false,
+  "twoWayCallAudioVerified": false,
+  "runtime": {
+    "sessionStatus": "READY",
+    "clipboardConnected": true,
+    "clipboardSyncEnabled": true,
+    "nativeUnpair": "User check requested; not yet observed",
+    "callAudio": "No incoming call test yet",
+    "settingsChanged": false
+  }
+}

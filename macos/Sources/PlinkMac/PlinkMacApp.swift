@@ -265,6 +265,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     @Published private(set) var pairingRecoveryError: String?
     @Published private(set) var startupRecovery = StartupRecoveryState()
     private let startupOperation = StartupRecoveryOperation()
+    @Published private(set) var savedPhones: [PairedDevice] = []
+    @Published private(set) var selectedPhoneID: String?
+    @Published private(set) var phoneManagementBusy = false
+    @Published private(set) var phoneManagementStatus: String?
+    private var phoneManagementID: UUID?
+    private var phoneManagementAffectsCurrentPeer = false
+    private var revokedPhoneSessions: Set<String> = []
+    private func revocationID(_ device: PairedDevice) -> String { "\(device.id.utf8.count):\(device.id)\(device.sessionId)" }
     @Published private(set) var pairedPhoneName: String?
     @Published private(set) var isPairing = false
     @Published private(set) var pairingCompleted = false
@@ -278,6 +286,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
     private var pairingExpiryTask: Task<Void, Never>?
     let calling = BluetoothCallController()
+    private lazy var callPanel = CallPanelController(calling: calling)
     let clipboard = ClipboardSyncController()
     let files = FileTransferController()
     let reconnect = ReconnectController()
@@ -392,7 +401,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             try await transport.send(envelope)
         }
         clipboard.start()
-        calling.onCallChanged = { [weak self] call in self?.notificationBridge.updateCall(call) }
+        calling.onCallChanged = { [weak self] call in
+            self?.notificationBridge.updateCall(call, presentNotification: false)
+            self?.refreshCallPanel()
+        }
         housekeeping = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(5))
@@ -445,6 +457,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     func applicationWillTerminate(_ notification: Notification) {
         terminationPending = true
+        phoneManagementID = nil
+        callPanel.dismiss()
         cancelPendingAutomaticRecovery()
         reconnect.stopDiscoveryForLifecycle()
         reconnectPathMonitor.cancel()
@@ -485,7 +499,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     func showDashboardWindow() {
         if dashboardWindow == nil {
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 540, height: 560),
+                contentRect: NSRect(x: 0, y: 0, width: 460, height: 820),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],
                 backing: .buffered,
                 defer: false
@@ -530,13 +544,194 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func setUpCalls() {
-        guard let pairedPhoneName else { return }
+        guard !phoneManagementBusy, !startupOperation.isRunning, !terminationPending,
+              let pairing = activePairing, let pairedPhoneName,
+              let selected = try? pairingFinalization.selectedDevice(localDeviceID: localMacDeviceId),
+              selected.id == pairing.device.id, selected.sessionId == pairing.device.sessionId else { return }
+        calling.cancelInitialSetup()
         calling.beginSetup(phoneName: pairedPhoneName)
+    }
+
+    private func refreshCallPanel() {
+        let allowed = !terminationPending && !(phoneManagementBusy && phoneManagementAffectsCurrentPeer) &&
+            reconnectSystemAwake && reconnectScreenAwake && reconnectSessionActive && reconnectSessionUnlocked &&
+            ClipboardSyncController.systemIsUnlocked() &&
+            (CGSessionCopyCurrentDictionary() as? [String: Any])?[kCGSessionOnConsoleKey as String] as? Bool == true
+        callPanel.update(call: calling.call, phoneName: pairedPhoneName, presentationAllowed: allowed)
+    }
+
+    func refreshSavedPhones() {
+        guard !startupOperation.isRunning, !phoneManagementBusy else { return }
+        do {
+            let pending = try pairingFinalization.pendingRemovals()
+            let stored = try pairingStore.all()
+            var revoked: Set<String> = []
+            for device in stored + pending where try pairingFinalization.isRevoked(device) {
+                revoked.insert(revocationID(device))
+            }
+            revokedPhoneSessions = revoked
+            savedPhones = (stored.filter { !revoked.contains(revocationID($0)) } + pending.filter { old in
+                !stored.contains(where: { $0.id == old.id && $0.sessionId != old.sessionId })
+            }).sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            selectedPhoneID = try pairingFinalization.selectedDevice(localDeviceID: localMacDeviceId)?.id
+        } catch { phoneManagementStatus = "Saved phones could not be read. Restart Plink and try again." }
+    }
+
+    private var phoneManagementUnavailableReason: String? {
+        if terminationPending { return "Plink is closing." }
+        if startupOperation.isRunning || !pairingRecoveryComplete { return "Wait for saved connection recovery." }
+        if phoneManagementBusy || pairingInFlight || pendingManualOffer != nil || isPairing {
+            return "Finish the current setup first."
+        }
+        return nil
+    }
+
+    func savedPhoneSelectionUnavailableReason(_ id: String) -> String? {
+        if let reason = phoneManagementUnavailableReason { return reason }
+        guard let device = savedPhones.first(where: { $0.id == id }) else { return "This phone is no longer saved." }
+        if revokedPhoneSessions.contains(revocationID(device)) { return "This connection was removed. Finish its cleanup first." }
+        if !device.trusted || device.securityVersion != 2 { return "Pair this phone again." }
+        return calling.managementUnavailableReason
+    }
+
+    func savedPhoneRemovalUnavailableReason(_ id: String) -> String? {
+        if let reason = phoneManagementUnavailableReason { return reason }
+        guard savedPhones.contains(where: { $0.id == id }) else { return "This phone is no longer saved." }
+        if activePairing?.device.id == id || selectedPhoneID == id || calling.ownsPeer(id) {
+            return calling.managementUnavailableReason
+        }
+        return nil
+    }
+
+    private func managementIsCurrent(_ id: UUID) -> Bool {
+        phoneManagementID == id && !terminationPending
+    }
+
+    private func finishPhoneManagement(_ id: UUID) {
+        guard phoneManagementID == id else { return }
+        phoneManagementID = nil
+        phoneManagementBusy = false
+        phoneManagementAffectsCurrentPeer = false
+        refreshSavedPhones()
+        refreshCallPanel()
+        schedulePendingAutomaticRecovery()
+    }
+
+    private func retirePhoneForManagement(_ id: UUID) async -> Bool {
+        calling.cancelInitialSetup()
+        callPanel.dismiss()
+        pairingAttempt = UUID()
+        connectionGeneration = UUID()
+        pairedPeerID = nil
+        commands.removeAll()
+        notificationBridge.clearContexts()
+        conditionalHandoff?.cancel()
+        conditionalReconnectTask?.cancel()
+        guard await preparePairLifetimeReplacement() != nil, managementIsCurrent(id) else { return false }
+        stopPairLifetime()
+        guard await calling.retireConfiguredPeer(), managementIsCurrent(id) else { return false }
+        activePairing = nil; priorPairing = nil; pairedPhoneName = nil
+        deviceStatus = nil; mediaState = nil; mediaSessions.removeAll(); lastPeerActivity = nil
+        return true
+    }
+
+    func selectSavedPhone(_ id: String) {
+        if let reason = savedPhoneSelectionUnavailableReason(id) { phoneManagementStatus = reason; return }
+        guard let device = savedPhones.first(where: { $0.id == id }) else { return }
+        let operation = UUID(), finalization = pairingFinalization, localID = localMacDeviceId
+        phoneManagementID = operation; phoneManagementBusy = true
+        phoneManagementAffectsCurrentPeer = true
+        phoneManagementStatus = "Selecting phone…"
+        Task {
+            defer { finishPhoneManagement(operation) }
+            do {
+                let key = try await Task.detached { try finalization.loadSelection(device, localDeviceID: localID) }.value
+                guard managementIsCurrent(operation), calling.managementUnavailableReason == nil,
+                      try pairingStore.all().contains(device), try !finalization.isRevoked(device) else { throw CancellationError() }
+                guard await retirePhoneForManagement(operation) else { throw CancellationError() }
+                try finalization.select(device, localDeviceID: localID)
+                recoveryPolicy.resumeByUser()
+                let attempt = pairingAttempt
+                let phase = await applyRestoredPairing(device: device, sessionKey: key, expectedPairingAttempt: attempt)
+                guard managementIsCurrent(operation) else { return }
+                phoneManagementStatus = phase == .ready ? "Selected \(device.name)." : "Phone selected. Connect again to continue."
+            } catch { if managementIsCurrent(operation) { phoneManagementStatus = "Could not finish selecting this phone. Check the selected phone and try Connect again." } }
+        }
+    }
+
+    func unpairSavedPhone(_ id: String) {
+        if let reason = savedPhoneRemovalUnavailableReason(id) { phoneManagementStatus = reason; return }
+        guard let device = savedPhones.first(where: { $0.id == id }) else { return }
+        let operation = UUID(), finalization = pairingFinalization, localID = localMacDeviceId
+        let association = calling.association(peerID: id)
+        let ownsRuntime = activePairing?.device.id == id || selectedPhoneID == id || calling.ownsPeer(id)
+        phoneManagementID = operation; phoneManagementBusy = true
+        phoneManagementAffectsCurrentPeer = ownsRuntime
+        phoneManagementStatus = "Removing this Mac connection…"
+        Task {
+            defer { finishPhoneManagement(operation) }
+            do {
+                if ownsRuntime, !(await retirePhoneForManagement(operation)) { throw CancellationError() }
+                guard managementIsCurrent(operation) else { return }
+                try finalization.revoke(device)
+                try finalization.clearSelectionForRemoval(device)
+                if try finalization.needsExternalCleanup(device) {
+                    let secrets = pairingSecretStore, endpoints = reconnectEndpointStore
+                    let endpointRetained = try await Task.detached {
+                        try finalization.requireRemovalCurrent(device)
+                        guard let key = try secrets.load(sessionId: device.sessionId) else { return true }
+                        guard key.count == 32 else { throw MacPairingFinalization.Failure.keyConflict }
+                        try endpoints.remove(localID: localID, peerID: device.id, sessionKey: key)
+                        return false
+                    }.value
+                    guard managementIsCurrent(operation) else { return }
+                    try finalization.requireRemovalCurrent(device)
+                    guard calling.removeAssociation(peerID: id, expectedAddress: association) else {
+                        throw MacPairingFinalization.Failure.staleRecord
+                    }
+                    try finalization.markExternalCleanupComplete(device, endpointRetained: endpointRetained)
+                }
+                try await Task.detached { try finalization.finishRemoval(device) }.value
+                guard managementIsCurrent(operation) else { return }
+                phoneManagementStatus = try finalization.retainsEndpoint(device)
+                    ? "Connection removed. An unused connection record remains; Bluetooth pairing was kept."
+                    : "Removed this Mac connection. Bluetooth pairing was kept."
+            } catch {
+                if managementIsCurrent(operation) {
+                    phoneManagementStatus = (try? finalization.isRevoked(device)) == true
+                        ? "Connection revoked; cleanup is pending. Choose Unpair again to retry."
+                        : "Could not remove this connection. Try again."
+                }
+            }
+        }
+    }
+
+    func disconnectSelectedPhone() {
+        guard phoneManagementUnavailableReason == nil, calling.managementUnavailableReason == nil else { return }
+        let operation = UUID()
+        phoneManagementID = operation; phoneManagementBusy = true
+        phoneManagementAffectsCurrentPeer = true
+        recoveryPolicy.cancelByUser()
+        Task {
+            defer { finishPhoneManagement(operation) }
+            let pairing = activePairing
+            if await retirePhoneForManagement(operation), managementIsCurrent(operation) {
+                // Retain saved selection; explicit Connect can prepare a fresh listener on this key.
+                if let pairing {
+                    activePairing = pairing; pairedPhoneName = pairing.device.name
+                    calling.configurePairedPhone(peerID: pairing.device.id)
+                    _ = startPairLifetime(device: pairing.device, sessionKey: pairing.key, lifecycleToken: reconnectAttempt)
+                }
+                reconnect.setFailed("Disconnected. Choose Connect when you are ready.")
+                phoneManagementStatus = "Disconnected."
+            }
+        }
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
         guard !terminationPending else { return }
         notificationBridge.refreshAuthorization()
+        refreshCallPanel()
         schedulePendingAutomaticRecovery()
     }
 
@@ -553,6 +748,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     if name == NSWorkspace.willSleepNotification { self.reconnectSystemAwake = false }
                     if name == NSWorkspace.screensDidSleepNotification { self.reconnectScreenAwake = false }
                     if name == NSWorkspace.sessionDidResignActiveNotification { self.reconnectSessionActive = false }
+                    self.refreshCallPanel()
                     self.invalidateReconnectForEnvironmentChange(
                         "Reconnect is required after the Mac sleeps or locks."
                     )
@@ -566,6 +762,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     if name == NSWorkspace.didWakeNotification { self.reconnectSystemAwake = true }
                     if name == NSWorkspace.screensDidWakeNotification { self.reconnectScreenAwake = true }
                     if name == NSWorkspace.sessionDidBecomeActiveNotification { self.reconnectSessionActive = true }
+                    self.refreshCallPanel()
                     self.schedulePendingAutomaticRecovery()
                 }
             })
@@ -579,9 +776,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     guard let self else { return }
                     if name == "com.apple.screenIsLocked" {
                         self.reconnectSessionUnlocked = false
+                        self.refreshCallPanel()
                         self.invalidateReconnectForEnvironmentChange("Reconnect is required after the Mac locks.")
                     } else {
                         self.reconnectSessionUnlocked = true
+                        self.refreshCallPanel()
                         self.schedulePendingAutomaticRecovery()
                     }
                 }
@@ -601,6 +800,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 self.reconnectPathSignature = signature
                 self.reconnectPathEligible = pathEligible
                 guard let previous else {
+                    self.refreshCallPanel()
                     self.schedulePendingAutomaticRecovery()
                     return
                 }
@@ -857,7 +1057,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private func scheduleAutomaticReconnect(device: PairedDevice, sessionKey: Data) {
         guard let lifetime = pairLifetime, lifetime.peerID == device.id, lifetime.sessionID == device.sessionId else { return }
         guard !recoveryPolicy.suppressed else { return }
-        guard reconnectEnvironmentEligible, !isPairing, !pairingInFlight else {
+        guard reconnectEnvironmentEligible, !(phoneManagementBusy && phoneManagementAffectsCurrentPeer), !isPairing, !pairingInFlight else {
             recoveryPolicy.request()
             return
         }
@@ -886,7 +1086,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     private func startReconnectAttempt() -> Bool {
         cancelPendingAutomaticRecovery()
-        guard !terminationPending, !isPairing, !pairingInFlight, reconnectEnvironmentEligible else { return false }
+        guard !terminationPending, !(phoneManagementBusy && phoneManagementAffectsCurrentPeer), !isPairing, !pairingInFlight, reconnectEnvironmentEligible else { return false }
         guard let lifetime = pairLifetime, lifetime.isCurrent, reconnectListener != nil,
               let pairing = activePairing, pairing.device.id == lifetime.peerID,
               pairing.device.sessionId == lifetime.sessionID else {
@@ -1242,7 +1442,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func startNearbyPairing() {
-        guard pairingRecoveryComplete else { pairingStatusText = "Waiting for saved pairing recovery."; return }
+        guard pairingRecoveryComplete, !startupOperation.isRunning, !phoneManagementBusy else { pairingStatusText = "Waiting for saved pairing recovery."; return }
+        calling.cancelInitialSetup()
         guard calling.call.context == nil, !calling.busy else {
             pairingStatusText = "Finish the current call before pairing another phone."
             return
@@ -1336,7 +1537,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func confirmManualPairing() async throws {
-        guard !pairingInFlight, canConfirmPairing,
+        guard !phoneManagementBusy, !startupOperation.isRunning, !pairingInFlight, canConfirmPairing,
               let offer = pendingManualOffer, let consent = pendingConsent,
               let confirmation = pendingManualConfirmation, consent.confirmation == confirmation,
               consent.stage == .confirmed, consentIsFresh,
@@ -1387,15 +1588,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             pairingStatusText = "Paired with \(device.name)."
             let setupAttempt = pairingAttempt
             let setupLifetime = pairLifetime
-            BluetoothCallSetup.afterPairingCommit(isCurrent: { [weak self, weak setupLifetime] in
+            let setupIsCurrent: () -> Bool = { [weak self, weak setupLifetime] in
                 guard let self, let setupLifetime else { return false }
-                return !self.terminationPending && !self.isPairing && !self.pairingInFlight &&
-                    self.pairingCompleted && self.pairingAttempt == setupAttempt &&
-                    self.pairLifetime === setupLifetime && setupLifetime.isCurrent &&
-                    self.activePairing?.device.id == device.id &&
-                    self.activePairing?.device.sessionId == device.sessionId &&
-                    self.pairedPhoneName == device.name
-            }, setup: { [weak self] in self?.setUpCalls() })
+                guard !self.terminationPending, !self.phoneManagementBusy, !self.startupOperation.isRunning,
+                      !self.isPairing, !self.pairingInFlight, self.pairingCompleted,
+                      self.pairingAttempt == setupAttempt, self.pairLifetime === setupLifetime,
+                      setupLifetime.isCurrent, self.activePairing?.device.id == device.id,
+                      self.activePairing?.device.sessionId == device.sessionId,
+                      let selected = try? self.pairingFinalization.selectedDevice(localDeviceID: self.localMacDeviceId)
+                else { return false }
+                return selected.id == device.id && selected.sessionId == device.sessionId
+            }
+            BluetoothCallSetup.afterPairingCommit(isCurrent: setupIsCurrent, setup: { [weak self] in
+                self?.calling.requestInitialSetup(id: setupAttempt, peerID: device.id,
+                    phoneName: device.name, isCurrent: setupIsCurrent)
+            })
+            refreshSavedPhones()
         } catch {
             // Cancel/restart may have already restored the old session. Never roll
             // back a subsequent attempt from this suspended send's completion.
@@ -1416,6 +1624,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     func cancelPairing() {
+        calling.cancelInitialSetup()
         stopPairingConfirmationReceiver()
         stopPairingAdvertiser()
         clearPairingAttempt() // Invalidates any suspended final send before it can save.
@@ -1436,6 +1645,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func invalidateActiveSession() {
+        calling.cancelInitialSetup()
+        callPanel.dismiss()
         reconnectAttempt = UUID()
         reconnectAuthority?.invalidate()
         reconnectTask?.cancel()
@@ -1492,6 +1703,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             if self.startupRecovery.isDelayed { self.lastDeliveryState = self.startupRecovery.detail }
         }, onFinish: { [weak self] in
             self?.startupRecovery.clearDelayed()
+            self?.refreshSavedPhones()
         }, work: { [domainName = "com.thekozugroup.plink.mac"] in
             guard await self.publishStartupRecovery(.restoring, attempt: attempt) else { return }
             NSLog("Plink startup pairing recovery started")
@@ -1564,6 +1776,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 guard self.publishStartupRecovery(outcome, attempt: attempt) else { return }
                 if outcome == .ready {
                     NSLog("Plink startup saved pairing restored")
+                    self.refreshCallPanel()
                     self.schedulePendingAutomaticRecovery()
                 }
             }

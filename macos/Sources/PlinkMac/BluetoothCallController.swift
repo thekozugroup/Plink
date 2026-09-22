@@ -16,6 +16,8 @@ struct BluetoothPhone: Identifiable, Equatable, Sendable {
 @MainActor
 final class BluetoothCallSetup {
     private var token: UUID?
+    private var initialRequestID: UUID?
+    private var initialRequest: (isCurrent: () -> Bool, present: () -> Void)?
     var inProgress: Bool { token != nil }
 
     nonisolated static func canonicalAddress(_ raw: String) -> String? {
@@ -45,7 +47,21 @@ final class BluetoothCallSetup {
         return candidates(phones).first { $0.id == address }
     }
 
-    func cancel() { token = nil }
+    func cancel() { token = nil; initialRequest = nil }
+
+    func queueInitialSetup(id: UUID, isCurrent: @escaping () -> Bool, present: @escaping () -> Void) {
+        guard id != initialRequestID, isCurrent() else { return }
+        initialRequestID = id
+        initialRequest = (isCurrent, present)
+    }
+
+    func drainInitialSetup(ready: Bool) {
+        guard let request = initialRequest else { return }
+        guard request.isCurrent() else { initialRequest = nil; return }
+        guard ready else { return }
+        initialRequest = nil // Consume before a modal chooser can reenter the run loop.
+        request.present()
+    }
 
     func begin(phoneName: String,
                readCatalog: (@escaping @MainActor ([BluetoothPhone]) -> Void) -> Void,
@@ -54,12 +70,12 @@ final class BluetoothCallSetup {
         guard token == nil, isCurrent() else { return }
         let token = UUID()
         self.token = token
-        readCatalog { [weak self] records in
+        readCatalog { [weak self] _ in
             guard let self, self.token == token else { return }
             defer { if self.token == token { self.token = nil } }
             guard !Task.isCancelled, isCurrent() else { return }
-            let matches = Self.candidates(records).filter { !$0.name.isEmpty && $0.name == phoneName }
-            let selected = matches.count == 1 ? matches.first : choose()
+            // A matching display name is not a verified association with the paired peer.
+            let selected = choose()
             guard self.token == token, !Task.isCancelled, isCurrent(), let selected,
                   let phone = Self.candidates([selected]).first, validate(phone),
                   self.token == token, isCurrent() else { return }
@@ -105,6 +121,88 @@ final class BluetoothCallController: ObservableObject {
     private var chooserRequiredPeerID: String?
     private var nativeServiceConnected = false
     private var connectingPhoneAddress: String?
+    private var peerRetirement: CheckedContinuation<Bool, Never>?
+
+    func ownsPeer(_ id: String) -> Bool { configuredPeerID == id || pendingPeerID == id }
+    var managementUnavailableReason: String? {
+        if call.context != nil || !call.stateIsCertain { return "End the call first." }
+        if blocked { return "Restart Plink before changing the calling phone." }
+        if busy || worker.isBusy || connectingPhoneAddress != nil || setupInProgress || peerRetirement != nil {
+            return "Wait for Bluetooth setup to finish."
+        }
+        return nil
+    }
+
+    func cancelInitialSetup() { setup.cancel() }
+
+    func requestInitialSetup(id: UUID, peerID: String, phoneName: String, isCurrent: @escaping () -> Bool) {
+        guard !blocked, call.context == nil, call.stateIsCertain,
+              association(peerID: peerID) == nil,
+              configuredPeerID == peerID || pendingPeerID == peerID else { return }
+        setup.queueInitialSetup(id: id, isCurrent: { [weak self] in
+            guard let self else { return false }
+            return isCurrent() && !self.blocked && self.call.context == nil && self.call.stateIsCertain &&
+                (self.configuredPeerID == peerID || self.pendingPeerID == peerID)
+        }, present: { [weak self] in self?.beginSetup(phoneName: phoneName) })
+        drainInitialSetup()
+    }
+
+    private func drainInitialSetup() {
+        setup.drainInitialSetup(ready: !busy && !worker.isBusy && gate.current == nil &&
+            !servicePeerMismatch && !pendingPeerConfiguration && connectingPhoneAddress == nil &&
+            call.phoneID == nil && !setupInProgress && peerRetirement == nil)
+    }
+
+    /// Does not delete an OS bond. Await the existing worker's disconnect and return.
+    func retireConfiguredPeer() async -> Bool {
+        guard managementUnavailableReason == nil else { return false }
+        setup.cancel()
+        pendingPeerID = nil; pendingPeerConfiguration = false; pendingPhoneAddress = nil
+        return await withCheckedContinuation { continuation in
+            peerRetirement = continuation
+            servicePeerMismatch = true
+            serviceConnected = false
+            bluetoothPaired = false
+            if call.phoneID != nil { disconnectForPeerSwitch() }
+            finishPeerRetirement()
+        }
+    }
+
+    private func finishPeerRetirement() {
+        guard let continuation = peerRetirement else { return }
+        if blocked {
+            peerRetirement = nil
+            continuation.resume(returning: false)
+            return
+        }
+        guard !busy, !worker.isBusy, gate.current == nil, call.phoneID == nil,
+              connectingPhoneAddress == nil, !nativeServiceConnected else { return }
+        peerRetirement = nil
+        configuredPeerID = nil; pendingPeerID = nil; servicePeerMismatch = false
+        generation = UUID()
+        call = MacCallSession()
+        onCallChanged?(call)
+        continuation.resume(returning: true)
+    }
+
+    @discardableResult
+    func removeAssociation(peerID: String, expectedAddress: String?) -> Bool {
+        Self.removeAssociation(peerID: peerID, expectedAddress: expectedAddress, defaults: .standard)
+    }
+
+    @discardableResult
+    nonisolated static func removeAssociation(peerID: String, expectedAddress: String?, defaults: UserDefaults) -> Bool {
+        let key = "plink.bluetoothPeers"
+        var entries = defaults.dictionary(forKey: key) as? [String: String] ?? [:]
+        guard entries[peerID] == expectedAddress else { return false }
+        entries.removeValue(forKey: peerID)
+        defaults.set(entries, forKey: key)
+        return true
+    }
+
+    func association(peerID: String) -> String? {
+        (UserDefaults.standard.dictionary(forKey: peerMapKey) as? [String: String])?[peerID]
+    }
 
     init() {
         worker.onEvent = { [weak self] generation, snapshot, message, serviceConnected, completion, endedContext, phoneDisconnected in
@@ -135,12 +233,15 @@ final class BluetoothCallController: ObservableObject {
                     } else if snapshot.context == nil {
                         self.disconnectForPeerSwitch()
                     }
+                    self.finishPeerRetirement()
+                    self.drainInitialSetup()
                     return
                 }
                 self.call = snapshot
                 self.status = message
                 self.serviceConnected = serviceConnected
                 self.onCallChanged?(snapshot)
+                self.drainInitialSetup()
             }
         }
         worker.onReturned = { [weak self] operation in
@@ -366,6 +467,7 @@ final class BluetoothCallController: ObservableObject {
         deadline = nil
         generation = UUID()
         blocked = true
+        finishPeerRetirement()
         busy = false
         nativeServiceConnected = false
         serviceConnected = false
@@ -454,6 +556,11 @@ final class BluetoothCallController: ObservableObject {
                 break
             }
             self.deadline = nil
+            self.finishPeerRetirement()
+            if let continuation = self.peerRetirement {
+                self.peerRetirement = nil
+                continuation.resume(returning: false) // Keep mismatch quarantine; never pretend teardown completed.
+            }
         }
         return current
     }
@@ -482,6 +589,8 @@ final class BluetoothCallController: ObservableObject {
         setupCatalogCompletion = nil
         completion?(phones)
         continuePendingPeerConfiguration()
+        finishPeerRetirement()
+        drainInitialSetup()
     }
 
     private func cancelStart(_ operation: MacBluetoothOperationGate.Operation) {
@@ -534,6 +643,7 @@ final class BluetoothCallController: ObservableObject {
             bluetoothPaired = false
             pendingPeerConfiguration = false
             status = "Set up Bluetooth calls for this phone."
+            drainInitialSetup()
             return
         }
         guard pendingDiscoveryComplete else {

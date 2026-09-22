@@ -1,0 +1,17 @@
+{
+  "kind": "design preview, not live UI evidence",
+  "renderer": "SwiftUI ImageRenderer",
+  "source": "macos/Sources/PlinkMac/CallPanel.swift",
+  "sourceSHA256": "847401255c8fc35cda44a7f03f71932dc349bab953df62bdd001108d80526fef",
+  "renderedTypes": [
+    "CallPanelPresentation",
+    "CallPanelContent"
+  ],
+  "states": "Synthetic incoming and active calls; enabled actions are inert preview closures",
+  "limits": [
+    "No real carrier call",
+    "No Bluetooth audio proof",
+    "No desktop background for material sampling",
+    "Main dashboard native screenshot remains pending"
+  ]
+}

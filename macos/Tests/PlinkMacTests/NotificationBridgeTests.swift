@@ -6,6 +6,31 @@ import UserNotifications
 
 @MainActor
 struct NotificationBridgeTests {
+    @Test func panelOwnedCallSuppressesNativeAndMirroredCallsButPreservesMessages() {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        bridge.show(envelope: call(.callRinging, key: "mirror-first"))
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "synthetic-phone")
+        hfp.ringing(number: "synthetic-caller")
+        bridge.updateCall(hfp, presentNotification: false)
+        bridge.show(envelope: call(.callRinging, key: "mirror-late"))
+        #expect(notifications.delivered.isEmpty)
+        #expect(notifications.pending.isEmpty)
+        if let context = hfp.context { _ = hfp.begin(.answer, context: context) }
+        bridge.updateCall(hfp, presentNotification: false)
+        bridge.show(envelope: call(.callRinging, key: "while-answering"))
+        #expect(notifications.delivered.isEmpty)
+        let message = PlinkEnvelope(id: "message", type: .messageReceived, sentAt: Date(), sourceDeviceId: "phone", targetDeviceId: "mac",
+            payload: ["sender": .string("Sender"), "preview": .string("Message"), "packageName": .string("test.mail"), "notificationKey": .string("message-key")])
+        bridge.show(envelope: message)
+        #expect(notifications.delivered.values.contains { $0.body == "Message" })
+        hfp.disconnected()
+        bridge.updateCall(hfp, presentNotification: false)
+        bridge.show(envelope: call(.callRinging, key: "new-mirror"))
+        #expect(notifications.delivered["plink.call.mirrored"] != nil)
+    }
+
     @Test func oldMirroredCallRemovalPreservesReplacementUntilItsOwnRemoval() {
         let notifications = Notifications()
         let bridge = notifications.bridge()

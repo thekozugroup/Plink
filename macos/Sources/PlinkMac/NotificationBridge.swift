@@ -105,7 +105,15 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         removeMessages(messages.expire())
     }
 
-    func updateCall(_ call: MacCallSession) {
+    func updateCall(_ call: MacCallSession, presentNotification: Bool = true) {
+        if !presentNotification, let context = call.context {
+            removeDeliveredAndPending([callNotificationID, "plink.call.mirrored"].compactMap { $0 })
+            mirroredCallIdentity = nil
+            // Keep authoritative HFP ownership during pending/uncertain phases too, so
+            // delayed mirrored events cannot create a second presentation over the panel.
+            callContext = context; callNotificationID = nil; callNumber = call.number
+            return
+        }
         guard call.stateIsCertain, let context = call.context, [.ringing, .active].contains(call.phase), !call.hasWaitingCall else {
             if let id = callNotificationID {
                 removeDeliveredAndPending([id])
