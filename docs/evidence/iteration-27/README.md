@@ -14,7 +14,7 @@ Two source reviewers found no defect in the suspected reentrant completion path.
 Independent review of the diagnostic patch confirmed preserved short-circuiting
 and evaluation order. The fresh full gate passed 242 Android and 323 Swift tests,
 lint and packaging. The signed update preserves the installed app identity and
-data. A new live trace is still required.
+data. The subsequent live trial reproduced the failure, as recorded below.
 
 The separate phone-side construction probe was rebuilt unchanged from the reviewed
 iteration-19 archive. Its 43 offline tests passed. It would allocate and release
@@ -27,3 +27,27 @@ user called the wrong number or used a particular VoIP app.
 
 No cellular endpoint allocation or audible audio success is claimed. No phone
 permissions, routing, display settings, app data or pairing were changed.
+
+## Live diagnostic trial
+
+The user answered from the Mac and reported sound falling back to the Pixel again.
+The running installed app matched the diagnostic binary. Its logs recorded HFP
+ringing and an active call, but no new `calls.audio.*` stage and no SCO callback in
+the captured interval. This does not establish which notification response path
+handled the click. The user's subsequent screenshots showed an incoming Phone
+card with three source actions and a separate active HFP card. This strongly
+supports selection of the generic Android action path. It does not prove that
+audio will work through HFP after correcting the notification classification.
+
+During the active call, the current Telecom call subtree contained both `ACTIVE`
+and `TelephonyConnectionService`. Telephony registry fields remained idle while
+audio mode was `MODE_IN_COMMUNICATION`. Mode alone therefore must not be used to
+declare that this was an app VoIP call. [AOSP telephony code](https://android.googlesource.com/platform/packages/services/Telephony/+/master/src/com/android/services/telephony/TelephonyConnection.java)
+also explicitly supports communication audio mode for IMS telephony connections.
+
+The user disabled Google Fi audio enhancement and reported the same failure. The
+agent made no Fi setting change. This observation does not establish the cause.
+
+The phone-side audio probe still has zero invocations. Its phone file, local helper
+source/build copy and installer scratch/rollback archive have been removed. The
+original reviewed source archive and verification evidence remain available.

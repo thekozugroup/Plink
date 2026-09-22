@@ -2,7 +2,7 @@
   "iteration": 27,
   "atUTC": "2026-09-22T18:37:38.227936+00:00",
   "audioFixed": false,
-  "liveDiagnosticTrialCompleted": false,
+  "liveDiagnosticTrialCompleted": true,
   "productionChange": "Fixed Answer/audio-transfer stage diagnostics only; no routing behavior change",
   "sourceSHA256": "6e4974e42aa28194410b9a393955acbe88b8820e123e7cf7c8d8671a9f2a363d",
   "freshGate": {
@@ -47,6 +47,37 @@
     ".a5c/artifacts/iteration27/luna-g2-review.json": "015d22da2984b46bc1cbd3611272f72057d160788c6e7f77ec664c32160b57af",
     ".a5c/artifacts/iteration27/luna-answer-diagnostics-review.json": "43d92be62785fa1fa937747c9f36d5a11f62cb3fe0aa3efa22694b07e7afa31b",
     ".a5c/artifacts/iteration27/terra-answer-reentrancy-review.json": "d871af45f46c9b6ba746a121e39dcd286a94c8abc2de7b7829e6f2f0218c8f47",
-    ".a5c/artifacts/iteration27/astra-result.json": "517046d23a8a3fa170f9e19a55fe1e9bfa93b742e83ab79514d85ac8ca4c9276"
+    ".a5c/artifacts/iteration27/astra-result.json": "517046d23a8a3fa170f9e19a55fe1e9bfa93b742e83ab79514d85ac8ca4c9276",
+    ".a5c/artifacts/iteration27/live-answer-sample-01.json": "b64fae10db4f6dd1350a3873680d581f3735ab9410312cec311b908e94fd122c",
+    ".a5c/artifacts/iteration27/live-answer-expanded-events.json": "74738511f86a102c0ce621808a4edff9bde74f04bfac2facb07e7ee02b83de26",
+    ".a5c/artifacts/iteration27/live-user-outcome.json": "bdaed5b6b5c22e8457b648ceba2ad5122685311b2ad26f94fed62bba253844fe",
+    ".a5c/artifacts/iteration27/cleanup.json": "b5fb57d02b2e6b0d73265d936159d38affe425cbbc75328a4ed177e1f1538425"
+  },
+  "updatedAtUTC": "2026-09-22T18:47:45.616619+00:00",
+  "liveDiagnosticTrialPassed": false,
+  "liveTrial": {
+    "userAnsweredFromMac": true,
+    "userReportedAudioFallbackToPhone": true,
+    "observedAudioStageCount": 0,
+    "handlerReached": null,
+    "activeTelephonyConnectionServiceObserved": true,
+    "audioMode": "MODE_IN_COMMUNICATION",
+    "G2Invocations": 0,
+    "FiEnhancementDisabledByUserSameFailure": true,
+    "screenshotRequested": true,
+    "screenshotsProvided": true,
+    "screenshotAssessment": "Generic incoming source-action card and distinct active HFP card"
+  },
+  "cleanup": {
+    "atUTC": "2026-09-22T18:47:06.715308+00:00",
+    "installedAppLaunchVerified": true,
+    "ownedInstallerStageRemoved": true,
+    "ownedHelperSourceAndBuildRemoved": true,
+    "originalSourceArchiveRetained": true,
+    "phoneHelperAbsent": true,
+    "stageUnregisterExitCode": 1,
+    "phoneDisplaySettingsChanged": false,
+    "phonePermissionsChanged": false,
+    "userChangedFiSettingNotOverwritten": true
   }
 }
