@@ -504,14 +504,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         if dashboardWindow == nil {
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 460, height: 820),
-                styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
             window.center()
             window.title = "Plink"
-            window.titlebarAppearsTransparent = false
-            window.backgroundColor = .windowBackgroundColor
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.backgroundColor = .clear
             window.isOpaque = false
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: DashboardWindow(appDelegate: self))

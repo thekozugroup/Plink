@@ -96,8 +96,10 @@ struct DashboardWindow: View {
             }
         }
         .background {
-            if reduceTransparency { Color(nsColor: .windowBackgroundColor) }
-            else { FrostedWindowBackground() }
+            Group {
+                if reduceTransparency { Color(nsColor: .windowBackgroundColor) }
+                else { FrostedWindowBackground() }
+            }.ignoresSafeArea()
         }
         .frame(minWidth: 420, idealWidth: 460, minHeight: 720, idealHeight: 820)
         .onAppear { appDelegate.refreshSavedPhones() }
@@ -126,6 +128,8 @@ struct ConnectionHeader: View {
     @ObservedObject var reconnect: ReconnectController
     @ObservedObject var calling: BluetoothCallController
     var compact = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
 
     private var connected: Bool { appDelegate.pairedPeerID != nil }
     private var presentation: DashboardPresentation {
@@ -156,17 +160,24 @@ struct ConnectionHeader: View {
         VStack(spacing: compact ? 12 : 18) {
             ZStack {
                 Circle().fill(Color.accentColor.opacity(connected ? 0.07 : 0.035))
-                Circle().strokeBorder(Color.primary.opacity(0.055), lineWidth: 1)
-                    .padding(10)
-                Circle().strokeBorder(connected ? Color.accentColor.opacity(0.75) : Color.primary.opacity(0.09), lineWidth: 2)
+                Circle().strokeBorder(Color.primary.opacity(contrast == .increased ? 0.3 : 0.09), lineWidth: compact ? 8 : 12)
+                if connected {
+                    Circle().strokeBorder(Color.accentColor, lineWidth: compact ? 8 : 12)
+                }
                 LucideIcon(name: .smartphone, size: compact ? 54 : 84)
                     .foregroundStyle(connected ? Color.accentColor : Color.secondary)
                 VStack {
                     Spacer()
                     if presentation.showsProgress {
-                        ProgressView().controlSize(.small).padding(10)
-                            .background(.regularMaterial, in: Circle())
-                            .accessibilityLabel(presentation.title)
+                        Group {
+                            if reduceMotion {
+                                Image(systemName: "hourglass").font(.system(size: 12, weight: .semibold))
+                            } else {
+                                ProgressView().controlSize(.small)
+                            }
+                        }.padding(10)
+                        .background(.regularMaterial, in: Circle())
+                        .accessibilityLabel(presentation.title)
                     } else if connected {
                         Image(systemName: "checkmark").font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(.white).frame(width: 28, height: 28)
@@ -331,7 +342,7 @@ struct PlinkSettingsContent: View {
                         Text("Open links from phone").font(.callout.weight(.medium))
                         Text("Open shared links in your Mac’s browser.").font(.caption).foregroundStyle(.secondary)
                     }
-                }.toggleStyle(.switch).controlSize(.small)
+                }.toggleStyle(.switch).controlSize(.regular)
             }
             DisclosureGroup("Connection help") {
                 Text(appDelegate.lastDeliveryState).font(.caption).textSelection(.enabled)
@@ -394,7 +405,7 @@ private struct ClipboardSyncSettings: View {
                 Text("Copy text on one device and paste on the other. Enable this on your phone too.")
                     .font(.caption).foregroundStyle(.secondary)
             }
-        }.toggleStyle(.switch).controlSize(.small)
+        }.toggleStyle(.switch).controlSize(.regular)
     }
 }
 

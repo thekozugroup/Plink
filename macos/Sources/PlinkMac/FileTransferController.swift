@@ -254,7 +254,8 @@ struct FileTransferPanel: View {
     var body: some View {
         GroupBox("Files") {
             VStack(alignment: .leading, spacing: 10) {
-                Toggle("Enable file transfers", isOn: $controller.enabled).disabled(!controller.connected)
+                Toggle("Enable file transfers", isOn: $controller.enabled)
+                    .toggleStyle(.switch).controlSize(.regular).disabled(!controller.connected)
                 Text("Choose each file to send and where to save incoming files. Maximum 16 MB.")
                     .font(.caption).foregroundStyle(.secondary)
                 Button("Send File…") { controller.chooseFile() }.disabled(!controller.canSend)
