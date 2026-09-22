@@ -19,7 +19,10 @@ class NotificationMapper(
     private val localDeviceId: String,
     private val pairedMacDeviceId: String,
     private val replyRoutes: ReplyRouteRegistry,
-    private val replyActions: RemoteInputReplyRegistry? = null
+    private val replyActions: RemoteInputReplyRegistry? = null,
+    private val notificationActions: NotificationActionRegistry? = null,
+    private val actionContext: android.content.Context? = null,
+    private val actionUserUnlocked: ((android.os.UserHandle) -> Boolean?)? = null
 ) {
     fun map(sbn: StatusBarNotification): NotificationHandoff? {
         replyRoutes.replaceForNotification(sbn.key)
@@ -30,6 +33,7 @@ class NotificationMapper(
         if (title.isBlank() && text.isBlank()) return removed(sbn)
 
         val isCall = notification.category == Notification.CATEGORY_CALL
+        if (isCall) notificationActions?.invalidateKey(sbn.key)
         if (isCall && !isIncomingCall(notification)) return removed(sbn)
         val envelope = if (isCall) {
             ContinuityEnvelopeFactory.create(
@@ -54,36 +58,31 @@ class NotificationMapper(
             )
         }
 
-        val replyAction = if (!isCall) {
-            notification.actions?.firstOrNull(::isEligibleReplyAction)
-        } else {
-            null
-        }
-        val canReply = replyAction != null
-        val route = if (canReply) {
+        val base = envelope.copy(payload = JsonObject(envelope.payload + mapOf(
+            "packageName" to JsonPrimitive(sbn.packageName), "notificationKey" to JsonPrimitive(sbn.key)
+        )))
+        val specs = if (!isCall && actionContext != null) notification.actions.orEmpty().map { action ->
+            AndroidNotificationActions.describe(actionContext, action, sbn.user,
+                actionUserUnlocked ?: { AndroidNotificationActions.isUserUnlocked(actionContext, it) })
+        } else emptyList()
+        val offer = if (!isCall) notificationActions?.offer(base, specs) else null
+        val safeIndex = if (notificationActions != null) specs.take(10).indexOfFirst {
+            it.kind == "text" && !it.authenticationRequired
+        }.takeIf { it >= 0 && offer?.claims?.containsKey(it) == true }
+        else notification.actions?.indexOfFirst(::isEligibleReplyAction)?.takeIf { !isCall && it >= 0 }
+        val replyAction = safeIndex?.let { notification.actions[it] }
+        val route = if (replyAction != null) {
+            val token = offer?.envelope?.payload?.get("action${safeIndex}Token")?.let {
+                (it as JsonPrimitive).content
+            } ?: java.util.UUID.randomUUID().toString()
             val candidate = replyRoutes.register(
-                pairedDeviceId = pairedMacDeviceId,
-                sourceEnvelopeId = envelope.id,
-                packageName = sbn.packageName,
-                notificationKey = sbn.key,
-                conversationId = notification.shortcutId,
-                canReply = true
+                pairedDeviceId = pairedMacDeviceId, sourceEnvelopeId = envelope.id,
+                packageName = sbn.packageName, notificationKey = sbn.key,
+                conversationId = notification.shortcutId, canReply = true, replyToken = token
             )
-            val actionRegistered = replyActions?.register(
-                    replyToken = candidate.replyToken,
-                    notificationKey = sbn.key,
-                    action = replyAction
-                ) ?: false
-            if (actionRegistered) {
-                candidate
-            } else {
-                replyRoutes.consume(candidate.replyToken)
-                replyActions?.remove(candidate.replyToken)
-                null
-            }
-        } else {
-            null
-        }
+            if (replyActions?.register(token, sbn.key, replyAction, offer?.claims?.get(safeIndex)) == true) candidate
+            else { replyRoutes.consume(token); replyActions?.remove(token); null }
+        } else null
 
         val identity = mapOf(
             "packageName" to JsonPrimitive(sbn.packageName),
@@ -93,7 +92,8 @@ class NotificationMapper(
             "canReply" to JsonPrimitive(true),
             "replyToken" to JsonPrimitive(it.replyToken)
         ) }.orEmpty()
-        val routedEnvelope = envelope.copy(payload = JsonObject(envelope.payload + identity + capability))
+        val offeredEnvelope = offer?.envelope ?: envelope
+        val routedEnvelope = offeredEnvelope.copy(payload = JsonObject(offeredEnvelope.payload + identity + capability))
 
         return NotificationHandoff(envelope = routedEnvelope, replyRoute = route)
     }
@@ -106,20 +106,23 @@ class NotificationMapper(
             MessageReceivedEvent(sbn.notification.shortcutId ?: sbn.key, sbn.packageName, "Notification removed.", false),
             localDeviceId, pairedMacDeviceId
         )
-        return NotificationHandoff(envelope.copy(
+        val tombstone = envelope.copy(
             type = if (sbn.notification.category == Notification.CATEGORY_CALL) PlinkEventType.CallEnded else envelope.type,
             payload = JsonObject(envelope.payload + mapOf(
                 "packageName" to JsonPrimitive(sbn.packageName),
                 "notificationKey" to JsonPrimitive(sbn.key),
                 "removed" to JsonPrimitive(true)
             ))
-        ), null)
+        )
+        val offered = notificationActions?.offer(tombstone, emptyList(), removed = true)?.envelope ?: tombstone
+        return NotificationHandoff(offered, null)
     }
 
     private fun isEligibleReplyAction(action: Notification.Action): Boolean {
+        if (android.os.Build.VERSION.SDK_INT < 31) return false
         val inputs = action.remoteInputs ?: return false
-        if (action.actionIntent == null || inputs.none { it.allowFreeFormInput }) return false
-        if (android.os.Build.VERSION.SDK_INT >= 31 && action.isAuthenticationRequired) return false
+        if (action.actionIntent == null || inputs.size != 1 || !inputs.single().allowFreeFormInput || !action.dataOnlyRemoteInputs.isNullOrEmpty()) return false
+        if (android.os.Build.VERSION.SDK_INT >= 31 && (action.isAuthenticationRequired || action.actionIntent.isImmutable)) return false
         return true
     }
 

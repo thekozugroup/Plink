@@ -400,4 +400,19 @@ if len(classification) != 10 or sum(case["valid"] is True for case in classifica
 for case in classification:
     if len(case["rawEnvelope"].encode("utf-8")) != case["rawEnvelopeBytes"]:
         fail(classification_path, "classification fixture byte count differs")
+
+# Shared action vectors are authored independently of either platform parser.
+actions_path = Path("shared/protocol/v1/notification-actions/v1-cases.json")
+actions = json.loads(actions_path.read_text())
+assert actions["schemaVersion"] == 1 and actions["syntheticOnly"] is True
+seen = set()
+for case in actions["cases"]:
+    assert case["name"] not in seen and isinstance(case["valid"], bool)
+    seen.add(case["name"])
+    assert case["kind"] in {"offer", "legacy", "enable", "state", "invoke", "outcome"}
+    envelope = json.loads(case["rawEnvelope"])
+    assert envelope["type"] in allowed
+    if case["kind"] == "offer":
+        assert case["expectedOfferDisposition"] == ("v1" if case["valid"] else "readonly")
+assert {case["kind"] for case in actions["cases"]} == {"offer", "legacy", "enable", "state", "invoke", "outcome"}
 PY

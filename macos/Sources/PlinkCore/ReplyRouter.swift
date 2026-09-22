@@ -133,7 +133,7 @@ public enum ReplyRouter {
     }
 
     public static func context(from envelope: PlinkEnvelope) -> ReplyContext? {
-        guard envelope.type == .messageReceived else { return nil }
+        guard !NotificationActionPolicy.hasExtension(envelope.payload), envelope.type == .messageReceived else { return nil }
         guard envelope.payload["canReply"]?.boolValue == true else { return nil }
         guard
             let packageName = envelope.payload["packageName"]?.stringValue,

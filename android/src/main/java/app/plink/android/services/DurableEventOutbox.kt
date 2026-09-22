@@ -75,7 +75,7 @@ class DurableEventOutbox(
             val omitted = setOf("replyToken", "sourceAppIconPng")
             envelope.copy(
                 requiresAck = false,
-                payload = JsonObject(envelope.payload.filterKeys { it !in omitted } + ("canReply" to JsonPrimitive(false)))
+                payload = JsonObject(envelope.payload.filterKeys { it !in omitted && !app.plink.android.protocol.NotificationActionsPolicy.reserved(it) } + ("canReply" to JsonPrimitive(false)))
             )
         }
         PlinkEventType.DeviceStatus, PlinkEventType.MediaState -> envelope.copy(requiresAck = false)

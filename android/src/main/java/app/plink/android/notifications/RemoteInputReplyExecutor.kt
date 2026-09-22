@@ -20,6 +20,12 @@ object ReplyDispatchLock {
     private val lock = Any()
 
     fun <T> serialized(block: () -> T): T = synchronized(lock, block)
+
+    /** Publication uses reply -> admission; execution must use that same order without suspension. */
+    internal fun admitted(runIfAdmitted: (() -> Unit) -> Boolean, action: () -> Unit): Boolean =
+        serialized { runIfAdmitted(action) }
+
+    internal fun heldByCurrentThread(): Boolean = Thread.holdsLock(lock)
 }
 
 data class LiveRemoteInputAction(
@@ -29,7 +35,8 @@ data class LiveRemoteInputAction(
     val remoteInputs: Array<RemoteInput>,
     val capabilityGeneration: ReplyCapabilityGeneration,
     val createdAt: Instant,
-    val expiresAt: Instant
+    val expiresAt: Instant,
+    val sharedClaim: NotificationActionClaim? = null
 ) {
     fun isExpired(now: Instant): Boolean = !expiresAt.isAfter(now)
 
@@ -65,13 +72,15 @@ class RemoteInputReplyRegistry(
     private val actions = linkedMapOf<String, LiveRemoteInputAction>()
 
     @Synchronized
-    fun register(replyToken: String, notificationKey: String, action: Notification.Action): Boolean {
+    fun register(replyToken: String, notificationKey: String, action: Notification.Action, sharedClaim: NotificationActionClaim? = null): Boolean {
+        if (android.os.Build.VERSION.SDK_INT < 31) return false
         val generation = capabilityGeneration() ?: return false
-        val remoteInputs = action.remoteInputs?.filter { it.allowFreeFormInput }?.toTypedArray() ?: return false
-        if (action.actionIntent == null || remoteInputs.isEmpty()) {
+        val remoteInputs = action.remoteInputs ?: return false
+        if (action.actionIntent == null || remoteInputs.size != 1 || !remoteInputs.single().allowFreeFormInput ||
+            !action.dataOnlyRemoteInputs.isNullOrEmpty()) {
             return false
         }
-        if (android.os.Build.VERSION.SDK_INT >= 31 && action.isAuthenticationRequired) return false
+        if (android.os.Build.VERSION.SDK_INT >= 31 && (action.isAuthenticationRequired || action.actionIntent.isImmutable)) return false
         val now = Instant.now(clock)
         prune(now)
         actions[replyToken] = LiveRemoteInputAction(
@@ -81,7 +90,8 @@ class RemoteInputReplyRegistry(
             remoteInputs = remoteInputs,
             capabilityGeneration = generation,
             createdAt = now,
-            expiresAt = now.plus(ttl)
+            expiresAt = now.plus(ttl),
+            sharedClaim = sharedClaim
         )
         return true
     }
@@ -135,6 +145,7 @@ class RemoteInputReplyExecutor(
     @Throws(PendingIntent.CanceledException::class)
     fun execute(envelope: PlinkEnvelope, localDeviceId: String): ValidatedInboundReply =
         ReplyDispatchLock.serialized {
+            require(android.os.Build.VERSION.SDK_INT >= 31) { "Text reply is unavailable on this Android version." }
             val reply = InboundReplyValidator.validate(envelope, routes, localDeviceId)
             val replyToken = reply.route.replyToken
             val liveAction = actions.peek(replyToken)
@@ -153,6 +164,7 @@ class RemoteInputReplyExecutor(
             val consumedAction = actions.consume(replyToken)
                 ?: throw IllegalArgumentException("Reply action was already consumed.")
             require(consumedAction == liveAction) { "Reply action changed during validation." }
+            require(liveAction.sharedClaim?.take() != false) { "Reply action was already consumed." }
             val intent = Intent()
             val results = Bundle()
             liveAction.remoteInputs.forEach { input ->

@@ -447,7 +447,8 @@ public enum ReconnectPayloadPolicy {
     }
 }
 
-private enum StrictJSONValue {
+// Shared lexical reader; reconnect validation remains unchanged.
+enum StrictJSONValue {
     case object([String: StrictJSONValue])
     case array([StrictJSONValue])
     case string(String)
@@ -483,7 +484,7 @@ private extension Dictionary where Key == String, Value == StrictJSONValue {
     }
 }
 
-private struct StrictJSONParser {
+struct StrictJSONParser {
     private let scalars: [UnicodeScalar]
     private var index = 0
 

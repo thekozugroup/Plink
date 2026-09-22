@@ -19,6 +19,22 @@ import java.time.ZoneId
 class DurableEventOutboxTest {
     @get:Rule val temporaryFolder = TemporaryFolder()
 
+    @Test fun durableReplayStripsEveryActionNamespaceIncludingUnknownFutureFields() {
+        val outbox = DurableEventOutbox(temporaryFolder.newFolder(), byteArrayOf(1, 2, 3), "mac", fixedClock())
+        val fields = listOf("actionsVersion", "actionsSession", "actionsFuture", "action0Token", "action9Label", "action123Future")
+        val base = message("actions", "synthetic preview", "synthetic-reply")
+        val offered = base.copy(payload = kotlinx.serialization.json.JsonObject(base.payload +
+            fields.associateWith { kotlinx.serialization.json.JsonPrimitive("synthetic-capability") }))
+        assertTrue(outbox.store(offered))
+        val replay = outbox.pending().single()
+        fields.forEach { assertNull(it, replay.payload[it]) }
+        assertEquals(base.payload["notificationKey"], replay.payload["notificationKey"])
+        assertEquals("false", replay.payload["canReply"].toString())
+        listOf("notification.actions.enable", "notification.actions.state", "notification.action").forEach { type ->
+            assertFalse(outbox.store(offered.copy(type = type)))
+        }
+    }
+
     @Test fun replayDropsArtworkAndReplyTokenButKeepsLabelAndIdentity() {
         val outbox = DurableEventOutbox(temporaryFolder.newFolder(), byteArrayOf(1, 2, 3), "mac", fixedClock())
         val base = message("artwork", "preview", "reply-secret")

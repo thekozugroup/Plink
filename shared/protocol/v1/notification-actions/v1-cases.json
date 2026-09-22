@@ -1,0 +1,720 @@
+{
+  "schemaVersion": 1,
+  "contract": "notification-actions-v1",
+  "syntheticOnly": true,
+  "cases": [
+    {
+      "name": "zero action offer",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":0,\"actionsOverflowCount\":0}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "one invoke offer",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "one text offer",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Reply\",\"action0Kind\":\"text\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0InputLabel\":\"Message\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "authenticated text offer",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Reply\",\"action0Kind\":\"text\",\"action0AuthenticationRequired\":true,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0InputLabel\":\"Message\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "source delete semantic",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Delete\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0Destructive\":true}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "ten ordered actions",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":10,\"actionsOverflowCount\":0,\"action0Label\":\"Action 0\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"00000000-0000-4000-8000-000000000001\",\"action1Label\":\"Action 1\",\"action1Kind\":\"invoke\",\"action1AuthenticationRequired\":false,\"action1Token\":\"00000000-0000-4000-8000-000000000002\",\"action2Label\":\"Action 2\",\"action2Kind\":\"invoke\",\"action2AuthenticationRequired\":false,\"action2Token\":\"00000000-0000-4000-8000-000000000003\",\"action3Label\":\"Action 3\",\"action3Kind\":\"invoke\",\"action3AuthenticationRequired\":false,\"action3Token\":\"00000000-0000-4000-8000-000000000004\",\"action4Label\":\"Action 4\",\"action4Kind\":\"invoke\",\"action4AuthenticationRequired\":false,\"action4Token\":\"00000000-0000-4000-8000-000000000005\",\"action5Label\":\"Action 5\",\"action5Kind\":\"invoke\",\"action5AuthenticationRequired\":false,\"action5Token\":\"00000000-0000-4000-8000-000000000006\",\"action6Label\":\"Action 6\",\"action6Kind\":\"invoke\",\"action6AuthenticationRequired\":false,\"action6Token\":\"00000000-0000-4000-8000-000000000007\",\"action7Label\":\"Action 7\",\"action7Kind\":\"invoke\",\"action7AuthenticationRequired\":false,\"action7Token\":\"00000000-0000-4000-8000-000000000008\",\"action8Label\":\"Action 8\",\"action8Kind\":\"invoke\",\"action8AuthenticationRequired\":false,\"action8Token\":\"00000000-0000-4000-8000-000000000009\",\"action9Label\":\"Action 9\",\"action9Kind\":\"invoke\",\"action9AuthenticationRequired\":false,\"action9Token\":\"00000000-0000-4000-8000-000000000010\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "explicit overflow",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":10,\"actionsOverflowCount\":3,\"action0Label\":\"Action 0\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"00000000-0000-4000-8000-000000000001\",\"action1Label\":\"Action 1\",\"action1Kind\":\"invoke\",\"action1AuthenticationRequired\":false,\"action1Token\":\"00000000-0000-4000-8000-000000000002\",\"action2Label\":\"Action 2\",\"action2Kind\":\"invoke\",\"action2AuthenticationRequired\":false,\"action2Token\":\"00000000-0000-4000-8000-000000000003\",\"action3Label\":\"Action 3\",\"action3Kind\":\"invoke\",\"action3AuthenticationRequired\":false,\"action3Token\":\"00000000-0000-4000-8000-000000000004\",\"action4Label\":\"Action 4\",\"action4Kind\":\"invoke\",\"action4AuthenticationRequired\":false,\"action4Token\":\"00000000-0000-4000-8000-000000000005\",\"action5Label\":\"Action 5\",\"action5Kind\":\"invoke\",\"action5AuthenticationRequired\":false,\"action5Token\":\"00000000-0000-4000-8000-000000000006\",\"action6Label\":\"Action 6\",\"action6Kind\":\"invoke\",\"action6AuthenticationRequired\":false,\"action6Token\":\"00000000-0000-4000-8000-000000000007\",\"action7Label\":\"Action 7\",\"action7Kind\":\"invoke\",\"action7AuthenticationRequired\":false,\"action7Token\":\"00000000-0000-4000-8000-000000000008\",\"action8Label\":\"Action 8\",\"action8Kind\":\"invoke\",\"action8AuthenticationRequired\":false,\"action8Token\":\"00000000-0000-4000-8000-000000000009\",\"action9Label\":\"Action 9\",\"action9Kind\":\"invoke\",\"action9AuthenticationRequired\":false,\"action9Token\":\"00000000-0000-4000-8000-000000000010\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "phone only missing_intent",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Use your phone\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"missing_intent\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "phone only data_input",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Use your phone\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"data_input\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "phone only choice_input",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Use your phone\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"choice_input\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "phone only multiple_inputs",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Use your phone\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"multiple_inputs\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "phone only invalid_label",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Use your phone\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"invalid_label\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "phone only unsupported_input",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Use your phone\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"unsupported_input\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "legacy alias alongside v1",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":true,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Reply\",\"action0Kind\":\"text\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0InputLabel\":\"Message\",\"replyToken\":\"legacy-synthetic-token\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "versioned tombstone",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":0,\"actionsOverflowCount\":0,\"removed\":true}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "legacy read only",
+      "kind": "legacy",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\"}}",
+      "expectedOfferDisposition": "legacy"
+    },
+    {
+      "name": "legacy text reply",
+      "kind": "legacy",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":true,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"replyToken\":\"legacy-token\"}}",
+      "expectedOfferDisposition": "legacy"
+    },
+    {
+      "name": "bool version",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":true,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "float version",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1.0,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "string count",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":\"1\",\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "float count",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1.0,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "bool count",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":true,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "negative count",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":-1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "eleven count",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":11,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "unknown version",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":2,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "bad session",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"not-a-uuid\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "uppercase session",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789ABC\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "zero epoch",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":0,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "float epoch",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1.0,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "bool revision",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":true,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "unsafe counter",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":9007199254740992,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "negative overflow",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":-1,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "float expiry",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000.0,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing actionsSession",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing actionsEpoch",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing actionsRevision",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing actionsExpiresAtMs",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing actionsCount",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing actionsOverflowCount",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing action0Label",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing action0Kind",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing action0AuthenticationRequired",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing action0Token",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "slot hole",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":2,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "extra slot",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action1Label\":\"Extra\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "leading zero slot",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action00Label\":\"Extra\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "unknown namespace",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"actionsUnexpected\":true}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "unknown slot field",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0Component\":\"com.example.Private\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "unknown kind",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"launch\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "numeric auth",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":1,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "blank label",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "long label",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "invalid token",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"token\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "wrong uuid version",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-1321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "invoke input label",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0InputLabel\":\"Message\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "invoke reason",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0Reason\":\"missing_intent\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "token on phone only",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Choose\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"choice_input\",\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "missing phone reason",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Choose\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "enable current session",
+      "kind": "enable",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.actions.enable\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\"}}"
+    },
+    {
+      "name": "enable missing session",
+      "kind": "enable",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.actions.enable\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1}}"
+    },
+    {
+      "name": "enable unknown version",
+      "kind": "enable",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.actions.enable\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":2,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\"}}"
+    },
+    {
+      "name": "enable float version",
+      "kind": "enable",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.actions.enable\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1.0,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\"}}"
+    },
+    {
+      "name": "state enabled",
+      "kind": "state",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.actions.state\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":2,\"state\":\"enabled\"}}"
+    },
+    {
+      "name": "state disabled",
+      "kind": "state",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.actions.state\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":2,\"state\":\"disabled\"}}"
+    },
+    {
+      "name": "invoke selected action",
+      "kind": "invoke",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\"}}"
+    },
+    {
+      "name": "reply exact unicode text",
+      "kind": "invoke",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\",\"text\":\"\\t  Exact reply ✓\\nCafé 👩‍💻\\n  \"}}"
+    },
+    {
+      "name": "reply 4000 UTF16 units",
+      "kind": "invoke",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\",\"text\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\"}}"
+    },
+    {
+      "name": "reply blank",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\",\"text\":\" \\n\\t\"}}"
+    },
+    {
+      "name": "reply 4002 UTF16 units",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\",\"text\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\"}}"
+    },
+    {
+      "name": "bool action index",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":false,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\"}}"
+    },
+    {
+      "name": "float action index",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0.0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\"}}"
+    },
+    {
+      "name": "string action index",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":\"0\",\"actionToken\":\"87654321-4321-4321-8321-cba987654321\"}}"
+    },
+    {
+      "name": "index overflow",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":10,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\"}}"
+    },
+    {
+      "name": "extra result key",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\",\"resultKey\":\"injected\"}}"
+    },
+    {
+      "name": "extra intent component",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\",\"component\":\"com.other.Activity\"}}"
+    },
+    {
+      "name": "enable acknowledged",
+      "kind": "outcome",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"ack\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"eventId\":\"synthetic-command-24\",\"action\":\"notification.actions.enable\",\"status\":\"enabled\",\"actionsEpoch\":1}}"
+    },
+    {
+      "name": "action dispatched",
+      "kind": "outcome",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"ack\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"eventId\":\"synthetic-command-24\",\"action\":\"notification.action\",\"status\":\"dispatched\"}}"
+    },
+    {
+      "name": "text without input label",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Reply\",\"action0Kind\":\"text\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "128 supplementary label scalars",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "128 supplementary input label scalars",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Reply\",\"action0Kind\":\"text\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0InputLabel\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "129 supplementary label scalars",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "129 input label scalars",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Reply\",\"action0Kind\":\"text\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0InputLabel\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "text cannot have phone reason",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Reply\",\"action0Kind\":\"text\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0InputLabel\":\"Message\",\"action0Reason\":\"choice_input\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "phone cannot have input label",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Choose\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"choice_input\",\"action0InputLabel\":\"Choice\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "unknown phone reason",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Choose\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"invented\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "immutable input phone fallback",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Reply\",\"action0Kind\":\"phone\",\"action0AuthenticationRequired\":false,\"action0Reason\":\"immutable_input\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "nonboolean destructive",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\",\"action0Destructive\":1}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "reserved fields without version",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "malformed extension blocks legacy alias",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":true,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"replyToken\":\"legacy-token\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "max exact safe revision",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":9007199254740991,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "zero revision",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":0,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "negative epoch",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":-1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "negative expiry",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":-1,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "wrong uuid variant",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-7321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "uppercase action token",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-CBA987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "uuid without hyphens",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321432143218321cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "uuid surrounding space",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\" 87654321-4321-4321-8321-cba987654321 \"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "reply 4001 UTF16 units",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\",\"text\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀x\"}}"
+    },
+    {
+      "name": "exponent version",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1e0,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "exponent count",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1e0,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "exponent revision",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1e0,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":1,\"actionsOverflowCount\":0,\"action0Label\":\"Archive\",\"action0Kind\":\"invoke\",\"action0AuthenticationRequired\":false,\"action0Token\":\"87654321-4321-4321-8321-cba987654321\"}}",
+      "expectedOfferDisposition": "readonly"
+    },
+    {
+      "name": "exponent action index",
+      "kind": "invoke",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":0e0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\"}}"
+    },
+    {
+      "name": "negative zero count",
+      "kind": "offer",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":-0,\"actionsOverflowCount\":0}}",
+      "expectedOfferDisposition": "v1"
+    },
+    {
+      "name": "negative zero action index",
+      "kind": "invoke",
+      "valid": true,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-command-24\",\"type\":\"notification.action\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-mac\",\"targetDeviceId\":\"synthetic-phone\",\"requiresAck\":true,\"payload\":{\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":1,\"sourceEnvelopeId\":\"synthetic-source-24\",\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionIndex\":-0,\"actionToken\":\"87654321-4321-4321-8321-cba987654321\"}}"
+    },
+    {
+      "name": "negative zero epoch",
+      "kind": "offer",
+      "valid": false,
+      "rawEnvelope": "{\"version\":1,\"id\":\"synthetic-source-24\",\"type\":\"message.received\",\"sentAt\":\"2026-09-22T12:00:00Z\",\"sourceDeviceId\":\"synthetic-phone\",\"targetDeviceId\":\"synthetic-mac\",\"requiresAck\":false,\"payload\":{\"sender\":\"Synthetic sender\",\"preview\":\"Synthetic action check\",\"canReply\":false,\"packageName\":\"app.plink.fixture\",\"notificationKey\":\"synthetic-key\",\"actionsVersion\":1,\"actionsSession\":\"12345678-1234-4123-8123-123456789abc\",\"actionsEpoch\":-0,\"actionsRevision\":1,\"actionsExpiresAtMs\":1790079000000,\"actionsCount\":0,\"actionsOverflowCount\":0}}",
+      "expectedOfferDisposition": "readonly"
+    }
+  ]
+}

@@ -119,6 +119,7 @@ public enum PayloadPolicy {
         }
         try FileTransferPayloadPolicy.validate(envelope)
         try ScreenPreviewPayloadPolicy.validate(envelope)
+        try NotificationActionPolicy.validate(envelope)
         if envelope.type == .webOpen {
             guard
                 let rawURL = envelope.payload["url"]?.stringValue,
@@ -136,7 +137,7 @@ public enum PayloadPolicy {
         case .messageReceived:
             try requireString(envelope.payload, key: "sender", maxLength: 200)
             try requireString(envelope.payload, key: "preview", maxLength: 4_000)
-            if envelope.payload["canReply"]?.boolValue == true {
+            if envelope.payload["canReply"]?.boolValue == true && !NotificationActionPolicy.hasExtension(envelope.payload) {
                 try requireString(envelope.payload, key: "packageName", maxLength: 300)
                 try requireString(envelope.payload, key: "notificationKey", maxLength: 500)
                 try requireString(envelope.payload, key: "replyToken", maxLength: 200)
@@ -155,9 +156,9 @@ public enum PayloadPolicy {
     }
 
     public static func redact(_ envelope: PlinkEnvelope) -> PlinkEnvelope {
-        let sensitiveKeys: Set<String> = ["preview", "text", "callerHandle", "body", "message", "clipboard", "data", "name"]
+        let sensitiveKeys: Set<String> = ["preview", "text", "callerHandle", "body", "message", "clipboard", "data", "name", "replyToken", "actionToken", "sourceEnvelopeId", "packageName", "notificationKey", "sourceAppName"]
         var payload = envelope.payload
-        for key in sensitiveKeys where payload[key] != nil {
+        for key in payload.keys where sensitiveKeys.contains(key) || NotificationActionPolicy.isReserved(key) {
             payload[key] = .string("[redacted]")
         }
         var redacted = envelope

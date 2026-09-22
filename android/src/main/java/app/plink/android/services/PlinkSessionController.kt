@@ -133,6 +133,10 @@ class PlinkSessionController(
 
     init {
         featureSettings.addListener { feature, enabled ->
+            if (feature == ContinuityFeature.Messages) {
+                SharedNotificationActions.registry.setFeatureEnabled(enabled)
+                if (enabled) SharedNotificationActions.requestRefresh()
+            }
             if (!enabled) {
                 if (feature == ContinuityFeature.Messages) {
                     revokeReplyCapabilities()
@@ -523,7 +527,7 @@ class PlinkSessionController(
         val generation = prepared.admission.generation
         outbox = prepared.outbox
         SharedSessionState.configure(session)
-        setReplySession(generation, active = true)
+        setReplySession(generation, active = true, session = session)
         fileTransferCoordinator.activateSession(session.localDeviceId, session.pairedDevice.id, generation)
         lifetime.admission = prepared.admission
         prepared.admission.admit()
@@ -538,6 +542,7 @@ class PlinkSessionController(
         admission.dispatch.submit {
             fun current() = pairLifetime === lifetime && admission.isAdmitted()
             try {
+                if (current()) SharedNotificationActions.requestRefresh()
                 if (current()) prepared.outbound.retryPending()
                 if (current() && featureSettings.isEnabled(ContinuityFeature.Battery)) batteryCollector.start()
                 if (current() && featureSettings.isEnabled(ContinuityFeature.Media)) mediaCollector.start()
@@ -849,6 +854,9 @@ class PlinkSessionController(
             is AuthenticatedFrameResult.Message -> {
                 val envelope = result.envelope
                 when (envelope.type) {
+                    app.plink.android.protocol.NotificationActionsPolicy.Enable,
+                    app.plink.android.protocol.NotificationActionsPolicy.Invoke ->
+                        handleNotificationAction(envelope, admission, localDeviceId, pairedDeviceId)
                     in ScreenPreviewPayloadPolicy.eventTypes -> Unit
                     in FileTransferPayloadPolicy.eventTypes ->
                         fileTransferCoordinator.handle(envelope, admission.generation)
@@ -857,7 +865,7 @@ class PlinkSessionController(
                         pairedDeviceId = pairedDeviceId,
                         executeReply = { command ->
                             withContext(Dispatchers.Main.immediate) {
-                                check(admission.runIfAdmitted { executor.execute(command, localDeviceId) }) {
+                                check(ReplyDispatchLock.admitted(admission::runIfAdmitted) { executor.execute(command, localDeviceId) }) {
                                     "Ordinary admission was revoked."
                                 }
                             }
@@ -881,6 +889,36 @@ class PlinkSessionController(
         }
     }
 
+    private suspend fun handleNotificationAction(
+        command: PlinkEnvelope, admission: OrdinaryAdmissionLease, localDeviceId: String, peerDeviceId: String
+    ) {
+        if (command.sourceDeviceId != peerDeviceId || command.targetDeviceId != localDeviceId) return
+        var outcome: PlinkEnvelope? = null
+        withContext(Dispatchers.Main.immediate) {
+            ReplyDispatchLock.admitted(admission::runIfAdmitted) {
+                outcome = SharedNotificationActions.registry.handle(command, admission.generation) {
+                    val session = activeSession
+                    sessionGeneration.get() == admission.generation &&
+                        session?.localDeviceId == localDeviceId && session.pairedDevice.id == peerDeviceId &&
+                        (command.type == app.plink.android.protocol.NotificationActionsPolicy.Enable ||
+                            (featureSettings.isEnabled(ContinuityFeature.Messages) &&
+                                app.plink.android.permissions.AndroidPermissionReader.isNotificationListenerEnabled(context)))
+                }
+            }
+        }
+        val reply = outcome ?: return
+        if (!admission.isAdmitted()) return
+        SharedOutboundBridge.sendAwaitable(reply, stillValid = admission::isAdmitted)
+        if (command.type == app.plink.android.protocol.NotificationActionsPolicy.Enable && reply.type == PlinkEventType.Ack) {
+            ReplyDispatchLock.admitted(admission::runIfAdmitted) {
+                if (SharedNotificationActions.registry.currentSession() == command.payload["actionsSession"]?.jsonPrimitive?.content) {
+                    SharedNotificationActions.registry.state()?.let { SharedOutboundBridge.tryForward(it) }
+                    SharedNotificationActions.requestRefresh(force = true)
+                }
+            }
+        }
+    }
+
     private fun parseEndpoint(endpoint: String): Pair<String, Int> {
         val separator = endpoint.lastIndexOf(':')
         require(separator > 0 && separator < endpoint.lastIndex) { "Paired endpoint must be host:port." }
@@ -897,9 +935,14 @@ class PlinkSessionController(
         }
     }
 
-    private fun setReplySession(generation: Long, active: Boolean) {
+    private fun setReplySession(generation: Long, active: Boolean, session: ActivePlinkSession? = null) {
         ReplyDispatchLock.serialized {
             SharedReplyDispatchAuthority.sessionChanged(generation, active)
+            if (active) {
+                val current = requireNotNull(session)
+                SharedNotificationActions.registry.beginSession(current.localDeviceId, current.pairedDevice.id, generation)
+                SharedNotificationActions.registry.setFeatureEnabled(featureSettings.isEnabled(ContinuityFeature.Messages))
+            } else SharedNotificationActions.registry.retireSession()
             SharedReplyRoutes.registry.clear()
             SharedReplyActions.registry.clear()
         }

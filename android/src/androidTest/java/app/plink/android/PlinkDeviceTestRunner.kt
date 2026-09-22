@@ -60,6 +60,24 @@ class PlinkDeviceTestRunner : Instrumentation() {
 
     override fun onStart() {
         val result = Bundle()
+        if (arguments.getString("mode") == "notificationActions") {
+            try {
+                val producedOffers = mutableListOf<String>()
+                val passed = checkNotificationActions(targetContext, this) { wire ->
+                    check(producedOffers.size < 128)
+                    producedOffers += wire
+                }
+                result.putString("producedOffers", kotlinx.serialization.json.JsonArray(
+                    producedOffers.map(::JsonPrimitive)).toString())
+                result.putString("stream", "\nNOTIFICATION ACTION CHECKS PASSED: ${passed.joinToString("; ")}\n")
+                result.putInt("checks", passed.size)
+                finish(0, result)
+            } catch (error: Throwable) {
+                result.putString("stream", "\nNOTIFICATION ACTION CHECKS FAILED: ${error.javaClass.simpleName}: ${error.message}\n")
+                finish(1, result)
+            }
+            return
+        }
         if (arguments.getString("mode") == "notificationArtwork") {
             try {
                 val metadata = app.plink.android.notifications.NotificationArtwork.read(
@@ -229,6 +247,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
     private fun testReplyAuthorityRevocation() = runBlocking {
         val scenarios = listOf("disconnect", "destroy", "denied", "unknown", "disabled", "session", "peer", "queued")
         for (scenario in scenarios) {
+            val listenerOwner = Any()
             SyntheticReplyReceiver.reset()
             val routes = ReplyRouteRegistry()
             val actions = RemoteInputReplyRegistry(capabilityGeneration = SharedReplyDispatchAuthority::capture)
@@ -242,7 +261,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
                 val mapper = NotificationMapper("test-pixel", "test-mac", routes, actions)
                 val message = onMain {
                     ReplyDispatchLock.serialized {
-                        SharedReplyDispatchAuthority.listenerConnected()
+                        SharedReplyDispatchAuthority.listenerConnected(listenerOwner)
                         SharedReplyDispatchAuthority.sessionChanged(91, active = true)
                         requireNotNull(mapper.map(notification(action))).envelope
                     }
@@ -254,7 +273,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
                     ReplyDispatchLock.serialized {
                         when (scenario) {
                             "disconnect", "destroy", "queued" -> {
-                                SharedReplyDispatchAuthority.listenerDisconnected()
+                                SharedReplyDispatchAuthority.listenerDisconnected(listenerOwner)
                                 routes.clear()
                                 actions.clear()
                             }
@@ -283,7 +302,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
                 pending.cancel()
                 onMain {
                     ReplyDispatchLock.serialized {
-                        SharedReplyDispatchAuthority.listenerDisconnected()
+                        SharedReplyDispatchAuthority.listenerDisconnected(listenerOwner)
                         SharedReplyDispatchAuthority.sessionChanged(0, active = false)
                     }
                 }
@@ -293,6 +312,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
     }
 
     private fun testReplyReconnectAndFailure() = runBlocking {
+        val listenerOwner = Any()
         SyntheticReplyReceiver.reset()
         val routes = ReplyRouteRegistry()
         val actions = RemoteInputReplyRegistry(capabilityGeneration = SharedReplyDispatchAuthority::capture)
@@ -303,7 +323,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
             val mapper = NotificationMapper("test-pixel", "test-mac", routes, actions)
             fun post() = onMain { ReplyDispatchLock.serialized { requireNotNull(mapper.map(notification(action))).envelope } }
             onMain { ReplyDispatchLock.serialized {
-                SharedReplyDispatchAuthority.listenerConnected()
+                SharedReplyDispatchAuthority.listenerConnected(listenerOwner)
                 SharedReplyDispatchAuthority.sessionChanged(91, active = true)
             } }
             val old = reply(post(), exactReplyText)
@@ -311,10 +331,10 @@ class PlinkDeviceTestRunner : Instrumentation() {
                 inbound.route.pairedDeviceId == "test-mac" && SharedReplyDispatchAuthority.isCurrent(live.capabilityGeneration)
             }
             onMain { ReplyDispatchLock.serialized {
-                SharedReplyDispatchAuthority.listenerDisconnected()
+                SharedReplyDispatchAuthority.listenerDisconnected(listenerOwner)
                 routes.clear()
                 actions.clear()
-                SharedReplyDispatchAuthority.listenerConnected()
+                SharedReplyDispatchAuthority.listenerConnected(listenerOwner)
             } }
             check(onMain { runCatching { executor.execute(old, "test-pixel") }.isFailure })
             val fresh = reply(post(), exactReplyText)
@@ -347,7 +367,7 @@ class PlinkDeviceTestRunner : Instrumentation() {
         } finally {
             pending.cancel()
             onMain { ReplyDispatchLock.serialized {
-                SharedReplyDispatchAuthority.listenerDisconnected()
+                SharedReplyDispatchAuthority.listenerDisconnected(listenerOwner)
                 SharedReplyDispatchAuthority.sessionChanged(0, active = false)
             } }
         }

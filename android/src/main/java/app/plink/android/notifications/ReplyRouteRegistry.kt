@@ -26,7 +26,8 @@ class ReplyRouteRegistry(
         packageName: String,
         notificationKey: String,
         conversationId: String?,
-        canReply: Boolean
+        canReply: Boolean,
+        replyToken: String = UUID.randomUUID().toString()
     ): ReplyRoute {
         val now = Instant.now(clock)
         prune(now)
@@ -37,7 +38,7 @@ class ReplyRouteRegistry(
             notificationKey = notificationKey,
             conversationId = conversationId,
             canReply = canReply,
-            replyToken = UUID.randomUUID().toString()
+            replyToken = replyToken
         )
         routes[route.replyToken] = LiveReplyRoute(route = route, createdAt = now, expiresAt = now.plus(ttl))
         return route

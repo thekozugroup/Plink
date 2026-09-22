@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import OSLog
 import PlinkCore
 import UserNotifications
@@ -13,6 +14,20 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     // Late delivery completions may only affect the current submission for this ID.
     private var submissions: [String: UUID] = [:]
     private var messages = MacNotificationBookkeeping()
+    private let registerCategories: ((Set<UNNotificationCategory>) -> Void)?
+    private let now: () -> Date
+    private var actionSession: NotificationActionSession?
+    private struct ActionPresentation {
+        let offer: NotificationActionOffer
+        let category: UNNotificationCategory
+        var consumed: Set<Int> = []
+    }
+    private var actionPresentations: [String: ActionPresentation] = [:]
+    var onNotificationAction: ((PlinkEnvelope, UUID) -> Void)?
+    var notificationActionsAllowed: ((UUID) -> Bool)?
+    var onActionInfo: ((String) -> Void)?
+    var onOpenNotification: (() -> Void)?
+    private var latestActionCommandID: String?
     private var callContext: MacCallContext?
     private var callNotificationID: String?
     private var callNumber: String?
@@ -44,22 +59,21 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     init(
         submitNotification: ((UNNotificationRequest) -> Void)? = nil,
         removeNotifications: (([String]) -> Void)? = nil,
-        addNotification: ((UNNotificationRequest, @escaping @MainActor (Error?) -> Void) -> Void)? = nil
+        addNotification: ((UNNotificationRequest, @escaping @MainActor (Error?) -> Void) -> Void)? = nil,
+        registerCategories: ((Set<UNNotificationCategory>) -> Void)? = nil,
+        now: @escaping () -> Date = { .now }
     ) {
         self.submitNotification = submitNotification
         self.removeNotifications = removeNotifications
         self.addNotification = addNotification
+        self.registerCategories = registerCategories
+        self.now = now
         super.init()
     }
 
     func configure() {
         center.delegate = self
-        let reply = UNTextInputNotificationAction(identifier: "message.reply", title: "Reply", options: [], textInputButtonTitle: "Send", textInputPlaceholder: "Message")
-        center.setNotificationCategories(Self.callCategories.union([
-            UNNotificationCategory(identifier: "plink.call.readonly", actions: [], intentIdentifiers: []),
-            UNNotificationCategory(identifier: "plink.message", actions: [reply], intentIdentifiers: [], options: [.customDismissAction]),
-            UNNotificationCategory(identifier: "plink.message.readonly", actions: [], intentIdentifiers: [])
-        ]))
+        publishCategories()
         // Live Android reply capabilities and call identities do not survive restart.
         clearContexts()
         // Only startup clears all OS notifications. Message eviction must preserve live calls.
@@ -101,6 +115,8 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
 
     func clearContexts() {
         submissions.removeAll()
+        endWaitingAction()
+        actionSession = nil
         removeMessages(messages.removeAll())
         removeMirroredCall()
     }
@@ -116,7 +132,13 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func expireContexts() {
-        removeMessages(messages.expire())
+        let expired = actionPresentations.filter { $0.value.offer.expires <= now() }.map(\.key)
+        for id in expired { _ = messages.remove(notificationID: id) }
+        removeMessages(expired + messages.expire(now: now()))
+        let timedOut = actionSession?.expire(now: now()) ?? []
+        if timedOut.contains(where: { $0.envelope.id == latestActionCommandID && $0.presentationID != nil }) {
+            endWaitingAction()
+        }
     }
 
     func updateCall(_ call: MacCallSession, presentNotification: Bool = true,
@@ -185,7 +207,21 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
             return
         }
         guard let plan = NotificationPlanner.plan(for: envelope) else { return }
-        let id = "\(plan.categoryIdentifier)-\(envelope.id)"
+        // Durable previews have no ordering metadata and cannot replace a retained v1 observation.
+        // A present malformed extension still follows the separate readonly policy.
+        if !NotificationActionPolicy.hasExtension(envelope.payload),
+           actionSession?.hasObservedKey(of: envelope) == true { return }
+        let offer = NotificationActionOffer(envelope)
+        if let offer, actionSession != nil {
+            guard let observation = actionSession?.observe(offer) else { return }
+            if observation.retireAll { endWaitingAction(); retireActionPresentations() }
+            if let key = observation.evicted {
+                retireActionPresentations { $0.packageName == key.package && $0.notificationKey == key.notification }
+            }
+            if let generation = actionSession?.admission.generation, notificationActionsAllowed?(generation) ?? true,
+               let enable = actionSession?.enable(now: now()) { onNotificationAction?(enable, generation) }
+        }
+        let id = offer == nil ? "\(plan.categoryIdentifier)-\(envelope.id)" : "plink.actions.\(UUID().uuidString)"
         let context = ReplyRouter.context(from: envelope)
         if envelope.type == .messageReceived,
            let key = envelope.payload["notificationKey"]?.stringValue {
@@ -195,7 +231,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
                     notificationID: id,
                     peerID: envelope.sourceDeviceId,
                     notificationKey: key,
-                    context: context
+                    context: context, now: now()
                 )
             removeMessages(obsolete)
         }
@@ -205,6 +241,15 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         content.subtitle = plan.subtitle
         content.body = plan.body
         content.categoryIdentifier = plan.categoryIdentifier == "plink.message" && context == nil ? "plink.message.readonly" : plan.categoryIdentifier
+        if let offer, actionSession?.permits(offer, now: now()) == true {
+            let category = Self.category(for: offer)
+            actionPresentations[id] = ActionPresentation(offer: offer, category: category)
+            content.categoryIdentifier = category.identifier
+            publishCategories() // Register before add; all currently referenced shapes and call categories survive.
+            if offer.overflow > 0 || offer.slots.contains(where: { $0.kind == .phone }) {
+                onActionInfo?(Self.explanation(for: offer))
+            }
+        }
         if envelope.type == .messageReceived {
             submitFromPhone(content, id: id, envelope: envelope, phoneName: pairedPhoneName)
         } else {
@@ -216,11 +261,11 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         let id = response.notification.request.identifier
         let action = response.actionIdentifier
         let text = (response as? UNTextInputNotificationResponse)?.userText
-        await handleResponse(id: id, action: action, text: text)
+        await handleResponse(id: id, action: action, text: text, category: response.notification.request.content.categoryIdentifier)
     }
 
     // Same action path for native responses and held-delivery regression tests.
-    func handleResponse(id: String, action: String, text: String?) {
+    func handleResponse(id: String, action: String, text: String?, category: String? = nil) {
         if action.hasPrefix("call."), let callAction = MacCallAction(rawValue: String(action.dropFirst(5))) {
             guard [.answer, .decline, .hangUp].contains(callAction),
                   callPresentationAllowed, !callActionConsumed, id == callNotificationID,
@@ -235,6 +280,15 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
             if id == callNotificationID { callActionConsumed = true }
             self.removeDeliveredAndPending([id])
             _ = self.messages.remove(notificationID: id)
+            return
+        }
+        if action.hasPrefix("notification.action.") {
+            handleNotificationAction(id: id, action: action, text: text, category: category)
+            return
+        }
+        if action == UNNotificationDefaultActionIdentifier, messages.containsID(id) {
+            if let presentation = actionPresentations[id] { onActionInfo?(Self.explanation(for: presentation.offer)) }
+            onOpenNotification?()
             return
         }
         guard action == "message.reply", let text else { return }
@@ -286,6 +340,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
             self.submissions.removeValue(forKey: id)
             guard let error else { return }
             _ = self.messages.remove(notificationID: id)
+            self.retireActionPresentation(id)
             self.onDeliveryError?(id, error)
         }
         if let addNotification { addNotification(request, completion); return }
@@ -306,6 +361,7 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     private func removeDeliveredAndPending(_ ids: [String]) {
         for id in ids {
             submissions.removeValue(forKey: id)
+            retireActionPresentation(id)
             if mirroredCallNotificationID == id {
                 mirroredCallNotificationID = nil
                 mirroredCallIdentity = nil
@@ -315,4 +371,124 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         center.removeDeliveredNotifications(withIdentifiers: ids)
         center.removePendingNotificationRequests(withIdentifiers: ids)
     }
+
+    func bindActionAdmission(localID: String, peerID: String, generation: UUID) {
+        let admission = NotificationActionSession.Admission(localID: localID, peerID: peerID, generation: generation)
+        guard actionSession?.admission != admission else { return }
+        clearContexts()
+        actionSession = NotificationActionSession(admission: admission)
+    }
+
+    /// Called before the legacy command tracker; new outcomes cannot fall through to legacy matching.
+    func handleActionControl(_ envelope: PlinkEnvelope) -> Bool {
+        guard NotificationActionPolicy.isControl(envelope) else { return false }
+        guard let generation = actionSession?.admission.generation,
+              notificationActionsAllowed?(generation) ?? true else { return true }
+        if envelope.type == .notificationActionsState {
+            if actionSession?.state(envelope) == true { endWaitingAction(); retireActionPresentations() }
+        } else if let command = actionSession?.outcome(envelope, now: now()),
+                  command.presentationID != nil, command.envelope.id == latestActionCommandID {
+            latestActionCommandID = nil
+            if envelope.type == .ack { onActionInfo?("Phone accepted the action. Delivery is not confirmed.") }
+            else { onActionInfo?(NotificationActionPolicy.failureMessage(envelope.payload["code"]?.stringValue ?? "")) }
+        }
+        return true
+    }
+
+    func actionTransportFailed(_ id: String, generation: UUID) {
+        guard actionSession?.admission.generation == generation,
+              let command = actionSession?.failed(id), command.envelope.id == latestActionCommandID,
+              command.presentationID != nil else { return }
+        endWaitingAction()
+    }
+
+    private func endWaitingAction() {
+        guard latestActionCommandID != nil else { return }
+        latestActionCommandID = nil
+        onActionInfo?("Could not confirm the action.")
+    }
+
+    private func handleNotificationAction(id: String, action: String, text: String?, category: String?) {
+        guard var presentation = actionPresentations[id], messages.containsID(id),
+              category == presentation.category.identifier,
+              let index = Int(action.dropFirst("notification.action.".count)),
+              action == "notification.action.\(index)", presentation.offer.slots.indices.contains(index),
+              !presentation.consumed.contains(index),
+              let generation = actionSession?.admission.generation,
+              notificationActionsAllowed?(generation) ?? true,
+              actionSession?.permits(presentation.offer, now: now()) == true else { onStaleAction?(); return }
+        let slot = presentation.offer.slots[index]
+        if slot.kind == .phone { onActionInfo?(Self.phoneExplanation(slot.reason)); return }
+        let command: PlinkEnvelope
+        do { command = try presentation.offer.invocation(index: index, text: text, now: now()) }
+        catch { onInvalidReply?(); return }
+        guard actionSession?.track(command, presentationID: id, now: now()) == true else {
+            onActionInfo?("Wait for the current actions to finish."); return
+        }
+        latestActionCommandID = command.id
+        presentation.consumed.insert(index)
+        actionPresentations[id] = presentation
+        onActionInfo?("Waiting for your phone…")
+        onNotificationAction?(command, generation)
+    }
+
+    private func retireActionPresentations(where predicate: (NotificationActionOffer) -> Bool = { _ in true }) {
+        let ids = actionPresentations.filter { predicate($0.value.offer) }.map(\.key)
+        for id in ids { _ = messages.remove(notificationID: id) }
+        removeMessages(ids)
+    }
+
+    private func retireActionPresentation(_ id: String) {
+        if actionPresentations.removeValue(forKey: id) != nil { publishCategories() }
+    }
+
+    private func publishCategories() {
+        let reply = UNTextInputNotificationAction(identifier: "message.reply", title: "Reply", options: [],
+            textInputButtonTitle: "Send", textInputPlaceholder: "Message")
+        var categories = Self.callCategories.union([
+            UNNotificationCategory(identifier: "plink.call.readonly", actions: [], intentIdentifiers: []),
+            UNNotificationCategory(identifier: "plink.message", actions: [reply], intentIdentifiers: [], options: [.customDismissAction]),
+            UNNotificationCategory(identifier: "plink.message.readonly", actions: [], intentIdentifiers: [])
+        ])
+        categories.formUnion(actionPresentations.values.map(\.category))
+        if let registerCategories { registerCategories(categories) }
+        else if submitNotification == nil && addNotification == nil { center.setNotificationCategories(categories) }
+    }
+
+    private static func category(for offer: NotificationActionOffer) -> UNNotificationCategory {
+        // Only immutable presentation fields enter this hash. Tokens and routing never do.
+        let shape = offer.slots.map { [$0.label, $0.kind.rawValue, $0.inputLabel ?? "",
+                                      $0.authenticationRequired ? "1" : "0", $0.destructive ? "1" : "0"] }
+        let data = (try? JSONSerialization.data(withJSONObject: shape)) ?? Data()
+        let identifier = "plink.actions." + SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        let actions: [UNNotificationAction] = offer.slots.enumerated().map { index, slot in
+            var options: UNNotificationActionOptions = []
+            if slot.authenticationRequired { options.insert(.authenticationRequired) }
+            if slot.destructive { options.insert(.destructive) }
+            let id = "notification.action.\(index)"
+            if slot.kind == .text {
+                return UNTextInputNotificationAction(identifier: id, title: slot.label, options: options,
+                    textInputButtonTitle: "Send", textInputPlaceholder: slot.inputLabel ?? "Message")
+            }
+            return UNNotificationAction(identifier: id, title: slot.label, options: options)
+        }
+        return UNNotificationCategory(identifier: identifier, actions: actions, intentIdentifiers: [], options: [.customDismissAction])
+    }
+
+    private static func explanation(for offer: NotificationActionOffer) -> String {
+        var parts = offer.slots.filter { $0.kind == .phone }.map { phoneExplanation($0.reason) }
+        if offer.overflow > 0 { parts.append("\(offer.overflow) more actions are available on your phone.") }
+        return parts.isEmpty ? "Choose an action on the notification." : Array(NSOrderedSet(array: parts)).compactMap { $0 as? String }.joined(separator: " ")
+    }
+
+    private static func phoneExplanation(_ reason: String?) -> String {
+        switch reason {
+        case "choice_input": return "Choose an option on your phone."
+        case "data_input": return "Add the requested attachment on your phone."
+        case "multiple_inputs": return "Complete the requested fields on your phone."
+        case "missing_intent", "invalid_label": return "This action is unavailable here. Check your phone."
+        default: return "Complete this action on your phone."
+        }
+    }
+
 }

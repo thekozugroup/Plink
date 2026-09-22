@@ -1,0 +1,115 @@
+{
+  "iteration": 24,
+  "baselineCommit": "003e8e8",
+  "scope": "Native notification action mirroring and reply correctness; simulated validation",
+  "gate": {
+    "command": "./scripts/verify.sh",
+    "exitCode": 0,
+    "android": {
+      "tests": 242,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "swiftTestingRuns": [
+      {
+        "tests": 131,
+        "suites": 11
+      },
+      {
+        "tests": 126,
+        "suites": 1
+      }
+    ],
+    "xctestTests": 66,
+    "swiftTests": 323,
+    "totalUnitTests": 565,
+    "physicalDeviceUsed": false,
+    "nativeNotificationCenterInteractionVerified": false,
+    "log": "full-gate.log",
+    "queueSHA256": "9c9103348f8877e29d7bfaf008b66c9211cacca2f388e80d03cfbd2c1108ec69"
+  },
+  "frameworkChecks": {
+    "total": 19,
+    "genericActionScenarios": 11,
+    "legacyReplyScenarios": 8,
+    "api": 36,
+    "abi": "arm64-v8a",
+    "physicalDeviceUsed": false,
+    "neverPostedSyntheticNotifications": true,
+    "ordinaryAdmissionTransportTested": false,
+    "phoneLockInjected": true
+  },
+  "sharedWireCases": {
+    "handwritten": 105,
+    "androidProduced": 26,
+    "exactMillisecondBoundaryCases": 1000,
+    "rejectedBoundaryCases": 0
+  },
+  "redEvidence": {
+    "androidInitialAssertionFailures": 3,
+    "macInitialFailedFunctions": 3,
+    "androidIssuanceAssertionFailures": 2
+  },
+  "artifacts": [
+    {
+      "path": "android/build/outputs/apk/debug/android-debug.apk",
+      "sha256": "6c017a6eab358ea7e0a94a3ac146e2ffe82b9a69f2a44f238212c865df62c95d"
+    },
+    {
+      "path": "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk",
+      "sha256": "ff7d46f7b835ae39936d923065ac96fc089e6bd18df8b385658150ec33c73800"
+    },
+    {
+      "path": "build/PlinkMac.app.zip",
+      "sha256": "7991133475218321034168a5f1a337edea4bd216ec677d047f9c0b0618790c81"
+    }
+  ],
+  "cleanup": {
+    "ownedEmulatorStopped": true,
+    "ownedAVDDeleted": true,
+    "temporaryHelpersRemoved": true,
+    "expandedMacBuildAppRemoved": true,
+    "physicalDeviceSettingsChanged": false,
+    "installedMacAppChanged": false
+  },
+  "notVerified": [
+    "Native Mac Notification Center action placement and interaction",
+    "Real messaging-provider reply and other action behavior",
+    "Full paired Mac-to-Pixel transport for new actions",
+    "Pixel API37 behavior and hardware/profile authentication",
+    "Generic primary notification icon and cellular call audio remain unresolved"
+  ],
+  "sourceSHA256": {
+    "android/src/main/java/app/plink/android/notifications/NotificationActionRegistry.kt": "80b50db5bf7939c8f4c7ba74f53ddf9fd029328942f3fbb655292f98e75c9fb8",
+    "android/src/main/java/app/plink/android/notifications/AndroidNotificationActions.kt": "b6e8bb266498bd902fe22f432f949f331f111b07ec4eca46d3b04ec548147b35",
+    "android/src/main/java/app/plink/android/notifications/NotificationMapper.kt": "81dedd80d38543de180242e303ea35077de8a6172d361fce8870c52bcc3b9a3f",
+    "android/src/main/java/app/plink/android/notifications/RemoteInputReplyExecutor.kt": "36c096328747e8e10741a34abf4d1ccf4389703bdc9d3ac2f2b5e10d1f58a34f",
+    "android/src/main/java/app/plink/android/notifications/ReplyRouteRegistry.kt": "a11c057d0ea9a7fa6c1987d4e15a23a2ccf184438020b567989bbf4951876b8c",
+    "android/src/main/java/app/plink/android/protocol/NotificationActionsPolicy.kt": "6a7ed1a917099ee495ab291c8e0a02053994566e058e1db6b6e71c3ca1a127fd",
+    "android/src/main/java/app/plink/android/security/SecureEnvelope.kt": "adb93c44b00310547171dcd7ebf5f5ba7b6ee665b4f52b4297aafbe09bd39358",
+    "android/src/main/java/app/plink/android/services/DurableEventOutbox.kt": "7f868ad0c350f7c863a6dd88b9195c51c14944070beb56223472741b6a6ff179",
+    "android/src/main/java/app/plink/android/services/PlinkNotificationListenerService.kt": "ef748b6a90f10779469188774741e14ddf86a816d21ed220cca4f67e20cc845b",
+    "android/src/main/java/app/plink/android/services/PlinkSessionController.kt": "948880e0d430965f1395728ce69ca60f2f9e7d7b5e5fc359acd15cfaf07295c9",
+    "android/src/main/java/app/plink/android/services/SharedNotificationActions.kt": "be622f675e76e20d9d2f872b43bbf383c69d991fff481e37fa37ec2871d67380",
+    "android/src/test/java/app/plink/android/notifications/NotificationActionsPolicyTest.kt": "a46fd35fcc4bb833735fa36b47649fb4dfa2f45eb002491297cfe19404f5e1b1",
+    "android/src/test/java/app/plink/android/notifications/NotificationActionRegistryTest.kt": "79793cd96ea284e62ed1c18f57f334b52d87bc8bdd718de6d533510735cca8f6",
+    "android/src/test/java/app/plink/android/notifications/NotificationActionsFixtureTest.kt": "e4da5b35e37accc1a5b9095870796e8cfbb22a2deadc97d15b89342ef44d3b67",
+    "android/src/test/java/app/plink/android/services/DurableEventOutboxTest.kt": "33e41478d7adc9676fd761007bbac4737a31e22fd42a1f8f7ac2a90381b50b88",
+    "android/src/main/java/app/plink/android/notifications/NotificationActionInputPolicy.kt": "765f388156a180d37ce67f7df862e717e7bdb8b5be4027f3494395fa13a64bbb",
+    "android/src/test/java/app/plink/android/notifications/NotificationActionInputPolicyTest.kt": "5b11f6dc6a623519671eb43544061bfe473fb2ada9114d21c427f5a3c2225e80",
+    "android/src/test/java/app/plink/android/services/NotificationListenerOwnershipTest.kt": "58db8ce3cadb6d78b122bed2c8f0e33bbe4db1b6228bc11a62cab657f94410de",
+    "android/src/test/java/app/plink/android/services/ReplyAdmissionLockTest.kt": "3f983b67715a0d93c2fa84f8f95802bd80bd7d715a09c1630c8aeb2aed049641",
+    "macos/Sources/PlinkCore/NotificationActionProtocol.swift": "5f654bd9f0a02778b08ed8839150c787729238d5c558d25ac077e00541157a9c",
+    "macos/Sources/PlinkCore/PlinkMessage.swift": "6ff79eafe19d805c06f129cc86f6aa640c16d9bcd5dc17b2866c028b94e93845",
+    "macos/Sources/PlinkCore/ReconnectProtocol.swift": "48009029e8907446463ed00affd6f617e2d8f41820584c7bbc2113dd65d7172b",
+    "macos/Sources/PlinkCore/ReplyRouter.swift": "9df5a3b1f9627e1587846c3ff92c36696f4192f3302812a15999343a58ec3870",
+    "macos/Sources/PlinkCore/SecureEnvelope.swift": "0e23c55191966ec32769e5ce27895632f2482530edac2d47bb411bfc2b07c0bb",
+    "macos/Sources/PlinkMac/NotificationActionSession.swift": "62998a17edeaa5606f783289cc0cfea29efa7eebc843ea7d6aa92991265c98d4",
+    "macos/Sources/PlinkMac/NotificationBridge.swift": "5fb09a7bc557a8140b642eddd8495c474da53390cbc23d809bbddefd5ac53c93",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "c8641a78f5389c8c2456c8473108d5f5722ced9218c223e01bb0d5b225129fa6",
+    "macos/Tests/PlinkCoreTests/NotificationActionProtocolTests.swift": "6ace7cce3e21340f978409b9482da071faa02102469f76fcc361d025ffcc0a26",
+    "macos/Tests/PlinkMacTests/NotificationActionsTests.swift": "448a3c682b6f8f6456d5d321acf955a4925621282485a25ff459c744fe35c94a",
+    "macos/Resources/Info.plist": "edb0d1e7c0ae915d4f282bcb890956391b4b59fbecb8731be11d2bfe8b883fda"
+  }
+}

@@ -86,7 +86,7 @@ object PayloadPolicy {
         PlinkEventType.Ack,
         PlinkEventType.Error
     ) + FileTransferPayloadPolicy.eventTypes + ScreenPreviewPayloadPolicy.eventTypes +
-        app.plink.android.protocol.ReconnectPayloadPolicy.eventTypes
+        app.plink.android.protocol.ReconnectPayloadPolicy.eventTypes + app.plink.android.protocol.NotificationActionsPolicy.eventTypes
 
     fun requireAcceptable(envelope: PlinkEnvelope) {
         require(envelope.version == 1) { "Unsupported protocol version." }
@@ -97,6 +97,7 @@ object PayloadPolicy {
         require(envelope.encode().toByteArray(Charsets.UTF_8).size <= maxEnvelopeBytes) {
             "Envelope exceeds $maxEnvelopeBytes bytes."
         }
+        app.plink.android.protocol.NotificationActionsPolicy.requireAcceptable(envelope)
         FileTransferPayloadPolicy.requireAcceptable(envelope)
         ScreenPreviewPayloadPolicy.requireAcceptable(envelope)
         app.plink.android.protocol.ReconnectPayloadPolicy.requireAcceptable(envelope)
@@ -150,7 +151,8 @@ object PrivacyRedactor {
     fun redact(envelope: PlinkEnvelope): PlinkEnvelope {
         val redactedPayload = JsonObject(
             envelope.payload.mapValues { (key, value) ->
-                if (key in sensitiveKeys) JsonPrimitive("[redacted]") else value
+                if (key in sensitiveKeys || app.plink.android.protocol.NotificationActionsPolicy.reserved(key) ||
+                    key in setOf("actionToken", "sourceEnvelopeId", "packageName", "notificationKey", "replyToken", "sourceAppIconPng")) JsonPrimitive("[redacted]") else value
             }
         )
         return envelope.copy(payload = redactedPayload)

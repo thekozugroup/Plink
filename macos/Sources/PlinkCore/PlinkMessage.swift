@@ -15,7 +15,8 @@ public struct PlinkEnvelope: Codable, Equatable, Sendable {
         _ data: Data,
         reconnectValidation: ReconnectValidationPolicy = .production
     ) throws -> PlinkEnvelope {
-        let envelope = try PlinkJSON.decoder().decode(PlinkEnvelope.self, from: data)
+        let actionData = try NotificationActionPolicy.prepareForDecoding(data)
+        let envelope = try PlinkJSON.decoder().decode(PlinkEnvelope.self, from: actionData)
         if ReconnectPayloadPolicy.eventTypes.contains(envelope.type) {
             try ReconnectPayloadPolicy.validateRawJSON(data, validation: reconnectValidation)
         }
@@ -103,6 +104,9 @@ public enum EventType: String, Codable, Hashable, Sendable {
     case callEnded = "call.ended"
     case messageReceived = "message.received"
     case messageReply = "message.reply"
+    case notificationActionsEnable = "notification.actions.enable"
+    case notificationActionsState = "notification.actions.state"
+    case notificationAction = "notification.action"
     case clipboardUpdated = "clipboard.updated"
     case fileOffer = "file.offer"
     case fileAccept = "file.accept"

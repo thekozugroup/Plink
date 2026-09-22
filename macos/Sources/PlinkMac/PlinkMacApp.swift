@@ -380,6 +380,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             do { self.sendCommand(try ReplyRouter.makeReplyEnvelope(context: context, text: text)) }
             catch { self.lastReply = "Reply failed: invalid reply context." }
         }
+        notificationBridge.notificationActionsAllowed = { [weak self] generation in
+            guard let self else { return false }
+            return self.connectionGeneration == generation && self.activeTransport != nil &&
+                self.callNotificationEnvironmentEligible
+        }
+        notificationBridge.onActionInfo = { [weak self] message in self?.commandStatus = message }
+        notificationBridge.onOpenNotification = { [weak self] in self?.showDashboardWindow() }
+        notificationBridge.onNotificationAction = { [weak self] envelope, generation in
+            guard let self, self.connectionGeneration == generation,
+                  self.pairedPeerID == envelope.targetDeviceId, let transport = self.activeTransport,
+                  self.callNotificationEnvironmentEligible else { return }
+            Task { @MainActor [weak self] in
+                guard let self, self.connectionGeneration == generation,
+                      self.pairedPeerID == envelope.targetDeviceId, self.callNotificationEnvironmentEligible else { return }
+                do { try await transport.send(envelope) }
+                catch { self.notificationBridge.actionTransportFailed(envelope.id, generation: generation) }
+            }
+        }
         notificationBridge.callActionsAllowed = { [weak self] in
             guard let self else { return false }
             return self.callNotificationEnvironmentEligible && self.ownsSelectedCallPeer && self.calling.serviceConnected &&
@@ -1952,6 +1970,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 files.receive(envelope)
                 return
             }
+            if activeTransport != nil, let peer = pairedPeerID {
+                notificationBridge.bindActionAdmission(localID: localMacDeviceId, peerID: peer, generation: connectionGeneration)
+            }
+            if notificationBridge.handleActionControl(envelope) { return }
             if let result = commands.resolve(envelope) { showCommandResult(result); return }
             switch envelope.type {
             case .deviceStatus:
