@@ -17,6 +17,10 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     private var callContext: MacCallContext?
     private var callNotificationID: String?
     private var callNumber: String?
+    private var callAudioUnavailableReason: String?
+    private var currentCall = MacCallSession()
+    private var callPresentationAllowed = true
+    private var callActionConsumed = false
     private struct MirroredCallIdentity: Equatable {
         let peerID: String
         let notificationKey: String
@@ -28,9 +32,11 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         }
     }
     private var mirroredCallIdentity: MirroredCallIdentity?
+    private var mirroredCallNotificationID: String?
     private var authorizationRefresh = UUID()
     var onTextReply: ((ReplyContext, String) -> Void)?
     var onCallAction: ((MacCallAction, MacCallContext) -> Void)?
+    var callActionsAllowed: (() -> Bool)?
     var onAuthorizationChanged: ((Bool, Error?) -> Void)?
     var onDeliveryError: ((String, Error) -> Void)?
     var onStaleAction: (() -> Void)?
@@ -52,22 +58,27 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     func configure() {
         center.delegate = self
         let reply = UNTextInputNotificationAction(identifier: "message.reply", title: "Reply", options: [], textInputButtonTitle: "Send", textInputPlaceholder: "Message")
-        let answer = UNNotificationAction(identifier: "call.answer", title: "Answer on Mac", options: [.authenticationRequired])
-        let decline = UNNotificationAction(identifier: "call.decline", title: "Decline", options: [.authenticationRequired])
-        let end = UNNotificationAction(identifier: "call.hangUp", title: "End Call", options: [.authenticationRequired, .destructive])
-        center.setNotificationCategories([
-            UNNotificationCategory(identifier: "plink.call.ringing", actions: [answer, decline], intentIdentifiers: []),
-            UNNotificationCategory(identifier: "plink.call.active", actions: [end], intentIdentifiers: []),
+        center.setNotificationCategories(Self.callCategories.union([
             UNNotificationCategory(identifier: "plink.call.readonly", actions: [], intentIdentifiers: []),
             UNNotificationCategory(identifier: "plink.message", actions: [reply], intentIdentifiers: [], options: [.customDismissAction]),
             UNNotificationCategory(identifier: "plink.message.readonly", actions: [], intentIdentifiers: [])
-        ])
+        ]))
         // Live Android reply capabilities and call identities do not survive restart.
         clearContexts()
         // Only startup clears all OS notifications. Message eviction must preserve live calls.
         center.removeAllDeliveredNotifications()
         center.removeAllPendingNotificationRequests()
         refreshAuthorization()
+    }
+
+    static var callCategories: Set<UNNotificationCategory> {
+        let answer = UNNotificationAction(identifier: "call.answer", title: "Answer", options: [.authenticationRequired])
+        let decline = UNNotificationAction(identifier: "call.decline", title: "Decline", options: [.authenticationRequired])
+        let end = UNNotificationAction(identifier: "call.hangUp", title: "End Call", options: [.authenticationRequired, .destructive])
+        return [
+            UNNotificationCategory(identifier: "plink.call.ringing", actions: [answer, decline], intentIdentifiers: [], options: [.customDismissAction]),
+            UNNotificationCategory(identifier: "plink.call.active", actions: [end], intentIdentifiers: [], options: [.customDismissAction])
+        ]
     }
 
     func refreshAuthorization() {
@@ -94,13 +105,14 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     func clearContexts() {
         submissions.removeAll()
         removeMessages(messages.removeAll())
-        removeDeliveredAndPending(["plink.call.mirrored"])
-        mirroredCallIdentity = nil
+        removeMirroredCall()
     }
 
     func shutdown() {
+        callPresentationAllowed = false
+        currentCall = MacCallSession()
         clearContexts()
-        let ids = [callNotificationID, "plink.call.mirrored"].compactMap { $0 }
+        let ids = [callNotificationID].compactMap { $0 }
         removeDeliveredAndPending(ids)
         callContext = nil; callNotificationID = nil; callNumber = nil
         mirroredCallIdentity = nil
@@ -110,34 +122,35 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         removeMessages(messages.expire())
     }
 
-    func updateCall(_ call: MacCallSession, presentNotification: Bool = true) {
-        if !presentNotification, let context = call.context {
-            removeDeliveredAndPending([callNotificationID, "plink.call.mirrored"].compactMap { $0 })
-            mirroredCallIdentity = nil
-            // Keep authoritative HFP ownership during pending/uncertain phases too, so
-            // delayed mirrored events cannot create a second presentation over the panel.
-            callContext = context; callNotificationID = nil; callNumber = call.number
+    func updateCall(_ call: MacCallSession, presentNotification: Bool = true,
+                    hfpControlsAvailable: Bool = true,
+                    audioUnavailableReason: String? = nil) {
+        let unchanged = callContext == call.context && currentCall.phase == call.phase &&
+            callNumber == call.number && callAudioUnavailableReason == audioUnavailableReason
+        callAudioUnavailableReason = audioUnavailableReason
+        currentCall = call
+        callContext = call.context
+        callPresentationAllowed = presentNotification
+        // HFP retains authority during pending/uncertain phases, even without a banner.
+        if callContext != nil || !presentNotification {
+            removeMirroredCall()
+        }
+        guard presentNotification, hfpControlsAvailable, call.stateIsCertain, let context = call.context,
+              [.ringing, .active].contains(call.phase), !call.hasWaitingCall else {
+            if let id = callNotificationID { removeDeliveredAndPending([id]) }
+            callNotificationID = nil; callNumber = call.number
             return
         }
-        guard call.stateIsCertain, let context = call.context, [.ringing, .active].contains(call.phase), !call.hasWaitingCall else {
-            if let id = callNotificationID {
-                removeDeliveredAndPending([id])
-            }
-            callContext = nil; callNotificationID = nil; callNumber = nil
-            return
-        }
-        let id = "plink.hfp.\(context.callID).\(call.phase.rawValue)"
-        removeDeliveredAndPending(["plink.call.mirrored"])
-        mirroredCallIdentity = nil
-        guard callNotificationID != id || callNumber != call.number else { return }
-        if let old = callNotificationID {
-            removeDeliveredAndPending([old])
-        }
-        callContext = context; callNotificationID = id
-        callNumber = call.number
+        guard callNotificationID == nil || !unchanged else { return }
+        if let old = callNotificationID { removeDeliveredAndPending([old]) }
+        // A new presentation after lock/unlock must reject responses to its predecessor,
+        // even when the underlying HFP context and phase have not changed.
+        let id = "plink.hfp.\(context.callID).\(call.phase.rawValue).\(UUID().uuidString)"
+        callNotificationID = id; callNumber = call.number; callActionConsumed = false
         let content = UNMutableNotificationContent()
         content.title = call.phase == .ringing ? "Incoming call" : "Call active"
         content.body = call.number ?? "Unknown caller"
+        content.subtitle = audioUnavailableReason ?? ""
         content.categoryIdentifier = call.phase == .ringing ? "plink.call.ringing" : "plink.call.active"
         if call.phase == .ringing { content.sound = .default }
         submit(content, id: id)
@@ -149,23 +162,29 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         }
         if envelope.type == .callEnded {
             guard let identity = MirroredCallIdentity(envelope), identity == mirroredCallIdentity else { return }
-            removeDeliveredAndPending(["plink.call.mirrored"])
-            mirroredCallIdentity = nil
+            removeMirroredCall()
             return // Only HFP identities may drive controls.
         }
         if envelope.type == .callRinging {
             callLog.notice("calls.notification.received.callRinging")
+            if !callPresentationAllowed {
+                callLog.notice("calls.notification.callRinging.skipped.privacy")
+                return
+            }
             if callContext != nil {
                 callLog.notice("calls.notification.callRinging.skipped.hfp_context")
                 return
             }
+            removeMirroredCall()
+            let id = "plink.call.mirrored.\(UUID().uuidString)"
+            mirroredCallNotificationID = id
             mirroredCallIdentity = MirroredCallIdentity(envelope)
             let content = UNMutableNotificationContent()
             content.title = "Call notification from phone"
             content.body = envelope.payload["callerName"]?.stringValue ?? "Check your phone"
             content.categoryIdentifier = "plink.call.readonly"
             callLog.notice("calls.notification.callRinging.submitting.readonly")
-            submitFromPhone(content, id: "plink.call.mirrored", envelope: envelope, phoneName: pairedPhoneName)
+            submitFromPhone(content, id: id, envelope: envelope, phoneName: pairedPhoneName)
             return
         }
         guard let plan = NotificationPlanner.plan(for: envelope) else { return }
@@ -206,11 +225,17 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
     // Same action path for native responses and held-delivery regression tests.
     func handleResponse(id: String, action: String, text: String?) {
         if action.hasPrefix("call."), let callAction = MacCallAction(rawValue: String(action.dropFirst(5))) {
-            guard id == self.callNotificationID, let context = self.callContext else { self.onStaleAction?(); return }
-            self.onCallAction?(callAction, context)
+            guard [.answer, .decline, .hangUp].contains(callAction),
+                  callPresentationAllowed, !callActionConsumed, id == callNotificationID,
+                  let context = callContext, currentCall.permits(callAction, context: context),
+                  callActionsAllowed?() ?? true else { onStaleAction?(); return }
+            callActionConsumed = true
+            removeDeliveredAndPending([id])
+            onCallAction?(callAction, context)
             return
         }
         if action == UNNotificationDismissActionIdentifier {
+            if id == callNotificationID { callActionConsumed = true }
             self.removeDeliveredAndPending([id])
             _ = self.messages.remove(notificationID: id)
             return
@@ -257,7 +282,18 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
             // Cleanup belongs to this handoff, even if its message owner was revoked.
             // Never use attachment.url: macOS may have moved it into daemon storage.
             if let stage { artwork.finish(stage) }
-            guard let self, self.submissions[id] == token else { return }
+            guard let self else { return }
+            guard self.submissions[id] == token else {
+                // An add can finish after privacy/ownership cleanup. HFP presentation IDs
+                // are unique, so removing this retired request cannot remove its replacement.
+                if id.hasPrefix("plink.hfp."),
+                   self.callNotificationID != id || self.callActionConsumed || !self.callPresentationAllowed {
+                    self.removeDeliveredAndPending([id])
+                } else if id.hasPrefix("plink.call.mirrored."), self.mirroredCallNotificationID != id {
+                    self.removeDeliveredAndPending([id])
+                }
+                return
+            }
             self.submissions.removeValue(forKey: id)
             guard let error else { return }
             if stage != nil, let plain = content.mutableCopy() as? UNMutableNotificationContent {
@@ -279,8 +315,18 @@ final class NotificationBridge: NSObject, UNUserNotificationCenterDelegate {
         removeDeliveredAndPending(ids)
     }
 
+    private func removeMirroredCall() {
+        if let id = mirroredCallNotificationID { removeDeliveredAndPending([id]) }
+    }
+
     private func removeDeliveredAndPending(_ ids: [String]) {
-        for id in ids { submissions.removeValue(forKey: id) }
+        for id in ids {
+            submissions.removeValue(forKey: id)
+            if mirroredCallNotificationID == id {
+                mirroredCallNotificationID = nil
+                mirroredCallIdentity = nil
+            }
+        }
         if let removeNotifications { removeNotifications(ids); return }
         center.removeDeliveredNotifications(withIdentifiers: ids)
         center.removePendingNotificationRequests(withIdentifiers: ids)

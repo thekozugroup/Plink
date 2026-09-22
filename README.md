@@ -15,7 +15,7 @@ Pixel-to-Mac continuity with native Android and macOS apps.
 
 Fresh pairings use durable transport security version 2. Existing legacy pairing records and keys are preserved, but default to security version 0 and are not activated automatically; re-pair each legacy device.
 
-The Mac call UI can request answer, decline, hang up, audio-route, and mute actions. Real cellular-call control and two-way laptop microphone/output speech remain unverified on hardware. A connected SCO route alone does not verify two-way laptop audio.
+Incoming and active calls use native macOS notifications with Answer, Decline, and End Call actions. The main window also exposes call controls. Pixel Bluetooth setup is verified, but two-way Mac call audio failed in live testing: the installed Bluetooth framework returned `kIOReturnUnsupported`. Plink reports that failure and stops repeating audio requests on that connection. This is not verified iPhone call parity; native action execution and two-way speech still need successful end-to-end evidence. A connected SCO route alone does not verify two-way laptop audio.
 
 Four Pixel synthetic `RemoteInput` checks passed: one-time delivery with reuse rejection, notification-replacement revocation, data-only `RemoteInput` rejection, and authentication-required action rejection. A later [OnePlus native reply check](docs/evidence/iteration-9/README.md) also passed: the user replied from Mac Notification Center, and the synthetic Android recipient recorded exactly one matching callback. This does not establish compatibility with every messaging app or external-recipient delivery. See the [development audit](docs/development-audit-2026-09-19.md).
 

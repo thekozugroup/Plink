@@ -1,10 +1,59 @@
 import Foundation
+import PlinkCore
 import Testing
 @testable import PlinkMac
 
 @MainActor
 struct BluetoothCallControllerTests {
     private let address = "AA:BB:CC:DD:EE:01"
+
+    @Test(arguments: [Int32?.none, 0, -1, -536870201])
+    func onlyExactUnsupportedSCOStatusDisablesComputerAudio(status: Int32?) {
+        var call = MacCallSession()
+        call.connected(phoneID: "phone")
+        call.setActive(true)
+        let context = call.context!
+        call.observeSCOOpened(status: status)
+        #expect(call.computerAudioUnsupported == (status == -536870201))
+        #expect(call.stateIsCertain)
+        #expect(call.context == context)
+        #expect(call.phase == .active)
+        #expect(call.permits(.hangUp, context: context))
+        #expect(call.permits(.computerAudio, context: context) == (status != -536870201))
+        #expect(call.audio == (status == 0 ? .scoConnectedUnverified : .phone))
+    }
+
+    @Test func unsupportedSCOFlagNeedsConnectionAndSurvivesLaterOrdinaryFailure() {
+        var call = MacCallSession()
+        call.observeSCOOpened(status: -536870201)
+        #expect(!call.computerAudioUnsupported)
+        #expect(call.context == nil)
+        call.connected(phoneID: "phone")
+        call.observeSCOOpened(status: -536870201)
+        call.observeSCOOpened(status: nil)
+        #expect(call.computerAudioUnsupported)
+        call.observeSCOOpened(status: -1)
+        #expect(call.computerAudioUnsupported)
+        #expect(call.stateIsCertain)
+        call.disconnected()
+        #expect(!call.computerAudioUnsupported)
+    }
+
+    @Test func successfulSCOObservationClearsUnsupportedWithoutChangingCallIdentity() {
+        var call = MacCallSession()
+        call.connected(phoneID: "phone")
+        call.setActive(true)
+        let context = call.context!
+        call.observeSCOOpened(status: -536870201)
+        #expect(!call.permits(.computerAudio, context: context))
+        call.observeSCOOpened(status: 0)
+        #expect(!call.computerAudioUnsupported)
+        #expect(call.audio == .scoConnectedUnverified)
+        #expect(call.permits(.computerAudio, context: context))
+        #expect(call.context == context)
+        #expect(call.phase == .active)
+        #expect(call.stateIsCertain)
+    }
 
     @Test func initialSetupWaitsForSettlementAndConsumesBeforeReentrantPresentation() {
         let setup = BluetoothCallSetup()

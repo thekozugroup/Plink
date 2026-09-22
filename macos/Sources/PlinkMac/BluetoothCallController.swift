@@ -2,6 +2,7 @@ import Foundation
 import AppKit
 import IOBluetooth
 import IOBluetoothUI
+import IOKit
 import PlinkCore
 import Combine
 import OSLog
@@ -11,6 +12,15 @@ struct BluetoothPhone: Identifiable, Equatable, Sendable {
     let name: String
     var isPaired = true
     var supportsCalls = true
+}
+
+extension MacCallSession {
+    /// Interpret the native result without changing call certainty or confirming an answer.
+    mutating func observeSCOOpened(status: Int32?) {
+        if status == kIOReturnUnsupported { markComputerAudioUnsupported() }
+        if status == 0 { clearComputerAudioUnsupported() }
+        setSCO(status == 0)
+    }
 }
 
 // Shared by explicit setup and fake catalog/selector tests; no native APIs here.
@@ -129,6 +139,9 @@ final class BluetoothCallController: ObservableObject {
     @Published private(set) var busy = false
     @Published private(set) var blocked = false
     var onCallChanged: ((MacCallSession) -> Void)?
+    var computerAudioUnavailableReason: String? {
+        call.computerAudioUnsupported ? "Mac call audio is unavailable for this connection. Use your phone for audio." : nil
+    }
     private let worker = HFPWorker()
     private var gate = MacBluetoothOperationGate()
     private var operation: MacBluetoothOperationGate.Operation? { gate.current }
@@ -598,6 +611,10 @@ final class BluetoothCallController: ObservableObject {
             status = "Disconnect and reconnect Bluetooth calling before retrying."
             return
         }
+        if action == .computerAudio, let reason = computerAudioUnavailableReason {
+            status = reason
+            return
+        }
         guard !busy && !blocked, call.permits(action, context: context) else {
             status = "That call action is no longer available."
             return
@@ -933,7 +950,10 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
 
     func perform(_ action: MacCallAction, context: MacCallContext, operation: Operation) {
         guard let phone, phone.isConnected, session.begin(action, context: context) else {
-            emit("Call changed; action ignored.", completion: operation); return
+            let message = action == .computerAudio && session.computerAudioUnsupported
+                ? "Mac call audio is unavailable for this connection. Use your phone for audio."
+                : "Call changed; action ignored."
+            emit(message, completion: operation); return
         }
         lock.lock()
         guard !stopping, work.permitsNextStep(operation) else { lock.unlock(); return }
@@ -944,7 +964,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         case .answer:
             phone.acceptCall()
             guard permitsNextStep(operation), session.context == context else { return }
-            phone.transferAudioToComputer()
+            if !session.computerAudioUnsupported { phone.transferAudioToComputer() }
         case .decline, .hangUp: phone.endCall()
         case .computerAudio:
             phone.transferAudioToComputer()
@@ -1048,10 +1068,13 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         callLog.notice("calls.worker.sco_opened status=\(status?.intValue ?? -1, privacy: .public) owned=\(self.owns(device), privacy: .public)")
         guard owns(device) else { return }
         let success = status?.int32Value == 0
-        session.setSCO(success)
+        session.observeSCOOpened(status: status?.int32Value)
         if success { session.setMuted(phone?.isInputMuted == true) }
         let completion = completePending(on: .sco(connected: success))
-        emit(success ? "Bluetooth audio connected; two-way laptop audio has not been verified." : "Bluetooth audio connection failed. Use phone audio or reconnect.", completion: completion)
+        let message = success ? "Bluetooth audio connected; two-way laptop audio has not been verified."
+            : session.computerAudioUnsupported ? "Mac call audio is unavailable for this connection. Use your phone for audio."
+            : "Bluetooth audio connection failed. Use phone audio or reconnect."
+        emit(message, completion: completion)
     }
     func handsFree(_ device: IOBluetoothHandsFree!, scoConnectionClosed status: NSNumber!) {
         callLog.notice("calls.worker.sco_closed status=\(status?.intValue ?? -1, privacy: .public) owned=\(self.owns(device), privacy: .public)")
@@ -1096,7 +1119,10 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         }
         if !isActive { resolve(endedContext) }
         applyUncertainty()
-        emit(isActive ? "Call active; check laptop audio." : "Call ended.", completion: completion, endedContext: endedContext)
+        let message = isActive
+            ? (session.computerAudioUnsupported ? "Call active. Use your phone for audio." : "Call active; check laptop audio.")
+            : "Call ended."
+        emit(message, completion: completion, endedContext: endedContext)
     }
     func handsFree(_ device: IOBluetoothHandsFreeDevice!, currentCall call: [AnyHashable: Any]!) {
         let observedStatus = (call?[IOBluetoothHandsFreeCallStatus] as? NSNumber)?.intValue ?? -1

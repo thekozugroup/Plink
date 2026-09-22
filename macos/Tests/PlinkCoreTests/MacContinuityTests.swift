@@ -36,8 +36,56 @@ final class MacContinuityTests: XCTestCase {
         XCTAssertFalse(MacCallAction.hangUp.completesOnSCO(connected: false))
         XCTAssertFalse(MacCallAction.hangUp.completesOnSCO(connected: true))
         XCTAssertFalse(MacCallAction.answer.completesOnSCO(connected: true))
+        XCTAssertFalse(MacCallAction.answer.completesOnSCO(connected: false))
         XCTAssertTrue(MacCallAction.phoneAudio.completesOnSCO(connected: false))
         XCTAssertTrue(MacCallAction.computerAudio.completesOnSCO(connected: true))
+        XCTAssertTrue(MacCallAction.computerAudio.completesOnSCO(connected: false))
+    }
+
+    func testUnsupportedAudioPersistsAcrossCallsButNotConnections() {
+        var call = activeCall()
+        let context = call.context!
+        call.markComputerAudioUnsupported()
+        XCTAssertTrue(call.stateIsCertain)
+        XCTAssertEqual(call.context, context)
+        XCTAssertFalse(call.begin(.computerAudio, context: context))
+        XCTAssertTrue(call.permits(.hangUp, context: context))
+        XCTAssertTrue(call.permits(.phoneAudio, context: context))
+        call.setActive(false)
+        call.ringing(number: nil)
+        let next = call.context!
+        XCTAssertTrue(call.computerAudioUnsupported)
+        XCTAssertTrue(call.permits(.decline, context: next))
+        XCTAssertTrue(call.begin(.answer, context: next))
+        XCTAssertEqual(call.phase, .answering)
+        XCTAssertEqual(call.audio, .phone)
+        call.setActive(true)
+        XCTAssertTrue(call.permits(.hangUp, context: next))
+        call.disconnected()
+        XCTAssertFalse(call.computerAudioUnsupported)
+        call.connected(phoneID: "other-phone")
+        XCTAssertFalse(call.computerAudioUnsupported)
+        call.markComputerAudioUnsupported()
+        call.connected(phoneID: "other-phone")
+        XCTAssertFalse(call.computerAudioUnsupported)
+    }
+
+    func testFailedAudioCompletionWaitsForNativeReturnWithoutQuarantiningCall() {
+        var call = activeCall()
+        let context = call.context!
+        var gate = MacBluetoothOperationGate()
+        let operation = gate.begin(generation: UUID(), action: .computerAudio, context: context)!
+        XCTAssertTrue(call.begin(.computerAudio, context: context))
+        call.markComputerAudioUnsupported()
+        XCTAssertTrue(operation.action!.completesOnSCO(connected: false))
+        XCTAssertFalse(gate.confirm(operation, invocation: .executing))
+        XCTAssertEqual(gate.current, operation)
+        XCTAssertTrue(gate.invocationReturned(operation))
+        XCTAssertNil(gate.current)
+        XCTAssertFalse(gate.requiresReconnect)
+        XCTAssertFalse(gate.blocked)
+        XCTAssertTrue(call.stateIsCertain)
+        XCTAssertTrue(call.permits(.hangUp, context: context))
     }
     func testCallActionsRequireCurrentIdentityAndObservedState() {
         var call = MacCallSession()

@@ -186,6 +186,8 @@ public struct MacCallSession: Equatable, Sendable {
     public private(set) var muted = false
     public private(set) var hasWaitingCall = false
     public private(set) var stateIsCertain = true
+    // HFP connection capability: ending a call must not permit another known-unsupported audio request.
+    public private(set) var computerAudioUnsupported = false
     private var active = false
     private var observedCallIndex: Int?
 
@@ -234,6 +236,12 @@ public struct MacCallSession: Equatable, Sendable {
     public mutating func setSCO(_ connected: Bool) {
         audio = connected ? .scoConnectedUnverified : (context == nil ? .unavailable : .phone)
     }
+    public mutating func clearComputerAudioUnsupported() { computerAudioUnsupported = false }
+    public mutating func markComputerAudioUnsupported() {
+        guard phoneID != nil else { return }
+        computerAudioUnsupported = true
+        setSCO(false)
+    }
     public mutating func setMuted(_ value: Bool) { muted = value }
     @discardableResult
     public mutating func markUnconfirmed(context expected: MacCallContext?) -> Bool {
@@ -246,14 +254,15 @@ public struct MacCallSession: Equatable, Sendable {
         switch action {
         case .answer, .decline: return phase == .ringing && !hasWaitingCall
         case .hangUp: return phase == .active && !hasWaitingCall
-        case .computerAudio, .phoneAudio: return phase == .active
+        case .computerAudio: return phase == .active && !computerAudioUnsupported
+        case .phoneAudio: return phase == .active
         case .toggleMute: return phase == .active && audio == .scoConnectedUnverified
         }
     }
     public mutating func begin(_ action: MacCallAction, context expected: MacCallContext) -> Bool {
         guard permits(action, context: expected) else { return false }
         switch action {
-        case .answer: phase = .answering; audio = .requestedComputer
+        case .answer: phase = .answering; audio = computerAudioUnsupported ? .phone : .requestedComputer
         case .decline, .hangUp: phase = .ending
         case .computerAudio: audio = .requestedComputer
         case .phoneAudio, .toggleMute: break

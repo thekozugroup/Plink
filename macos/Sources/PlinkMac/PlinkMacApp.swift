@@ -286,7 +286,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
     private var pairingExpiryTask: Task<Void, Never>?
     let calling = BluetoothCallController()
-    private lazy var callPanel = CallPanelController(calling: calling)
     let clipboard = ClipboardSyncController()
     let files = FileTransferController()
     let reconnect = ReconnectController()
@@ -381,6 +380,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             do { self.sendCommand(try ReplyRouter.makeReplyEnvelope(context: context, text: text)) }
             catch { self.lastReply = "Reply failed: invalid reply context." }
         }
+        notificationBridge.callActionsAllowed = { [weak self] in
+            guard let self else { return false }
+            return self.callNotificationEnvironmentEligible && self.ownsSelectedCallPeer && self.calling.serviceConnected &&
+                !self.calling.busy && !self.calling.blocked
+        }
         notificationBridge.onCallAction = { [weak self] action, context in
             self?.calling.perform(action, context: context)
         }
@@ -401,10 +405,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             try await transport.send(envelope)
         }
         clipboard.start()
-        calling.onCallChanged = { [weak self] call in
-            self?.notificationBridge.updateCall(call, presentNotification: false)
-            self?.refreshCallPanel()
+        calling.onCallChanged = { [weak self] _ in
+            self?.refreshCallNotifications()
         }
+        refreshCallNotifications()
         housekeeping = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(5))
@@ -424,6 +428,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         guard !terminationReplied else { return .terminateNow }
         guard !terminationPending else { return .terminateLater }
         terminationPending = true
+        refreshCallNotifications()
         clipboard.stop()
         cancelReconnect()
         let reconnectCleanup = reconnectTask
@@ -457,7 +462,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     func applicationWillTerminate(_ notification: Notification) {
         terminationPending = true
         phoneManagementID = nil
-        callPanel.dismiss()
+        notificationBridge.updateCall(calling.call, presentNotification: false)
         cancelPendingAutomaticRecovery()
         reconnect.stopDiscoveryForLifecycle()
         reconnectPathMonitor.cancel()
@@ -561,23 +566,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         calling.beginSetup(phoneName: pairedPhoneName)
     }
 
-    private func refreshCallPanel() {
-        let log = Logger(subsystem: "com.thekozugroup.plink.mac", category: "bluetooth-calling")
-        let allowed: Bool = {
-            guard !terminationPending else { log.notice("calls.panel.ineligible.terminating"); return false }
-            guard !(phoneManagementBusy && phoneManagementAffectsCurrentPeer) else { log.notice("calls.panel.ineligible.phone_management"); return false }
-            guard reconnectSystemAwake else { log.notice("calls.panel.ineligible.system_asleep"); return false }
-            guard reconnectScreenAwake else { log.notice("calls.panel.ineligible.screen_asleep"); return false }
-            guard reconnectSessionActive else { log.notice("calls.panel.ineligible.session_inactive"); return false }
-            guard reconnectSessionUnlocked else { log.notice("calls.panel.ineligible.session_locked"); return false }
-            guard ClipboardSyncController.systemIsUnlocked() else { log.notice("calls.panel.ineligible.system_locked"); return false }
-            guard (CGSessionCopyCurrentDictionary() as? [String: Any])?[kCGSessionOnConsoleKey as String] as? Bool == true else {
-                log.notice("calls.panel.ineligible.not_on_console"); return false
-            }
-            log.notice("calls.panel.eligible")
-            return true
-        }()
-        callPanel.update(call: calling.call, phoneName: pairedPhoneName, presentationAllowed: allowed)
+    private var callNotificationEnvironmentEligible: Bool {
+        guard !terminationPending, !(phoneManagementBusy && phoneManagementAffectsCurrentPeer),
+              !isPairing, !pairingInFlight,
+              activePairing != nil,
+              reconnectSystemAwake, reconnectScreenAwake, reconnectSessionActive, reconnectSessionUnlocked,
+              ClipboardSyncController.systemIsUnlocked(),
+              (CGSessionCopyCurrentDictionary() as? [String: Any])?[kCGSessionOnConsoleKey as String] as? Bool == true else { return false }
+        return true
+    }
+
+    private var ownsSelectedCallPeer: Bool {
+        activePairing.map { calling.ownsPeer($0.device.id) } ?? false
+    }
+
+    private func refreshCallNotifications() {
+        // An unavailable HFP worker must not hide authenticated Wi-Fi call notices.
+        // Retain an owned call context for dedup even during pending/uncertain phases.
+        notificationBridge.updateCall(ownsSelectedCallPeer ? calling.call : MacCallSession(),
+            presentNotification: callNotificationEnvironmentEligible,
+            hfpControlsAvailable: ownsSelectedCallPeer && calling.serviceConnected && !calling.blocked,
+            audioUnavailableReason: calling.computerAudioUnavailableReason)
     }
 
     func refreshSavedPhones() {
@@ -633,13 +642,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         phoneManagementBusy = false
         phoneManagementAffectsCurrentPeer = false
         refreshSavedPhones()
-        refreshCallPanel()
+        refreshCallNotifications()
         schedulePendingAutomaticRecovery()
     }
 
     private func retirePhoneForManagement(_ id: UUID) async -> Bool {
         calling.cancelInitialSetup()
-        callPanel.dismiss()
+        notificationBridge.updateCall(calling.call, presentNotification: false)
         pairingAttempt = UUID()
         connectionGeneration = UUID()
         pairedPeerID = nil
@@ -751,7 +760,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     func applicationDidBecomeActive(_ notification: Notification) {
         guard !terminationPending else { return }
         notificationBridge.refreshAuthorization()
-        refreshCallPanel()
+        refreshCallNotifications()
         schedulePendingAutomaticRecovery()
     }
 
@@ -768,7 +777,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     if name == NSWorkspace.willSleepNotification { self.reconnectSystemAwake = false }
                     if name == NSWorkspace.screensDidSleepNotification { self.reconnectScreenAwake = false }
                     if name == NSWorkspace.sessionDidResignActiveNotification { self.reconnectSessionActive = false }
-                    self.refreshCallPanel()
+                    self.refreshCallNotifications()
                     self.invalidateReconnectForEnvironmentChange(
                         "Reconnect is required after the Mac sleeps or locks."
                     )
@@ -782,7 +791,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     if name == NSWorkspace.didWakeNotification { self.reconnectSystemAwake = true }
                     if name == NSWorkspace.screensDidWakeNotification { self.reconnectScreenAwake = true }
                     if name == NSWorkspace.sessionDidBecomeActiveNotification { self.reconnectSessionActive = true }
-                    self.refreshCallPanel()
+                    self.refreshCallNotifications()
                     self.schedulePendingAutomaticRecovery()
                 }
             })
@@ -796,11 +805,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     guard let self else { return }
                     if name == "com.apple.screenIsLocked" {
                         self.reconnectSessionUnlocked = false
-                        self.refreshCallPanel()
+                        self.refreshCallNotifications()
                         self.invalidateReconnectForEnvironmentChange("Reconnect is required after the Mac locks.")
                     } else {
                         self.reconnectSessionUnlocked = true
-                        self.refreshCallPanel()
+                        self.refreshCallNotifications()
                         self.schedulePendingAutomaticRecovery()
                     }
                 }
@@ -820,7 +829,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 self.reconnectPathSignature = signature
                 self.reconnectPathEligible = pathEligible
                 guard let previous else {
-                    self.refreshCallPanel()
+                    self.refreshCallNotifications()
                     self.schedulePendingAutomaticRecovery()
                     return
                 }
@@ -1666,7 +1675,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     private func invalidateActiveSession() {
         calling.cancelInitialSetup()
-        callPanel.dismiss()
+        notificationBridge.updateCall(calling.call, presentNotification: false)
         reconnectAttempt = UUID()
         reconnectAuthority?.invalidate()
         reconnectTask?.cancel()
@@ -1798,7 +1807,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 guard self.publishStartupRecovery(outcome, attempt: attempt) else { return }
                 if outcome == .ready {
                     NSLog("Plink startup saved pairing restored")
-                    self.refreshCallPanel()
+                    self.refreshCallNotifications()
                     self.schedulePendingAutomaticRecovery()
                 }
             }
@@ -1960,6 +1969,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 if envelope.requiresAck { sendOutcome(for: envelope, executed: executed) }
                 return
             default:
+                if envelope.type == .callRinging || envelope.type == .callEnded { refreshCallNotifications() }
                 notificationBridge.show(envelope: envelope,
                     pairedPhoneName: activePairing?.device.id == envelope.sourceDeviceId ? pairedPhoneName : nil)
             }
@@ -2078,6 +2088,9 @@ struct BluetoothCallingView: View {
         GroupBox("Cellular calls") {
             VStack(alignment: .leading, spacing: 10) {
                 Text(controller.status).textSelection(.enabled)
+                if controller.call.context == nil, let reason = controller.computerAudioUnavailableReason {
+                    Text(reason).font(.caption).foregroundStyle(.secondary)
+                }
                 if controller.bluetoothPaired {
                     Label { Text("Bluetooth paired") } icon: { LucideIcon(name: .bluetooth) }
                 }
@@ -2102,7 +2115,7 @@ struct BluetoothCallingView: View {
                     Text(controller.call.number ?? "Unknown caller").font(.headline)
                     Text(controller.call.phase.rawValue.capitalized)
                     HStack {
-                        callButton("Answer on Mac", .answer, context)
+                        callButton("Answer", .answer, context)
                         callButton("Decline", .decline, context)
                         callButton("End Call", .hangUp, context)
                     }
@@ -2111,9 +2124,9 @@ struct BluetoothCallingView: View {
                         callButton("Audio on Phone", .phoneAudio, context)
                         callButton(controller.call.muted ? "Unmute" : "Mute", .toggleMute, context)
                     }
-                    Text(controller.call.audio == .scoConnectedUnverified
+                    Text(controller.computerAudioUnavailableReason ?? (controller.call.audio == .scoConnectedUnverified
                          ? "Bluetooth audio is connected."
-                         : "Choose where you want call audio to play.")
+                         : "Choose where you want call audio to play."))
                     .font(.caption).foregroundStyle(.secondary)
                 }
                 Text("Calls use Bluetooth. Allow microphone access when you choose Mac audio.")
