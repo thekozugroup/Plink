@@ -8,6 +8,10 @@ RESOURCES_DIR="$APP_DIR/Contents/Resources"
 DIST_DIR="$ROOT_DIR/build"
 DIST_ZIP="$DIST_DIR/PlinkMac.app.zip"
 
+if [ -z "${DEVELOPER_DIR:-}" ] && [ -d /Applications/Xcode.app/Contents/Developer ]; then
+  export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+fi
+
 cd "$ROOT_DIR/macos"
 swift build -c release
 
@@ -52,6 +56,29 @@ printf '%s\n' '{"info":{"author":"xcode","version":1}}' > "$ICON_CATALOG/Content
 xcrun actool "$ICON_CATALOG" --compile "$RESOURCES_DIR" --platform macosx \
   --minimum-deployment-target "$(plutil -extract LSMinimumSystemVersion raw "$APP_DIR/Contents/Info.plist")" \
   --app-icon AppIcon --output-partial-info-plist "$ICON_WORK_DIR/asset-info.plist"
+
+# Honor the compiler's icon declarations without replacing unrelated app metadata.
+cp "$ICON_WORK_DIR/asset-info.plist" "$DIST_DIR/PlinkMac.asset-info.plist"
+/usr/bin/python3 - "$ICON_WORK_DIR/asset-info.plist" "$APP_DIR/Contents/Info.plist" "$RESOURCES_DIR" <<'PY'
+import json, pathlib, plistlib, sys
+partial_path, info_path, resources = map(pathlib.Path, sys.argv[1:])
+partial = plistlib.loads(partial_path.read_bytes())
+info = plistlib.loads(info_path.read_bytes())
+icon_keys = {"CFBundleIconName", "CFBundleIconFile", "CFBundleIconFiles", "CFBundleIcons"}
+icons = {key: value for key, value in partial.items() if key in icon_keys}
+if not icons:
+    raise ValueError("actool emitted no icon declarations")
+delta = {key: {"before": info.get(key), "after": value}
+         for key, value in icons.items() if info.get(key) != value}
+info.update(icons)
+icon_file = info.get("CFBundleIconFile")
+if icon_file:
+    filename = icon_file if pathlib.Path(icon_file).suffix else icon_file + ".icns"
+    if not (resources / filename).is_file():
+        raise ValueError("Compiled icon file is missing")
+info_path.write_bytes(plistlib.dumps(info, sort_keys=False))
+print(json.dumps({"actool_icon_metadata": icons, "icon_metadata_delta": delta}, sort_keys=True))
+PY
 
 plutil -lint "$APP_DIR/Contents/Info.plist" >/dev/null
 test -x "$MACOS_DIR/PlinkMac"
