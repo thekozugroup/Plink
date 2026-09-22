@@ -1,0 +1,18 @@
+{
+  "command": "./scripts/verify.sh",
+  "exitCode": 0,
+  "swiftTests": 299,
+  "swiftFailures": 0,
+  "androidTests": 207,
+  "androidFailures": 0,
+  "androidBuildsAndLint": "passed",
+  "strictMacPackaging": "passed",
+  "packageRegressionCases": 8,
+  "productionInstalled": false,
+  "sourceHashes": {
+    "scripts/package-macos.sh": "027e44453ac96494755cc73914c4b930e50764be76919958e2dffa6e38bbc1f2",
+    "scripts/test-package-macos.py": "56f5188e54980ea0355176ae4da903b99ac2ec6285a3abe95d035e30aa537751"
+  },
+  "swiftXCTests": 66,
+  "swiftTestingTests": 233
+}

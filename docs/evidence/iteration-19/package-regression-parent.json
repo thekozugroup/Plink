@@ -1,0 +1,46 @@
+{
+  "scope": "actual script with controlled dependencies; not real signature proof",
+  "temporaryDirectoryRemoved": true,
+  "cases": [
+    {
+      "case": "sign",
+      "exit": 71,
+      "assertions": "passed"
+    },
+    {
+      "case": "verify",
+      "exit": 71,
+      "assertions": "passed"
+    },
+    {
+      "case": "zip",
+      "exit": 72,
+      "assertions": "passed"
+    },
+    {
+      "case": "publishApp",
+      "exit": 73,
+      "assertions": "passed"
+    },
+    {
+      "case": "publishZip",
+      "exit": 74,
+      "assertions": "passed"
+    },
+    {
+      "case": "success",
+      "exit": 0,
+      "assertions": "passed"
+    },
+    {
+      "case": "postZipSignalWithPrior",
+      "exit": 143,
+      "assertions": "passed"
+    },
+    {
+      "case": "postZipSignalNoPrior",
+      "exit": 143,
+      "assertions": "passed"
+    }
+  ]
+}

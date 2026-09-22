@@ -1,0 +1,14 @@
+{
+  "nativeDeliveryConfirmed": true,
+  "visualVerified": false,
+  "replyVerified": false,
+  "extensionObserved": false,
+  "cleanupOwnedNotificationCount": 0,
+  "fixtureProcessExited": true,
+  "installedFixtureRemoved": true,
+  "scratchRemoved": true,
+  "fixtureAlertStyleRestored": "Temporary",
+  "fixtureNotificationPermission": "Off",
+  "productionPreferencesChanged": false,
+  "ownedSandboxEventScratchRemoved": true
+}
