@@ -1,0 +1,117 @@
+{
+  "checkpointCommit": "fc0030c",
+  "productionSourceChangedInIteration25": false,
+  "environment": {
+    "macBuild": 5,
+    "androidModel": "Pixel 10 Pro XL",
+    "androidAPI": 37
+  },
+  "installedArtifacts": {
+    "androidAPK": "6c017a6eab358ea7e0a94a3ac146e2ffe82b9a69f2a44f238212c865df62c95d",
+    "macExecutable": "713b3d3ce153cc7ca23836c1e8cf8dfd9ab6d4be8587021b755bfadd8c48129a",
+    "fixtureAPK": "5700464c03d8d6f4bb7930ba7064ac1d06d916148fed8a682c16c2173a7f6024"
+  },
+  "results": [
+    {
+      "case": "Mark as read",
+      "macOrigin": "User explicitly confirmed clicking Mark as read in Mac Notification Center",
+      "nativeLabels": [
+        "Reply",
+        "Mark as read",
+        "Archive"
+      ],
+      "nativeScreenshotProvided": true,
+      "receipt": {
+        "generation": 1,
+        "replyCount": 0,
+        "readCount": 1,
+        "archiveCount": 0,
+        "replyExactMatch": false,
+        "replyKeyCount": 0,
+        "replyIntendedKeyOnly": false
+      },
+      "result": "pass; exact intended receiver once, other receivers untouched"
+    },
+    {
+      "case": "Reply",
+      "macOrigin": "User explicitly confirmed sending Plink25 from Mac Notification Center",
+      "nativeScreenshotProvided": true,
+      "receipt": {
+        "generation": 2,
+        "replyCount": 1,
+        "readCount": 0,
+        "archiveCount": 0,
+        "replyExactMatch": true,
+        "replyKeyCount": 1,
+        "replyIntendedKeyOnly": true
+      },
+      "result": "pass; exact ASCII text in one intended RemoteInput key, received once",
+      "limits": "Synthetic local receiver; no real provider or recipient delivery claim"
+    },
+    {
+      "case": "Archive",
+      "macOrigin": "User explicitly confirmed clicking Archive in Mac Notification Center",
+      "receipt": {
+        "generation": 3,
+        "replyCount": 0,
+        "readCount": 0,
+        "archiveCount": 1,
+        "replyExactMatch": false,
+        "replyKeyCount": 0,
+        "replyIntendedKeyOnly": false
+      },
+      "result": "pass; intended receiver once, other receivers untouched"
+    }
+  ],
+  "automatedBaseline": {
+    "iteration": 24,
+    "command": "./scripts/verify.sh",
+    "tests": 565,
+    "frameworkScenarios": 19,
+    "rerunForThisLiveTest": false
+  },
+  "evidenceLimits": [
+    "Native action origin is confirmed by user reports and supplied screenshots; computer-use bridge failed.",
+    "Counts prove the owned synthetic PendingIntent receiver executed, not real-provider or recipient delivery.",
+    "Exact Plink25 proves this live ASCII input; Unicode was separately simulated.",
+    "No live stale-action or hardware/profile-lock acceptance claim.",
+    "Blank primary notification icon and cellular laptop audio remain unresolved."
+  ],
+  "cleanup": {
+    "testNotificationCanceled": true,
+    "ownedFixtureUninstalled": true,
+    "phoneSettingsUnchanged": true,
+    "pairingAndAppDataPreserved": true,
+    "macInstallerScratchRemoved": true,
+    "hostBuildCleanupPending": false,
+    "fixtureBuildsAndTemporarySigningKeyRemoved": true
+  },
+  "postLiveGate": {
+    "command": "./scripts/verify.sh",
+    "exitCode": 0,
+    "sourceCommit": "fc0030c",
+    "android": {
+      "tests": 242,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "swiftTests": 323,
+    "totalTests": 565,
+    "rebuiltArtifacts": [
+      {
+        "path": "android/build/outputs/apk/debug/android-debug.apk",
+        "sha256": "6c017a6eab358ea7e0a94a3ac146e2ffe82b9a69f2a44f238212c865df62c95d"
+      },
+      {
+        "path": "build/PlinkMac.app.zip",
+        "sha256": "d31c41b08cdb77630d78b23acb11eee6cf4901978e8a7f9a585db79082bf1965"
+      },
+      {
+        "path": "build/PlinkMac.app/Contents/MacOS/PlinkMac",
+        "sha256": "713b3d3ce153cc7ca23836c1e8cf8dfd9ab6d4be8587021b755bfadd8c48129a"
+      }
+    ],
+    "note": "Post-live gate. Installed artifact identity is recorded separately; no reinstall for this gate."
+  }
+}

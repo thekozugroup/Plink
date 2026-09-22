@@ -1,0 +1,13 @@
+{
+  "files": {
+    "AndroidManifest.xml": "7f64a47b5532c0ebfca4b201fdb0a6fa05b6835fa56fa1bb359f3821eef3f968",
+    "README.md": "b3ed28d671aca703b51ae11ced9961dad154b1276b428df921b0dd82497e7ffa",
+    "build.sh": "63da7ea7a02c8254d1aca8bae61d00c085defb6e1c4c758e9e55e1bc8d3ba4a4",
+    "res/drawable/fixture_icon.xml": "d9ae7fa04b3d8d2463e3e7658c329136b1cffba6bbdc8d76b4d343bd5bc887f1",
+    "src/app/plink/fixture/actions25/ActionReceiver.java": "05e13cbf7c790f25c803013406267e29d93ca140c8f38f59bf6f9e7d7ce3631b",
+    "src/app/plink/fixture/actions25/FixtureActivity.java": "0e93d4ce4c66d748f383f6a974fb97e09982ac1ed394e3d137d3dd601f3b1a93",
+    "src/app/plink/fixture/actions25/FixtureReceiver.java": "42bc0b4c241adb75ce501ef5eb05efeb9647d4dfd4b6e11799c7aef65c7890a5",
+    "src/app/plink/fixture/actions25/FixtureState.java": "4d28e01451ade8db2c63ff74b424d2776657f3b0ed15eae73432a96da94c2568"
+  },
+  "archiveSHA256": "ab0e81c4dee30d49bd8eeb3defea9de6d82c19bd5e8d9144f98c2b15de188423"
+}
