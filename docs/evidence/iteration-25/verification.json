@@ -113,5 +113,13 @@
       }
     ],
     "note": "Post-live gate. Installed artifact identity is recorded separately; no reinstall for this gate."
+  },
+  "realProviderFollowUp": {
+    "source": "User report in current task",
+    "test": "Own OnePlus/Google Voice to Pixel, reply through native Mac Notification Center",
+    "result": "User confirmed it works",
+    "verification": "User-reported real-provider delivery; no independent provider receipt inspection",
+    "assistantSentMessage": false,
+    "scope": "One controlled self-message flow; not all-provider parity"
   }
 }

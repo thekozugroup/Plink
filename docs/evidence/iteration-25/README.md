@@ -34,6 +34,14 @@ Unicode, stale-action interaction, and hardware/profile-lock checks remain
 separate from the simulated coverage. The blank primary notification icon and
 cellular audio remain unresolved.
 
+The user then confirmed that a real message sent from their own OnePlus/Google
+Voice to the Pixel could be replied to from Mac Notification Center, with the
+reply arriving on the OnePlus. This is user-reported verification of that one
+provider flow, separate from the instrumented fixture. The assistant sent no
+message and did not inspect the provider's receipt or message body. The user
+also reported that calls display correctly but audio still falls back to the
+phone.
+
 Checkpoint 24's unchanged production source passed 565 automated tests and 19
 Android framework scenarios. That baseline is identified separately in
 `verification.json`; these three live trials are additional evidence, not a
