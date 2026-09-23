@@ -288,6 +288,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     let calling = BluetoothCallController()
     let clipboard = ClipboardSyncController()
     let files = FileTransferController()
+    let screen = ScreenPreviewController()
+    private let screenIngress = ScreenPreviewIngress()
+    @Published var screenPreviewEnabled = UserDefaults.standard.object(forKey: "plink.screenPreviewEnabled") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(screenPreviewEnabled, forKey: "plink.screenPreviewEnabled")
+            screen.setEnabled(screenPreviewEnabled)
+        }
+    }
     let reconnect = ReconnectController()
     @Published var deviceStatus: MacDeviceStatus?
     @Published var mediaState: MacMediaState?
@@ -318,6 +326,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     @Published var canConfirmPairing: Bool = false
     private var dashboardWindow: NSWindow?
     private var pairingWindow: NSWindow?
+    private var screenWindow: NSWindow?
     private var workspaceObservers: [NSObjectProtocol] = []
     private var sessionObservers: [NSObjectProtocol] = []
     private let recoveryPolicy = ReconnectRecoveryPolicy()
@@ -339,6 +348,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     private let observationLog = Logger(subsystem: "com.thekozugroup.plink.mac", category: "reconnect-observation")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        screen.setEnabled(screenPreviewEnabled)
         installReconnectLifecycleObservers()
         startReconnectPathMonitor()
         reconnect.onDiscoveryStart = { [weak self] in self?.startReconnectAttempt() ?? false }
@@ -448,6 +458,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         terminationPending = true
         refreshCallNotifications()
         clipboard.stop()
+        screen.beginShutdown()
         cancelReconnect()
         let reconnectCleanup = reconnectTask
         terminationWatchdog = Task { [weak self] in
@@ -461,6 +472,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             reconnectListener = nil
             pairLifetime?.invalidate()
             pairLifetime = nil
+            await screen.shutdown()
             replyToTermination()
         }
         return .terminateLater
@@ -479,6 +491,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
 
     func applicationWillTerminate(_ notification: Notification) {
         terminationPending = true
+        screen.beginShutdown()
         phoneManagementID = nil
         notificationBridge.updateCall(calling.call, presentNotification: false)
         cancelPendingAutomaticRecovery()
@@ -605,7 +618,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         notificationBridge.updateCall(ownsSelectedCallPeer ? calling.call : MacCallSession(),
             presentNotification: callNotificationEnvironmentEligible,
             hfpControlsAvailable: ownsSelectedCallPeer && calling.serviceConnected && !calling.blocked,
-            audioUnavailableReason: calling.computerAudioUnavailableReason)
+            audioUnavailableReason: calling.computerAudioUnavailableReason,
+            selectedPeerID: ownsSelectedCallPeer && pairedPeerID == activePairing?.device.id ? pairedPeerID : nil)
     }
 
     func refreshSavedPhones() {
@@ -776,14 +790,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         }
     }
 
+    func showScreenWindow() {
+        guard !terminationPending else { return }
+        if screenWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 700),
+                styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
+            window.title = "Phone Screen"
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.backgroundColor = .clear
+            window.isOpaque = false
+            window.isReleasedWhenClosed = false
+            window.delegate = self
+            window.contentView = NSHostingView(rootView: ScreenPreviewView(controller: screen))
+            window.center()
+            screenWindow = window
+        }
+        screenWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+        screen.setVisible(true)
+    }
+
+    func applicationDidResignActive(_ notification: Notification) { screen.setVisible(false) }
+
+    func windowDidBecomeKey(_ notification: Notification) {
+        guard !terminationPending, NSApp.isActive, let window = notification.object as? NSWindow,
+              window === screenWindow else { return }
+        screen.setVisible(true)
+    }
+
+    func windowDidResignKey(_ notification: Notification) { stopHiddenPreview(notification) }
+    func windowDidMiniaturize(_ notification: Notification) { stopHiddenPreview(notification) }
+    func windowDidChangeOcclusionState(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if !window.occlusionState.contains(.visible) { stopHiddenPreview(notification) }
+        else if window.isKeyWindow && NSApp.isActive { windowDidBecomeKey(notification) }
+    }
+
+    private func stopHiddenPreview(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow, window === screenWindow else { return }
+        screen.setVisible(false)
+    }
+
     func applicationDidBecomeActive(_ notification: Notification) {
         guard !terminationPending else { return }
         notificationBridge.refreshAuthorization()
+        if screenWindow?.isKeyWindow == true { screen.setVisible(true) }
         refreshCallNotifications()
         schedulePendingAutomaticRecovery()
     }
 
     func windowWillClose(_ notification: Notification) {
+        stopHiddenPreview(notification)
         if let window = notification.object as? NSWindow, window === pairingWindow, isPairing { cancelPairing() }
     }
 
@@ -794,6 +852,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 MainActor.assumeIsolated {
                     guard let self else { return }
                     if name == NSWorkspace.willSleepNotification { self.reconnectSystemAwake = false }
+                    self.screen.stop(reason: .locked)
+                    self.screen.setVisible(false)
                     if name == NSWorkspace.screensDidSleepNotification { self.reconnectScreenAwake = false }
                     if name == NSWorkspace.sessionDidResignActiveNotification { self.reconnectSessionActive = false }
                     self.refreshCallNotifications()
@@ -824,6 +884,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     guard let self else { return }
                     if name == "com.apple.screenIsLocked" {
                         self.reconnectSessionUnlocked = false
+                        self.screen.stop(reason: .locked)
+                        self.screen.setVisible(false)
                         self.refreshCallNotifications()
                         self.invalidateReconnectForEnvironmentChange("Reconnect is required after the Mac locks.")
                     } else {
@@ -1003,6 +1065,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func clearTransport() {
+        screen.unbind()
         clipboard.setConnected(false)
         let previous = activeTransport ?? retiringTransport
         previous?.invalidate()
@@ -1018,6 +1081,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     }
 
     private func stopPairLifetime() {
+        screen.unbind()
         cancelPendingAutomaticRecovery()
         reconnect.stopDiscoveryForLifecycle()
         reconnectAuthority?.invalidate()
@@ -1044,6 +1108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         reconnectAttempt = UUID()
         let token = reconnectAttempt
         pairLifetime?.closeOrdinaryAdmission()
+        screen.unbind()
         let ownedTransport = activeTransport ?? retiringTransport
         ownedTransport?.invalidate()
         activeTransport = nil
@@ -1051,6 +1116,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         await previous?.value
         guard !Task.isCancelled, reconnectAttempt == token else { return nil }
         await files.suspendAndAwait()
+        guard !Task.isCancelled, reconnectAttempt == token else { return nil }
+        await screen.suspendAndAwait()
         guard !Task.isCancelled, reconnectAttempt == token else { return nil }
         if let ownedTransport {
             await ownedTransport.shutdown()
@@ -1070,12 +1137,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         connectionGeneration = UUID()
         let lifetime = PairSessionLifetime(localID: localMacDeviceId, peerID: device.id,
             sessionID: device.sessionId, sessionKey: sessionKey, stateStore: frameStateStore)
+        let localID = localMacDeviceId
+        let peerID = device.id
+        let ingress = screenIngress
+        let previewAdmission = screen.admissionGeneration
         let listener = ReconnectListener(port: receiverPort, lifetime: lifetime) { [weak self, weak lifetime] result, generation in
             guard let lifetime, lifetime.isCurrent else { return }
             switch result {
             case .success(let envelope) where ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type):
-                // Screen sharing is unavailable; discard frames before scheduling UI work.
-                return
+                guard let previewGeneration = previewAdmission.current(),
+                      let admission = ingress.admit(envelope, expectedSourceDeviceID: peerID,
+                        expectedTargetDeviceID: localID, connectionGeneration: generation) else { return }
+                Task { @MainActor in
+                    guard let self, self.pairLifetime === lifetime,
+                          self.connectionGeneration == generation else { admission.release(); return }
+                    self.screen.receive(envelope, admission: admission, previewGeneration: previewGeneration)
+                }
+            case .failure(let error) where error is AuthenticatedScreenProtocolRejection:
+                guard let previewGeneration = previewAdmission.current(),
+                      let rejection = error as? AuthenticatedScreenProtocolRejection,
+                      let admission = ingress.admit(rejection, expectedPeerDeviceID: peerID,
+                        connectionGeneration: generation) else { return }
+                Task { @MainActor in
+                    guard let self, self.pairLifetime === lifetime,
+                          self.connectionGeneration == generation else { admission.release(); return }
+                    self.screen.receive(rejection, admission: admission, previewGeneration: previewGeneration)
+                }
             case .failure:
                 return
             default:
@@ -1153,6 +1240,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         reconnectDeadline = deadline
         NSLog("Plink reconnect attempt started; deadline 30 seconds")
         lifetime.closeOrdinaryAdmission()
+        screen.unbind()
         pairedPeerID = nil
         connectionGeneration = UUID()
         commands.removeAll()
@@ -1172,6 +1260,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                   self.reconnectAuthority === authority else { return }
             await self.files.suspendAndAwait()
             guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
+            await self.screen.suspendAndAwait()
+            guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
             if let ownedTransport {
                 await ownedTransport.shutdown()
                 guard self.reconnectAttempt == token, self.reconnectAuthority === authority else { return }
@@ -1185,6 +1275,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             NSLog("Plink reconnect deadline expired")
             authority.invalidate()
             self.pairLifetime?.closeOrdinaryAdmission()
+            self.screen.unbind()
             self.reconnectTask?.cancel()
             self.reconnect.setDisconnecting()
         }
@@ -1224,6 +1315,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             deadline: deadline, isCurrent: current, retire: { [weak self] in
                 guard let self else { return }
                 self.connectionGeneration = retiredGeneration
+                self.screen.unbind()
                 self.pairedPeerID = nil
                 self.commands.removeAll()
                 self.notificationBridge.clearContexts()
@@ -1239,6 +1331,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             }, cleanup: { [weak self] in
                 // Before touching the shared file controller, recheck actor-owned state.
                 if let self, current() { await self.files.suspendAndAwait() }
+                if let self, current() { await self.screen.suspendAndAwait() }
                 await ownedTransport?.shutdown()
                 if let self, self.retiringTransport === ownedTransport { self.retiringTransport = nil }
             })
@@ -1266,6 +1359,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 self.connectionGeneration = nextGeneration
                 self.pairedPeerID = pairing.device.id
                 self.files.bind(localID: self.localMacDeviceId, peerID: pairing.device.id, transport: sender)
+                self.screen.bind(localID: self.localMacDeviceId, peerID: pairing.device.id,
+                    generation: nextGeneration, sender: sender)
                 self.reconnect.setConnected()
                 self.lastDeliveryState = "Connected to \(pairing.device.name) on the local network."
                 self.observationLog.notice("Plink conditional reconnect completed")
@@ -1344,6 +1439,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                     error is ReconnectEndpointStoreError ? "endpoint_store" : "non_transient")
                 NSLog("Plink reconnect stopped: %@", category)
                 self.pairLifetime?.closeOrdinaryAdmission()
+                self.screen.unbind()
                 self.pairedPeerID = nil
                 self.reconnectDeadlineTask?.cancel()
                 self.reconnectDeadlineTask = nil
@@ -1371,6 +1467,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
         let token = reconnectAttempt
         previous?.cancel()
         pairLifetime?.closeOrdinaryAdmission()
+        screen.unbind()
         pairedPeerID = nil
         connectionGeneration = UUID()
         commands.removeAll()
@@ -1387,6 +1484,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
             await previous?.value
             guard let self, self.reconnectAttempt == token else { return }
             await self.files.suspendAndAwait()
+            guard self.reconnectAttempt == token else { return }
+            await self.screen.suspendAndAwait()
             guard self.reconnectAttempt == token else { return }
             if let ownedTransport {
                 await ownedTransport.shutdown()
@@ -1440,6 +1539,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 connectionGeneration = generation
                 pairedPeerID = pairing.device.id
                 files.bind(localID: localMacDeviceId, peerID: pairing.device.id, transport: sender)
+                screen.bind(localID: localMacDeviceId, peerID: pairing.device.id, generation: generation, sender: sender)
                 reconnect.setConnected()
                 lastDeliveryState = "Connected to \(pairing.device.name) on the local network."
                 authority.invalidate()
@@ -1960,6 +2060,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
     func handleInbound(_ result: Result<PlinkEnvelope, Error>) {
         switch result {
         case .success(let envelope) where ScreenPreviewPayloadPolicy.eventTypes.contains(envelope.type):
+            // Screen traffic requires the admission token captured by the authenticated listener.
             return
         case .failure(let error) where error is AuthenticatedScreenProtocolRejection:
             return

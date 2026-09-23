@@ -1,0 +1,59 @@
+{
+  "scope": "Call notification consistency and restored consented screen preview",
+  "command": "./scripts/verify.sh",
+  "exitCode": 0,
+  "tests": {
+    "android": 259,
+    "macSwiftTesting": 153,
+    "coreSwiftTesting": 126,
+    "coreXCTest": 66,
+    "total": 604
+  },
+  "sourceHashes": {
+    "android/src/main/AndroidManifest.xml": "83242bd6bddef1f6729ce2da3f3c4e2a709c5c7882de7110de3a3dc20cfb9caf",
+    "android/src/main/java/app/plink/android/MainActivity.kt": "96c89fdbd3371feac98166b0719dc748a336d006774a1611a6c986dd0a0f077c",
+    "android/src/main/java/app/plink/android/features/FeatureState.kt": "9a1be761733219f16dd10ef7b3ba80793bfb20acb6deb5b7b942d8edae27c306",
+    "android/src/main/java/app/plink/android/screen/ScreenPreviewCoordinator.kt": "f24cedfc31453e91d42bdea362693d99c4b26036821bde5771faf2776662209c",
+    "android/src/main/java/app/plink/android/screen/ScreenProjectionService.kt": "dd114ed9cd39a02e52c023af314e1643415d4689e5a735df5d39bf9acb1df318",
+    "android/src/main/java/app/plink/android/services/PlinkSessionController.kt": "5a3e41755715031c616e76a8cb780610da9ad2725d0f0a4b575a17ccfc4c4b2d",
+    "android/src/main/java/app/plink/android/ui/PlinkAppScreen.kt": "08aae47c37158d8936c1f8c272198dfb4326e992815ae72bc65c712d7acabcca",
+    "android/src/main/java/app/plink/android/ui/PlinkUiState.kt": "1417dcf36b212ad1faabffe63feebfe228e3418898968815d12fecf75996d0b3",
+    "android/src/test/java/app/plink/android/features/FeaturePolicyTest.kt": "de801d1e5741cd8402e940130d17c9089d323c63d1d9553ea0023c1e556f7d0c",
+    "macos/Sources/PlinkMac/DashboardWindow.swift": "ea63d338f4864b90f4984c1725d13c2dc85b3d9350fd177f29e33f38ff54f5cb",
+    "macos/Sources/PlinkMac/NotificationBridge.swift": "05af6f27c9f8588607adef415ffacdca038c132f53be611539e1c7d9b81a5964",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "6c4c839dc3d7650a2d688eec0999c29a89bca934de61269d890178e9bcd53b04",
+    "macos/Sources/PlinkMac/ScreenPreviewView.swift": "6b479f77a6095379be2b5c90782609360719a55ac554408c7f99780e27cfdd9c",
+    "macos/Tests/PlinkMacTests/NotificationBridgeTests.swift": "fe26b10a4ee6c3e539cc8aacec0c275dcefb5fc2bf63a2415c933b4a2ea5ff73",
+    "macos/Tests/PlinkMacTests/ScreenPreviewControllerTests.swift": "a49c4095d5cdb96dc61aa03a2e5f8866e0867f23ff6610886440dc7b86585eb1",
+    "android/src/main/java/app/plink/android/ui/ScreenPreviewControls.kt": "9989469b0740d8cc88fc819d1c72630b409b58129bd574efdbb93a5eac150d75",
+    "android/src/test/java/app/plink/android/screen/ScreenPreviewCoordinatorWiringTest.kt": "2cc193602ebd5f5d9fdec67de6e3318ba3e59b523dcffb1876ccaafad76aa8ac"
+  },
+  "installation": {
+    "macExecutableSHA256": "f10fef940dbb360977652d58703f96f663dacc2d197bde336301846daddfd969",
+    "androidAPK_SHA256": "fe36381d16f47823d7d47d074aa12a1940b640c32417d1eb280c94132a09726e",
+    "macInstalled": true,
+    "androidInstalled": true,
+    "phoneSettingsUnchanged": true,
+    "phoneScreenStayedDozing": true,
+    "pairingDataPreserved": true,
+    "temporaryInstallFilesRemoved": true
+  },
+  "runtime": {
+    "newInstalledMacProcessRunning": true,
+    "nativeConnectionCallbackStatus": 0,
+    "notificationSubmissionsObserved": true,
+    "computerUse": "native pipe closed before response"
+  },
+  "unverified": [
+    "Live restored screen approval, cross-app viewing, and Stop/Off",
+    "Primary icon rendering after targeted same-ID registration repair",
+    "Two-way call audio; last native attempt failed"
+  ],
+  "audioEndpointExperiment": {
+    "offlineChecks": 65,
+    "invokedOnPhone": false,
+    "awaitingDesignatedActiveCall": true,
+    "hostBuildScratchRemoved": true
+  },
+  "fullAcceptanceVerified": false
+}

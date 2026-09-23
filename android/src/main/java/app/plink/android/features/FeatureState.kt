@@ -1,6 +1,7 @@
 package app.plink.android.features
 
 import android.content.Context
+import android.os.Build
 import android.content.SharedPreferences
 import app.plink.android.permissions.PermissionState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,8 +62,6 @@ class FeatureSettings(
         _enabled.value[feature] ?: defaultEnabled(feature)
 
     fun setEnabled(feature: ContinuityFeature, enabled: Boolean) {
-        // Keep historical preferences, but retired features cannot be activated.
-        if (feature == ContinuityFeature.ScreenMirror) return
         preferences.edit().putBoolean(feature.preferenceKey, enabled).apply()
         _enabled.value = _enabled.value + (feature to enabled)
         listeners.forEach { it(feature, enabled) }
@@ -79,8 +78,7 @@ class FeatureSettings(
 
     private fun readAll(): Map<ContinuityFeature, Boolean> =
         ContinuityFeature.entries.associateWith { feature ->
-            feature != ContinuityFeature.ScreenMirror &&
-                preferences.getBoolean(feature.preferenceKey, defaultEnabled(feature))
+            preferences.getBoolean(feature.preferenceKey, defaultEnabled(feature))
         }
 
     private fun defaultEnabled(feature: ContinuityFeature): Boolean = when (feature) {
@@ -101,7 +99,8 @@ object FeaturePolicy {
             feature != ContinuityFeature.Files &&
                 feature != ContinuityFeature.Sms &&
                 feature != ContinuityFeature.ScreenMirror
-        }
+        },
+        screenPreviewSupported: Boolean = Build.VERSION.SDK_INT >= 34
     ): List<FeatureAvailability> = listOf(
         FeatureAvailability(
             ContinuityFeature.Calls,
@@ -147,6 +146,13 @@ object FeaturePolicy {
             enabled = settings.isEnabled(ContinuityFeature.Media),
             available = permissionState.notificationListener,
             reason = if (permissionState.notificationListener) null else "Turn on notification access."
+        ),
+        FeatureAvailability(
+            ContinuityFeature.ScreenMirror,
+            enabled = settings.isEnabled(ContinuityFeature.ScreenMirror),
+            available = screenPreviewSupported,
+            reason = if (screenPreviewSupported) "View-only preview. Approve each request in Plink and Android."
+                else "Screen preview requires Android 14 or later."
         )
     )
 }

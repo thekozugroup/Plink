@@ -37,6 +37,132 @@ struct NotificationBridgeTests {
         #expect(notifications.delivered.isEmpty && notifications.pending.isEmpty)
     }
 
+    @Test func repeatedSameKeyRingingKeepsOnePresentation() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        bridge.show(envelope: call(.callRinging, key: "same"))
+        let id = try #require(notifications.mirrorID)
+        bridge.show(envelope: call(.callRinging, key: "same", caller: "Updated"))
+        #expect(notifications.mirrorID == id)
+        #expect(notifications.submissions == [id])
+        #expect(notifications.removals.isEmpty)
+    }
+
+    @Test func dismissedReadonlyDoesNotRealertSameLiveIdentity() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        bridge.show(envelope: call(.callRinging, key: "same"))
+        let id = try #require(notifications.mirrorID)
+        bridge.handleResponse(id: id, action: UNNotificationDismissActionIdentifier, text: nil)
+        bridge.show(envelope: call(.callRinging, key: "same"))
+        #expect(notifications.submissions == [id])
+        #expect(notifications.delivered.isEmpty)
+        bridge.show(envelope: call(.callEnded, key: "same"))
+        bridge.show(envelope: call(.callRinging, key: "same"))
+        #expect(notifications.submissions.count == 2)
+    }
+
+    @Test func readyHFPDefersReadonlyForFixedDeadlineAndHandsOver() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "AA:BB:CC:DD:EE:FF")
+        bridge.updateCall(hfp, selectedPeerID: "app-peer")
+        bridge.show(envelope: call(.callRinging, key: "same", peer: "app-peer"))
+        let first = try #require(notifications.scheduled.first)
+        bridge.show(envelope: call(.callRinging, key: "same", peer: "app-peer"))
+        #expect(notifications.scheduled.count == 1)
+        #expect(notifications.scheduledDelays == [0.3])
+        #expect(notifications.delivered.isEmpty)
+        hfp.ringing(number: nil)
+        bridge.updateCall(hfp, selectedPeerID: "app-peer")
+        first()
+        #expect(notifications.mirror == nil)
+        #expect(notifications.delivered.values.filter { $0.categoryIdentifier == "plink.call.ringing" }.count == 1)
+    }
+
+    @Test func readyHFPWithoutContextFallsBackOnceAtOriginalDeadline() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "AA:BB:CC:DD:EE:FF")
+        bridge.updateCall(hfp, selectedPeerID: "app-peer")
+        bridge.show(envelope: call(.callRinging, key: "same", peer: "app-peer"))
+        let first = try #require(notifications.scheduled.first)
+        bridge.show(envelope: call(.callRinging, key: "same", peer: "app-peer"))
+        #expect(notifications.scheduled.count == 1)
+        first()
+        let id = try #require(notifications.mirrorID)
+        bridge.show(envelope: call(.callRinging, key: "same", peer: "app-peer"))
+        #expect(notifications.submissions == [id])
+    }
+
+    @Test func graceUsesAuthenticatedPeerIDNotBluetoothAddress() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "AA:BB:CC:DD:EE:FF")
+        bridge.updateCall(hfp, selectedPeerID: "app-peer")
+        bridge.show(envelope: call(.callRinging, key: "wrong-domain", peer: "AA:BB:CC:DD:EE:FF"))
+        #expect(notifications.scheduled.isEmpty)
+        #expect(notifications.mirror != nil)
+        bridge.show(envelope: call(.callRinging, key: "app", peer: "app-peer"))
+        #expect(notifications.scheduled.count == 1)
+    }
+
+    @Test func sameBluetoothAddressNewAppPeerRetiresPendingFallback() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "AA:BB:CC:DD:EE:FF")
+        bridge.updateCall(hfp, selectedPeerID: "peer-A")
+        bridge.show(envelope: call(.callRinging, key: "A", peer: "peer-A"))
+        let oldDeadline = try #require(notifications.scheduled.first)
+        bridge.updateCall(hfp, selectedPeerID: "peer-B")
+        oldDeadline()
+        #expect(notifications.delivered.isEmpty)
+        bridge.show(envelope: call(.callRinging, key: "B", peer: "peer-B"))
+        #expect(notifications.scheduled.count == 2)
+        notifications.scheduled[1]()
+        #expect(notifications.mirror != nil)
+        #expect(notifications.delivered.count == 1)
+    }
+
+    @Test func clearContextsRetiresReadinessWithoutSuppressingReadonlyFallback() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "AA:BB:CC:DD:EE:FF")
+        bridge.updateCall(hfp, selectedPeerID: "peer-A")
+        bridge.show(envelope: call(.callRinging, key: "old", peer: "peer-A"))
+        let oldDeadline = try #require(notifications.scheduled.first)
+        bridge.clearContexts()
+        oldDeadline()
+        #expect(notifications.delivered.isEmpty)
+        bridge.show(envelope: call(.callRinging, key: "new", peer: "peer-A"))
+        #expect(notifications.scheduled.count == 1)
+        #expect(notifications.mirror != nil)
+    }
+
+    @Test(arguments: ["privacy", "peer", "ended", "clear"])
+    func pendingReadonlyCancelsOnLifecycleChange(outcome: String) throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "AA:BB:CC:DD:EE:FF")
+        bridge.updateCall(hfp, selectedPeerID: "app-peer")
+        bridge.show(envelope: call(.callRinging, key: "same", peer: "app-peer"))
+        let fire = try #require(notifications.scheduled.first)
+        switch outcome {
+        case "privacy": bridge.updateCall(hfp, presentNotification: false, selectedPeerID: "app-peer")
+        case "peer": hfp.connected(phoneID: "11:22:33:44:55:66"); bridge.updateCall(hfp, selectedPeerID: "other-peer")
+        case "ended": bridge.show(envelope: call(.callEnded, key: "same", peer: "app-peer"))
+        default: bridge.clearContexts()
+        }
+        fire()
+        #expect(notifications.delivered.isEmpty)
+    }
+
     @Test func unavailableHFPControlsRetainPendingAndUncertainCallAuthority() throws {
         let notifications = Notifications()
         let bridge = notifications.bridge()
@@ -228,12 +354,59 @@ struct NotificationBridgeTests {
         hfp.markComputerAudioUnsupported()
         bridge.updateCall(hfp, audioUnavailableReason: reason)
         let current = try #require(notifications.delivered.keys.first)
-        #expect(current != old)
+        #expect(current == old)
         #expect(notifications.delivered[current]?.subtitle == reason)
         #expect(notifications.delivered[current]?.categoryIdentifier == "plink.call.ringing")
         #expect(notifications.delivered[current]?.attachments.isEmpty == true)
         bridge.handleResponse(id: current, action: "call.answer", text: nil)
         #expect(actions == [.answer])
+    }
+
+    @Test func callerEnrichmentKeepsHFPIdentityAndConsumedAction() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        var actions = 0
+        bridge.onCallAction = { _, _ in actions += 1 }
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "phone")
+        hfp.ringing(number: nil)
+        bridge.updateCall(hfp)
+        let id = try #require(notifications.delivered.keys.first)
+        hfp.ringing(number: "Caller")
+        bridge.updateCall(hfp)
+        #expect(notifications.delivered[id]?.body == "Caller")
+        #expect(notifications.delivered[id]?.sound == nil)
+        #expect(notifications.submissions == [id, id])
+        #expect(notifications.removals.isEmpty)
+        bridge.handleResponse(id: id, action: "call.answer", text: nil)
+        bridge.updateCall(hfp)
+        bridge.handleResponse(id: id, action: "call.answer", text: nil)
+        #expect(actions == 1)
+        #expect(notifications.delivered.isEmpty)
+        #expect(notifications.submissions == [id, id])
+    }
+
+    @Test func currentCallBodyClickOpensWithoutCallAction() throws {
+        let notifications = Notifications()
+        let bridge = notifications.bridge()
+        var opens = 0
+        var actions = 0
+        bridge.onOpenNotification = { opens += 1 }
+        bridge.onCallAction = { _, _ in actions += 1 }
+        bridge.show(envelope: call(.callRinging, key: "mirror"))
+        let mirror = try #require(notifications.mirrorID)
+        bridge.handleResponse(id: mirror, action: UNNotificationDefaultActionIdentifier, text: nil)
+        var hfp = MacCallSession()
+        hfp.connected(phoneID: "phone")
+        hfp.ringing(number: nil)
+        bridge.updateCall(hfp)
+        let native = try #require(notifications.delivered.keys.first)
+        bridge.handleResponse(id: mirror, action: UNNotificationDefaultActionIdentifier, text: nil)
+        bridge.handleResponse(id: native, action: UNNotificationDefaultActionIdentifier, text: nil)
+        #expect(opens == 2 && actions == 0)
+        bridge.updateCall(hfp, presentNotification: false)
+        bridge.handleResponse(id: native, action: UNNotificationDefaultActionIdentifier, text: nil)
+        #expect(opens == 2)
     }
 
     @Test func lockAndUnlockPublishNewIdentityAndRejectOldResponses() throws {
@@ -427,11 +600,15 @@ struct NotificationBridgeTests {
         var delivered: [String: UNNotificationContent] = [:]
         var pending: [String: UNNotificationContent] = [:]
         var removals: [[String]] = []
+        var submissions: [String] = []
+        var scheduled: [@MainActor () -> Void] = []
+        var scheduledDelays: [TimeInterval] = []
         var mirrorID: String? { delivered.keys.first { $0.hasPrefix("plink.call.mirrored.") } }
         var mirror: UNNotificationContent? { mirrorID.flatMap { delivered[$0] } }
 
         func bridge() -> NotificationBridge {
             NotificationBridge(submitNotification: { request in
+                self.submissions.append(request.identifier)
                 self.delivered[request.identifier] = request.content
                 self.pending[request.identifier] = request.content
             }, removeNotifications: { ids in
@@ -440,7 +617,7 @@ struct NotificationBridgeTests {
                     self.delivered.removeValue(forKey: id)
                     self.pending.removeValue(forKey: id)
                 }
-            })
+            }, schedule: { delay, fire in self.scheduledDelays.append(delay); self.scheduled.append(fire) })
         }
     }
 }

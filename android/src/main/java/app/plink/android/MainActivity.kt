@@ -1,6 +1,7 @@
 package app.plink.android
 
 import android.Manifest
+import android.app.Activity
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -27,6 +30,8 @@ import app.plink.android.features.FeaturePolicy
 import app.plink.android.permissions.AndroidPermissionReader
 import app.plink.android.permissions.PermissionAction
 import app.plink.android.permissions.PermissionOnboarding
+import app.plink.android.screen.ScreenConsentAttempt
+import app.plink.android.screen.ScreenConsentLaunch
 import app.plink.android.ui.PlinkAppScreen
 import app.plink.android.ui.PlinkUiActions
 import app.plink.android.ui.PlinkUiState
@@ -34,6 +39,12 @@ import app.plink.android.ui.theme.PlinkTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    // Rotation retains only the opaque attempt, never the MediaProjection grant.
+    private val screenConsentState by lazy { ViewModelProvider(this)[ScreenConsentState::class.java] }
+
+    class ScreenConsentState : ViewModel() {
+        var attempt: ScreenConsentAttempt? = null
+    }
     /** Bind the clipboard setup button to this explicit user action. */
     fun requestClipboardSyncSetup() {
         (application as PlinkApplication).clipboardSync.requestShizukuPermission()
@@ -47,6 +58,17 @@ class MainActivity : ComponentActivity() {
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {}
+    private val screenConsentLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val attempt = screenConsentState.attempt
+        screenConsentState.attempt = null
+        if (attempt != null) {
+            (application as PlinkApplication).sessionController.completeScreenConsent(
+                attempt, result.resultCode, result.data
+            )
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,20 +86,35 @@ class MainActivity : ComponentActivity() {
                     if (Build.VERSION.SDK_INT >= 33) {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
-                }
+                },
+                onBeginScreenConsent = ::beginScreenConsent
             )
+        }
+    }
+
+    private fun beginScreenConsent(requestId: String) {
+        val controller = (application as PlinkApplication).sessionController
+        val launch: ScreenConsentLaunch = controller.beginScreenConsent(requestId) ?: return
+        screenConsentState.attempt = launch.attempt
+        try {
+            screenConsentLauncher.launch(launch.intent)
+        } catch (_: RuntimeException) {
+            screenConsentState.attempt = null
+            controller.completeScreenConsent(launch.attempt, Activity.RESULT_CANCELED, null)
         }
     }
 }
 
 @Composable
 fun PlinkApp(
-    onRequestPostNotifications: () -> Unit = {}
+    onRequestPostNotifications: () -> Unit = {},
+    onBeginScreenConsent: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as PlinkApplication
     val sessionStatus by application.sessionController.status.collectAsState()
     val fileTransferState by application.sessionController.fileTransferState.collectAsState()
+    val screenPreviewState by application.sessionController.screenPreviewState.collectAsState()
     val featureSettings by application.featureSettings.enabled.collectAsState()
     val clipboardSyncEnabled by application.featureSettings.clipboardSyncEnabled.collectAsState()
     val clipboardSyncState by application.clipboardSync.state.collectAsState()
@@ -112,6 +149,7 @@ fun PlinkApp(
                     backgroundConnectionEnabled = backgroundConnectionEnabled,
                     backgroundConnectionState = backgroundConnectionState,
                     fileTransferState = fileTransferState,
+                    screenPreviewState = screenPreviewState,
                     clipboardSyncEnabled = clipboardSyncEnabled,
                     clipboardSyncState = clipboardSyncState
                 ),
@@ -126,6 +164,8 @@ fun PlinkApp(
                         application.requestBackgroundConnection(enabled)
                     },
                     onCancelFileTransfer = application.sessionController::cancelFileTransfer,
+                    onBeginScreenConsent = onBeginScreenConsent,
+                    onStopScreenPreview = application.sessionController::stopScreenPreview,
                     onClipboardSyncEnabledChange = application.clipboardSync::setEnabled,
                     onSetUpClipboardSync = application.clipboardSync::requestShizukuPermission
                 ),

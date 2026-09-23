@@ -114,6 +114,9 @@ struct DashboardWindow: View {
         if appDelegate.pairingRecoveryComplete {
             if appDelegate.pairedPeerID != nil {
                 ContinuityPanel(appDelegate: appDelegate)
+                Button { appDelegate.showScreenWindow() } label: {
+                    Label { Text("Phone Screen") } icon: { LucideIcon(name: .smartphone) }
+                }.disabled(!appDelegate.screenPreviewEnabled)
                 FileTransferPanel(controller: appDelegate.files)
             } else {
                 NativeSettingsCard("Get connected") {
@@ -346,6 +349,13 @@ struct PlinkSettingsContent: View {
                 }
             }
             NativeSettingsCard("Sharing") {
+                Toggle(isOn: $appDelegate.screenPreviewEnabled) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Phone screen").font(.callout.weight(.medium))
+                        Text("Your phone asks before sharing its screen.").font(.caption).foregroundStyle(.secondary)
+                    }
+                }.toggleStyle(.switch).controlSize(.regular)
+                Divider()
                 ClipboardSyncSettings(controller: appDelegate.clipboard)
                 Divider()
                 Toggle(isOn: $appDelegate.receiveURLs) {
@@ -395,6 +405,8 @@ struct MenuBarPanel: View {
                     .disabled(DashboardPresentation.callsSetupDisabled(busy: calling.busy, blocked: calling.blocked) || appDelegate.phoneManagementBusy)
             }
             FileTransferMenu(controller: appDelegate.files, openDashboard: { appDelegate.showDashboardWindow() })
+            Button("Phone Screen…") { appDelegate.showScreenWindow() }
+                .disabled(!appDelegate.screenPreviewEnabled)
         } else if appDelegate.isPairing {
             Button("Continue Pairing…") { appDelegate.showPairingWindow() }
         } else if appDelegate.pairedPhoneName != nil {
@@ -443,7 +455,7 @@ private struct NativeSettingsCard<Content: View>: View {
     }
 }
 
-private struct FrostedWindowBackground: NSViewRepresentable {
+struct FrostedWindowBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
         view.material = .underWindowBackground

@@ -8,6 +8,51 @@ import UniformTypeIdentifiers
 
 @MainActor
 struct ScreenPreviewControllerTests {
+    @Test func peerReplacementAndOffRevokePendingConsentAndQueuedStartedMessage() async throws {
+        let oldWire = PreviewTestTransport(), nextWire = PreviewTestTransport()
+        let oldSender = SerializedPlinkSender(transport: oldWire)
+        let nextSender = SerializedPlinkSender(transport: nextWire)
+        let controller = ScreenPreviewController(isAppActive: { true })
+        let oldConnection = UUID(), nextConnection = UUID()
+        let ingress = ScreenPreviewIngress()
+        controller.bind(localID: "mac", peerID: "old-phone", generation: oldConnection, sender: oldSender)
+        controller.setVisible(true)
+        controller.start()
+        let oldRequest = try #require(controller.snapshot?.requestID)
+        let oldEpoch = try #require(controller.admissionGeneration.current())
+        _ = try await oldWire.next()
+        let stale = ScreenPreviewMessage.started(requestID: oldRequest, streamID: UUID().uuidString.lowercased())
+            .envelope(sourceDeviceID: "old-phone", targetDeviceID: "mac")
+        let queued = try #require(ingress.admit(stale, expectedSourceDeviceID: "old-phone",
+            expectedTargetDeviceID: "mac", connectionGeneration: oldConnection))
+        await controller.suspendAndAwait()
+        controller.bind(localID: "mac", peerID: "next-phone", generation: nextConnection, sender: nextSender)
+        controller.start()
+        _ = try await nextWire.next()
+        let nextRequest = try #require(controller.snapshot?.requestID)
+        controller.receive(stale, admission: queued, previewGeneration: oldEpoch)
+        #expect(controller.snapshot?.requestID == nextRequest)
+        #expect(controller.snapshot?.phase == .requesting)
+        let awaiting = ScreenPreviewMessage.needsConsent(requestID: nextRequest)
+            .envelope(sourceDeviceID: "next-phone", targetDeviceID: "mac")
+        let token = try #require(ingress.admit(awaiting, expectedSourceDeviceID: "next-phone",
+            expectedTargetDeviceID: "mac", connectionGeneration: nextConnection))
+        controller.receive(awaiting, admission: token,
+            previewGeneration: try #require(controller.admissionGeneration.current()))
+        #expect(controller.snapshot?.phase == .needsConsent)
+        controller.setEnabled(false)
+        #expect(controller.snapshot?.phase == .stopped(.disabled))
+        #expect(controller.admissionGeneration.current() == nil)
+        #expect(controller.image == nil)
+        controller.setEnabled(true)
+        #expect(controller.snapshot?.requestID == nil)
+        #expect(try await nextWire.next().type == .screenStop)
+        #expect(await nextWire.remainingCount == 0)
+        await controller.shutdown()
+        await oldSender.shutdown()
+        await nextSender.shutdown()
+    }
+
     @Test func decodedPixelsDisappearImmediatelyWhenPreviewStops() async throws {
         let wire = PreviewTestTransport()
         let sender = SerializedPlinkSender(transport: wire)

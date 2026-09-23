@@ -191,9 +191,6 @@ class ScreenProjectionService : Service() {
                     }
                 }
 
-                override fun onCapturedContentVisibilityChanged(isVisible: Boolean) {
-                    if (!isVisible) stopCapture(ScreenStopReason.HIDDEN)
-                }
             }
             mediaProjection.registerCallback(projectionCallback, captureHandler)
             synchronized(lock) { callback = projectionCallback }

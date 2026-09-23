@@ -1,6 +1,7 @@
 package app.plink.android.services
 
 import android.content.Context
+import android.content.Intent
 import android.os.SystemClock
 import app.plink.android.continuity.ContinuityEnvelopeFactory
 import app.plink.android.continuity.ContinuityEvent
@@ -22,6 +23,9 @@ import app.plink.android.pairing.PairedDevice
 import app.plink.android.protocol.PlinkEventType
 import app.plink.android.protocol.FileTransferPayloadPolicy
 import app.plink.android.protocol.ScreenPreviewPayloadPolicy
+import app.plink.android.screen.ScreenConsentAttempt
+import app.plink.android.screen.ScreenPreviewCoordinator
+import app.plink.android.screen.ScreenPreviewSession
 import app.plink.android.protocol.ReconnectPayloadPolicy
 import app.plink.android.reconnect.ReconnectBindingResolver
 import app.plink.android.reconnect.ReconnectAttemptToken
@@ -110,6 +114,7 @@ class PlinkSessionController(
     private val frameStateStore = FileFrameStateStore(File(context.filesDir, "transport-state"))
     @Volatile
     private var activeSession: ActivePlinkSession? = null
+    @Volatile private var screenSession: ScreenPreviewSession? = null
     @Volatile
     private var outbox: EventOutbox? = null
     private val sessionGeneration = AtomicLong()
@@ -130,6 +135,18 @@ class PlinkSessionController(
         sendEnvelope = { envelope, allowRevoked, stillValid -> SharedOutboundBridge.sendAwaitable(envelope, allowRevoked, stillValid) }
     )
     val fileTransferState: StateFlow<FileTransferState> = fileTransferCoordinator.state
+    private val screenPreviewCoordinator = ScreenPreviewCoordinator(
+        context = context.applicationContext,
+        scope = scope,
+        featureEnabled = { featureSettings.isEnabled(ContinuityFeature.ScreenMirror) },
+        currentSession = { screenSession }
+    )
+    val screenPreviewState = screenPreviewCoordinator.state
+
+    fun beginScreenConsent(requestId: String) = screenPreviewCoordinator.beginConsent(requestId)
+    fun completeScreenConsent(attempt: ScreenConsentAttempt, resultCode: Int, data: Intent?) =
+        screenPreviewCoordinator.completeConsent(attempt, resultCode, data)
+    fun stopScreenPreview() = screenPreviewCoordinator.stop()
 
     init {
         featureSettings.addListener { feature, enabled ->
@@ -143,6 +160,7 @@ class PlinkSessionController(
                 }
                 if (feature == ContinuityFeature.Files) fileTransferCoordinator.featureDisabled()
                 SharedOutboundBridge.purge(feature.eventTypes)
+                if (feature == ContinuityFeature.ScreenMirror) screenPreviewCoordinator.featureDisabled()
             }
         }
         scope.launch {
@@ -314,8 +332,10 @@ class PlinkSessionController(
                 deactivateOrdinaryLocked(lifetime, SessionStatus.DISCONNECTED)
             }
         } ?: run {
+            screenSession = null
             val generation = sessionGeneration.incrementAndGet()
             activeSession = null
+            screenPreviewCoordinator.sessionChanged()
             setReplySession(generation, active = false)
             fileTransferCoordinator.deactivateSession()
         }
@@ -355,6 +375,7 @@ class PlinkSessionController(
             lifetime?.reconnect?.closeAndAwait()
             receivers.joinAll()
             if (lifetime != null) awaitOrdinaryQuiescence(lifetime)
+            screenPreviewCoordinator.awaitQuiescence()
             fileTransferCoordinator.awaitQuiescence()
             SharedOutboundBridge.awaitQuiescence()
         } finally {
@@ -514,7 +535,10 @@ class PlinkSessionController(
                 activeSession === session && pairLifetime === lifetime &&
                     envelope.sourceDeviceId == session.localDeviceId &&
                     envelope.targetDeviceId == session.pairedDevice.id &&
-                    ordinaryFeatureEnabled(envelope)
+                    (ordinaryFeatureEnabled(envelope) ||
+                        envelope.type == PlinkEventType.ScreenStop ||
+                        (envelope.type == PlinkEventType.ScreenState &&
+                            envelope.payload["state"]?.jsonPrimitive?.content == "rejected"))
             }
         )
     }
@@ -529,6 +553,9 @@ class PlinkSessionController(
         SharedSessionState.configure(session)
         setReplySession(generation, active = true, session = session)
         fileTransferCoordinator.activateSession(session.localDeviceId, session.pairedDevice.id, generation)
+        screenSession = ScreenPreviewSession(
+            session.localDeviceId, session.pairedDevice.id, session.pairedDevice.name, generation
+        )
         lifetime.admission = prepared.admission
         prepared.admission.admit()
         activeSession = session
@@ -563,8 +590,10 @@ class PlinkSessionController(
             lifetime.retiringDispatch = admission.dispatch
         }
         lifetime.admission = null
+        screenSession = null
         val generation = sessionGeneration.incrementAndGet()
         activeSession = null
+        screenPreviewCoordinator.sessionChanged()
         setReplySession(generation, active = false)
         fileTransferCoordinator.deactivateSession()
         batteryCollector.stop()
@@ -581,6 +610,7 @@ class PlinkSessionController(
         }
         prepared?.awaitStopped()
         dispatch?.awaitStopped()
+        screenPreviewCoordinator.awaitQuiescence()
         fileTransferCoordinator.awaitQuiescence()
         SharedOutboundBridge.awaitQuiescence()
         synchronized(lifetime.admissionLock) {
@@ -848,8 +878,8 @@ class PlinkSessionController(
         pairedDeviceId: String
     ) {
         if (!admission.isAdmitted()) return
+        if (screenPreviewCoordinator.dispatchAuthenticated(result, admission.generation)) return
         when (result) {
-            // Screen sharing is retired. Authentication/validation remain in the decoder.
             is AuthenticatedFrameResult.RejectedScreen -> Unit
             is AuthenticatedFrameResult.Message -> {
                 val envelope = result.envelope
@@ -857,7 +887,6 @@ class PlinkSessionController(
                     app.plink.android.protocol.NotificationActionsPolicy.Enable,
                     app.plink.android.protocol.NotificationActionsPolicy.Invoke ->
                         handleNotificationAction(envelope, admission, localDeviceId, pairedDeviceId)
-                    in ScreenPreviewPayloadPolicy.eventTypes -> Unit
                     in FileTransferPayloadPolicy.eventTypes ->
                         fileTransferCoordinator.handle(envelope, admission.generation)
                     else -> InboundCommandHandler(

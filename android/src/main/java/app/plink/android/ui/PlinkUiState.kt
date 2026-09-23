@@ -8,6 +8,8 @@ import app.plink.android.permissions.PermissionAction
 import app.plink.android.permissions.PermissionOnboardingStep
 import app.plink.android.services.BackgroundConnectionState
 import app.plink.android.services.SessionStatus
+import app.plink.android.screen.ScreenPreviewUiState
+import app.plink.android.screen.ScreenPreviewPhase
 
 data class PlinkUiState(
     val sessionStatus: SessionStatus,
@@ -16,6 +18,7 @@ data class PlinkUiState(
     val backgroundConnectionEnabled: Boolean,
     val backgroundConnectionState: BackgroundConnectionState,
     val fileTransferState: FileTransferState,
+    val screenPreviewState: ScreenPreviewUiState = ScreenPreviewUiState(ScreenPreviewPhase.IDLE),
     val clipboardSyncEnabled: Boolean = false,
     val clipboardSyncState: ClipboardSyncState = ClipboardSyncState()
 )
@@ -27,6 +30,8 @@ data class PlinkUiActions(
     val onFeatureEnabledChange: (ContinuityFeature, Boolean) -> Unit,
     val onBackgroundConnectionEnabledChange: (Boolean) -> Unit,
     val onCancelFileTransfer: () -> Unit,
+    val onBeginScreenConsent: (String) -> Unit = {},
+    val onStopScreenPreview: () -> Unit = {},
     val onClipboardSyncEnabledChange: (Boolean) -> Unit = {},
     val onSetUpClipboardSync: () -> Unit = {}
 )

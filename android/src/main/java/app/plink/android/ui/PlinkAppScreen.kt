@@ -148,6 +148,9 @@ private fun ConnectionScreen(
     onCancelReconnect: () -> Unit,
     contentPadding: PaddingValues
 ) {
+    val screenEnabled = state.features.any {
+        it.feature == ContinuityFeature.ScreenMirror && it.enabled && it.available
+    }
     ScreenScaffold("Plink", "Pixel + Mac continuity", contentPadding) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -156,6 +159,17 @@ private fun ConnectionScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { ConnectionRing(state.sessionStatus) }
+            if (screenEnabled) {
+                item(key = "screenPreview") {
+                    Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
+                        ScreenPreviewControls(
+                            state.screenPreviewState,
+                            actions.onBeginScreenConsent,
+                            actions.onStopScreenPreview
+                        )
+                    }
+                }
+            }
             if (reconnectAvailable) {
                 item {
                     Box(Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp)) {
@@ -200,8 +214,7 @@ private fun ConnectionScreen(
 private fun ActivityScreen(state: PlinkUiState, reconnectAvailable: Boolean, contentPadding: PaddingValues) {
     ScreenScaffold("Activity", "Current status", contentPadding) { innerPadding ->
         val visibleFeatures = state.features.filterNot {
-            it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard ||
-                it.feature == ContinuityFeature.ScreenMirror
+            it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard
         }
         val enabled = visibleFeatures.count { it.enabled && it.available } +
             if (state.clipboardSyncEnabled &&
@@ -257,8 +270,7 @@ private fun SettingsScreen(
     contentPadding: PaddingValues
 ) {
     val visibleFeatures = state.features.filterNot {
-        it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard ||
-            it.feature == ContinuityFeature.ScreenMirror
+        it.feature == ContinuityFeature.Sms || it.feature == ContinuityFeature.Clipboard
     }
     ScreenScaffold(
         title = "Settings",

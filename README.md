@@ -21,7 +21,7 @@ Four Pixel synthetic `RemoteInput` checks passed: one-time delivery with reuse r
 
 ## Further integrations
 
-Screen sharing and Pixel USB webcam were removed from the current apps at the user’s request. Their earlier implementation evidence remains historical. Instant Hotspot and other unimplemented parity features are deferred. Current verification focuses on calls, notifications, clipboard, files and reliable connection.
+Consented phone screen preview is restored: open Phone Screen on the Mac, choose Start Preview, then approve sharing in Plink and Android. It is a view-only preview at up to two frames per second, with off switches and no audio or recording. The restored integration passes offline checks; a fresh live preview is still pending. Pixel USB webcam, Instant Hotspot and other unimplemented parity features remain deferred. Current verification also covers calls, notifications, clipboard, files and reliable connection.
 
 Background connection is an explicit optional Android UI switch and requires notification permission plus a paired Mac. Reopening the app restores the service when the saved switch remains on. On OnePlus 15, ordinary relaunch and process-death service recovery passed; an off switch remained off after relaunch. Checkpoint 9 also verified authenticated automatic reconnection after phone process death: the Mac completed recovery in 4.4 seconds without a manual action or Mac restart. A subsequent native notification reply reached the local Android recipient once. This does not establish full phone reboot recovery, all Doze conditions, or recovery when Bonjour misses the phone's disappearance and return.
 

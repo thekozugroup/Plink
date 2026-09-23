@@ -11,6 +11,7 @@ import app.plink.android.protocol.PlinkEnvelope
 import app.plink.android.protocol.PlinkEventType
 import app.plink.android.protocol.ScreenPreviewPayloadPolicy
 import app.plink.android.security.AuthenticatedScreenRejection
+import app.plink.android.security.AuthenticatedFrameResult
 import app.plink.android.services.OutboundRequestRejectedException
 import app.plink.android.services.SerializedOutboundQueue
 import app.plink.android.services.SharedOutboundBridge
@@ -94,6 +95,9 @@ class ScreenPreviewCoordinator(
     private val projectionStarter: ScreenProjectionStarter = ScreenProjectionStarter { ticket, resultCode, data ->
         ScreenProjectionService.start(context.applicationContext, ticket, resultCode, data)
     },
+    private val createConsentIntent: () -> Intent = {
+        context.applicationContext.getSystemService(MediaProjectionManager::class.java).createScreenCaptureIntent()
+    },
     private val platformSupported: () -> Boolean = { Build.VERSION.SDK_INT >= 34 },
     private val captureAllowed: () -> Boolean = {
         val app = context.applicationContext
@@ -101,6 +105,22 @@ class ScreenPreviewCoordinator(
             !app.getSystemService(KeyguardManager::class.java).isKeyguardLocked
     }
 ) {
+    /** Called only after transport authentication and ordinary admission. */
+    fun dispatchAuthenticated(result: AuthenticatedFrameResult, sessionGeneration: Long): Boolean {
+        when (result) {
+            is AuthenticatedFrameResult.RejectedScreen ->
+                handleAuthenticatedRejection(result.rejection, sessionGeneration)
+            is AuthenticatedFrameResult.Message -> when (result.envelope.type) {
+                PlinkEventType.ScreenRequest -> handleRequest(result.envelope, sessionGeneration)
+                PlinkEventType.ScreenPull -> handlePull(result.envelope, sessionGeneration)
+                PlinkEventType.ScreenStop -> handleRemoteStop(result.envelope, sessionGeneration)
+                in ScreenPreviewPayloadPolicy.eventTypes ->
+                    handleUnexpectedInbound(result.envelope, sessionGeneration)
+                else -> return false
+            }
+        }
+        return true
+    }
     private data class Pending(
         val requestId: String,
         val session: ScreenPreviewSession,
@@ -138,7 +158,6 @@ class ScreenPreviewCoordinator(
     )
 
     private val applicationContext = context.applicationContext
-    private val projectionManager = applicationContext.getSystemService(MediaProjectionManager::class.java)
     private val lock = Any()
     private val _state = MutableStateFlow(initialState())
     val state: StateFlow<ScreenPreviewUiState> = _state.asStateFlow()
@@ -198,7 +217,7 @@ class ScreenPreviewCoordinator(
         current.attemptToken = token
         ScreenConsentLaunch(
             ScreenConsentAttempt(token),
-            projectionManager.createScreenCaptureIntent()
+            createConsentIntent()
         )
     }
 

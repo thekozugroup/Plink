@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ScreenPreviewView: View {
     @ObservedObject var controller: ScreenPreviewController
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -36,6 +37,13 @@ struct ScreenPreviewView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(20)
+        .padding(.top, 20)
+        .background {
+            Group {
+                if reduceTransparency { Color(nsColor: .windowBackgroundColor) }
+                else { FrostedWindowBackground() }
+            }.ignoresSafeArea()
+        }
         .frame(minWidth: 440, minHeight: 520)
     }
 
