@@ -1,0 +1,153 @@
+{
+  "iteration": 30,
+  "recordedAtUTC": "2026-09-23T01:01:28.984915+00:00",
+  "scope": "Pinned source review and documentation only; no app implementation, device experiment, Tether execution or new product tests.",
+  "baseCommit": "9c287ac65f41ca989b227b70f60495b7b19ddef7",
+  "tether": {
+    "commit": "779b8a4d970f3aa34f105fc9a84d06f186670ec1",
+    "cleanCloneVerified": true,
+    "sources": {
+      "LICENSE": {
+        "sha256": "74274c5580ff5bdb3c7e2180717db0f2962198c01ad5c79bb456de7373372f50",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/LICENSE"
+      },
+      "apple/TetherFramework/Package.swift": {
+        "sha256": "97ad96dc4678894aa317f6a96c4fdc304f9db88cae9e8e8010d39fc05a8ccc37",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/apple/TetherFramework/Package.swift#L14-L17"
+      },
+      "docs/BLUETOOTH.md": {
+        "sha256": "e336cfb25a7bb821ff1d559500f3add9d60736f40a02605237589cf011e4ccf7",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/docs/BLUETOOTH.md#L369-L376"
+      },
+      "docs/PROTOCOL.md": {
+        "sha256": "8db6dd8fa44fed19b624296e4e80c8701261039a51113bcfe06dc29a36afb74d",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/docs/PROTOCOL.md#L1-L23"
+      },
+      "src/core/src/bluetooth/ancs/notifications.cpp": {
+        "sha256": "011add86fd0c5f304796e70b149b2478549f8236548e66b333d8111219f2d299",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/src/core/src/bluetooth/ancs/notifications.cpp#L140-L142"
+      },
+      "src/core/src/bluetooth/map_session.cpp": {
+        "sha256": "b0aca5d7631d35aad28c0bda405a1d519e5dbe17eabcef027e8f8b4731a04e74",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/src/core/src/bluetooth/map_session.cpp"
+      },
+      "src/core/src/bluetooth/pbap_session.cpp": {
+        "sha256": "4784c9891c703fa330aeb890e7839e2930978aafe298aef85f7135817cbaf734",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/src/core/src/bluetooth/pbap_session.cpp#L88-L102"
+      },
+      "src/core/src/bluetooth/telephony.cpp": {
+        "sha256": "d3dd31ed2259d3dc16e0fb702a637b9b07b4afe24e0a4ac51f18f1b50a320638",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/src/core/src/bluetooth/telephony.cpp#L216-L238"
+      },
+      "src/daemon/main.cpp": {
+        "sha256": "616d11aae5defb65d79c27004e99a72b4192d886d9ec7386fb6cd43083936a50",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/src/daemon/main.cpp#L227-L241"
+      },
+      "src/daemon/notification.cpp": {
+        "sha256": "8b296be5d07e1cb066b83a6a47851c30bceef3b3e6de7b8c18aa1f1821164f49",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/src/daemon/notification.cpp#L287-L299"
+      },
+      "src/gtk/calls_view.cpp": {
+        "sha256": "3fadb9720333e9e46931f7382a870de5716e74bbd67a40af9b143b1564644cc2",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/src/gtk/calls_view.cpp#L160-L181"
+      },
+      "README.md": {
+        "sha256": "9a67a7ed7918215a21414434d5839879c44cc24b09269b413a876308f6a2b44d",
+        "url": "https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/README.md"
+      }
+    },
+    "license": "MIT; selected copied/bundled files would require their applicable notices. No code copied."
+  },
+  "aosp": {
+    "commit": "745ee92b87ed62b5a8a1bac47d5df8cad623bf59",
+    "commitResolution": "Gitiles refs/heads/main commit JSON; committer date 2025-03-17. This is not the installed Pixel source/version.",
+    "sources": {
+      "BluetoothMapService.java": {
+        "sha256": "1fee602dd1a16119241f29c4094f93a24a37005bebcd12709d409d63aff03fd6",
+        "url": "https://android.googlesource.com/platform/packages/modules/Bluetooth/+/745ee92b87ed62b5a8a1bac47d5df8cad623bf59/android/app/src/com/android/bluetooth/map/BluetoothMapService.java"
+      },
+      "BluetoothMapObexServer.java": {
+        "sha256": "add2f16e0d704cec4864dfb0fc5e1d93aba5f23894e9d5d4bec5c9dae8623305",
+        "url": "https://android.googlesource.com/platform/packages/modules/Bluetooth/+/745ee92b87ed62b5a8a1bac47d5df8cad623bf59/android/app/src/com/android/bluetooth/map/BluetoothMapObexServer.java"
+      },
+      "BluetoothMapContent.java": {
+        "sha256": "78376de404acdbb6fd9de835a8d5592074ff599890ec62c2b752fa85c67cb834",
+        "url": "https://android.googlesource.com/platform/packages/modules/Bluetooth/+/745ee92b87ed62b5a8a1bac47d5df8cad623bf59/android/app/src/com/android/bluetooth/map/BluetoothMapContent.java"
+      },
+      "BluetoothMapContentObserver.java": {
+        "sha256": "417eecce1706ffaec11ec27aec1bfbe8477b4ac7da9bbb85774db55ca97c794d",
+        "url": "https://android.googlesource.com/platform/packages/modules/Bluetooth/+/745ee92b87ed62b5a8a1bac47d5df8cad623bf59/android/app/src/com/android/bluetooth/map/BluetoothMapContentObserver.java"
+      }
+    },
+    "observedSource": [
+      "message access permission and rejection at Service906-914 and1099-1121",
+      "OBEX listing/get/push handlers",
+      "SMS provider query Content3672; MMS provider3970",
+      "SMS send Observer3768-3777; MMS send3380-3386"
+    ],
+    "notVerified": [
+      "Pixel profile availability or consent UX",
+      "permission revocation during a live session",
+      "Mac-to-Pixel OBEX interoperability",
+      "RCS support or arbitrary app messages"
+    ]
+  },
+  "macOSSDK": {
+    "files": {
+      "OBEXSession.h": "d2207b84f6df9374a252a5a4cbaa8494fe72f595c6c7c553f6368808eeda896f",
+      "IOBluetoothOBEXSession.h": "79b2008e2af6ffd2a0b2537c07bcb93ba9569f2a0ff50b45c90bd90f82d114d3"
+    },
+    "observations": [
+      "Session can be created from SDP service record or exact device/RFCOMM channel",
+      "OBEX connect/get/put/setpath API declarations and callback signature inspected",
+      "OBEXDisconnect does not necessarily close underlying transport"
+    ],
+    "limit": "API declarations do not establish runtime MAP support or callback/thread guarantees."
+  },
+  "decisions": {
+    "leadingFeasibilityCandidate": "Native Swift MAP client against Android system MAP server; PBAP separately",
+    "smallFollowups": [
+      "Explicit quiet notification restoration preserving current action/session authority",
+      "Surface known computer-audio unavailability in connected labels"
+    ],
+    "notEstablished": [
+      "Repair for macOS kIOReturnUnsupported SCO result",
+      "Apple Account Continuity enrollment for Android",
+      "Native macOS notification primary-icon fix"
+    ]
+  },
+  "verification": {
+    "sourceReferences": "Pinned Tether cited paths and line ranges exist; clone clean; SHA256 recorded. AOSP decoded sources read and hashed.",
+    "documentationCheck": {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "productBuild": false
+    },
+    "independentReview": {
+      "status": "pass",
+      "mustFix": [],
+      "reviewedDocumentSHA256": "139a886534cc6f5801118bcfa4c0bf2d720c10aa847467332843560d76e7f6a8",
+      "lanes": [
+        "Sol: HFP/PipeWire source and Plink comparison",
+        "Terra: notifications/messages/pairing comparison",
+        "Luna: cross-lane critic and final document/source review",
+        "Astra: architecture decision"
+      ],
+      "reviewHashes": {
+        "sol-tether-calls.json": "931f123739580548ed159b2d2d5e54c5297feb84355c04b74938ade78df3c8bd",
+        "terra-tether-messages.json": "144f5ae35217d3acaea51860c14b08967a7d01fa628b6bac7bf4e898725029e5",
+        "luna-doc-review.json": "5bc8a350ecc9445c8b28c00b2bf78942cda2d5b2d121386bf4e4c4eb352532ba",
+        "astra-result.json": "5d498e739cf23095e1bea5395c12977506e6c8153c4f184f54e64b7a2a27dbd4"
+      }
+    },
+    "productTestsRun": false,
+    "deviceTestsRun": false,
+    "audioFixed": false,
+    "fullyValidatedProduct": false
+  },
+  "cleanup": {
+    "ownedTemporaryClone": "removed after source hashes and final review",
+    "deviceSettingsChanged": false,
+    "temporaryDeviceFilesCreated": false
+  }
+}
