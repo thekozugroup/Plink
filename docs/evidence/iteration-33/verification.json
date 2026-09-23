@@ -1,0 +1,63 @@
+{
+  "iteration": 33,
+  "status": "stopped_before_emulator_creation",
+  "atUTC": "2026-09-23T02:40:55.836113+00:00",
+  "scope": "Owned disposable emulator metadata viability; no product code changes",
+  "sourceSHA256": "c2708422ae06bf3ee20b405ce021d970851e68d44ca94e20d44948bcdcc598f9",
+  "probeCompilation": {
+    "javac": 0,
+    "d8": 0,
+    "jar": 0
+  },
+  "installedImage": {
+    "api": 36,
+    "extension": 17,
+    "tag": "google_apis",
+    "abi": "arm64-v8a",
+    "revision": 7
+  },
+  "setup": {
+    "avdCreationAttempts": 2,
+    "initialExitCode": 1,
+    "correctedToolsdirExitCode": 1,
+    "exactError": "Error: Package path is not valid. Valid system image paths are:\nnull",
+    "globalSDKOrToolEdits": false,
+    "imageDownloads": false
+  },
+  "runtime": {
+    "AVDCreated": false,
+    "emulatorLaunched": false,
+    "adbCalls": 0,
+    "probeInvocations": 0,
+    "audioEndpointAllocations": 0,
+    "physicalDeviceOperations": 0,
+    "factoryAvailability": "not_assessed",
+    "shellPermissions": "not_assessed",
+    "shellAttribution": "not_assessed",
+    "audioMode": "not_assessed",
+    "audioSuccess": false
+  },
+  "meaning": "AVD tooling did not discover the installed image. No conclusion about Android audio API availability, endpoint behavior, Pixel cleanup or cellular audio follows.",
+  "limits": [
+    "Compilation checks Java/DEX packaging only.",
+    "No endpoint construction, audio access, mode/route changes or markers.",
+    "Original helper29 and prerequisite checks unchanged."
+  ],
+  "cleanup": {
+    "ownedScratchRemoved": true,
+    "guestProcessStarted": false,
+    "phoneFilesCreated": false,
+    "userSettingsChanged": false
+  },
+  "checks": {
+    "documentationDiff": {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    "productBuildsOrTests": "not run"
+  },
+  "review": {
+    "result": "Astra found no material correction",
+    "sha256": "46ed6c80be87b1fd7035248e7cf1e5aa192e2abe02a5b94a289460819a6b7427"
+  }
+}
