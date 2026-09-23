@@ -829,6 +829,8 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     private var pendingOperation: Operation?
     private var invalidatedOperations: Set<UUID> = []
     private var uncertainCalls: Set<UUID> = []
+    private var audioFailureDiagnostic = NativeAudioFailureDiagnostic()
+    private var transferInvocationInProgress = false
     private let callLog = Logger(subsystem: "com.thekozugroup.plink.mac", category: "bluetooth-calling")
 
     var isBusy: Bool { lock.lock(); defer { lock.unlock() }; return work.operation != nil }
@@ -997,7 +999,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
             }
             if !session.computerAudioUnsupported {
                 callLog.notice("calls.audio.answer.transfer_requested")
-                phone.transferAudioToComputer()
+                transferAudioToComputer(phone)
                 callLog.notice("calls.audio.answer.transfer_invocation_returned")
             } else {
                 callLog.notice("calls.audio.answer.transfer_skipped_unsupported")
@@ -1005,7 +1007,7 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         case .decline, .hangUp: phone.endCall()
         case .computerAudio:
             callLog.notice("calls.audio.computer.transfer_requested")
-            phone.transferAudioToComputer()
+            transferAudioToComputer(phone)
             callLog.notice("calls.audio.computer.transfer_invocation_returned")
             if phone.isSCOConnected() {
                 session.setSCO(true)
@@ -1106,6 +1108,10 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
     func handsFree(_ device: IOBluetoothHandsFree!, scoConnectionOpened status: NSNumber!) {
         callLog.notice("calls.worker.sco_opened status=\(status?.intValue ?? -1, privacy: .public) owned=\(self.owns(device), privacy: .public)")
         guard owns(device) else { return }
+        if audioFailureDiagnostic.shouldCapture(owned: true, status: status?.int32Value) {
+            let record = NativeAudioFailureDiagnostic.capture(transferInProgress: transferInvocationInProgress)
+            callLog.notice("\(record.logLine, privacy: .public)")
+        }
         let success = status?.int32Value == 0
         session.observeSCOOpened(status: status?.int32Value)
         if success { session.setMuted(phone?.isInputMuted == true) }
@@ -1121,6 +1127,13 @@ private final class HFPWorker: NSObject, IOBluetoothHandsFreeDeviceDelegate, @un
         session.setSCO(false)
         let completion = completePending(on: .sco(connected: false))
         emit("Bluetooth audio disconnected; check the phone audio route.", completion: completion)
+    }
+
+    private func transferAudioToComputer(_ phone: IOBluetoothHandsFreeDevice) {
+        let previous = transferInvocationInProgress
+        transferInvocationInProgress = true
+        defer { transferInvocationInProgress = previous }
+        phone.transferAudioToComputer()
     }
     func handsFree(_ device: IOBluetoothHandsFreeDevice!, incomingCallFrom number: String!) {
         callLog.notice("calls.worker.incoming_call owned=\(self.owns(device), privacy: .public)")

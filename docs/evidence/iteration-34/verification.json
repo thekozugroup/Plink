@@ -1,0 +1,68 @@
+{
+  "scope": "Connected Pixel metadata and one-shot native Bluetooth audio failure diagnostic",
+  "implemented": "Capture at most one owned kIOReturnUnsupported callback per HFP worker using the loaded IOBluetooth UUID, up to eight image-relative stack PCs, and whether transferAudioToComputer is still executing. Existing call and transfer behavior is unchanged.",
+  "verification": {
+    "command": "./scripts/verify.sh",
+    "exitCode": 0,
+    "androidTests": 255,
+    "swiftTests": 334,
+    "totalTests": 589,
+    "sourceSHA256": {
+      "macos/Sources/PlinkMac/BluetoothCallController.swift": "11d6ef5a418b290d72af5aac0e4373373032cf5387586e6974df7cf023e72e05",
+      "macos/Sources/PlinkMac/NativeAudioFailureDiagnostic.swift": "f0e0ba234613599eeb4662e8417b4a3f46fd657c21bb6df4c9c42d9c7cb732bd",
+      "macos/Tests/PlinkMacTests/NativeAudioFailureDiagnosticTests.swift": "330f1bbe3001dc9702aa151cd3b05bad38b5246c03f38bd79eaa043fa1723a4d"
+    },
+    "packagedExecutableSHA256": "feb63e0e478b0b0a689b445ac313adf046018f7a234522e2c771ff4cafbd906e"
+  },
+  "phoneMetadata": {
+    "model": "Pixel 10 Pro XL",
+    "androidVersion": "17",
+    "apiLevel": 37,
+    "actualUID": 2000,
+    "methods": [
+      "getCallDownlinkExtractionAudioRecord=android.media.AudioRecord",
+      "getCallUplinkInjectionAudioTrack=android.media.AudioTrack",
+      "pstnCapabilityMethod=boolean"
+    ],
+    "shellPermissions": {
+      "CALL_AUDIO_INTERCEPTION": true,
+      "MODIFY_PHONE_STATE": true
+    },
+    "shizukuRunsAsShell": true,
+    "plinkShizukuPermissionGranted": true,
+    "audioFactoryInvocations": 0,
+    "capabilityMethodInvoked": false,
+    "settingsChanged": false,
+    "ownedTemporaryFilesRemoved": true,
+    "scope": "Reflection-only preflight for this checkpoint; separate later endpoint experiments are not included."
+  },
+  "installation": {
+    "installedExecutableMatchesPackage": true,
+    "strictSignatureVerified": true,
+    "sameBundleID": true,
+    "pairingPreserved": true,
+    "nativeConnectionCallbackStatus": 0,
+    "ownedInstallBackupRemoved": true
+  },
+  "limits": [
+    "Method presence and existing permissions do not prove usable call PCM.",
+    "No Android audio factory, recording, injection, policy registration or route mutation was performed.",
+    "Shizuku availability does not establish the audio helper attribution or cleanup contract.",
+    "The diagnostic stack may identify synchronous versus asynchronous rejection; converged branches cannot be distinguished without additional evidence.",
+    "Computer use failed with native pipe closed before response and obtained no screenshot. The user separately supplied the live call-notification screenshot.",
+    "Fresh native Answer test failed: audio fell back to the phone. The new diagnostic is verified; call audio is not fixed."
+  ],
+  "callAudioFixed": false,
+  "fullAcceptanceVerified": false,
+  "liveCall": {
+    "userReported": "Audio fell back to the phone after answering from the Mac native call notification. Competing call notifications were confusing.",
+    "nativeAnswerAccepted": true,
+    "ownedSCOStatus": -536870201,
+    "IOBluetoothUUID": "644E0897-5ADA-3071-80EC-C93F1774D35F",
+    "imageRelativeReturnPC": "0x63f74",
+    "transferInvocationInProgress": true,
+    "staticMapping": "Return address after connectSCO delegate-dispatch call at image offset 0x63f70.",
+    "inference": "Synchronous unsupported callback from the local framework is corroborated. The earlier failing branch and a supported correction are not established.",
+    "callAudioVerified": false
+  }
+}
