@@ -1,0 +1,116 @@
+{
+  "iteration": 32,
+  "scope": "Public source research and documentation only",
+  "recordedAtUTC": "2026-09-23T02:24:44.946285+00:00",
+  "mpcfw": {
+    "repository": "https://github.com/evilsocket/mpcfw",
+    "pin": "0587375364b104e9752fc28c521f2a958176a43f",
+    "commitDate": "2022-10-20T15:59:28+02:00",
+    "sourceHashes": {
+      "README.md": "77622007f001a890bcb88159ac23a2caa6827ce73871ee30545ba30f7e831681",
+      ".gitignore": "bbef77a4ffb35c8f3b65cfab2e4cd7230a0067dfe42f58c018476d4f544f0f54",
+      "main.py": "ee18ea71699381359224d655c57f7ff6e1d8330042c6d2e67fbf51f2d425fa3c",
+      "mpc/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mpc/utils.py": "ff05de1f9fae6827efc869726b7d6decc71cb427fd80bb48221cb8e4fe4c8946",
+      "mpc/stun/server.py": "6a840075f571dfb256bbb48544d6fd66dd0e3adbc3a897bf34ea4a6aa1414ab7",
+      "mpc/stun/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mpc/stun/messages.py": "d60ffabf2f35ba6cec8a64b0965f91f780ae3eea9209b2b866822fe8b6e9e95e",
+      "mpc/mdns/__init__.py": "7dc75bedeba559e5fcb84d0c2aaf8db1be20479cc2c1baff6732feb95b2b7916",
+      "mpc/tcp/protocol.py": "6e6823dd6b94f27ff130d46042e3924abf28dab423e1f76e2e31886a636f8a58",
+      "mpc/tcp/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mpc/tcp/messages_tests.py": "81c265283c682f3775243a3d26e8c3b56c179991dd0bdab42adca62bba9da86e",
+      "mpc/tcp/messages.py": "579080aa9442791eeebaad18c882444782d02493a4f1a44666da27dc896867f5",
+      "mpc/ospf/session.py": "4a76f18b841c5a15d21361619ed4721c1ee6151f12366a8b930460b8e19c31c5",
+      "mpc/ospf/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mpc/ospf/messages.py": "a206d279bef7931c85a84ab3ecccaa3ddd66064f7dfe1903cc143253428f52f8"
+    },
+    "authorArticle": "https://www.evilsocket.net/2022/10/20/Reverse-Engineering-the-Apple-MultiPeer-Connectivity-Framework/"
+  },
+  "additionalPinnedSources": [
+    {
+      "repository": "https://github.com/martinvigo/apple_call_relay_protocol",
+      "pin": "ad1f451c3bd18d49af3fc4da5b25f43f43f844b4",
+      "commitDate": "2022-02-17T00:03:15Z",
+      "limits": "Tip changed README; representative script sipcapture.py last edited at 5bab76b42270aa812d59c4abec3f115ace8e4686 on 2017-08-31. Repository describes iOS8/Yosemite-era Continuity and 2017 research, not current macOS27 validation."
+    },
+    {
+      "repository": "https://github.com/OpenBubbles/rustpush",
+      "pin": "48bcc271b220ff219513822a99aadd8c0f469e36",
+      "commitDate": "2026-09-22T05:44:20Z",
+      "limits": null
+    },
+    {
+      "repository": "https://github.com/OpenBubbles/openbubbles-app",
+      "pin": "eed1b6332efbb17adbf5ebfa2263ad770169f75e",
+      "commitDate": "2026-04-14T22:54:46Z",
+      "limits": "Inspected this app pin separately from newer rustpush tip; do not imply the app embeds that newer tip."
+    }
+  ],
+  "relatedPairingSources": [
+    {
+      "repo": "seemoo-lab/apple-continuity-tools",
+      "pin": "b93207b5887c6bef8c9e0e16a442149fb3520e28",
+      "scope": "rapportd Handoff/Universal Clipboard inspection and process identification; not complete Android trusted enrollment",
+      "readFiles": {
+        "continuity_messages/README.md": "0ed630a228715d0c80f5c4a18e23662a96ca697d327a7729fc33170339f355b1",
+        "process_recon/README.md": "dd6b86f220c0261e38bf7a7265fb3cc96a7e4cf2d26231d214c4d5dd67495fd0"
+      }
+    },
+    {
+      "repo": "furiousMAC/continuity",
+      "pin": "d9fa98bddafbfa3baafc84e37a417d78a0598546",
+      "scope": "BLE message taxonomy/dissector; not account enrollment or call media",
+      "readFiles": {
+        "README.md": "a23f48d545aa2096a7df5cb8338838358712ae511ee547e2297416a01af823c0"
+      }
+    }
+  ],
+  "sourceReadLimitations": [
+    "No third-party implementation was executed or copied.",
+    "pymobiledevice3, pyatv and scrcpy references in the Terra review were read at mutable upstream revisions; not pinned or validated for reuse.",
+    "Historical Apple Call Relay scripts do not decode voice or implement trusted enrollment. Current rustpush media code is FaceTime code, not demonstrated iPhone cellular relay.",
+    "No present-day Apple Continuity interoperability or Android cellular PCM capability was established."
+  ],
+  "findings": {
+    "mpcfw": "Partial Logic Remote MPC invitations/endpoint/framing reference; no direct fix for the three priorities.",
+    "audio": "Apple relay demonstrates a secure IP media architecture. Plink still needs proven Android downlink extraction and uplink injection; its native SCO failure remains unresolved.",
+    "screen": "Retained consent-based Android capture and Swift viewer are a direct future restoration path. Existing profile is view-only, at most two JPEG frames per second.",
+    "icon": "No new causal evidence or fix for the primary icon rendering failure under Plink identity.",
+    "scope": "Audio, then screen sharing, then icon. Contacts later; SMS/MMS conversations and standalone Messages app excluded."
+  },
+  "checks": {
+    "sourceReview": "Parent source review, Sol audio review, Terra platform review, Luna independent source/documentation review and Astra architecture review complete. No material documentation correction remains.",
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "stdoutBytes": 0,
+      "stderrBytes": 0
+    },
+    "productTests": "Not run for this documentation-only change.",
+    "build": "Not run.",
+    "deviceOrUI": "Not run."
+  },
+  "runtime": {
+    "audioFixed": false,
+    "screenRestored": false,
+    "notificationIconFixed": false,
+    "appsInstalledOrLaunched": false,
+    "settingsChanged": false,
+    "liveAudioExperimentRun": false
+  },
+  "cleanup": {
+    "ownedTemporaryCheckout": "/private/tmp/plink-mpcfw-review-20260922",
+    "removed": true,
+    "deviceTemporaryFilesCreated": false
+  },
+  "sourceReviewArtifacts": {
+    "parent-mpcfw-result.json": "0a93a20edd1acb2bfab68dbd36b0b41dbd6bac560968141b77194bb8a472058e",
+    "sol-result.json": "bd3081ca749be2a2d06aa16e7932c3e3fdac940be383c564aa42ee2dca54cc47",
+    "terra-result.json": "bb794ec9f06c73fffef41c0ab9e5b0fcf27dda1b3801a939a7a30d67213af83c",
+    "luna-result.json": "d028a605298ac67bc241eded3b7552754f34ae3422945110f0aea7a8514be40f",
+    "luna-doc-review.json": "2d09bf001171f91d26b20b9592f3a46fceb121897136b9a110b24492c8048baf",
+    "astra-result.json": "306dddaa21bbf9173c5cafd6fc589a802b90f29c8ecae16aefa9070bde99e2fe"
+  },
+  "fullCompletion": false,
+  "nextAudioPrerequisite": "First establish exact mode-3 API and unchanged helper prerequisites in an owned disposable Android emulator. If viable, test two distinct synthetic signal directions there; emulator disposal contains experiment resources but does not prove physical-device cleanup or Pixel carrier audio. No emulator was launched in this checkpoint."
+}
