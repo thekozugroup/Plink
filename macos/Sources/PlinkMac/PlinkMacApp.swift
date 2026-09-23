@@ -2111,7 +2111,9 @@ struct BluetoothCallingView: View {
         GroupBox("Cellular calls") {
             VStack(alignment: .leading, spacing: 10) {
                 Text(controller.status).textSelection(.enabled)
-                if controller.call.context == nil, let reason = controller.computerAudioUnavailableReason {
+                if controller.call.context == nil, let reason = DashboardPresentation.callsRecoveryDetail(
+                    blocked: controller.blocked, connected: controller.serviceConnected,
+                    audioUnavailableReason: controller.computerAudioUnavailableReason) {
                     Text(reason).font(.caption).foregroundStyle(.secondary)
                 }
                 if controller.bluetoothPaired {
@@ -2119,12 +2121,16 @@ struct BluetoothCallingView: View {
                 }
                 if controller.busy { ProgressView("Connecting calls…") }
                 if controller.serviceConnected {
+                    let showConnected = DashboardPresentation.callsShowConnected(connected: controller.serviceConnected,
+                        blocked: controller.blocked, audioUnavailableReason: controller.computerAudioUnavailableReason)
                     Label {
-                        Text("Calls connected")
+                        Text(DashboardPresentation.callsStatus(connected: controller.serviceConnected,
+                            paired: controller.bluetoothPaired, blocked: controller.blocked,
+                            audioUnavailableReason: controller.computerAudioUnavailableReason))
                     } icon: {
-                        LucideIcon(name: .circleCheck)
+                        LucideIcon(name: showConnected ? .circleCheck : .bluetooth)
                     }
-                    .foregroundStyle(.green)
+                    .foregroundStyle(showConnected ? Color.green : Color.secondary)
                     Button("Disconnect Calls") { controller.disconnect() }
                         .disabled(controller.busy || controller.blocked)
                 } else if let phoneName {
@@ -2147,7 +2153,9 @@ struct BluetoothCallingView: View {
                         callButton("Audio on Phone", .phoneAudio, context)
                         callButton(controller.call.muted ? "Unmute" : "Mute", .toggleMute, context)
                     }
-                    Text(controller.computerAudioUnavailableReason ?? (controller.call.audio == .scoConnectedUnverified
+                    Text(DashboardPresentation.callsRecoveryDetail(blocked: controller.blocked,
+                         connected: controller.serviceConnected, audioUnavailableReason: controller.computerAudioUnavailableReason)
+                         ?? (controller.call.audio == .scoConnectedUnverified
                          ? "Bluetooth audio is connected."
                          : "Choose where you want call audio to play."))
                     .font(.caption).foregroundStyle(.secondary)

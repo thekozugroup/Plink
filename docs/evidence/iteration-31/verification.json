@@ -1,0 +1,66 @@
+{
+  "iteration": 31,
+  "command": "cd /Users/michaelwong/Developer/Plink && ./scripts/verify.sh",
+  "exitCode": 0,
+  "startedAtUTC": "2026-09-23T01:16:10Z",
+  "log": ".a5c/artifacts/iteration31/full-gate.log",
+  "logSHA256": "f5e118b3227166a5df84f449ca9447cbcf1a0d8eef8ed90e872eec486970e9dd",
+  "sourceHashes": {
+    "macos/Sources/PlinkMac/DashboardWindow.swift": "7b674c913bddab8ccc6374ed930bbf8fc1e73fb4c26110f149890976812bfe7e",
+    "macos/Sources/PlinkMac/PlinkMacApp.swift": "8bfec0fd8ecdc3ca069a3e1bc35260e87898801f00d8c3dcae188cef8b500753",
+    "macos/Tests/PlinkMacTests/DashboardPresentationTests.swift": "9e18a54ede782a998f29c7b4225cd6e7a050ecf34d8c6dadce7d6d5ea5d78c70"
+  },
+  "tests": {
+    "android": {
+      "tests": 255,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "swiftTestingSuites": [
+      139,
+      126
+    ],
+    "swiftXCTestAggregate": 66,
+    "swiftTotal": 331,
+    "total": 586,
+    "failures": 0
+  },
+  "checks": [
+    "fixtures",
+    "Android debug/release APKs",
+    "Android instrumentation APK build only",
+    "Android lintDebug",
+    "Android unit tests",
+    "Swift unit tests and build",
+    "macOS packaging"
+  ],
+  "packagedExecutableSHA256": "78a41c04d58e04b754911e19b8f658cff2cf8590553236bf695b754f4cdc4d90",
+  "installed": false,
+  "nativeUIExercised": false,
+  "phoneUsed": false,
+  "audioVerified": false,
+  "status": "source_and_build_verified_runtime_unverified",
+  "focusedRegression": {
+    "reportedTests": 10,
+    "exitCode": 0,
+    "toolchain": "Xcode developer directory",
+    "initialDefaultToolchainAttempt": "Failed: no such module Testing; corrected toolchain run passed."
+  },
+  "independentSourceReviews": {
+    "sol-result.json": "415a19bc3557634a8d95694137fe9244461cbd54583d834b9d487d8975122774",
+    "luna-result.json": "a6291e24a516a7bef1422d4599b6f26603e001c3fe1388f21dbd3da518b97508",
+    "astra-result.json": "3860f1264befbdbd0fd154defdac0ccfdedad716a412814c498e58374a9233f7"
+  },
+  "limitations": [
+    "No call audio transport repair",
+    "No native visual/device test in this checkpoint",
+    "Not installed or launched",
+    "MAP feasibility and notification primary icon remain unresolved"
+  ],
+  "cleanup": {
+    "deviceSettingsChanged": false,
+    "temporaryDeviceFilesCreated": false,
+    "temporaryResearchClone": "removed in iteration30"
+  }
+}

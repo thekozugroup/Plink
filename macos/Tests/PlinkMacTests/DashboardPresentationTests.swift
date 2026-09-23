@@ -3,6 +3,50 @@ import Testing
 @testable import PlinkMac
 
 struct DashboardPresentationTests {
+    private let audioUnavailableReason = "Mac call audio is unavailable for this connection. Use your phone for audio."
+
+    @Test func connectedAudioFailureShowsPhoneGuidanceWithoutSuccessStyling() {
+        #expect(DashboardPresentation.callsStatus(connected: true, paired: true, blocked: false,
+            audioUnavailableReason: audioUnavailableReason) == "Mac audio unavailable")
+        #expect(!DashboardPresentation.callsShowConnected(connected: true, blocked: false,
+            audioUnavailableReason: audioUnavailableReason))
+        #expect(DashboardPresentation.callsRecoveryDetail(blocked: false, connected: true,
+            audioUnavailableReason: audioUnavailableReason) == audioUnavailableReason)
+        #expect(!DashboardPresentation.callsSetupDisabled(busy: false, blocked: false))
+    }
+
+    @Test func connectedWithoutKnownAudioFailureKeepsExistingPresentation() {
+        #expect(DashboardPresentation.callsStatus(connected: true, paired: true, blocked: false,
+            audioUnavailableReason: nil) == "Calls connected")
+        #expect(DashboardPresentation.callsShowConnected(connected: true, blocked: false,
+            audioUnavailableReason: nil))
+        #expect(DashboardPresentation.callsRecoveryDetail(blocked: false, connected: true,
+            audioUnavailableReason: nil) == nil)
+    }
+
+    @Test(arguments: [false, true])
+    func disconnectedCallsIgnoreStaleAudioFailure(paired: Bool) {
+        #expect(DashboardPresentation.callsStatus(connected: false, paired: paired, blocked: false,
+            audioUnavailableReason: audioUnavailableReason) == (paired ? "Calls disconnected" : "Calls need setup"))
+        #expect(DashboardPresentation.callsStatus(connected: false, paired: paired, blocked: false,
+            pairedLabel: "Bluetooth paired", audioUnavailableReason: audioUnavailableReason)
+            == (paired ? "Bluetooth paired" : "Calls need setup"))
+        #expect(!DashboardPresentation.callsShowConnected(connected: false, blocked: false,
+            audioUnavailableReason: audioUnavailableReason))
+        #expect(DashboardPresentation.callsRecoveryDetail(blocked: false, connected: false,
+            audioUnavailableReason: audioUnavailableReason) == nil)
+    }
+
+    @Test(arguments: [false, true])
+    func blockedCallsTakePrecedenceOverAudioFailure(connected: Bool) {
+        #expect(DashboardPresentation.callsStatus(connected: connected, paired: true, blocked: true,
+            audioUnavailableReason: audioUnavailableReason) == "Calls unavailable")
+        #expect(!DashboardPresentation.callsShowConnected(connected: connected, blocked: true,
+            audioUnavailableReason: audioUnavailableReason))
+        #expect(DashboardPresentation.callsRecoveryDetail(blocked: true, connected: connected,
+            audioUnavailableReason: audioUnavailableReason) == "Restart Plink to use calls again.")
+    }
+
     @Test(arguments: [false, true])
     func blockedCallsExplainRecoveryRegardlessOfSavedAssociation(paired: Bool) {
         #expect(DashboardPresentation.callsStatus(connected: false, paired: paired, blocked: true) == "Calls unavailable")

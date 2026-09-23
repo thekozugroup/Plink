@@ -43,12 +43,17 @@ struct DashboardPresentation {
         Self.callsStatus(connected: callsConnected, paired: bluetoothPaired, blocked: false)
     }
     static func callsStatus(connected: Bool, paired: Bool, blocked: Bool,
-                            pairedLabel: String = "Calls disconnected") -> String {
+                            pairedLabel: String = "Calls disconnected", audioUnavailableReason: String? = nil) -> String {
         if blocked { return "Calls unavailable" }
+        if connected, audioUnavailableReason != nil { return "Mac audio unavailable" }
         return connected ? "Calls connected" : (paired ? pairedLabel : "Calls need setup")
     }
-    static func callsRecoveryDetail(blocked: Bool) -> String? {
-        blocked ? "Restart Plink to use calls again." : nil
+    static func callsRecoveryDetail(blocked: Bool, connected: Bool = false, audioUnavailableReason: String? = nil) -> String? {
+        if blocked { return "Restart Plink to use calls again." }
+        return connected ? audioUnavailableReason : nil
+    }
+    static func callsShowConnected(connected: Bool, blocked: Bool, audioUnavailableReason: String?) -> Bool {
+        connected && !blocked && audioUnavailableReason == nil
     }
     static func callsSetupDisabled(busy: Bool, blocked: Bool) -> Bool {
         busy || blocked
@@ -149,7 +154,10 @@ struct ConnectionHeader: View {
             if calling.busy { return "Finishing Bluetooth setup…" }
             return calling.bluetoothPaired ? "Your Bluetooth pairing is saved. Connect calls when you’re ready." : "Finish Bluetooth setup to answer your phone’s calls on this Mac."
         }
-        if connected { return "Connected for calls and sharing." }
+        if connected {
+            return DashboardPresentation.callsRecoveryDetail(blocked: calling.blocked, connected: calling.serviceConnected,
+                audioUnavailableReason: calling.computerAudioUnavailableReason) ?? "Connected for calls and sharing."
+        }
         if case .failed(let reason) = reconnect.state { return reason }
         if presentation.reconnecting { return "Keep Plink open on your phone." }
         if appDelegate.startupRecovery.phase == .needsPairing { return appDelegate.startupRecovery.detail }
@@ -201,8 +209,11 @@ struct ConnectionHeader: View {
                     statusChip(!appDelegate.pairingRecoveryComplete ? "Wi-Fi · Waiting" : (connected ? "Wi-Fi connected" : "Wi-Fi disconnected"),
                                icon: connected ? .wifi : .wifiOff, active: connected)
                     statusChip(!appDelegate.pairingRecoveryComplete ? "Calls · Waiting" : DashboardPresentation.callsStatus(
-                        connected: calling.serviceConnected, paired: calling.bluetoothPaired, blocked: calling.blocked, pairedLabel: "Bluetooth paired"),
-                               icon: .bluetooth, active: calling.serviceConnected)
+                        connected: calling.serviceConnected, paired: calling.bluetoothPaired, blocked: calling.blocked,
+                        pairedLabel: "Bluetooth paired", audioUnavailableReason: calling.computerAudioUnavailableReason),
+                               icon: .bluetooth, active: DashboardPresentation.callsShowConnected(
+                                connected: calling.serviceConnected, blocked: calling.blocked,
+                                audioUnavailableReason: calling.computerAudioUnavailableReason))
                 }.padding(.top, 3)
                 if let battery = appDelegate.deviceStatus, connected {
                     Label { Text("\(battery.batteryLevel)%\(battery.charging ? " · Charging" : "")").monospacedDigit() }
@@ -369,8 +380,10 @@ struct MenuBarPanel: View {
             Text(appDelegate.pairedPhoneName ?? appDelegate.startupRecovery.menuStatus)
             Text(appDelegate.pairedPeerID == nil ? "Wi-Fi disconnected" : "Wi-Fi connected")
             Text(DashboardPresentation.callsStatus(connected: calling.serviceConnected,
-                paired: calling.bluetoothPaired, blocked: calling.blocked))
-            if let detail = DashboardPresentation.callsRecoveryDetail(blocked: calling.blocked) { Text(detail) }
+                paired: calling.bluetoothPaired, blocked: calling.blocked,
+                audioUnavailableReason: calling.computerAudioUnavailableReason))
+            if let detail = DashboardPresentation.callsRecoveryDetail(blocked: calling.blocked,
+                connected: calling.serviceConnected, audioUnavailableReason: calling.computerAudioUnavailableReason) { Text(detail) }
         }
         Divider()
         if appDelegate.pairedPeerID != nil {

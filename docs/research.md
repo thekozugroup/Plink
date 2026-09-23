@@ -117,3 +117,7 @@ Next proof, in order:
 No new MAP/PBAP capability, restoration change or audio-status change is implemented by this research checkpoint. Existing versioned notification actions, `RemoteInput` replies and peer/session checks remain the working message path.
 
 Tether's own code is [MIT licensed](https://github.com/zackb/tether/blob/779b8a4d970f3aa34f105fc9a84d06f186670ec1/LICENSE). Reuse must preserve applicable notices; bundled dependency and per-file terms need checking for the selected subset. No third-party code was copied in this review. Source hashes and verification scope are recorded in [iteration 30 evidence](evidence/iteration-30/verification.json).
+
+### Implemented follow-up: known call-audio failure
+
+Iteration 31 applies the status-accuracy finding: the dashboard, menu and Calls view consume the existing connection-scoped audio-unavailable reason. A known failure displays “Mac audio unavailable,” keeps the existing phone-audio guidance and removes the green success treatment. Pairing, reconnect and call controls retain their existing behavior. This is a presentation correction; it does not establish or repair two-way audio. See [verification and limits](evidence/iteration-31/README.md).
