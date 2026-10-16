@@ -1,0 +1,65 @@
+{
+  "iteration": 36,
+  "verdict": "pass_with_limits",
+  "evidence": {
+    "sourceFingerprintMatches": true,
+    "sourceFingerprint": "99b5c9d0fb822a84c4e8d01e93e01a439debfce20aeafbf3a3d7c908cd62d9f7",
+    "androidJUnit": {
+      "tests": 312,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 43
+    },
+    "allThreeApkHashesMatch": true,
+    "diffCheck": "passed",
+    "swift": "Unchanged; iteration35 evidence retained, not rerun.",
+    "deviceValidation": "None; offline only."
+  },
+  "findings": [
+    "No must-fix defect found in the reviewed production diff and companion tests.",
+    "Accepted registrations survive stale callbacks and transient reads; explicit removal tombstones remain effective.",
+    "Failure-after-memory tests distinguish volatile state from durable acceptance and cleanup.",
+    "Cancellation and guarded metadata failure reporting preserve session and consent ownership.",
+    "Termination branch follows checkpoint execution and requires offlineComplete, no offlineDefects, successful checks, committed=true and pushed=true. It preserves unsuccessful, unverified product status."
+  ],
+  "offlineDefects": [],
+  "metrics": {
+    "cellularCalls": 0,
+    "notificationReplies": 0,
+    "nativeMac": 0,
+    "tomatoAndroid": 0,
+    "continuity": 0,
+    "security": 0,
+    "stability": 0,
+    "deviceEndToEnd": 0,
+    "processIntegrity": 0
+  },
+  "metricBasis": "Original frozen evidence scores preserved. No complete matching-build acceptance cases submitted; automated checks do not establish live coverage.",
+  "blockers": [
+    "Acceptance evaluator exits 2 for the unchanged device-addendum hash mismatch; original hashes and criteria remain preserved.",
+    "Physical companion consent, notification permission and capability reporting remain unverified.",
+    "Production authentication compatible with Android secure companion transport remains open.",
+    "Supported macOS Continue On receiver and actual cross-device task handoff remain open.",
+    "Two-way cellular audio through the Mac remains unresolved.",
+    "Native notification artwork and consented screen preview require matching-build validation.",
+    "Original message coverage, native accessibility/design, Tomato fidelity, security runtime, recovery, soak and physical-device acceptance evidence remain incomplete."
+  ],
+  "knownLimits": [
+    "Process death before the first successful journal write leaves an unknown association untouched.",
+    "Metadata publication remains once per authenticated connection without acknowledgment or retry."
+  ],
+  "sourceCheckpointEligible": true,
+  "terminalExecution": "Permitted only after actual checkpoint commit and push succeed; neither was performed by this reviewer.",
+  "verified": false,
+  "offlineComplete": true,
+  "offlineCompleteMeaning": "Iteration36's reviewed bounded offline scope is complete, not all conceivable offline development.",
+  "originalAcceptanceComplete": false,
+  "reviewer": {
+    "role": "Astra independent architecture and adversarial review",
+    "agentId": "01a14510-7414-7a80-9d33-3c88f499ff6b"
+  }
+}

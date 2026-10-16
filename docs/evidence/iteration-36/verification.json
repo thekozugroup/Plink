@@ -1,0 +1,93 @@
+{
+  "checkpoint": 36,
+  "recordedAtUtc": "2026-10-16T15:46:37Z",
+  "baseCommit": "d82033fbd850edbf8bc5a7696ef66698661027f3",
+  "scope": "Offline Android companion callback recovery, durable cleanup and metadata failure reporting",
+  "changedSourceFingerprint": {
+    "algorithm": "SHA256 of sorted changed source paths, each followed by NUL, file bytes and NUL; roots android/src, macos/Sources, macos/Tests",
+    "fileCount": 3,
+    "sha256": "99b5c9d0fb822a84c4e8d01e93e01a439debfce20aeafbf3a3d7c908cd62d9f7"
+  },
+  "regressionFirst": {
+    "callbackBaseline": { "tests": 36, "failures": 5 },
+    "metadataBaseline": { "tests": 9, "failures": 6 },
+    "focusedAfterFix": { "tests": 45, "failures": 0 }
+  },
+  "checks": {
+    "android": {
+      "command": "JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew --no-daemon :android:testDebugUnitTest :android:assembleDebug :android:assembleRelease :android:assembleDebugAndroidTest :android:lintDebug",
+      "exitCode": 0,
+      "tests": 312,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "lintErrors": 0,
+      "lintWarnings": 43,
+      "instrumentationApkBuilt": true,
+      "instrumentationExecuted": false,
+      "releaseSigned": false,
+      "diagnosticReceiverPresentInDebug": true,
+      "diagnosticReceiverPresentInRelease": false,
+      "privilegedSelfManagedPermissionDeclared": false,
+      "nonfatalWarning": "Existing Android SDK command-line tools XML schema version mismatch"
+    },
+    "mac": {
+      "sourceChanged": false,
+      "rerun": false,
+      "previousEvidence": "../iteration-35/verification.json"
+    },
+    "shared": {
+      "commands": ["./scripts/check-fixtures.sh", "git diff --check"],
+      "exitCodes": [0, 0]
+    },
+    "apkManifestInspection": {
+      "tool": "/Users/michaelwong/Library/Android/sdk/build-tools/36.0.0/aapt2",
+      "exitCodes": [0, 0],
+      "debugReceiverPresent": true,
+      "releaseReceiverPresent": false,
+      "debugShellVisibilityQueryPresent": true,
+      "releaseShellVisibilityQueryPresent": false
+    }
+  },
+  "binarySha256": {
+    "android/build/outputs/apk/debug/android-debug.apk": "0f872b1cfd6913a0c91d71a72130be9985302ac7e8dabfefced82bd78700a2fc",
+    "android/build/outputs/apk/release/android-release-unsigned.apk": "882330392566bcdb53ae62713c6ef01bdefd0af21b0ecd3ad52006bb4d2093a6",
+    "android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk": "9a3749f109d5f2b0378dcf7c7fbd8334cbd23529614aefb8f689ca944f4e88f6"
+  },
+  "deviceValidation": {
+    "mode": "Offline only, as requested by the user",
+    "deviceInventoryRepeated": false,
+    "nativeConsentTested": false,
+    "notificationPermissionUiTested": false,
+    "installed": false,
+    "pairingOrSettingsChanged": false
+  },
+  "acceptance": {
+    "verified": false,
+    "evaluatorCommand": "python3 .a5c/artifacts/acceptance/evaluate.py",
+    "exitCode": 2,
+    "error": "Device addendum changed; refresh acceptance explicitly",
+    "expectedDeviceConstraintsSha256": "c3be51adce89b8234fc3bb6001dcc88c78418582a953cbb7d13994e65c0da313",
+    "actualDeviceConstraintsSha256": "9f0a4086d97729c3eb893918e7fcec67c16ac0f7a394285fedca388a76f1c59b",
+    "frozenCriteriaChanged": false,
+    "newAcceptanceCreditClaimed": false,
+    "remaining": [
+      "Physical companion consent, notification permission and capability reporting",
+      "Production authentication compatible with Android secure companion transport",
+      "Supported macOS Continue On receiver and cross-device task handoff",
+      "Two-way cellular call audio through the Mac",
+      "Native notification artwork and consented screen preview on matching builds",
+      "Original message, device, design, recovery and soak acceptance evidence"
+    ]
+  },
+  "knownLimits": [
+    "A process death before the first successful journal write leaves an unknown association untouched",
+    "Metadata publication is once per authenticated connection without acknowledgment or retry"
+  ],
+  "cleanup": {
+    "taskScratchFilesRemaining": 0,
+    "packagingScratchDirectoriesRemaining": 0,
+    "runWorkDirectoriesRemaining": 0,
+    "intendedBuildArtifactsRetained": true
+  }
+}

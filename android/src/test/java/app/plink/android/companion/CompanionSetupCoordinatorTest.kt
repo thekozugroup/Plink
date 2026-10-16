@@ -18,6 +18,7 @@ class CompanionSetupCoordinatorTest {
         override var supported = true
         var peers = CompanionPairings(null, emptySet())
         var saved = CompanionRegistrations()
+        var durable = saved
         val owned = linkedMapOf<Int, CompanionAssociation>()
         val removed = mutableListOf<Int>()
         val callbacks = mutableListOf<CompanionEnvironment.Callback<String>>()
@@ -25,16 +26,28 @@ class CompanionSetupCoordinatorTest {
         var writesFail = false
         var failWriteNumber: Int? = null
         var writes = 0
+        var readsFail = false
+        var failAfterMemoryWriteNumber: Int? = null
+        var failAfterMemoryWhen: ((CompanionRegistrations) -> Boolean)? = null
+        var immediatelyCreate: Int? = null
+        var afterMemoryWrite: ((CompanionRegistrations) -> Unit)? = null
         var notificationFails = false
         var associationQueryFails = false
         var notificationRequests = 0
         var beforeMain: (suspend () -> Unit)? = null
         override suspend fun pairings() = peers
-        override fun readRegistrations() = saved
+        override fun readRegistrations(): CompanionRegistrations {
+            check(!readsFail)
+            return saved
+        }
         override fun writeRegistrations(value: CompanionRegistrations) {
             writes++
             check(!writesFail && writes != failWriteNumber)
             saved = value
+            afterMemoryWrite?.invoke(value)
+            check(writes != failAfterMemoryWriteNumber)
+            check(failAfterMemoryWhen?.invoke(value) != true)
+            durable = value
         }
         override fun associations(): List<CompanionAssociation> {
             check(!associationQueryFails)
@@ -49,6 +62,7 @@ class CompanionSetupCoordinatorTest {
         override fun associate(bluetoothAddress: String, callback: CompanionEnvironment.Callback<String>) {
             requestedAddresses += bluetoothAddress
             callbacks += callback
+            immediatelyCreate?.let { create(it) }
         }
         override fun requestNotificationAccess() {
             notificationRequests++
@@ -61,6 +75,7 @@ class CompanionSetupCoordinatorTest {
         fun select(peer: CompanionPeer?) {
             peers = CompanionPairings(peer, setOfNotNull(peer?.identity))
             saved = saved.copy(metadata = peer?.identity)
+            durable = saved
         }
         fun create(id: Int, index: Int = callbacks.lastIndex) {
             owned[id] = CompanionAssociation(id, requestedAddresses[index])
@@ -69,8 +84,226 @@ class CompanionSetupCoordinatorTest {
         fun register(peer: CompanionPeer, id: Int = 1) {
             select(peer)
             saved = CompanionRegistrations(CompanionRegistration(id, peer.identity), metadata = peer.identity)
+            durable = saved
             owned[id] = CompanionAssociation(id, peer.identity.bluetoothAddress)
         }
+        fun restart() { saved = durable }
+    }
+
+    @Test fun duplicateCreatedReadFailureDoesNotRemoveAcceptedAssociation() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        controller.setUp(Any()) {}
+        runCurrent()
+        env.create(7)
+        runCurrent()
+        env.readsFail = true
+        env.callbacks.single().created(7)
+        runCurrent()
+        env.readsFail = false
+        controller.refresh()
+        runCurrent()
+        assertTrue(env.removed.isEmpty())
+        assertTrue(controller.state.value.registered)
+        assertEquals(7, env.durable.registration?.associationId)
+    }
+
+    @Test fun staleDifferentPeerCallbackCannotRemoveCurrentAcceptedId() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        val owner = Any()
+        controller.setUp(owner) {}
+        runCurrent()
+        controller.cancelSetup(owner)
+        env.register(replacement, 9)
+        controller.refresh()
+        runCurrent()
+        env.callbacks.single().created(9)
+        runCurrent()
+        assertTrue(env.removed.isEmpty())
+        assertEquals(replacement.identity, env.saved.registration?.identity)
+        assertTrue(controller.state.value.registered)
+    }
+
+    @Test fun failedJournalCommitAfterMemoryChangeRetriesDurablyBeforeCleanup() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        controller.setUp(Any()) {}
+        runCurrent()
+        env.failAfterMemoryWriteNumber = env.writes + 1
+        env.create(7)
+        runCurrent()
+        assertEquals(setOf(7), env.saved.cleanupIds)
+        assertTrue(env.durable.cleanupIds.isEmpty())
+        env.failAfterMemoryWriteNumber = null
+        env.cleanupFails = true
+        controller.refresh()
+        runCurrent()
+        assertEquals(setOf(7), env.durable.cleanupIds)
+        env.restart()
+        env.cleanupFails = false
+        val restarted = CompanionSetupCoordinator(env, this)
+        restarted.refresh()
+        runCurrent()
+        assertEquals(listOf(7), env.removed)
+        assertNull(env.durable.registration)
+        assertFalse(restarted.state.value.registered)
+    }
+
+    @Test fun failedRegistrationCommitAfterMemoryChangeNeverBecomesAcceptedOnRefresh() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        controller.setUp(Any()) {}
+        runCurrent()
+        env.failAfterMemoryWriteNumber = env.writes + 2
+        env.create(7)
+        runCurrent()
+        assertEquals(7, env.saved.registration?.associationId)
+        assertEquals(setOf(7), env.durable.cleanupIds)
+        assertFalse(controller.state.value.registered)
+        env.failAfterMemoryWriteNumber = null
+        controller.refresh()
+        runCurrent()
+        assertNull(env.saved.registration)
+        assertFalse(controller.state.value.registered)
+        assertEquals(listOf(7), env.removed)
+        env.restart()
+        val restarted = CompanionSetupCoordinator(env, this)
+        restarted.refresh()
+        runCurrent()
+        assertNull(env.durable.registration)
+        assertFalse(restarted.state.value.registered)
+    }
+
+    @Test fun failedRegistrationCommitAfterMemoryChangeHasDurableRestartCleanup() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        controller.setUp(Any()) {}
+        runCurrent()
+        env.failAfterMemoryWriteNumber = env.writes + 2
+        env.create(7)
+        runCurrent()
+        env.failAfterMemoryWriteNumber = null
+        env.restart()
+        val restarted = CompanionSetupCoordinator(env, this)
+        restarted.refresh()
+        runCurrent()
+        assertEquals(listOf(7), env.removed)
+        assertNull(env.durable.registration)
+        assertFalse(restarted.state.value.registered)
+    }
+
+    @Test fun failedFinalAcceptanceCommitRetainsDurableCleanupAcrossRestart() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        controller.setUp(Any()) {}
+        runCurrent()
+        env.failAfterMemoryWhen = { it.registration != null && 7 !in it.cleanupIds }
+        env.create(7)
+        runCurrent()
+        assertFalse(controller.state.value.registered)
+        assertEquals(setOf(7), env.durable.cleanupIds)
+        env.failAfterMemoryWhen = null
+        env.restart()
+        val restarted = CompanionSetupCoordinator(env, this)
+        restarted.refresh()
+        runCurrent()
+        assertEquals(listOf(7), env.removed)
+        assertFalse(restarted.state.value.registered)
+        assertNull(env.saved.registration)
+    }
+
+    @Test fun failedFirstJournalCommitCannotAuthorizeUnknownAssociationAfterRestart() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        controller.setUp(Any()) {}
+        runCurrent()
+        env.failAfterMemoryWriteNumber = env.writes + 1
+        env.create(7)
+        runCurrent()
+        env.failAfterMemoryWriteNumber = null
+        env.restart()
+        val restarted = CompanionSetupCoordinator(env, this)
+        restarted.refresh()
+        runCurrent()
+        // No durable ID exists; an unknown ordinary association cannot be claimed or removed.
+        assertTrue(7 in env.owned)
+        assertTrue(env.removed.isEmpty())
+        assertNull(env.saved.registration)
+        assertFalse(restarted.state.value.registered)
+    }
+
+    @Test fun cancellationDuringAcceptedWriteAndFailedCleanupCannotResurrectRegistration() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        val owner = Any()
+        controller.setUp(owner) {}
+        runCurrent()
+        env.afterMemoryWrite = { value ->
+            if (value.registration != null) {
+                controller.cancelSetup(owner)
+                env.afterMemoryWrite = null
+                env.failWriteNumber = env.writes + 1
+            }
+        }
+        env.create(7)
+        runCurrent()
+        env.failWriteNumber = null
+        env.restart()
+        val restarted = CompanionSetupCoordinator(env, this)
+        restarted.refresh()
+        runCurrent()
+        assertFalse(restarted.state.value.registered)
+        assertNull(env.saved.registration)
+        assertEquals(listOf(7), env.removed)
+    }
+
+    @Test fun duplicateCallbacksLaunchConsentOnceAndKeepImmediateCreation() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        var launched = 0
+        controller.setUp(Any()) { launched++ }
+        runCurrent()
+        val callback = env.callbacks.single()
+        callback.pending("consent")
+        callback.pending("consent")
+        runCurrent()
+        assertEquals(1, launched)
+        env.create(7)
+        callback.created(7)
+        callback.failed()
+        callback.failed()
+        runCurrent()
+        assertTrue(controller.state.value.registered)
+        assertTrue(env.removed.isEmpty())
+        val immediate = FakeEnvironment().apply { select(old); immediatelyCreate = 8 }
+        val direct = CompanionSetupCoordinator(immediate, this)
+        direct.setUp(Any()) { fail("No consent callback is required") }
+        runCurrent()
+        assertTrue(direct.state.value.registered)
+        assertFalse(direct.state.value.busy)
+    }
+
+    @Test fun duplicateCreatedCannotUndoExplicitRemovalTombstone() = runTest {
+        val env = FakeEnvironment().apply { select(old) }
+        val controller = CompanionSetupCoordinator(env, this)
+        controller.setUp(Any()) {}
+        runCurrent()
+        env.create(7)
+        runCurrent()
+        env.cleanupFails = true
+        controller.removeRegistration()
+        runCurrent()
+        env.callbacks.single().created(7)
+        runCurrent()
+        assertNull(env.saved.registration)
+        assertEquals(setOf(7), env.durable.cleanupIds)
+        env.restart()
+        env.cleanupFails = false
+        CompanionSetupCoordinator(env, this).refresh()
+        runCurrent()
+        assertEquals(listOf(7), env.removed)
+        assertNull(env.durable.registration)
     }
 
     @Test fun defaultsAreSafe() {

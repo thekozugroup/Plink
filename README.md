@@ -28,7 +28,7 @@ Background connection is an explicit optional Android UI switch and requires not
 
 ## Evidence
 
-The [companion registration checkpoint](docs/evidence/iteration-35/README.md) records the supported Android setup path, capability diagnostics and 640 passing automated tests. Physical companion consent and permission checks remain pending.
+The [companion registration checkpoint](docs/evidence/iteration-35/README.md) records the supported Android setup path and capability diagnostics. The [recovery checkpoint](docs/evidence/iteration-36/README.md) adds callback and persistence fixes, with 312 Android tests passing. Physical companion consent and permission checks remain pending.
 
 Recent verification: [checkpoint 6](docs/evidence/iteration-6/README.md) records two-way clipboard, Android's off toggle, ten direct-LAN file transfers, Bluetooth setup fixes, and removal of screen sharing/webcam. [Checkpoint 8](docs/evidence/iteration-8/README.md) records clearer startup states and the observed authenticated-recovery failure. [Checkpoint 9](docs/evidence/iteration-9/README.md) fixes automatic recovery and records native synthetic replies, with 202 Android and 227 Swift tests passing. These are bounded results, not full Apple Continuity parity.
 

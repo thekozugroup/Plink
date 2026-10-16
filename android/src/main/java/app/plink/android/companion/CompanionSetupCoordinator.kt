@@ -62,10 +62,13 @@ internal class CompanionSetupCoordinator<Consent>(
 ) {
     private class Attempt<T>(val owner: Any, val launch: (T) -> Unit) {
         var peer: CompanionPeer? = null
+        var consentLaunched = false
     }
     private class NotificationRequest(val owner: Any)
     private val mutex = Mutex()
     private val unjournaledIds = mutableSetOf<Int>()
+    // A failed commit may already have changed SharedPreferences' in-memory snapshot.
+    private val cleanupRequiredIds = mutableSetOf<Int>()
     private val attempt = AtomicReference<Attempt<Consent>?>(null)
     private val notificationRequest = AtomicReference<NotificationRequest?>(null)
     private val mutableState = MutableStateFlow(CompanionSetupState(supported = environment.supported))
@@ -79,18 +82,28 @@ internal class CompanionSetupCoordinator<Consent>(
     suspend fun receiveMetadata(deviceId: String, peerPublicKey: String, bluetoothAddress: String,
         commitIfCurrent: (() -> Unit) -> Boolean) = mutex.withLock {
         CompanionMetadataPolicy.requireAddress(bluetoothAddress)
-        val peer = environment.pairings().selected?.identity ?: return@withLock
-        if (peer.deviceId != deviceId || peer.peerPublicKey != peerPublicKey) return@withLock
-        val saved = environment.readRegistrations()
-        // Unavailable metadata must not discard a previously authenticated address for this peer.
-        if (bluetoothAddress.isEmpty() && saved.metadata?.let {
-            it.deviceId == deviceId && it.peerPublicKey == peerPublicKey && it.bluetoothAddress.isNotEmpty()
-        } == true) return@withLock
-        val committed = commitIfCurrent {
-            environment.writeRegistrations(saved.copy(metadata = peer.copy(bluetoothAddress = bluetoothAddress)))
+        try {
+            val peer = environment.pairings().selected?.identity ?: return@withLock
+            if (peer.deviceId != deviceId || peer.peerPublicKey != peerPublicKey) return@withLock
+            val saved = environment.readRegistrations()
+            // Unavailable metadata must not discard a previously authenticated address for this peer.
+            if (bluetoothAddress.isEmpty() && saved.metadata?.let {
+                it.deviceId == deviceId && it.peerPublicKey == peerPublicKey && it.bluetoothAddress.isNotEmpty()
+            } == true) return@withLock
+            val committed = commitIfCurrent {
+                environment.writeRegistrations(saved.copy(metadata = peer.copy(bluetoothAddress = bluetoothAddress)))
+            }
+            if (!committed) return@withLock
+            reconcile()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            // A revoked session must not replace the current setup status with its error.
+            commitIfCurrent {
+                mutableState.value = state.value.copy(registered = false, busy = attempt.get() != null,
+                    message = "Companion setup could not be updated. Reconnect to your Mac to try again.")
+            }
         }
-        if (!committed) return@withLock
-        reconcile()
     }
 
     private suspend fun pairings(): CompanionPairings {
@@ -135,12 +148,13 @@ internal class CompanionSetupCoordinator<Consent>(
                 if (attempt.get() === request) {
                     environment.associate(peer.identity.bluetoothAddress, object : CompanionEnvironment.Callback<Consent> {
                         override fun pending(consent: Consent) = work(request) {
-                            if (attempt.get() !== request) return@work
+                            if (attempt.get() !== request || request.consentLaunched) return@work
                             if (pairings().selected?.identity != peer.identity) {
                                 attempt.compareAndSet(request, null)
                                 reconcile()
                                 return@work
                             }
+                            request.consentLaunched = true
                             environment.onMain {
                                 if (attempt.get() === request) request.launch(consent)
                             }
@@ -175,6 +189,7 @@ internal class CompanionSetupCoordinator<Consent>(
         notificationRequest.set(null)
         work {
             val saved = environment.readRegistrations()
+            cleanupRequiredIds += listOfNotNull(saved.registration?.associationId)
             environment.writeRegistrations(saved.copy(
                 registration = null,
                 cleanupIds = saved.cleanupIds + listOfNotNull(saved.registration?.associationId)
@@ -220,15 +235,21 @@ internal class CompanionSetupCoordinator<Consent>(
 
     private suspend fun complete(request: Attempt<Consent>, id: Int) {
         var saved = environment.readRegistrations()
-        val previous = saved.registration
-        if (previous?.associationId != id) {
-            saved = saved.copy(cleanupIds = saved.cleanupIds + id)
-            environment.writeRegistrations(saved)
-        }
-        unjournaledIds -= id
         val pairings = pairings()
+        val associations = environment.associations().associateBy { it.id }
+        // An old request cannot remove a different request's valid, durably accepted ID.
+        if (validRegistrationId(saved, pairings, associations) == id) {
+            unjournaledIds -= id
+            attempt.compareAndSet(request, null)
+            reconcile()
+            return
+        }
+        cleanupRequiredIds += id
+        saved = saved.copy(cleanupIds = saved.cleanupIds + id)
+        environment.writeRegistrations(saved)
+        unjournaledIds -= id
         val peer = request.peer
-        val association = environment.associations().singleOrNull { it.id == id &&
+        val association = associations[id]?.takeIf {
             it.bluetoothAddress == peer?.identity?.bluetoothAddress && it.bluetoothAddress != null }
         if (association == null) {
             attempt.compareAndSet(request, null)
@@ -236,24 +257,28 @@ internal class CompanionSetupCoordinator<Consent>(
             mutableState.value = state.value.copy(message = "Android could not confirm the companion registration. Try again.")
             return
         }
-        // A duplicate callback must not delete a registration already accepted from this request.
-        if (peer != null && saved.registration == CompanionRegistration(id, peer.identity) &&
-            pairings.selected?.identity == peer.identity && peer.identity in pairings.trusted &&
-            id !in saved.cleanupIds) return
-
         val accept = peer != null && attempt.get() === request && pairings.selected?.identity == peer.identity &&
             peer.identity in pairings.trusted
         val next = if (accept) saved.copy(
             registration = CompanionRegistration(id, checkNotNull(peer).identity),
-            cleanupIds = (saved.cleanupIds + listOfNotNull(saved.registration?.associationId)) - id
-        ) else saved.copy(cleanupIds = saved.cleanupIds + id)
+            cleanupIds = saved.cleanupIds + listOfNotNull(saved.registration?.associationId)
+        ) else saved.copy(registration = saved.registration?.takeUnless { it.associationId == id })
+        // Keep the cleanup journal until both the owner check and acceptance commit succeed.
         environment.writeRegistrations(next)
-        if (accept && !attempt.compareAndSet(request, null)) {
-            environment.writeRegistrations(next.copy(registration = null, cleanupIds = next.cleanupIds + id))
+        if (accept && attempt.compareAndSet(request, null)) {
+            environment.writeRegistrations(next.copy(cleanupIds = next.cleanupIds - id))
+            cleanupRequiredIds -= id
         }
         attempt.compareAndSet(request, null)
         reconcile()
     }
+
+    private fun validRegistrationId(saved: CompanionRegistrations, pairings: CompanionPairings,
+        associations: Map<Int, CompanionAssociation>): Int? = saved.registration?.takeIf {
+        it.identity in pairings.trusted && it.identity.bluetoothAddress.isNotEmpty() &&
+            associations[it.associationId]?.bluetoothAddress == it.identity.bluetoothAddress &&
+            it.associationId !in saved.cleanupIds && it.associationId !in cleanupRequiredIds
+    }?.associationId
 
     private suspend fun reconcile(): Pair<CompanionPairings, CompanionRegistrations> {
         val pairings = pairings()
@@ -261,27 +286,37 @@ internal class CompanionSetupCoordinator<Consent>(
             mutableState.value = CompanionSetupState(paired = pairings.selected != null)
             return pairings to environment.readRegistrations()
         }
-        val associations = environment.associations().associateBy { it.id }
+        val associations = environment.associations().associateBy { it.id }.toMutableMap()
         var saved = environment.readRegistrations()
-        if (unjournaledIds.isNotEmpty()) {
-            saved = saved.copy(cleanupIds = saved.cleanupIds + unjournaledIds)
-            environment.writeRegistrations(saved)
-            unjournaledIds.clear()
-        }
+        val acceptedId = validRegistrationId(saved, pairings, associations)
+        cleanupRequiredIds += unjournaledIds.filter { it != acceptedId }
+        unjournaledIds.clear()
+        cleanupRequiredIds += saved.cleanupIds
         val registration = saved.registration
         if (registration != null && (registration.identity !in pairings.trusted ||
             registration.identity.bluetoothAddress.isEmpty() ||
             associations[registration.associationId]?.bluetoothAddress != registration.identity.bluetoothAddress)) {
-            saved = saved.copy(registration = null, cleanupIds = saved.cleanupIds + registration.associationId)
+            cleanupRequiredIds += registration.associationId
+        }
+        if (cleanupRequiredIds.isNotEmpty()) {
+            saved = saved.copy(
+                registration = saved.registration?.takeUnless { it.associationId in cleanupRequiredIds },
+                cleanupIds = saved.cleanupIds + cleanupRequiredIds
+            )
+            // Recommit even an unchanged snapshot: a prior failed commit may exist only in memory.
             environment.writeRegistrations(saved)
         }
         var cleanupFailed = false
         for (id in saved.cleanupIds) {
             try {
-                if (id in associations) environment.disassociate(id)
+                if (id in associations) {
+                    environment.disassociate(id)
+                    associations.remove(id)
+                }
                 val next = saved.copy(cleanupIds = saved.cleanupIds - id)
                 environment.writeRegistrations(next)
                 saved = next
+                cleanupRequiredIds -= id
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: Exception) {
