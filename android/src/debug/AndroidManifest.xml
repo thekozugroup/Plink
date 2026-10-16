@@ -1,5 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <package android:name="com.android.shell" />
+    </queries>
     <application>
+        <receiver
+            android:name=".debug.TaskContinuityCapabilitiesReceiver"
+            android:enabled="@bool/continuity_probe_enabled"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:process=":continuity_probe">
+            <intent-filter>
+                <action android:name="app.plink.android.DEBUG_TASK_CONTINUITY_CAPABILITIES" />
+            </intent-filter>
+        </receiver>
         <receiver
             android:name=".debug.DebugSessionStateReceiver"
             android:exported="true"

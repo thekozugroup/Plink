@@ -73,6 +73,7 @@ object PayloadPolicy {
         PlinkEventType.PairingOffer,
         PlinkEventType.PairingConfirm,
         PlinkEventType.DeviceStatus,
+        PlinkEventType.DeviceCompanion,
         PlinkEventType.CallRinging,
         PlinkEventType.CallEnded,
         PlinkEventType.MessageReceived,
@@ -98,6 +99,7 @@ object PayloadPolicy {
             "Envelope exceeds $maxEnvelopeBytes bytes."
         }
         app.plink.android.protocol.NotificationActionsPolicy.requireAcceptable(envelope)
+        if (envelope.type == PlinkEventType.DeviceCompanion) app.plink.android.protocol.CompanionMetadataPolicy.address(envelope)
         FileTransferPayloadPolicy.requireAcceptable(envelope)
         ScreenPreviewPayloadPolicy.requireAcceptable(envelope)
         app.plink.android.protocol.ReconnectPayloadPolicy.requireAcceptable(envelope)
@@ -146,7 +148,7 @@ object PayloadPolicy {
 }
 
 object PrivacyRedactor {
-    private val sensitiveKeys = setOf("preview", "text", "callerHandle", "body", "message", "clipboard", "data", "name")
+    private val sensitiveKeys = setOf("preview", "text", "callerHandle", "body", "message", "clipboard", "data", "name", "bluetoothAddress")
 
     fun redact(envelope: PlinkEnvelope): PlinkEnvelope {
         val redactedPayload = JsonObject(

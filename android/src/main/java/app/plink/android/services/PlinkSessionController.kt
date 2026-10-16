@@ -533,6 +533,7 @@ class PlinkSessionController(
             scope = scope,
             isAllowed = { envelope ->
                 activeSession === session && pairLifetime === lifetime &&
+                    envelope.type != PlinkEventType.DeviceCompanion &&
                     envelope.sourceDeviceId == session.localDeviceId &&
                     envelope.targetDeviceId == session.pairedDevice.id &&
                     (ordinaryFeatureEnabled(envelope) ||
@@ -884,6 +885,25 @@ class PlinkSessionController(
             is AuthenticatedFrameResult.Message -> {
                 val envelope = result.envelope
                 when (envelope.type) {
+                    PlinkEventType.DeviceCompanion -> {
+                        val session = activeSession ?: return
+                        if (envelope.sourceDeviceId != pairedDeviceId || envelope.targetDeviceId != localDeviceId ||
+                            session.pairedDevice.id != pairedDeviceId) return
+                        val address = app.plink.android.protocol.CompanionMetadataPolicy.address(envelope)
+                        (context.applicationContext as PlinkApplication).companionDevices.receiveMetadata(
+                            pairedDeviceId, session.pairedDevice.peerPublicKey, address,
+                            commitIfCurrent = { persistMetadata ->
+                                var persisted = false
+                                admission.runIfAdmitted {
+                                    if (activeSession === session) {
+                                        persistMetadata()
+                                        persisted = true
+                                    }
+                                }
+                                persisted
+                            }
+                        )
+                    }
                     app.plink.android.protocol.NotificationActionsPolicy.Enable,
                     app.plink.android.protocol.NotificationActionsPolicy.Invoke ->
                         handleNotificationAction(envelope, admission, localDeviceId, pairedDeviceId)

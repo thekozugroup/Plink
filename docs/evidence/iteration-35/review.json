@@ -1,0 +1,48 @@
+{
+  "reviewer": "Independent Astra source and evidence review",
+  "sourceCheckpointEligible": true,
+  "fullAcceptanceEligible": false,
+  "verified": false,
+  "codeBlockers": [],
+  "independentlyChecked": {
+    "androidUnitTests": 293,
+    "androidFailuresErrorsSkipped": 0,
+    "androidLintErrors": 0,
+    "androidLintWarnings": 43,
+    "recordedBinaryHashesMatch": true,
+    "changedSourceFingerprintMatches": true,
+    "debugReleaseAndInstrumentationApksExist": true,
+    "macStrictSignatureVerified": true,
+    "diffCheckPassed": true,
+    "evidenceDescriptionsAccurate": true
+  },
+  "parentReported": {
+    "swiftTests": 347,
+    "swiftFailures": 0,
+    "swiftBuildAndPackagingExitCode": 0
+  },
+  "originalMetrics": {
+    "cellularCalls": 0,
+    "notificationReplies": 0,
+    "nativeMac": 0,
+    "tomatoAndroid": 0,
+    "continuity": 0,
+    "security": 0,
+    "stability": 0,
+    "deviceEndToEnd": 0,
+    "processIntegrity": 0
+  },
+  "metricMeaning": "Original frozen evidence baseline retained. These are not implementation-quality estimates; no new product-acceptance credit is claimed.",
+  "acceptanceEvaluator": {
+    "exitCode": 2,
+    "unresolved": "Device addendum hash mismatch",
+    "frozenHashesChanged": false,
+    "rebaselineRequiredForSourceCheckpoint": false
+  },
+  "remaining": [
+    "Matching-build native companion consent and notification-access UI",
+    "Mac cellular audio, native notification artwork and screen-preview device evidence",
+    "Supported and authenticated macOS Continue On integration",
+    "Original acceptance coverage and frozen addendum integrity resolution"
+  ]
+}

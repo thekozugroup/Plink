@@ -131,6 +131,11 @@ public enum PayloadPolicy {
             }
         }
         switch envelope.type {
+        case .deviceCompanion:
+            guard envelope.payload.count == 1, !envelope.requiresAck,
+                  let address = envelope.payload["bluetoothAddress"]?.stringValue,
+                  address.isEmpty || MacDeviceIdentity.bluetoothAddress(address) == address
+            else { throw PayloadPolicyError.malformedFrame }
         case .callRinging:
             try requireString(envelope.payload, key: "callerName", maxLength: 200)
             try requireString(envelope.payload, key: "callerHandle", maxLength: 200)
@@ -156,7 +161,7 @@ public enum PayloadPolicy {
     }
 
     public static func redact(_ envelope: PlinkEnvelope) -> PlinkEnvelope {
-        let sensitiveKeys: Set<String> = ["preview", "text", "callerHandle", "body", "message", "clipboard", "data", "name", "replyToken", "actionToken", "sourceEnvelopeId", "packageName", "notificationKey", "sourceAppName"]
+        let sensitiveKeys: Set<String> = ["preview", "text", "callerHandle", "body", "message", "clipboard", "data", "name", "replyToken", "actionToken", "sourceEnvelopeId", "packageName", "notificationKey", "sourceAppName", "bluetoothAddress"]
         var payload = envelope.payload
         for key in payload.keys where sensitiveKeys.contains(key) || NotificationActionPolicy.isReserved(key) {
             payload[key] = .string("[redacted]")

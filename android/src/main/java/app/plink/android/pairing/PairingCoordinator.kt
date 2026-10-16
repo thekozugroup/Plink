@@ -70,7 +70,9 @@ class PairingCoordinator internal constructor(
         val now: () -> Long,
         val restore: suspend (ActivePlinkSession, Int, Boolean) -> Unit = { session, port, _ ->
             configure(session, port)
-        }
+        },
+        val pairingTransaction: suspend (suspend () -> Unit) -> Unit = { it() },
+        val pairingSettled: () -> Unit = {}
     )
 
     /** Workers exchange bytes only; keys and trust decisions remain with the lifecycle owner. */
@@ -226,55 +228,60 @@ class PairingCoordinator internal constructor(
         if (!current.confirmationSent || !current.gate.consume(environment.now())) return
         // Commit is the cancellation boundary. Later commands wait for success or full rollback.
         withContext(NonCancellable) {
-            val prepared = current.prepared
-            val trusted = prepared.candidate.copy(trusted = true)
-            var oldDevice: PairedDevice? = null
-            var oldSecret: ByteArray? = null
-            var oldActiveDeviceId: String? = null
-            var secretTouched = false
-            var deviceTouched = false
-            var activeDeviceTouched = false
-            var failure: Throwable? = null
-            try {
-                stopNetwork(current)
-                oldDevice = environment.store.all().firstOrNull { it.id == trusted.id }
-                oldSecret = environment.secrets.load(trusted.sessionId)
-                oldActiveDeviceId = environment.store.activeDeviceId()
-                secretTouched = true
-                environment.secrets.save(prepared.key, trusted.sessionId)
-                deviceTouched = true
-                environment.store.save(trusted)
-                activeDeviceTouched = true
-                environment.store.setActiveDeviceId(trusted.id)
-                configure(ActivePlinkSession(prepared.confirmation.deviceId, trusted, prepared.key), current.port)
-                activePort = current.port
-                mutableState.value = State(message = "Paired with ${trusted.name}.", paired = true)
-            } catch (error: Exception) {
-                failure = error
-                // A store may throw after applying a write; restore every potentially touched value.
-                suspend fun undo(action: suspend () -> Unit) {
-                    try { action() } catch (rollback: Exception) { error.addSuppressed(rollback) }
-                }
-                if (activeDeviceTouched) undo { environment.store.setActiveDeviceId(oldActiveDeviceId) }
-                if (deviceTouched) undo {
-                    oldDevice?.let { environment.store.save(it) } ?: environment.store.remove(trusted.id)
-                }
-                if (secretTouched) undo {
-                    oldSecret?.let { environment.secrets.save(it, trusted.sessionId) }
-                        ?: environment.secrets.remove(trusted.sessionId)
-                }
-                undo { restore(current) }
-                mutableState.value = State(message = when {
-                    error.suppressed.isNotEmpty() -> "Pairing failed and recovery was incomplete. Restart Plink before trying again."
-                    current.previous != null -> "Pairing did not complete. The previous session was restored."
-                    else -> "Pairing did not complete. Try again with fresh codes."
-                })
-            } finally {
-                oldSecret?.fill(0)
-                release(current)
-                // Do not let a later Cancel hide a failed recovery and permit another replacement.
-                if (failure?.suppressed?.isNotEmpty() == true) recoveryFailed = true
+            environment.pairingTransaction { commitPairing(current) }
+            environment.pairingSettled()
+        }
+    }
+
+    private suspend fun commitPairing(current: Attempt) {
+        val prepared = current.prepared
+        val trusted = prepared.candidate.copy(trusted = true)
+        var oldDevice: PairedDevice? = null
+        var oldSecret: ByteArray? = null
+        var oldActiveDeviceId: String? = null
+        var secretTouched = false
+        var deviceTouched = false
+        var activeDeviceTouched = false
+        var failure: Throwable? = null
+        try {
+            stopNetwork(current)
+            oldDevice = environment.store.all().firstOrNull { it.id == trusted.id }
+            oldSecret = environment.secrets.load(trusted.sessionId)
+            oldActiveDeviceId = environment.store.activeDeviceId()
+            secretTouched = true
+            environment.secrets.save(prepared.key, trusted.sessionId)
+            deviceTouched = true
+            environment.store.save(trusted)
+            activeDeviceTouched = true
+            environment.store.setActiveDeviceId(trusted.id)
+            configure(ActivePlinkSession(prepared.confirmation.deviceId, trusted, prepared.key), current.port)
+            activePort = current.port
+            mutableState.value = State(message = "Paired with ${trusted.name}.", paired = true)
+        } catch (error: Exception) {
+            failure = error
+            // A store may throw after applying a write; restore every potentially touched value.
+            suspend fun undo(action: suspend () -> Unit) {
+                try { action() } catch (rollback: Exception) { error.addSuppressed(rollback) }
             }
+            if (activeDeviceTouched) undo { environment.store.setActiveDeviceId(oldActiveDeviceId) }
+            if (deviceTouched) undo {
+                oldDevice?.let { environment.store.save(it) } ?: environment.store.remove(trusted.id)
+            }
+            if (secretTouched) undo {
+                oldSecret?.let { environment.secrets.save(it, trusted.sessionId) }
+                    ?: environment.secrets.remove(trusted.sessionId)
+            }
+            undo { restore(current) }
+            mutableState.value = State(message = when {
+                error.suppressed.isNotEmpty() -> "Pairing failed and recovery was incomplete. Restart Plink before trying again."
+                current.previous != null -> "Pairing did not complete. The previous session was restored."
+                else -> "Pairing did not complete. Try again with fresh codes."
+            })
+        } finally {
+            oldSecret?.fill(0)
+            release(current)
+            // Do not let a later Cancel hide a failed recovery and permit another replacement.
+            if (failure?.suppressed?.isNotEmpty() == true) recoveryFailed = true
         }
     }
 
@@ -390,7 +397,9 @@ class PairingCoordinator internal constructor(
                     port,
                     admitOrdinary = false
                 )
-            }
+            },
+            pairingTransaction = app.companionDevices::withPairingTransaction,
+            pairingSettled = app.companionDevices::refresh
         )
     }
 }

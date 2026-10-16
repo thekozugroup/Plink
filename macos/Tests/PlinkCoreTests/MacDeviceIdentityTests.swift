@@ -2,6 +2,35 @@ import XCTest
 @testable import PlinkCore
 
 final class MacDeviceIdentityTests: XCTestCase {
+    func testBluetoothAddressNormalizationRejectsUnavailableAndMalformedValues() {
+        XCTAssertEqual(MacDeviceIdentity.bluetoothAddress("a4-83-e7-12-34-56"), "A4:83:E7:12:34:56")
+        for value in [nil, "", "00:00:00:00:00:00", "FF:FF:FF:FF:FF:FF", "02:00:00:00:00:00",
+                      " A4:83:E7:12:34:56", "A4:83:E7:12:34:5G", "A4:83:E7:12:34:56\n"] {
+            XCTAssertNil(MacDeviceIdentity.bluetoothAddress(value))
+        }
+    }
+
+    func testCompanionMetadataPolicyRequiresExactBoundedAddressAndRedactsIt() throws {
+        var envelope = PlinkEnvelope(id: "companion", type: .deviceCompanion, sentAt: .now,
+            sourceDeviceId: "mac", targetDeviceId: "pixel", payload: ["bluetoothAddress": .string("A4:83:E7:12:34:56")])
+        try PayloadPolicy.validate(envelope)
+        XCTAssertEqual(PayloadPolicy.redact(envelope).payload["bluetoothAddress"], .string("[redacted]"))
+        envelope.payload["bluetoothAddress"] = .string("")
+        try PayloadPolicy.validate(envelope)
+        for value in [PayloadValue.string("a4:83:e7:12:34:56"), .string("00:00:00:00:00:00"), .bool(true), .string(String(repeating: "A", count: 100))] {
+            envelope.payload["bluetoothAddress"] = value
+            XCTAssertThrowsError(try PayloadPolicy.validate(envelope))
+        }
+        envelope.payload = ["bluetoothAddress": .string("A4:83:E7:12:34:56"), "extra": .string("ignored")]
+        XCTAssertThrowsError(try PayloadPolicy.validate(envelope))
+        envelope.payload.removeValue(forKey: "extra")
+        envelope.requiresAck = true
+        XCTAssertThrowsError(try PayloadPolicy.validate(envelope))
+        envelope.requiresAck = false
+        envelope.payload = [:]
+        XCTAssertThrowsError(try PayloadPolicy.validate(envelope))
+    }
+
     func testFreshIdentityPersistsAcrossInstances() throws {
         try withDefaults { defaults in
             let first = try MacDeviceIdentity.resolve(defaults: defaults, hasSavedPairings: false)

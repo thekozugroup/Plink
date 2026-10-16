@@ -50,6 +50,7 @@ object PlinkEventType {
     const val PairingOffer = "pairing.offer"
     const val PairingConfirm = "pairing.confirm"
     const val DeviceStatus = "device.status"
+    const val DeviceCompanion = "device.companion"
     const val CallRinging = "call.ringing"
     const val CallEnded = "call.ended"
     const val MessageReceived = "message.received"

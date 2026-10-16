@@ -100,6 +100,7 @@ public enum EventType: String, Codable, Hashable, Sendable {
     case pairingOffer = "pairing.offer"
     case pairingConfirm = "pairing.confirm"
     case deviceStatus = "device.status"
+    case deviceCompanion = "device.companion"
     case callRinging = "call.ringing"
     case callEnded = "call.ended"
     case messageReceived = "message.received"

@@ -1,6 +1,7 @@
 import AppKit
 import CoreGraphics
 import CryptoKit
+import IOBluetooth
 import Network
 import OSLog
 import PlinkCore
@@ -1362,6 +1363,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 self.screen.bind(localID: self.localMacDeviceId, peerID: pairing.device.id,
                     generation: nextGeneration, sender: sender)
                 self.reconnect.setConnected()
+                self.publishCompanionIdentity()
                 self.lastDeliveryState = "Connected to \(pairing.device.name) on the local network."
                 self.observationLog.notice("Plink conditional reconnect completed")
             } catch {
@@ -1541,6 +1543,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 files.bind(localID: localMacDeviceId, peerID: pairing.device.id, transport: sender)
                 screen.bind(localID: localMacDeviceId, peerID: pairing.device.id, generation: generation, sender: sender)
                 reconnect.setConnected()
+                publishCompanionIdentity()
                 lastDeliveryState = "Connected to \(pairing.device.name) on the local network."
                 authority.invalidate()
                 reconnectDeadlineTask?.cancel()
@@ -2158,6 +2161,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, @pre
                 }
                 if latestReplyID == envelope.id, lastReply == "Waiting for Android reply execution…" { lastReply = failure }
             }
+        }
+    }
+
+    private func publishCompanionIdentity() {
+        guard let peer = pairedPeerID, let transport = activeTransport else { return }
+        let address = MacDeviceIdentity.bluetoothAddress(IOBluetoothHostController.default()?.addressAsString()) ?? ""
+        let envelope = PlinkEnvelope(id: UUID().uuidString.lowercased(), type: .deviceCompanion,
+            sentAt: .now, sourceDeviceId: localMacDeviceId, targetDeviceId: peer,
+            payload: ["bluetoothAddress": .string(address)])
+        Task {
+            // The bound transport rejects a retired session; this metadata has no command side effects.
+            try? await transport.send(envelope)
         }
     }
 

@@ -1,0 +1,3 @@
+<resources>
+    <bool name="continuity_probe_enabled">false</bool>
+</resources>

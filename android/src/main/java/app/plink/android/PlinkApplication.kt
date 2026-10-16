@@ -18,6 +18,7 @@ import android.content.Intent
 import androidx.core.content.ContextCompat
 import app.plink.android.features.FeatureSettings
 import app.plink.android.clipboard.ClipboardSyncController
+import app.plink.android.companion.CompanionDeviceController
 import app.plink.android.storage.KeystorePairingSecretStore
 import app.plink.android.storage.KeystorePairingStore
 import kotlinx.coroutines.CoroutineScope
@@ -44,13 +45,19 @@ class PlinkApplication : Application() {
         private set
     lateinit var clipboardSync: ClipboardSyncController
         private set
+    lateinit var companionDevices: CompanionDeviceController
+        private set
     val backgroundConnectionState: StateFlow<BackgroundConnectionState>
         get() = BackgroundConnectionRuntime.state
 
     override fun onCreate() {
         super.onCreate()
+        // The debug metadata receiver must not start pairing, clipboard, or background services.
+        if (android.os.Build.VERSION.SDK_INT >= 28 &&
+            getProcessName() == "$packageName:continuity_probe") return
         featureSettings = FeatureSettings(this)
         sessionController = PlinkSessionController(this, featureSettings, scope)
+        companionDevices = CompanionDeviceController(this, scope)
         clipboardSync = ClipboardSyncController(this, featureSettings, sessionController)
         clipboardSync.start()
         restoreSavedSession()
@@ -177,6 +184,7 @@ class PlinkApplication : Application() {
                 mutateIfRestoreCurrent(generation) {
                     _sessionRestoreState.value = SessionRestoreState.COMPLETE
                 }
+                companionDevices.refresh()
             }
         }
     }

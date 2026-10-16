@@ -1,6 +1,7 @@
 package app.plink.android.ui
 
 import app.plink.android.clipboard.ClipboardSyncState
+import app.plink.android.companion.CompanionSetupState
 import app.plink.android.continuity.FileTransferState
 import app.plink.android.features.ContinuityFeature
 import app.plink.android.features.FeatureAvailability
@@ -20,7 +21,8 @@ data class PlinkUiState(
     val fileTransferState: FileTransferState,
     val screenPreviewState: ScreenPreviewUiState = ScreenPreviewUiState(ScreenPreviewPhase.IDLE),
     val clipboardSyncEnabled: Boolean = false,
-    val clipboardSyncState: ClipboardSyncState = ClipboardSyncState()
+    val clipboardSyncState: ClipboardSyncState = ClipboardSyncState(),
+    val companionState: CompanionSetupState = CompanionSetupState()
 )
 
 data class PlinkUiActions(
@@ -33,5 +35,7 @@ data class PlinkUiActions(
     val onBeginScreenConsent: (String) -> Unit = {},
     val onStopScreenPreview: () -> Unit = {},
     val onClipboardSyncEnabledChange: (Boolean) -> Unit = {},
-    val onSetUpClipboardSync: () -> Unit = {}
+    val onSetUpClipboardSync: () -> Unit = {},
+    val onSetUpCompanion: () -> Unit = {},
+    val onRemoveCompanion: () -> Unit = {}
 )

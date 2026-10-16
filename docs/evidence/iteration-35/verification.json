@@ -1,0 +1,83 @@
+{
+  "checkpoint": 35,
+  "recordedAtUtc": "2026-10-16T14:54:18Z",
+  "baseCommit": "79cc82b32a017bd5ade0770dd3a6a925400db9b6",
+  "scope": "Ordinary Android Bluetooth companion registration, authenticated Mac adapter metadata and debug-only capability diagnostics",
+  "changedSourceFingerprint": {
+    "algorithm": "SHA256 of sorted changed source paths, each followed by NUL, file bytes and NUL; roots android/src, macos/Sources, macos/Tests",
+    "fileCount": 26,
+    "sha256": "f162c282a2f597478088e514efeb0d5904c68b7f5c6872a2c4a5ac6fe77d3c1b"
+  },
+  "checks": {
+    "android": {
+      "command": "JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew --no-daemon :android:testDebugUnitTest :android:assembleDebug :android:assembleRelease :android:assembleDebugAndroidTest :android:lintDebug",
+      "exitCode": 0,
+      "tests": 293,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "lintErrors": 0,
+      "lintWarnings": 43,
+      "instrumentationApkBuilt": true,
+      "instrumentationExecuted": false,
+      "releaseSigned": false,
+      "diagnosticReceiverPresentInDebug": true,
+      "diagnosticReceiverPresentInRelease": false,
+      "privilegedSelfManagedPermissionDeclared": false
+    },
+    "mac": {
+      "commands": [
+        "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test (working directory macos)",
+        "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift build (working directory macos)",
+        "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./scripts/package-macos.sh",
+        "codesign --verify --deep --strict build/PlinkMac.app"
+      ],
+      "exitCodes": [0, 0, 0, 0],
+      "xctestCount": 68,
+      "swiftTestingCounts": [153, 126],
+      "totalTests": 347,
+      "failures": 0,
+      "developerIdSignedAndNotarized": false
+    },
+    "shared": {
+      "commands": ["./scripts/check-fixtures.sh", "git diff --check"],
+      "exitCodes": [0, 0]
+    }
+  },
+  "binarySha256": {
+    "android/build/outputs/apk/debug/android-debug.apk": "fc13aa1fbcc8222c374ae0f28885713a38685c9808ea37d17c987e49bdae8753",
+    "android/build/outputs/apk/release/android-release-unsigned.apk": "f3bcf68e1d725f1da5958a74b064ff4fa331a86825c7d766d596fcd89fc5ae92",
+    "build/PlinkMac.app/Contents/MacOS/PlinkMac": "f66c81d9b55a7f20dfd447ada92f9492d2549627ddf8e7f543c6afb4f6c32d9a"
+  },
+  "deviceValidation": {
+    "adbDeviceCount": 0,
+    "nativeConsentTested": false,
+    "notificationPermissionUiTested": false,
+    "installed": false,
+    "pairingOrSettingsChanged": false
+  },
+  "acceptance": {
+    "verified": false,
+    "evaluatorCommand": "python3 .a5c/artifacts/acceptance/evaluate.py",
+    "exitCode": 2,
+    "error": "Device addendum changed; refresh acceptance explicitly",
+    "expectedDeviceConstraintsSha256": "c3be51adce89b8234fc3bb6001dcc88c78418582a953cbb7d13994e65c0da313",
+    "actualDeviceConstraintsSha256": "9f0a4086d97729c3eb893918e7fcec67c16ac0f7a394285fedca388a76f1c59b",
+    "frozenCriteriaChanged": false,
+    "newAcceptanceCreditClaimed": false,
+    "remaining": [
+      "Physical companion consent, notification permission and capability reporting",
+      "Production authentication compatible with Android secure companion transport before any transport experiment",
+      "Supported macOS Continue On receiver and actual cross-device task handoff",
+      "Two-way cellular call audio through the Mac",
+      "Native notification artwork and consented screen preview on matching builds",
+      "Original message coverage, device, design, recovery and soak acceptance evidence"
+    ]
+  },
+  "cleanup": {
+    "taskScratchFilesRemaining": 0,
+    "packagingScratchDirectoriesRemaining": 0,
+    "runWorkDirectoriesRemaining": 0,
+    "intendedBuildArtifactsRetained": true
+  }
+}

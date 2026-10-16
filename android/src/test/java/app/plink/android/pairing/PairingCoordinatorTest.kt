@@ -72,6 +72,8 @@ class PairingCoordinatorTest {
         var configuredPort = 45731
         var elapsed = 0L
         var stops = 0
+        var inPairingTransaction = false
+        val transactionEvents = mutableListOf<String>()
         val restoredAdmissions = mutableListOf<Boolean>()
         var offer = PairingOffer("mac", "Mac", "macos", "mac:45732", "nonce", PairingCrypto.generateKeyPair().publicKeyBase64, "pixel")
         val coordinator = PairingCoordinator(PairingCoordinator.Environment(
@@ -104,6 +106,18 @@ class PairingCoordinatorTest {
                 restoredAdmissions += admitted
                 active = session.copy(sessionKey = session.copySessionKey())
                 configuredPort = port
+            },
+            pairingTransaction = { commit ->
+                inPairingTransaction = true
+                transactionEvents += "begin"
+                try { commit() } finally {
+                    inPairingTransaction = false
+                    transactionEvents += "end"
+                }
+            },
+            pairingSettled = {
+                check(!inPairingTransaction)
+                transactionEvents += "settled"
             }
         ), StandardTestDispatcher(scope.testScheduler))
 
@@ -219,9 +233,25 @@ class PairingCoordinatorTest {
             assertArrayEquals(f.oldKey, f.backingSecrets.load(f.oldDevice.sessionId))
             assertEquals("mac", f.backingStore.activeDeviceId())
             assertFalse(f.coordinator.state.value.paired)
+            assertEquals(listOf("begin", "end", "settled"), f.transactionEvents)
             f.failedActivationKey?.let { assertTrue(it.all { b -> b == 0.toByte() }) }
             f.coordinator.close(); runCurrent()
         }
+    }
+
+    @Test fun companionReconciliationWaitsForTheTrustTransaction() = runTest {
+        val f = Fixture(this); f.seed(); f.select(); runCurrent()
+        val release = CompletableDeferred<Unit>()
+        f.afterDeviceSave = {
+            assertTrue(f.inPairingTransaction)
+            release.await()
+        }
+        f.coordinator.confirm(); runCurrent(); f.approve(); runCurrent()
+        assertEquals(listOf("begin"), f.transactionEvents)
+        release.complete(Unit); runCurrent()
+        assertTrue(f.coordinator.state.value.paired)
+        assertEquals(listOf("begin", "end", "settled"), f.transactionEvents)
+        f.coordinator.close(); runCurrent()
     }
 
     @Test fun rollbackPreservesExistingSecretAtCandidateSessionId() = runTest {

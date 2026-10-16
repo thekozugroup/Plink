@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.IntentSenderRequest
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -39,6 +40,7 @@ import app.plink.android.ui.theme.PlinkTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private val companionConsentOwner = Any()
     // Rotation retains only the opaque attempt, never the MediaProjection grant.
     private val screenConsentState by lazy { ViewModelProvider(this)[ScreenConsentState::class.java] }
 
@@ -53,6 +55,20 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         (application as PlinkApplication).clipboardSync.refresh()
+        (application as PlinkApplication).companionDevices.refresh()
+    }
+
+    override fun onDestroy() {
+        (application as PlinkApplication).companionDevices.cancelSetup(companionConsentOwner)
+        super.onDestroy()
+    }
+
+    private val companionConsentLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode != Activity.RESULT_OK) {
+            (application as PlinkApplication).companionDevices.cancelSetup(companionConsentOwner)
+        }
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -87,7 +103,19 @@ class MainActivity : ComponentActivity() {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 },
-                onBeginScreenConsent = ::beginScreenConsent
+                onBeginScreenConsent = ::beginScreenConsent,
+                onSetUpCompanion = {
+                    (application as PlinkApplication).companionDevices.setUp(companionConsentOwner) { sender ->
+                        check(!isFinishing && !isDestroyed &&
+                            lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) { "Plink is no longer open." }
+                        companionConsentLauncher.launch(IntentSenderRequest.Builder(sender).build())
+                    }
+                },
+                onRequestNotificationAccess = { openSettings ->
+                    (application as PlinkApplication).companionDevices.requestNotificationAccess(
+                        companionConsentOwner, openSettings
+                    )
+                }
             )
         }
     }
@@ -108,7 +136,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun PlinkApp(
     onRequestPostNotifications: () -> Unit = {},
-    onBeginScreenConsent: (String) -> Unit = {}
+    onBeginScreenConsent: (String) -> Unit = {},
+    onSetUpCompanion: () -> Unit = {},
+    onRequestNotificationAccess: (() -> Unit) -> Unit = { it() }
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as PlinkApplication
@@ -118,6 +148,7 @@ fun PlinkApp(
     val featureSettings by application.featureSettings.enabled.collectAsState()
     val clipboardSyncEnabled by application.featureSettings.clipboardSyncEnabled.collectAsState()
     val clipboardSyncState by application.clipboardSync.state.collectAsState()
+    val companionState by application.companionDevices.state.collectAsState()
     val backgroundConnectionEnabled by application.featureSettings.backgroundConnectionEnabled.collectAsState()
     val backgroundConnectionState by application.backgroundConnectionState.collectAsState()
     val reconnectState by application.sessionController.reconnectState.collectAsState()
@@ -151,13 +182,24 @@ fun PlinkApp(
                     fileTransferState = fileTransferState,
                     screenPreviewState = screenPreviewState,
                     clipboardSyncEnabled = clipboardSyncEnabled,
-                    clipboardSyncState = clipboardSyncState
+                    clipboardSyncState = clipboardSyncState,
+                    companionState = companionState
                 ),
                 actions = PlinkUiActions(
                     onRequestPostNotifications = onRequestPostNotifications,
                     onRefreshPermissions = { permissions = AndroidPermissionReader.read(context) },
                     onOpenPermissionSettings = { action: PermissionAction ->
-                        context.startActivity(AndroidPermissionReader.settingsIntent(action))
+                        val openSettings = {
+                            check(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                                "Plink is no longer open."
+                            }
+                            context.startActivity(AndroidPermissionReader.settingsIntent(action))
+                        }
+                        if (action == PermissionAction.OpenNotificationListenerSettings) {
+                            onRequestNotificationAccess(openSettings)
+                        } else {
+                            openSettings()
+                        }
                     },
                     onFeatureEnabledChange = application.featureSettings::setEnabled,
                     onBackgroundConnectionEnabledChange = { enabled ->
@@ -167,7 +209,9 @@ fun PlinkApp(
                     onBeginScreenConsent = onBeginScreenConsent,
                     onStopScreenPreview = application.sessionController::stopScreenPreview,
                     onClipboardSyncEnabledChange = application.clipboardSync::setEnabled,
-                    onSetUpClipboardSync = application.clipboardSync::requestShizukuPermission
+                    onSetUpClipboardSync = application.clipboardSync::requestShizukuPermission,
+                    onSetUpCompanion = onSetUpCompanion,
+                    onRemoveCompanion = application.companionDevices::removeRegistration
                 ),
                 reconnectState = reconnectState,
                 reconnectAvailable = reconnectAvailable,

@@ -5,6 +5,7 @@ Plink does not claim full Apple Continuity parity. This table records current im
 | Capability | Current state | Verification boundary |
 | --- | --- | --- |
 | Local pairing | Implemented | Fresh pairings use security version 2 after two-sided code/consent confirmation. Legacy records and keys are preserved as version 0 but are not activated; re-pair each device. |
+| Android companion registration | Optional ordinary Bluetooth association on Android 13+ after encrypted pairing | Native picker uses the authenticated Mac adapter address; association ID is bound to the saved device ID, public key and address. Existing settings flow remains on older/unsupported devices. Live consent and permission validation pending. This does not enroll a Mac in Google Continue On. |
 | Call controls on Mac | Experimental native HFP controller | Real carrier-call answer, decline, and hangup require hardware evidence. |
 | Laptop call audio | Experimental route control | SCO connection does not establish two-way laptop microphone/output speech. Real two-way speech testing remains open. |
 | Message reply | Inbound Android reply server validates one-time, origin-bound free-form `RemoteInput` routes | Four Pixel synthetic checks passed: one-time delivery with reuse rejection, replacement revocation, data-only rejection, and authentication-required rejection. Native Notification Center delivery to the original conversation/recipient remains open. |

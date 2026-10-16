@@ -45,6 +45,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.motionScheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -204,7 +205,49 @@ private fun ConnectionScreen(
             item {
                 PermissionsGroup(state.onboarding, actions, Modifier.padding(horizontal = 16.dp))
             }
+            if (state.companionState.supported && state.companionState.paired) {
+                item {
+                    CompanionSetupCard(state, actions)
+                }
+            }
             item { Spacer(Modifier.height(4.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun CompanionSetupCard(state: PlinkUiState, actions: PlinkUiActions) {
+    val companion = state.companionState
+    Card(
+        modifier = Modifier.widthIn(max = PlinkShapeDefaults.paneMaxWidth).padding(horizontal = 16.dp),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Companion device", style = MaterialTheme.typography.titleLarge)
+            Text(
+                companion.message ?: if (companion.registered) {
+                    "Your Mac is registered with Android. Notification access is managed separately."
+                } else {
+                    "Register your paired Mac with Android for simpler notification setup. Android will ask you to confirm."
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (companion.registered) {
+                OutlinedButton(onClick = actions.onRemoveCompanion, enabled = !companion.busy) {
+                    Text("Remove registration")
+                }
+                Text(
+                    "Your Plink pairing stays saved.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                FilledTonalButton(onClick = actions.onSetUpCompanion, enabled = !companion.busy) {
+                    Text(if (companion.busy) "Waiting for Android…" else "Set up companion device")
+                }
+            }
         }
     }
 }
@@ -313,6 +356,10 @@ private fun SettingsScreen(
             item { SectionTitle("File transfer") }
             item { FileTransferCard(state.fileTransferState, actions.onCancelFileTransfer) }
             item { Spacer(Modifier.height(14.dp)) }
+            if (state.companionState.supported && state.companionState.paired) {
+                item { CompanionSetupCard(state, actions) }
+                item { Spacer(Modifier.height(14.dp)) }
+            }
             item { SectionTitle("Permissions") }
             itemsIndexed(state.onboarding, key = { _, step -> step.title }) { index, step ->
                 PermissionSettingRow(

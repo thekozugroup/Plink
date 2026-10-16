@@ -5,6 +5,7 @@ Pixel-to-Mac continuity with native Android and macOS apps.
 ## Current capability
 
 - Two-sided, authenticated pairing consent with code comparison.
+- Optional Android companion registration for the paired Mac, with native system confirmation and notification-access setup on Android 13+.
 - Android notification mirroring and a validated inbound reply server for eligible free-form `RemoteInput` actions.
 - Android battery and media collectors, plus text and URL share handoff in both directions.
 - Automatic text clipboard sync with off toggles. Phone-to-Mac sync currently requires an unlocked personal profile and Shizuku running in shell mode.
@@ -26,6 +27,8 @@ Consented phone screen preview is restored: open Phone Screen on the Mac, choose
 Background connection is an explicit optional Android UI switch and requires notification permission plus a paired Mac. Reopening the app restores the service when the saved switch remains on. On OnePlus 15, ordinary relaunch and process-death service recovery passed; an off switch remained off after relaunch. Checkpoint 9 also verified authenticated automatic reconnection after phone process death: the Mac completed recovery in 4.4 seconds without a manual action or Mac restart. A subsequent native notification reply reached the local Android recipient once. This does not establish full phone reboot recovery, all Doze conditions, or recovery when Bonjour misses the phone's disappearance and return.
 
 ## Evidence
+
+The [companion registration checkpoint](docs/evidence/iteration-35/README.md) records the supported Android setup path, capability diagnostics and 640 passing automated tests. Physical companion consent and permission checks remain pending.
 
 Recent verification: [checkpoint 6](docs/evidence/iteration-6/README.md) records two-way clipboard, Android's off toggle, ten direct-LAN file transfers, Bluetooth setup fixes, and removal of screen sharing/webcam. [Checkpoint 8](docs/evidence/iteration-8/README.md) records clearer startup states and the observed authenticated-recovery failure. [Checkpoint 9](docs/evidence/iteration-9/README.md) fixes automatic recovery and records native synthetic replies, with 202 Android and 227 Swift tests passing. These are bounded results, not full Apple Continuity parity.
 
@@ -58,6 +61,8 @@ All local checks:
 ## Permissions and release work
 
 Enable the Android and macOS permissions required by the capability you choose to use, including Android notification access for mirroring and reply routes. Ordinary OS permission grants require the user's normal system confirmation; no extra Plink approval is required.
+
+After pairing, connect both updated apps, then choose **Set up companion device** in Android Plink. Android's Bluetooth picker is filtered to the address received from the authenticated Mac. The Mac must be discoverable or already Bluetooth-paired. The **Notification access** action uses Android's companion permission dialog when a valid registration exists, with normal notification settings as a fallback. Sideloaded apps may first need **Allow restricted settings** in Android's app information. **Remove registration** removes the Android system registration while keeping the encrypted Plink pairing. Registration does not provide Bluetooth call audio or enroll the Mac in Google's Continue On service. See the [Continue On assessment](docs/research.md#android-continue-on-assessment--2026-10-16).
 
 Open release work: Android release signing, macOS Developer ID signing and notarization, and real paired-device tests for calls, audio, and Notification Center reply recipient delivery.
 
